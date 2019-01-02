@@ -169,38 +169,35 @@ class r1cs_gg_ppzksnark_verification_key {
 public:
     libff::G1<ppT> alpha_g1;
     libff::G2<ppT> beta_g2;
-    libff::G2<ppT> gamma_g2;
     libff::G2<ppT> delta_g2;
 
-    accumulation_vector<libff::G1<ppT> > gamma_ABC_g1;
+    accumulation_vector<libff::G1<ppT> > ABC_g1;
 
     r1cs_gg_ppzksnark_verification_key() = default;
     r1cs_gg_ppzksnark_verification_key(const libff::G1<ppT> &alpha_g1,
                                        const libff::G2<ppT> &beta_g2,
-                                       const libff::G2<ppT> &gamma_g2,
                                        const libff::G2<ppT> &delta_g2,
-                                       const accumulation_vector<libff::G1<ppT> > &gamma_ABC_g1) :
+                                       const accumulation_vector<libff::G1<ppT> > &ABC_g1) :
         alpha_g1(alpha_g1),
         beta_g2(beta_g2),
-        gamma_g2(gamma_g2),
         delta_g2(delta_g2),
-        gamma_ABC_g1(gamma_ABC_g1)
+        ABC_g1(ABC_g1)
     {};
 
     size_t G1_size() const
     {
-        return gamma_ABC_g1.size() + 1;
+        return ABC_g1.size() + 1;
     }
 
     size_t G2_size() const
     {
-        return 3;
+        return 2;
     }
 
     size_t size_in_bits() const
     {
 
-        return (gamma_ABC_g1.size_in_bits() + 3 * libff::G2<ppT>::size_in_bits() + libff::G1<ppT>::size_in_bits());
+        return (ABC_g1.size_in_bits() + 2 * libff::G2<ppT>::size_in_bits() + libff::G1<ppT>::size_in_bits());
     }
 
     void print_size() const
@@ -240,11 +237,11 @@ template<typename ppT>
 class r1cs_gg_ppzksnark_processed_verification_key {
 public:
     libff::G1_precomp<ppT> vk_alpha_g1_precomp;
-    libff::G2_precomp<ppT> vk_beta_g2_precomp; 
-    libff::G2_precomp<ppT> vk_gamma_g2_precomp;
+    libff::G2_precomp<ppT> vk_beta_g2_precomp;
+    libff::G2_precomp<ppT> vk_generator_g2_precomp;
     libff::G2_precomp<ppT> vk_delta_g2_precomp;
 
-    accumulation_vector<libff::G1<ppT> > gamma_ABC_g1;
+    accumulation_vector<libff::G1<ppT> > ABC_g1;
 
     bool operator==(const r1cs_gg_ppzksnark_processed_verification_key &other) const;
     friend std::ostream& operator<< <ppT>(std::ostream &out, const r1cs_gg_ppzksnark_processed_verification_key<ppT> &pvk);
