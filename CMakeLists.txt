@@ -107,7 +107,12 @@ else()
   set(DEPENDS_DIR "${DEPENDS_DIR}")
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if(APPLE)
+  set(WITH_PROCPS OFF)
+  set(WITH_SUPERCOP OFF)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Apple)?Clang$")
   # Common compilation flags and warning configuration
   set(
     CMAKE_CXX_FLAGS
