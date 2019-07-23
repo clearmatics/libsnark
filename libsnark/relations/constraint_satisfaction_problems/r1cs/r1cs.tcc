@@ -174,6 +174,8 @@ void r1cs_constraint_system<FieldT>::add_constraint(const r1cs_constraint<FieldT
 {
 #ifdef DEBUG
     constraint_annotations[constraints.size()] = annotation;
+#else
+    libff::UNUSED(annotation);
 #endif
     constraints.emplace_back(c);
 }

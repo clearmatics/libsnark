@@ -186,8 +186,10 @@ void test_merkle_tree_check_read_gadget()
     root_digest.generate_r1cs_witness(root);
     assert(pb.is_satisfied());
 
+#ifndef NDEBUG
     const size_t num_constraints = pb.num_constraints();
     const size_t expected_constraints = merkle_tree_check_read_gadget<FieldT, HashT>::expected_constraints(tree_depth);
+#endif
     assert(num_constraints == expected_constraints);
 }
 

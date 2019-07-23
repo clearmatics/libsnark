@@ -252,6 +252,13 @@ void test_knapsack_CRH_with_bit_out_gadget_internal(const size_t dimension, cons
     const size_t num_constraints = pb.num_constraints();
     const size_t expected_constraints = knapsack_CRH_with_bit_out_gadget<FieldT>::expected_constraints();
     assert(num_constraints == expected_constraints);
+
+#ifdef NDEBUG
+    libff::UNUSED(dimension);
+    libff::UNUSED(digest_bits);
+    libff::UNUSED(num_constraints);
+    libff::UNUSED(expected_constraints);
+#endif
 }
 
 } // libsnark
