@@ -403,7 +403,7 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     r1cs_gg_ppzksnark_keypair<ppT> key_pair = r1cs_gg_ppzksnark_generator_from_secrets<ppT>(
         r1cs, t, alpha, beta, delta, g1_generator, g2_generator);
 
-    libff::enter_block("Call to r1cs_gg_ppzksnark_generator");
+    libff::leave_block("Call to r1cs_gg_ppzksnark_generator");
 
     return std::move(key_pair);
 }
