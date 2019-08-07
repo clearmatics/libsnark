@@ -33,11 +33,16 @@ namespace libsnark {
  *   each A_i,B_i,C_i is expressed in the Lagrange basis.
  */
 template<typename FieldT>
-qap_instance<FieldT> r1cs_to_qap_instance_map(const r1cs_constraint_system<FieldT> &cs)
+qap_instance<FieldT> r1cs_to_qap_instance_map(
+    const r1cs_constraint_system<FieldT> &cs,
+    bool force_pow_2_domain)
 {
     libff::enter_block("Call to r1cs_to_qap_instance_map");
 
-    const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain = libfqfft::get_evaluation_domain<FieldT>(cs.num_constraints() + cs.num_inputs() + 1);
+    const size_t min_n = cs.num_constraints() + cs.num_inputs() + 1;
+    const size_t n = force_pow_2_domain ? 1 << libff::log2(min_n) : min_n;
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain =
+        libfqfft::get_evaluation_domain<FieldT>(n);
 
     std::vector<std::map<size_t, FieldT> > A_in_Lagrange_basis(cs.num_variables()+1);
     std::vector<std::map<size_t, FieldT> > B_in_Lagrange_basis(cs.num_variables()+1);
@@ -102,12 +107,17 @@ qap_instance<FieldT> r1cs_to_qap_instance_map(const r1cs_constraint_system<Field
  *   n = degree of the QAP
  */
 template<typename FieldT>
-qap_instance_evaluation<FieldT> r1cs_to_qap_instance_map_with_evaluation(const r1cs_constraint_system<FieldT> &cs,
-                                                                         const FieldT &t)
+qap_instance_evaluation<FieldT> r1cs_to_qap_instance_map_with_evaluation(
+    const r1cs_constraint_system<FieldT> &cs,
+    const FieldT &t,
+    bool force_pow_2_domain)
 {
     libff::enter_block("Call to r1cs_to_qap_instance_map_with_evaluation");
 
-    const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain = libfqfft::get_evaluation_domain<FieldT>(cs.num_constraints() + cs.num_inputs() + 1);
+    const size_t min_n = cs.num_constraints() + cs.num_inputs() + 1;
+    const size_t n = force_pow_2_domain ? 1 << libff::log2(min_n) : min_n;
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain =
+        libfqfft::get_evaluation_domain<FieldT>(n);
 
     std::vector<FieldT> At, Bt, Ct, Ht;
 
@@ -203,19 +213,24 @@ qap_instance_evaluation<FieldT> r1cs_to_qap_instance_map_with_evaluation(const r
  * some reshuffling to save space.
  */
 template<typename FieldT>
-qap_witness<FieldT> r1cs_to_qap_witness_map(const r1cs_constraint_system<FieldT> &cs,
-                                            const r1cs_primary_input<FieldT> &primary_input,
-                                            const r1cs_auxiliary_input<FieldT> &auxiliary_input,
-                                            const FieldT &d1,
-                                            const FieldT &d2,
-                                            const FieldT &d3)
+qap_witness<FieldT> r1cs_to_qap_witness_map(
+    const r1cs_constraint_system<FieldT> &cs,
+    const r1cs_primary_input<FieldT> &primary_input,
+    const r1cs_auxiliary_input<FieldT> &auxiliary_input,
+    const FieldT &d1,
+    const FieldT &d2,
+    const FieldT &d3,
+    bool force_pow_2_domain)
 {
     libff::enter_block("Call to r1cs_to_qap_witness_map");
 
     /* sanity check */
     assert(cs.is_satisfied(primary_input, auxiliary_input));
 
-    const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain = libfqfft::get_evaluation_domain<FieldT>(cs.num_constraints() + cs.num_inputs() + 1);
+    const size_t min_n = cs.num_constraints() + cs.num_inputs() + 1;
+    const size_t n = force_pow_2_domain ? 1 << libff::log2(min_n) : min_n;
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain =
+        libfqfft::get_evaluation_domain<FieldT>(n);
 
     r1cs_variable_assignment<FieldT> full_variable_assignment = primary_input;
     full_variable_assignment.insert(full_variable_assignment.end(), auxiliary_input.begin(), auxiliary_input.end());

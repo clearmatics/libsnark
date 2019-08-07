@@ -220,7 +220,8 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
     const libff::Fr<ppT> &beta,
     const libff::Fr<ppT> &delta,
     const libff::G1<ppT> &g1_generator,
-    const libff::G2<ppT> &g2_generator)
+    const libff::G2<ppT> &g2_generator,
+    bool force_pow_2_domain)
 {
     libff::enter_block("Call to r1cs_gg_ppzksnark_generator_from_secrets");
 
@@ -231,7 +232,8 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
     const libff::Fr<ppT> delta_inverse = delta.inverse();
 
     /* A quadratic arithmetic program evaluated at t. */
-    qap_instance_evaluation<libff::Fr<ppT> > qap = r1cs_to_qap_instance_map_with_evaluation(r1cs_copy, t);
+    qap_instance_evaluation<libff::Fr<ppT> > qap =
+        r1cs_to_qap_instance_map_with_evaluation(r1cs_copy, t, force_pow_2_domain);
 
     libff::print_indent(); printf("* QAP number of variables: %zu\n", qap.num_variables());
     libff::print_indent(); printf("* QAP pre degree: %zu\n", r1cs_copy.constraints.size());
@@ -388,7 +390,9 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
 }
 
 template <typename ppT>
-r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksnark_constraint_system<ppT> &r1cs)
+r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(
+    const r1cs_gg_ppzksnark_constraint_system<ppT> &r1cs,
+    bool force_pow_2_domain)
 {
     libff::enter_block("Call to r1cs_gg_ppzksnark_generator");
 
@@ -401,7 +405,7 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     const libff::G2<ppT> g2_generator = libff::G2<ppT>::one();
 
     r1cs_gg_ppzksnark_keypair<ppT> key_pair = r1cs_gg_ppzksnark_generator_from_secrets<ppT>(
-        r1cs, t, alpha, beta, delta, g1_generator, g2_generator);
+        r1cs, t, alpha, beta, delta, g1_generator, g2_generator, force_pow_2_domain);
 
     libff::leave_block("Call to r1cs_gg_ppzksnark_generator");
 
@@ -409,9 +413,11 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
 }
 
 template <typename ppT>
-r1cs_gg_ppzksnark_proof<ppT> r1cs_gg_ppzksnark_prover(const r1cs_gg_ppzksnark_proving_key<ppT> &pk,
-                                                      const r1cs_gg_ppzksnark_primary_input<ppT> &primary_input,
-                                                      const r1cs_gg_ppzksnark_auxiliary_input<ppT> &auxiliary_input)
+r1cs_gg_ppzksnark_proof<ppT> r1cs_gg_ppzksnark_prover(
+    const r1cs_gg_ppzksnark_proving_key<ppT> &pk,
+    const r1cs_gg_ppzksnark_primary_input<ppT> &primary_input,
+    const r1cs_gg_ppzksnark_auxiliary_input<ppT> &auxiliary_input,
+    bool force_pow_2_domain)
 {
     libff::enter_block("Call to r1cs_gg_ppzksnark_prover");
 
@@ -420,7 +426,14 @@ r1cs_gg_ppzksnark_proof<ppT> r1cs_gg_ppzksnark_prover(const r1cs_gg_ppzksnark_pr
 #endif
 
     libff::enter_block("Compute the polynomial H");
-    const qap_witness<libff::Fr<ppT> > qap_wit = r1cs_to_qap_witness_map(pk.constraint_system, primary_input, auxiliary_input, libff::Fr<ppT>::zero(), libff::Fr<ppT>::zero(), libff::Fr<ppT>::zero());
+    const qap_witness<libff::Fr<ppT> > qap_wit = r1cs_to_qap_witness_map(
+        pk.constraint_system,
+        primary_input,
+        auxiliary_input,
+        libff::Fr<ppT>::zero(),
+        libff::Fr<ppT>::zero(),
+        libff::Fr<ppT>::zero(),
+        force_pow_2_domain);
 
     /* We are dividing degree 2(d-1) polynomial by degree d polynomial
        and not adding a PGHR-style ZK-patch, so our H is degree d-2 */
@@ -431,7 +444,9 @@ r1cs_gg_ppzksnark_proof<ppT> r1cs_gg_ppzksnark_prover(const r1cs_gg_ppzksnark_pr
 
 #ifdef DEBUG
     const libff::Fr<ppT> t = libff::Fr<ppT>::random_element();
-    qap_instance_evaluation<libff::Fr<ppT> > qap_inst = r1cs_to_qap_instance_map_with_evaluation(pk.constraint_system, t);
+    qap_instance_evaluation<libff::Fr<ppT> > qap_inst =
+        r1cs_to_qap_instance_map_with_evaluation(
+            pk.constraint_system, t, force_pow_2_domain);
     assert(qap_inst.is_satisfied(qap_wit));
 #endif
 
