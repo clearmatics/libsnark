@@ -219,7 +219,8 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
     const libff::Fr<ppT> &alpha,
     const libff::Fr<ppT> &beta,
     const libff::Fr<ppT> &delta,
-    const libff::G1<ppT> &g1_generator)
+    const libff::G1<ppT> &g1_generator,
+    const libff::G2<ppT> &g2_generator)
 {
     libff::enter_block("Call to r1cs_gg_ppzksnark_generator_from_secrets");
 
@@ -306,21 +307,20 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
     libff::leave_block("Generating G1 MSM window table");
 
     libff::enter_block("Generating G2 MSM window table");
-    const libff::G2<ppT> G2_gen = libff::G2<ppT>::one();
     const size_t g2_scalar_count = non_zero_Bt;
     const size_t g2_scalar_size = libff::Fr<ppT>::size_in_bits();
     size_t g2_window_size = libff::get_exp_window_size<libff::G2<ppT> >(g2_scalar_count);
 
     libff::print_indent(); printf("* G2 window: %zu\n", g2_window_size);
-    libff::window_table<libff::G2<ppT> > g2_table = libff::get_window_table(g2_scalar_size, g2_window_size, G2_gen);
+    libff::window_table<libff::G2<ppT> > g2_table = libff::get_window_table(g2_scalar_size, g2_window_size, g2_generator);
     libff::leave_block("Generating G2 MSM window table");
 
     libff::enter_block("Generate R1CS proving key");
     libff::G1<ppT> alpha_g1 = alpha * g1_generator;
     libff::G1<ppT> beta_g1 = beta * g1_generator;
-    libff::G2<ppT> beta_g2 = beta * G2_gen;
+    libff::G2<ppT> beta_g2 = beta * g2_generator;
     libff::G1<ppT> delta_g1 = delta * g1_generator;
-    libff::G2<ppT> delta_g2 = delta * G2_gen;
+    libff::G2<ppT> delta_g2 = delta * g2_generator;
 
     libff::enter_block("Generate queries");
     libff::enter_block("Compute the A-query", false);
@@ -398,9 +398,10 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     const libff::Fr<ppT> beta = libff::Fr<ppT>::random_element();
     const libff::Fr<ppT> delta = libff::Fr<ppT>::random_element();
     const libff::G1<ppT> g1_generator = libff::G1<ppT>::one();
+    const libff::G2<ppT> g2_generator = libff::G2<ppT>::one();
 
     r1cs_gg_ppzksnark_keypair<ppT> key_pair = r1cs_gg_ppzksnark_generator_from_secrets<ppT>(
-        r1cs, t, alpha, beta, delta, g1_generator);
+        r1cs, t, alpha, beta, delta, g1_generator, g2_generator);
 
     libff::enter_block("Call to r1cs_gg_ppzksnark_generator");
 
