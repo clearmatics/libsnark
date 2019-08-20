@@ -255,8 +255,10 @@ void test_merkle_tree_check_update_gadget()
     address_bits_va.fill_with_bits(pb, address_bits);
     assert(pb.is_satisfied());
 
+#ifndef NDEBUG
     const size_t num_constraints = pb.num_constraints();
     const size_t expected_constraints = merkle_tree_check_update_gadget<FieldT, HashT>::expected_constraints(tree_depth);
+#endif
     assert(num_constraints == expected_constraints);
 }
 

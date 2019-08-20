@@ -44,8 +44,9 @@ knowledge_commitment<T1, T2> kc_multi_exp_with_mixed_addition(const knowledge_co
     size_t num_add = 0;
     size_t num_other = 0;
 
+#ifndef NDEBUG
     const size_t scalar_length = std::distance(scalar_start, scalar_end);
-
+#endif
     while (index_it != vec.indices.end() && *index_it < max_idx)
     {
         const size_t scalar_position = (*index_it) - min_idx;

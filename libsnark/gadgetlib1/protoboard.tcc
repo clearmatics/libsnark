@@ -115,6 +115,9 @@ void protoboard<FieldT>::augment_variable_annotation(const pb_variable<FieldT> &
 #ifdef DEBUG
     auto it = constraint_system.variable_annotations.find(v.index);
     constraint_system.variable_annotations[v.index] = (it == constraint_system.variable_annotations.end() ? "" : it->second + " ") + postfix;
+#else
+    libff::UNUSED(v);
+    libff::UNUSED(postfix);
 #endif
 }
 

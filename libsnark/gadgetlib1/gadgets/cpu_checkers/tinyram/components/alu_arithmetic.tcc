@@ -106,6 +106,9 @@ void brute_force_arithmetic_gadget(const size_t w,
                            arg1, libff::from_twos_complement(arg1, w),
                            arg2, libff::from_twos_complement(arg2, w),
                            res, libff::from_twos_complement(res, w), res_f);
+#else
+                    libff::UNUSED(res);
+                    libff::UNUSED(res_f);
 #endif
                     g->generate_r1cs_witness();
 #ifdef DEBUG
@@ -183,8 +186,8 @@ void test_ALU_and_gadget(const size_t w)
                                                                   ALU_and_gadget<FieldT>* {
                                                                       return new ALU_and_gadget<FieldT>(pb, opcode_indicators, desval, arg1val, arg2val, flag, result, result_flag, "ALU_and_gadget");
                                                                   },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return x & y; },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> bool { return (x & y) == 0; });
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> size_t { return x & y; },
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> bool { return (x & y) == 0; });
     libff::print_time("and tests successful");
 }
 
@@ -248,8 +251,8 @@ void test_ALU_or_gadget(const size_t w)
                                                                  ALU_or_gadget<FieldT>* {
                                                                      return new ALU_or_gadget<FieldT>(pb, opcode_indicators, desval, arg1val, arg2val, flag, result, result_flag, "ALU_or_gadget");
                                                                  },
-                                                                 [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return x | y; },
-                                                                 [w] (size_t des, bool f, size_t x, size_t y) -> bool { return (x | y) == 0; });
+                                                                 [w] (size_t, bool, size_t x, size_t y) -> size_t { return x | y; },
+                                                                 [w] (size_t, bool, size_t x, size_t y) -> bool { return (x | y) == 0; });
     libff::print_time("or tests successful");
 }
 
@@ -314,8 +317,8 @@ void test_ALU_xor_gadget(const size_t w)
                                                                   ALU_xor_gadget<FieldT>* {
                                                                       return new ALU_xor_gadget<FieldT>(pb, opcode_indicators, desval, arg1val, arg2val, flag, result, result_flag, "ALU_xor_gadget");
                                                                   },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return x ^ y; },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> bool { return (x ^ y) == 0; });
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> size_t { return x ^ y; },
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> bool { return (x ^ y) == 0; });
     libff::print_time("xor tests successful");
 }
 
@@ -378,8 +381,8 @@ void test_ALU_not_gadget(const size_t w)
                                                                   ALU_not_gadget<FieldT>* {
                                                                       return new ALU_not_gadget<FieldT>(pb, opcode_indicators,desval, arg1val, arg2val, flag, result, result_flag, "ALU_not_gadget");
                                                                   },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return (1ul<<w)-1-y; },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> bool { return ((1ul<<w)-1-y) == 0; });
+                                                                  [w] (size_t, bool, size_t, size_t y) -> size_t { return (1ul<<w)-1-y; },
+                                                                  [w] (size_t, bool, size_t, size_t y) -> bool { return ((1ul<<w)-1-y) == 0; });
     libff::print_time("not tests successful");
 }
 
@@ -427,8 +430,8 @@ void test_ALU_add_gadget(const size_t w)
                                                                   ALU_add_gadget<FieldT>* {
                                                                       return new ALU_add_gadget<FieldT>(pb, opcode_indicators, desval, arg1val, arg2val, flag, result, result_flag, "ALU_add_gadget");
                                                                   },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return (x+y) % (1ul<<w); },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> bool { return (x+y) >= (1ul<<w); });
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> size_t { return (x+y) % (1ul<<w); },
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> bool { return (x+y) >= (1ul<<w); });
     libff::print_time("add tests successful");
 }
 
@@ -498,11 +501,11 @@ void test_ALU_sub_gadget(const size_t w)
                                                                   ALU_sub_gadget<FieldT>* {
                                                                       return new ALU_sub_gadget<FieldT>(pb, opcode_indicators, desval, arg1val, arg2val, flag, result, result_flag, "ALU_sub_gadget");
                                                                   },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> size_t {
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> size_t {
                                                                       const size_t unsigned_result = ((1ul<<w) + x - y) % (1ul<<w);
                                                                       return unsigned_result;
                                                                   },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> bool {
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> bool {
                                                                       const size_t msb = ((1ul<<w) + x - y) >> w;
                                                                       return (msb == 0);
                                                                   });
@@ -552,8 +555,8 @@ void test_ALU_mov_gadget(const size_t w)
                                                                   ALU_mov_gadget<FieldT>* {
                                                                       return new ALU_mov_gadget<FieldT>(pb, opcode_indicators, desval, arg1val, arg2val, flag, result, result_flag, "ALU_mov_gadget");
                                                                   },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return y; },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> bool { return f; });
+                                                                  [w] (size_t, bool, size_t, size_t y) -> size_t { return y; },
+                                                                  [w] (size_t, bool f, size_t, size_t) -> bool { return f; });
     libff::print_time("mov tests successful");
 }
 
@@ -606,8 +609,8 @@ void test_ALU_cmov_gadget(const size_t w)
                                                                    ALU_cmov_gadget<FieldT>* {
                                                                        return new ALU_cmov_gadget<FieldT>(pb, opcode_indicators, desval, arg1val, arg2val, flag, result, result_flag, "ALU_cmov_gadget");
                                                                    },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return f ? y : des; },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> bool { return f; });
+                                                                   [w] (size_t des, bool f, size_t, size_t y) -> size_t { return f ? y : des; },
+                                                                   [w] (size_t, bool f, size_t, size_t) -> bool { return f; });
     libff::print_time("cmov tests successful");
 }
 
@@ -688,8 +691,8 @@ void test_ALU_cmpe_gadget(const size_t w)
                                                                                                         cmpa_result, cmpa_result_flag,
                                                                                                         cmpae_result, cmpae_result_flag, "ALU_cmp_gadget");
                                                                   },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return des; },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> bool { return x == y; });
+                                                                  [w] (size_t des, bool, size_t, size_t) -> size_t { return des; },
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> bool { return x == y; });
     libff::print_time("cmpe tests successful");
 }
 
@@ -717,8 +720,8 @@ void test_ALU_cmpa_gadget(const size_t w)
                                                                                                         result, result_flag,
                                                                                                         cmpae_result, cmpae_result_flag, "ALU_cmp_gadget");
                                                                   },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return des; },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> bool { return x > y; });
+                                                                  [w] (size_t des, bool, size_t, size_t) -> size_t { return des; },
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> bool { return x > y; });
     libff::print_time("cmpa tests successful");
 }
 
@@ -746,8 +749,8 @@ void test_ALU_cmpae_gadget(const size_t w)
                                                                                                         cmpa_result, cmpa_result_flag,
                                                                                                         result, result_flag, "ALU_cmp_gadget");
                                                                   },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return des; },
-                                                                  [w] (size_t des, bool f, size_t x, size_t y) -> bool { return x >= y; });
+                                                                  [w] (size_t des, bool, size_t, size_t) -> size_t { return des; },
+                                                                  [w] (size_t, bool, size_t x, size_t y) -> bool { return x >= y; });
     libff::print_time("cmpae tests successful");
 }
 
@@ -831,8 +834,8 @@ void test_ALU_cmpg_gadget(const size_t w)
                                                                                                           result, result_flag,
                                                                                                           cmpge_result, cmpge_result_flag, "ALU_cmps_gadget");
                                                                    },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return des; },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> bool {
+                                                                   [w] (size_t des, bool, size_t, size_t) -> size_t { return des; },
+                                                                   [w] (size_t, bool, size_t x, size_t y) -> bool {
                                                                        return (libff::from_twos_complement(x, w) >
                                                                                libff::from_twos_complement(y, w));
                                                                    });
@@ -860,8 +863,8 @@ void test_ALU_cmpge_gadget(const size_t w)
                                                                                                           cmpg_result, cmpg_result_flag,
                                                                                                           result, result_flag, "ALU_cmps_gadget");
                                                                    },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return des; },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> bool {
+                                                                   [w] (size_t des, bool, size_t, size_t) -> size_t { return des; },
+                                                                   [w] (size_t, bool, size_t x, size_t y) -> bool {
                                                                        return (libff::from_twos_complement(x, w) >=
                                                                                libff::from_twos_complement(y, w));
                                                                    });
@@ -942,8 +945,8 @@ void test_ALU_mull_gadget(const size_t w)
                                                                                                           umulh_result, umulh_flag,
                                                                                                           "ALU_umul_gadget");
                                                                    },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return (x*y) % (1ul<<w); },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> bool {
+                                                                   [w] (size_t, bool, size_t x, size_t y) -> size_t { return (x*y) % (1ul<<w); },
+                                                                   [w] (size_t, bool, size_t x, size_t y) -> bool {
                                                                        return ((x*y) >> w) != 0;
                                                                    });
     libff::print_time("mull tests successful");
@@ -971,8 +974,8 @@ void test_ALU_umulh_gadget(const size_t w)
                                                                                                           result, result_flag,
                                                                                                           "ALU_umul_gadget");
                                                                    },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> size_t { return (x*y) >> w; },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> bool {
+                                                                   [w] (size_t, bool, size_t x, size_t y) -> size_t { return (x*y) >> w; },
+                                                                   [w] (size_t, bool, size_t x, size_t y) -> bool {
                                                                        return ((x*y) >> w) != 0;
                                                                    });
     libff::print_time("umulh tests successful");
@@ -1114,11 +1117,11 @@ void test_ALU_smulh_gadget(const size_t w)
                                                                                                           result, result_flag,
                                                                                                           "ALU_smul_gadget");
                                                                    },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> size_t {
+                                                                   [w] (size_t, bool, size_t x, size_t y) -> size_t {
                                                                        const size_t res = libff::to_twos_complement((libff::from_twos_complement(x, w) * libff::from_twos_complement(y, w)), 2*w);
                                                                        return res >> w;
                                                                    },
-                                                                   [w] (size_t des, bool f, size_t x, size_t y) -> bool {
+                                                                   [w] (size_t, bool, size_t x, size_t y) -> bool {
                                                                        const int res = libff::from_twos_complement(x, w) * libff::from_twos_complement(y, w);
                                                                        const int truncated_res = libff::from_twos_complement(libff::to_twos_complement(res, 2*w) & ((1ul<<w)-1), w);
                                                                        return (res != truncated_res);
@@ -1233,10 +1236,10 @@ void test_ALU_udiv_gadget(const size_t w)
                                                                                                               umod_result, umod_flag,
                                                                                                               "ALU_divmod_gadget");
                                                                      },
-                                                                     [w] (size_t des, bool f, size_t x, size_t y) -> size_t {
+                                                                     [w] (size_t, bool, size_t x, size_t y) -> size_t {
                                                                          return (y == 0 ? 0 : x / y);
                                                                      },
-                                                                     [w] (size_t des, bool f, size_t x, size_t y) -> bool {
+                                                                     [w] (size_t, bool, size_t, size_t y) -> bool {
                                                                          return (y == 0);
                                                                      });
     libff::print_time("udiv tests successful");
@@ -1264,10 +1267,10 @@ void test_ALU_umod_gadget(const size_t w)
                                                                                                               result, result_flag,
                                                                                                               "ALU_divmod_gadget");
                                                                      },
-                                                                     [w] (size_t des, bool f, size_t x, size_t y) -> size_t {
+                                                                     [w] (size_t, bool, size_t x, size_t y) -> size_t {
                                                                          return (y == 0 ? 0 : x % y);
                                                                      },
-                                                                     [w] (size_t des, bool f, size_t x, size_t y) -> bool {
+                                                                     [w] (size_t, bool, size_t, size_t y) -> bool {
                                                                          return (y == 0);
                                                                      });
     libff::print_time("umod tests successful");
@@ -1457,10 +1460,10 @@ void test_ALU_shr_gadget(const size_t w)
                                                                                                                 shl_result, shl_flag,
                                                                                                                 "ALU_shr_shl_gadget");
                                                                       },
-                                                                      [w] (size_t des, bool f, size_t x, size_t y) -> size_t {
+                                                                      [w] (size_t, bool, size_t x, size_t y) -> size_t {
                                                                           return (x >> y);
                                                                       },
-                                                                      [w] (size_t des, bool f, size_t x, size_t y) -> bool {
+                                                                      [w] (size_t, bool, size_t x, size_t) -> bool {
                                                                           return (x & 1);
                                                                       });
     libff::print_time("shr tests successful");
@@ -1488,10 +1491,10 @@ void test_ALU_shl_gadget(const size_t w)
                                                                                                                 result, result_flag,
                                                                                                                 "ALU_shr_shl_gadget");
                                                                       },
-                                                                      [w] (size_t des, bool f, size_t x, size_t y) -> size_t {
+                                                                      [w] (size_t, bool, size_t x, size_t y) -> size_t {
                                                                           return (x << y) & ((1ul<<w)-1);
                                                                       },
-                                                                      [w] (size_t des, bool f, size_t x, size_t y) -> bool {
+                                                                      [w] (size_t, bool, size_t x, size_t) -> bool {
                                                                           return (x >> (w-1));
                                                                       });
     libff::print_time("shl tests successful");
