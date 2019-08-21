@@ -92,9 +92,8 @@ bool r1cs_gg_ppzksnark_verification_key<ppT>::operator==(const r1cs_gg_ppzksnark
 {
     return (this->alpha_g1 == other.alpha_g1 &&
             this->beta_g2 == other.beta_g2 &&
-            this->gamma_g2 == other.gamma_g2 &&
             this->delta_g2 == other.delta_g2 &&
-            this->gamma_ABC_g1 == other.gamma_ABC_g1);
+            this->ABC_g1 == other.ABC_g1);
 }
 
 template<typename ppT>
@@ -102,9 +101,8 @@ std::ostream& operator<<(std::ostream &out, const r1cs_gg_ppzksnark_verification
 {
     out << vk.alpha_g1 << OUTPUT_NEWLINE;
     out << vk.beta_g2 << OUTPUT_NEWLINE;
-    out << vk.gamma_g2 << OUTPUT_NEWLINE;
     out << vk.delta_g2 << OUTPUT_NEWLINE;
-    out << vk.gamma_ABC_g1 << OUTPUT_NEWLINE;
+    out << vk.ABC_g1 << OUTPUT_NEWLINE;
 
     return out;
 }
@@ -116,11 +114,9 @@ std::istream& operator>>(std::istream &in, r1cs_gg_ppzksnark_verification_key<pp
     libff::consume_OUTPUT_NEWLINE(in);
     in >> vk.beta_g2;
     libff::consume_OUTPUT_NEWLINE(in);
-    in >> vk.gamma_g2;
-    libff::consume_OUTPUT_NEWLINE(in);
     in >> vk.delta_g2;
     libff::consume_OUTPUT_NEWLINE(in);
-    in >> vk.gamma_ABC_g1;
+    in >> vk.ABC_g1;
     libff::consume_OUTPUT_NEWLINE(in);
 
     return in;
@@ -131,9 +127,9 @@ bool r1cs_gg_ppzksnark_processed_verification_key<ppT>::operator==(const r1cs_gg
 {
     return (this->vk_alpha_g1_precomp == other.vk_alpha_g1_precomp &&
             this->vk_beta_g2_precomp == other.vk_beta_g2_precomp &&
-            this->vk_gamma_g2_precomp == other.vk_gamma_g2_precomp &&
+            this->vk_generator_g2_precomp == other.vk_generator_g2_precomp &&
             this->vk_delta_g2_precomp == other.vk_delta_g2_precomp &&
-            this->gamma_ABC_g1 == other.gamma_ABC_g1);
+            this->ABC_g1 == other.ABC_g1);
 }
 
 template<typename ppT>
@@ -141,9 +137,9 @@ std::ostream& operator<<(std::ostream &out, const r1cs_gg_ppzksnark_processed_ve
 {
     out << pvk.vk_alpha_g1_precomp << OUTPUT_NEWLINE;
     out << pvk.vk_beta_g2_precomp << OUTPUT_NEWLINE;
-    out << pvk.vk_gamma_g2_precomp << OUTPUT_NEWLINE;
+    out << pvk.vk_generator_g2_precomp << OUTPUT_NEWLINE;
     out << pvk.vk_delta_g2_precomp << OUTPUT_NEWLINE;
-    out << pvk.gamma_ABC_g1 << OUTPUT_NEWLINE;
+    out << pvk.ABC_g1 << OUTPUT_NEWLINE;
 
     return out;
 }
@@ -155,11 +151,11 @@ std::istream& operator>>(std::istream &in, r1cs_gg_ppzksnark_processed_verificat
     libff::consume_OUTPUT_NEWLINE(in);
     in >> pvk.vk_beta_g2_precomp;
     libff::consume_OUTPUT_NEWLINE(in);
-    in >> pvk.vk_gamma_g2_precomp;
+    in >> pvk.vk_generator_g2_precomp;
     libff::consume_OUTPUT_NEWLINE(in);
     in >> pvk.vk_delta_g2_precomp;
     libff::consume_OUTPUT_NEWLINE(in);
-    in >> pvk.gamma_ABC_g1;
+    in >> pvk.ABC_g1;
     libff::consume_OUTPUT_NEWLINE(in);
 
     return in;
@@ -202,7 +198,6 @@ r1cs_gg_ppzksnark_verification_key<ppT> r1cs_gg_ppzksnark_verification_key<ppT>:
     r1cs_gg_ppzksnark_verification_key<ppT> result;
     result.alpha_g1 = libff::G1<ppT>::random_element();
     result.beta_g2 = libff::G2<ppT>::random_element();
-    result.gamma_g2 = libff::G2<ppT>::random_element();
     result.delta_g2 = libff::G2<ppT>::random_element();
 
     libff::G1<ppT> base = libff::G1<ppT>::random_element();
@@ -212,27 +207,27 @@ r1cs_gg_ppzksnark_verification_key<ppT> r1cs_gg_ppzksnark_verification_key<ppT>:
         v.emplace_back(libff::G1<ppT>::random_element());
     }
 
-    result.gamma_ABC_g1 = accumulation_vector<libff::G1<ppT> >(std::move(base), std::move(v));
+    result.ABC_g1 = accumulation_vector<libff::G1<ppT> >(std::move(base), std::move(v));
 
     return result;
 }
 
 template <typename ppT>
-r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksnark_constraint_system<ppT> &r1cs)
+r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
+    const r1cs_gg_ppzksnark_constraint_system<ppT> &r1cs,
+    const libff::Fr<ppT> &t,
+    const libff::Fr<ppT> &alpha,
+    const libff::Fr<ppT> &beta,
+    const libff::Fr<ppT> &delta,
+    const libff::G1<ppT> &g1_generator,
+    const libff::G2<ppT> &g2_generator)
 {
-    libff::enter_block("Call to r1cs_gg_ppzksnark_generator");
+    libff::enter_block("Call to r1cs_gg_ppzksnark_generator_from_secrets");
 
     /* Make the B_query "lighter" if possible */
     r1cs_gg_ppzksnark_constraint_system<ppT> r1cs_copy(r1cs);
     r1cs_copy.swap_AB_if_beneficial();
 
-    /* Generate secret randomness */
-    const libff::Fr<ppT> t = libff::Fr<ppT>::random_element();
-    const libff::Fr<ppT> alpha = libff::Fr<ppT>::random_element();
-    const libff::Fr<ppT> beta = libff::Fr<ppT>::random_element();
-    const libff::Fr<ppT> gamma = libff::Fr<ppT>::random_element();
-    const libff::Fr<ppT> delta = libff::Fr<ppT>::random_element();
-    const libff::Fr<ppT> gamma_inverse = gamma.inverse();
     const libff::Fr<ppT> delta_inverse = delta.inverse();
 
     /* A quadratic arithmetic program evaluated at t. */
@@ -265,17 +260,17 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     libff::Fr_vector<ppT> Ct = std::move(qap.Ct);
     libff::Fr_vector<ppT> Ht = std::move(qap.Ht);
 
-    /* The gamma inverse product component: (beta*A_i(t) + alpha*B_i(t) + C_i(t)) * gamma^{-1}. */
-    libff::enter_block("Compute gamma_ABC for R1CS verification key");
-    libff::Fr_vector<ppT> gamma_ABC;
-    gamma_ABC.reserve(qap.num_inputs());
+    /* The product component: (beta*A_i(t) + alpha*B_i(t) + C_i(t)). */
+    libff::enter_block("Compute ABC for R1CS verification key");
+    libff::Fr_vector<ppT> ABC;
+    ABC.reserve(qap.num_inputs());
 
-    const libff::Fr<ppT> gamma_ABC_0 = (beta * At[0] + alpha * Bt[0] + Ct[0]) * gamma_inverse;
+    const libff::Fr<ppT> ABC_0 = beta * At[0] + alpha * Bt[0] + Ct[0];
     for (size_t i = 1; i < qap.num_inputs() + 1; ++i)
     {
-        gamma_ABC.emplace_back((beta * At[i] + alpha * Bt[i] + Ct[i]) * gamma_inverse);
+        ABC.emplace_back(beta * At[i] + alpha * Bt[i] + Ct[i]);
     }
-    libff::leave_block("Compute gamma_ABC for R1CS verification key");
+    libff::leave_block("Compute ABC for R1CS verification key");
 
     /* The delta inverse product component: (beta*A_i(t) + alpha*B_i(t) + C_i(t)) * delta^{-1}. */
     libff::enter_block("Compute L query for R1CS proving key");
@@ -283,9 +278,9 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     Lt.reserve(qap.num_variables() - qap.num_inputs());
 
     const size_t Lt_offset = qap.num_inputs() + 1;
-    for (size_t i = 0; i < qap.num_variables() - qap.num_inputs(); ++i)
+    for (size_t i = Lt_offset; i < qap.num_variables() + 1; ++i)
     {
-        Lt.emplace_back((beta * At[Lt_offset + i] + alpha * Bt[Lt_offset + i] + Ct[Lt_offset + i]) * delta_inverse);
+        Lt.emplace_back((beta * At[i] + alpha * Bt[i] + Ct[i]) * delta_inverse);
     }
     libff::leave_block("Compute L query for R1CS proving key");
 
@@ -303,7 +298,6 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
 #endif
 
     libff::enter_block("Generating G1 MSM window table");
-    const libff::G1<ppT> g1_generator = libff::G1<ppT>::random_element();
     const size_t g1_scalar_count = non_zero_At + non_zero_Bt + qap.num_variables();
     const size_t g1_scalar_size = libff::Fr<ppT>::size_in_bits();
     const size_t g1_window_size = libff::get_exp_window_size<libff::G1<ppT> >(g1_scalar_count);
@@ -313,21 +307,20 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     libff::leave_block("Generating G1 MSM window table");
 
     libff::enter_block("Generating G2 MSM window table");
-    const libff::G2<ppT> G2_gen = libff::G2<ppT>::random_element();
     const size_t g2_scalar_count = non_zero_Bt;
     const size_t g2_scalar_size = libff::Fr<ppT>::size_in_bits();
     size_t g2_window_size = libff::get_exp_window_size<libff::G2<ppT> >(g2_scalar_count);
 
     libff::print_indent(); printf("* G2 window: %zu\n", g2_window_size);
-    libff::window_table<libff::G2<ppT> > g2_table = libff::get_window_table(g2_scalar_size, g2_window_size, G2_gen);
+    libff::window_table<libff::G2<ppT> > g2_table = libff::get_window_table(g2_scalar_size, g2_window_size, g2_generator);
     libff::leave_block("Generating G2 MSM window table");
 
     libff::enter_block("Generate R1CS proving key");
     libff::G1<ppT> alpha_g1 = alpha * g1_generator;
     libff::G1<ppT> beta_g1 = beta * g1_generator;
-    libff::G2<ppT> beta_g2 = beta * G2_gen;
+    libff::G2<ppT> beta_g2 = beta * g2_generator;
     libff::G1<ppT> delta_g1 = delta * g1_generator;
-    libff::G2<ppT> delta_g2 = delta * G2_gen;
+    libff::G2<ppT> delta_g2 = delta * g2_generator;
 
     libff::enter_block("Generate queries");
     libff::enter_block("Compute the A-query", false);
@@ -361,23 +354,21 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     libff::leave_block("Generate R1CS proving key");
 
     libff::enter_block("Generate R1CS verification key");
-    libff::G2<ppT> gamma_g2 = gamma * G2_gen;
 
-    libff::enter_block("Encode gamma_ABC for R1CS verification key");
-    libff::G1<ppT> gamma_ABC_g1_0 = gamma_ABC_0 * g1_generator;
-    libff::G1_vector<ppT> gamma_ABC_g1_values = batch_exp(g1_scalar_size, g1_window_size, g1_table, gamma_ABC);
-    libff::leave_block("Encode gamma_ABC for R1CS verification key");
+    libff::enter_block("Encode ABC for R1CS verification key");
+    libff::G1<ppT> ABC_g1_0 = ABC_0 * g1_generator;
+    libff::G1_vector<ppT> ABC_g1_values = batch_exp(g1_scalar_size, g1_window_size, g1_table, ABC);
+    libff::leave_block("Encode ABC for R1CS verification key");
     libff::leave_block("Generate R1CS verification key");
 
-    libff::leave_block("Call to r1cs_gg_ppzksnark_generator");
+    libff::leave_block("Call to r1cs_gg_ppzksnark_generator_from_secrets");
 
-    accumulation_vector<libff::G1<ppT> > gamma_ABC_g1(std::move(gamma_ABC_g1_0), std::move(gamma_ABC_g1_values));
+    accumulation_vector<libff::G1<ppT> > ABC_g1(std::move(ABC_g1_0), std::move(ABC_g1_values));
 
     r1cs_gg_ppzksnark_verification_key<ppT> vk = r1cs_gg_ppzksnark_verification_key<ppT>(alpha_g1,
                                                                                          beta_g2,
-                                                                                         gamma_g2,
                                                                                          delta_g2,
-                                                                                         gamma_ABC_g1);
+                                                                                         ABC_g1);
 
     r1cs_gg_ppzksnark_proving_key<ppT> pk = r1cs_gg_ppzksnark_proving_key<ppT>(std::move(alpha_g1),
                                                                                std::move(beta_g1),
@@ -394,6 +385,27 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     vk.print_size();
 
     return r1cs_gg_ppzksnark_keypair<ppT>(std::move(pk), std::move(vk));
+}
+
+template <typename ppT>
+r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksnark_constraint_system<ppT> &r1cs)
+{
+    libff::enter_block("Call to r1cs_gg_ppzksnark_generator");
+
+    /* Generate secret randomness */
+    const libff::Fr<ppT> t = libff::Fr<ppT>::random_element();
+    const libff::Fr<ppT> alpha = libff::Fr<ppT>::random_element();
+    const libff::Fr<ppT> beta = libff::Fr<ppT>::random_element();
+    const libff::Fr<ppT> delta = libff::Fr<ppT>::random_element();
+    const libff::G1<ppT> g1_generator = libff::G1<ppT>::one();
+    const libff::G2<ppT> g2_generator = libff::G2<ppT>::one();
+
+    r1cs_gg_ppzksnark_keypair<ppT> key_pair = r1cs_gg_ppzksnark_generator_from_secrets<ppT>(
+        r1cs, t, alpha, beta, delta, g1_generator, g2_generator);
+
+    libff::enter_block("Call to r1cs_gg_ppzksnark_generator");
+
+    return std::move(key_pair);
 }
 
 template <typename ppT>
@@ -521,9 +533,9 @@ r1cs_gg_ppzksnark_processed_verification_key<ppT> r1cs_gg_ppzksnark_verifier_pro
     r1cs_gg_ppzksnark_processed_verification_key<ppT> pvk;
     pvk.vk_alpha_g1_precomp = ppT::precompute_G1(vk.alpha_g1);
     pvk.vk_beta_g2_precomp = ppT::precompute_G2(vk.beta_g2);
-    pvk.vk_gamma_g2_precomp = ppT::precompute_G2(vk.gamma_g2);
+    pvk.vk_generator_g2_precomp = ppT::precompute_G2(libff::G2<ppT>::one());
     pvk.vk_delta_g2_precomp = ppT::precompute_G2(vk.delta_g2);
-    pvk.gamma_ABC_g1 = vk.gamma_ABC_g1;
+    pvk.ABC_g1 = vk.ABC_g1;
 
     libff::leave_block("Call to r1cs_gg_ppzksnark_verifier_process_vk");
 
@@ -536,10 +548,10 @@ bool r1cs_gg_ppzksnark_online_verifier_weak_IC(const r1cs_gg_ppzksnark_processed
                                                const r1cs_gg_ppzksnark_proof<ppT> &proof)
 {
     libff::enter_block("Call to r1cs_gg_ppzksnark_online_verifier_weak_IC");
-    assert(pvk.gamma_ABC_g1.domain_size() >= primary_input.size());
+    assert(pvk.ABC_g1.domain_size() >= primary_input.size());
 
     libff::enter_block("Accumulate input");
-    const accumulation_vector<libff::G1<ppT> > accumulated_IC = pvk.gamma_ABC_g1.template accumulate_chunk<libff::Fr<ppT> >(primary_input.begin(), primary_input.end(), 0);
+    const accumulation_vector<libff::G1<ppT> > accumulated_IC = pvk.ABC_g1.template accumulate_chunk<libff::Fr<ppT> >(primary_input.begin(), primary_input.end(), 0);
     const libff::G1<ppT> &acc = accumulated_IC.first;
     libff::leave_block("Accumulate input");
 
@@ -568,7 +580,7 @@ bool r1cs_gg_ppzksnark_online_verifier_weak_IC(const r1cs_gg_ppzksnark_processed
 
     const libff::Fqk<ppT> QAP1 = ppT::miller_loop(proof_g_A_precomp,  proof_g_B_precomp);
     const libff::Fqk<ppT> QAP2 = ppT::double_miller_loop(
-        acc_precomp, pvk.vk_gamma_g2_precomp,
+        acc_precomp, pvk.vk_generator_g2_precomp,
         proof_g_C_precomp, pvk.vk_delta_g2_precomp);
     const libff::GT<ppT> QAP = ppT::final_exponentiation(QAP1 * QAP2.unitary_inverse());
 
@@ -608,9 +620,9 @@ bool r1cs_gg_ppzksnark_online_verifier_strong_IC(const r1cs_gg_ppzksnark_process
     bool result = true;
     libff::enter_block("Call to r1cs_gg_ppzksnark_online_verifier_strong_IC");
 
-    if (pvk.gamma_ABC_g1.domain_size() != primary_input.size())
+    if (pvk.ABC_g1.domain_size() != primary_input.size())
     {
-        libff::print_indent(); printf("Input length differs from expected (got %zu, expected %zu).\n", primary_input.size(), pvk.gamma_ABC_g1.domain_size());
+        libff::print_indent(); printf("Input length differs from expected (got %zu, expected %zu).\n", primary_input.size(), pvk.ABC_g1.domain_size());
         result = false;
     }
     else
@@ -640,13 +652,13 @@ bool r1cs_gg_ppzksnark_affine_verifier_weak_IC(const r1cs_gg_ppzksnark_verificat
                                                const r1cs_gg_ppzksnark_proof<ppT> &proof)
 {
     libff::enter_block("Call to r1cs_gg_ppzksnark_affine_verifier_weak_IC");
-    assert(vk.gamma_ABC_g1.domain_size() >= primary_input.size());
+    assert(vk.ABC_g1.domain_size() >= primary_input.size());
 
-    libff::affine_ate_G2_precomp<ppT> pvk_vk_gamma_g2_precomp = ppT::affine_ate_precompute_G2(vk.gamma_g2);
+    libff::affine_ate_G2_precomp<ppT> pvk_vk_generator_g2_precomp = ppT::affine_ate_precompute_G2(libff::G2<ppT>::one());
     libff::affine_ate_G2_precomp<ppT> pvk_vk_delta_g2_precomp = ppT::affine_ate_precompute_G2(vk.delta_g2);
 
     libff::enter_block("Accumulate input");
-    const accumulation_vector<libff::G1<ppT> > accumulated_IC = vk.gamma_ABC_g1.template accumulate_chunk<libff::Fr<ppT> >(primary_input.begin(), primary_input.end(), 0);
+    const accumulation_vector<libff::G1<ppT> > accumulated_IC = vk.ABC_g1.template accumulate_chunk<libff::Fr<ppT> >(primary_input.begin(), primary_input.end(), 0);
     const libff::G1<ppT> &acc = accumulated_IC.first;
     libff::leave_block("Accumulate input");
 
@@ -670,7 +682,7 @@ bool r1cs_gg_ppzksnark_affine_verifier_weak_IC(const r1cs_gg_ppzksnark_verificat
     const libff::affine_ate_G1_precomp<ppT> acc_precomp = ppT::affine_ate_precompute_G1(acc);
 
     const libff::Fqk<ppT> QAP_miller = ppT::affine_ate_e_times_e_over_e_miller_loop(
-        acc_precomp, pvk_vk_gamma_g2_precomp,
+        acc_precomp, pvk_vk_generator_g2_precomp,
         proof_g_C_precomp, pvk_vk_delta_g2_precomp,
         proof_g_A_precomp,  proof_g_B_precomp);
     const libff::GT<ppT> QAP = ppT::final_exponentiation(QAP_miller.unitary_inverse());
