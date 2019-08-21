@@ -31,6 +31,11 @@ References:
  EUROCRYPT 2016,
  <https://eprint.iacr.org/2016/260>
 
+\[BoweGM17]:
+ "Scalable Multi-party Computation for zk-SNARK Parameters in the Random Beacon Model"
+ Sean Bowe and Ariel Gabizon and Ian Miers,
+ IACR Cryptology ePrint Archive 2017,
+ <http://eprint.iacr.org/2017/1050>
 
 *****************************************************************************
 * @author     This file is part of libsnark, developed by SCIPR Lab
