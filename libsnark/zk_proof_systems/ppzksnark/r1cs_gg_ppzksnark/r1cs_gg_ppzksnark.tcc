@@ -278,9 +278,9 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
     Lt.reserve(qap.num_variables() - qap.num_inputs());
 
     const size_t Lt_offset = qap.num_inputs() + 1;
-    for (size_t i = 0; i < qap.num_variables() - qap.num_inputs(); ++i)
+    for (size_t i = Lt_offset; i < qap.num_variables() + 1; ++i)
     {
-        Lt.emplace_back((beta * At[Lt_offset + i] + alpha * Bt[Lt_offset + i] + Ct[Lt_offset + i]) * delta_inverse);
+        Lt.emplace_back((beta * At[i] + alpha * Bt[i] + Ct[i]) * delta_inverse);
     }
     libff::leave_block("Compute L query for R1CS proving key");
 
