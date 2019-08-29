@@ -359,10 +359,30 @@ public:
 /**
  * A generator algorithm for the R1CS GG-ppzkSNARK.
  *
+ * Given a R1CS constraint system CS and vaules for all secrets,
+ * produce the proving and verification keys for CS.  Optionally force
+ * the domain size
+ */
+template<typename ppT>
+r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
+    const r1cs_gg_ppzksnark_constraint_system<ppT> &cs,
+    const libff::Fr<ppT> &t,
+    const libff::Fr<ppT> &alpha,
+    const libff::Fr<ppT> &beta,
+    const libff::Fr<ppT> &delta,
+    const libff::G1<ppT> &g1_generator,
+    const libff::G2<ppT> &g2_generator,
+    bool force_pow_2_domain=false);
+
+/**
+ * A generator algorithm for the R1CS GG-ppzkSNARK.
+ *
  * Given a R1CS constraint system CS, this algorithm produces proving and verification keys for CS.
  */
 template<typename ppT>
-r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksnark_constraint_system<ppT> &cs);
+r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(
+    const r1cs_gg_ppzksnark_constraint_system<ppT> &cs,
+    bool force_pow_2_domain=false);
 
 /**
  * A prover algorithm for the R1CS GG-ppzkSNARK.
@@ -373,9 +393,11 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
  * Above, CS is the R1CS constraint system that was given as input to the generator algorithm.
  */
 template<typename ppT>
-r1cs_gg_ppzksnark_proof<ppT> r1cs_gg_ppzksnark_prover(const r1cs_gg_ppzksnark_proving_key<ppT> &pk,
-                                                      const r1cs_gg_ppzksnark_primary_input<ppT> &primary_input,
-                                                      const r1cs_gg_ppzksnark_auxiliary_input<ppT> &auxiliary_input);
+r1cs_gg_ppzksnark_proof<ppT> r1cs_gg_ppzksnark_prover(
+    const r1cs_gg_ppzksnark_proving_key<ppT> &pk,
+    const r1cs_gg_ppzksnark_primary_input<ppT> &primary_input,
+    const r1cs_gg_ppzksnark_auxiliary_input<ppT> &auxiliary_input,
+    bool force_pow_2_domain=false);
 
 /*
   Below are four variants of verifier algorithm for the R1CS GG-ppzkSNARK.
