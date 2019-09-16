@@ -67,35 +67,13 @@ The libsnark library currently provides a C++ implementation of:
        optimizes the approach described in \[BCTV14a], itself an extension of
        \[BCGTV13], following the approach of \[GGPR13] and \[BCIOP13]. (An alternative
        implementation of this approach is the _Pinocchio_ system of \[PGHR13].)
-    2. A preprocessing SNARK for a language of arithmetic circuits, "BACS"
-       (_Bilinear Arithmetic Circuit Satisfiability_). This simplifies the writing
-       of NP statements when the additional flexibility of R1CS is not needed.
-       Internally, it reduces to R1CS.
-    3. A preprocessing SNARK for the language "USCS"
-       (_Unitary-Square Constraint Systems_). This abstracts and implements the core
-       contribution of \[DFGK14]
-    4. A preprocessing SNARK for a language of Boolean circuits, "TBCS"
-       (_Two-input Boolean Circuit Satisfiability_). Internally, it reduces to USCS.
-       This is much more efficient than going through R1CS.
     5. A simulation-extractable preprocessing SNARK for R1CS.
        This construction uses the approach described in \[GM17]. For arithmetic
        circuits, it is slower than the \[BCTV14a] approach, but produces shorter
        proofs.
-    6. ADSNARK, a preprocessing SNARKs for proving statements on authenticated
-       data, as described in \[BBFR15].
-    7. Proof-Carrying Data (PCD). This uses recursive composition of SNARKs, as
-       explained in \[BCCT13] and optimized in \[BCTV14b].
-2.  Gadget libraries (gadgetlib1 and gadgetlib2) for constructing R1CS
+2.  A gadget library (gadgetlib1) for constructing R1CS
     instances out of modular "gadget" classes.
-3.  Examples of applications that use the above proof systems to prove
-    statements about:
-    1. Several toy examples.
-    2. Execution of TinyRAM machine code, as explained in \[BCTV14a] and
-       \[BCGTV13]. (Such machine code can be obtained, e.g., by compiling from C.)
-       This is easily adapted to any other Random Access Machine that satisfies a
-       simple load-store interface.
-    3. A scalable for TinyRAM using Proof-Carrying Data, as explained in \[BCTV14b]
-    4. Zero-knowldge cluster MapReduce, as explained in \[CTV15].
+3.  Examples of applications that use the above proof systems.
 
 See the above references for discussions of efficiency aspects that arise in
 practical use of such constructions, as well as security and trust
@@ -109,8 +87,7 @@ verification key).
 
 Using the library involves the following high-level steps:
 
-1.  Express the statements to be proved as an R1CS (or any of the other
-    languages above, such as arithmetic circuits, Boolean circuits, or TinyRAM).
+1.  Express the statements to be proved as an R1CS.
     This is done by writing C++ code that constructs an R1CS, and linking this code
     together with libsnark
 2.  Use libsnark's generator algorithm to create the public parameters for this
@@ -183,14 +160,7 @@ This is a low-level library which expose all features of the preprocessing
 zkSNARK for R1CS. Its design is based on templates (as does the ppzkSNARK code)
 to efficiently support working on multiple elliptic curves simultaneously. This
 library is used for most of the constraint-building in libsnark, both internal
-(reductions and Proof-Carrying Data) and examples applications.
-
-### gadgetlib2
-
-This is an alternative library for constructing systems of polynomial equations
-and, in particular, also R1CS instances. It is better documented and easier to
-use than gadgetlib1, and its interface does not use templates. However, fewer
-useful gadgets are provided.
+(reductions) and examples applications.
 
 
 --------------------------------------------------------------------------------
@@ -237,7 +207,6 @@ The libsnark library relies on the following:
     - [Google Test](https://github.com/google/googletest) (GTest) for unit tests
     - [ate-pairing](https://github.com/herumi/ate-pairing) for the BN128 elliptic curve
     - [xbyak](https://github.com/herumi/xbyak) just-in-time assembler, for the BN128 elliptic curve
-    - [Subset of SUPERCOP](https://github.com/mbbarbosa/libsnark-supercop) for crypto primitives needed by ADSNARK
 
 So far we have tested these only on Linux, though we have been able to make the
 libsnark work, with some features disabled (such as memory profiling or GTest tests),
@@ -433,12 +402,6 @@ libsnark includes a tutorial, and some usage examples, for the high-level API.
 * `libsnark/gadgetlib1/examples1` contains a simple example for constructing a
   constraint system using gadgetlib1.
 
-* `libsnark/gadgetlib2/examples` contains a tutorial for using gadgetlib2 to express
-  NP statements as constraint systems. It introduces basic terminology, design
-  overview, and recommended programming style. It also shows how to invoke
-  ppzkSNARKs on such constraint systems. The main file, `tutorial.cpp`, builds
-  into a standalone executable.
-
 * `libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/profiling/profile_r1cs_ppzksnark.cpp`
   constructs a simple constraint system and runs the ppzksnark. See below for how to
    run it.
@@ -496,8 +459,6 @@ with respect to portability. Specifically:
 
 7. The ate-pairing library, require by the BN128 curve, can be compiled only on i686 and x86-64. (On other platforms, use other `-DCURVE=...` choices.)
 
-8. The SUPERCOP library, required by ADSNARK, can be compiled only on i686 and x86-64. (On other platforms, use `-DWITH_SUPERCOP=OFF`.)
-
 Tested configurations include:
 
 * Debian jessie with g++ 4.7 on x86-64
@@ -522,11 +483,9 @@ The directory structure of the libsnark library is as follows:
     * [__common__](libsnark/common): miscellaneous utilities
     * [__gadgetlib1__](libsnark/gadgetlib1): gadgetlib1, a library to construct R1CS instances
         * [__gadgets__](libsnark/gadgetlib1/gadgets): basic gadgets for gadgetlib1
-    * [__gadgetlib2__](libsnark/gadgetlib2): gadgetlib2, a library to construct R1CS instances
     * [__relations__](libsnark/relations): interfaces for expressing statement (relations between instances and witnesses) as various NP-complete languages
-        * [__constraint_satisfaction_problems__](libsnark/relations/constraint_satisfaction_problems): R1CS and USCS languages
+        * [__constraint_satisfaction_problems__](libsnark/relations/constraint_satisfaction_problems): R1CS language
         * [__circuit_satisfaction_problems__](libsnark/relations/circuit_satisfaction_problems):  Boolean and arithmetic circuit satisfiability languages
-        * [__ram_computations__](libsnark/relations/ram_computations): RAM computation languages
     * [__zk_proof_systems__](libsnark/zk_proof_systems): interfaces and implementations of the proof systems
     * [__reductions__](libsnark/reductions): reductions between languages (used internally, but contains many examples of building constraints)
 * [__depends__](depends): external dependencies which are automatically fetched and compiled (overridable by `cmake -DDEPENDS_DIR=...`)
@@ -537,7 +496,7 @@ Some of these module directories have the following subdirectories:
     * __examples__: example code and tutorials for this module
     * __tests__: unit tests for this module
 
-In particular, the top-level API examples are at `libsnark/r1cs_ppzksnark/examples/` and `libsnark/gadgetlib2/examples/`.
+In particular, the top-level API examples is at `libsnark/r1cs_ppzksnark/examples/`.
 
 
 --------------------------------------------------------------------------------
