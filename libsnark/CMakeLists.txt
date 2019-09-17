@@ -76,26 +76,6 @@ install(
   DESTINATION lib
 )
 
-if("${WITH_SUPERCOP}")
-  add_library(
-    snark_adsnark
-
-    common/default_types/r1cs_ppzkadsnark_pp.cpp
-  )
-  target_link_libraries(
-    snark_adsnark
-
-    snark
-    snark_supercop
-  )
-  install(
-    TARGETS
-    snark_adsnark
-
-    DESTINATION lib
-  )
-endif()
-
 # Profiling
 add_executable(
   profile_routing_algorithms
@@ -146,18 +126,6 @@ target_link_libraries(
 )
 
 add_executable(
-  profile_bacs_ppzksnark
-  EXCLUDE_FROM_ALL
-
-  zk_proof_systems/ppzksnark/bacs_ppzksnark/profiling/profile_bacs_ppzksnark.cpp
-)
-target_link_libraries(
-  profile_bacs_ppzksnark
-
-  snark
-)
-
-add_executable(
   profile_r1cs_gg_ppzksnark
   EXCLUDE_FROM_ALL
 
@@ -167,31 +135,6 @@ target_link_libraries(
   profile_r1cs_gg_ppzksnark
 
   snark
-)
-
-add_executable(
-  profile_ram_ppzksnark
-  EXCLUDE_FROM_ALL
-
-  zk_proof_systems/ppzksnark/ram_ppzksnark/profiling/profile_ram_ppzksnark.cpp
-)
-target_link_libraries(
-  profile_ram_ppzksnark
-
-  snark
-)
-
-add_executable(
-  profile_ram_zksnark
-  EXCLUDE_FROM_ALL
-
-  zk_proof_systems/zksnark/ram_zksnark/profiling/profile_ram_zksnark.cpp
-)
-target_link_libraries(
-  profile_ram_zksnark
-
-  snark
-  ${Boost_LIBRARIES}
 )
 
 # Tests
@@ -258,30 +201,6 @@ if ("${IS_LIBSNARK_PARENT}")
   )
 
   add_executable(
-    relations_sap_test
-    EXCLUDE_FROM_ALL
-
-    relations/arithmetic_programs/sap/tests/test_sap.cpp
-  )
-  target_link_libraries(
-    relations_sap_test
-
-    snark
-  )
-
-  add_executable(
-    zk_proof_systems_bacs_ppzksnark_test
-    EXCLUDE_FROM_ALL
-
-    zk_proof_systems/ppzksnark/bacs_ppzksnark/tests/test_bacs_ppzksnark.cpp
-  )
-  target_link_libraries(
-    zk_proof_systems_bacs_ppzksnark_test
-
-    snark
-  )
-
-  add_executable(
     zk_proof_systems_r1cs_ppzksnark_test
     EXCLUDE_FROM_ALL
 
@@ -317,29 +236,6 @@ if ("${IS_LIBSNARK_PARENT}")
     snark
   )
 
-  add_executable(
-    zk_proof_systems_ram_ppzksnark_test
-    EXCLUDE_FROM_ALL
-
-    zk_proof_systems/ppzksnark/ram_ppzksnark/tests/test_ram_ppzksnark.cpp
-  )
-  target_link_libraries(
-    zk_proof_systems_ram_ppzksnark_test
-
-    snark
-  )
-
-  add_executable(
-    zk_proof_systems_ram_zksnark_test
-    EXCLUDE_FROM_ALL
-
-    zk_proof_systems/zksnark/ram_zksnark/tests/test_ram_zksnark.cpp
-  )
-  target_link_libraries(
-    zk_proof_systems_ram_zksnark_test
-
-    snark
-  )
   add_executable(
     test_knapsack_gadget
     EXCLUDE_FROM_ALL
@@ -406,10 +302,6 @@ if ("${IS_LIBSNARK_PARENT}")
     COMMAND relations_qap_test
   )
   add_test(
-    NAME relations_sap_test
-    COMMAND relations_sap_test
-  )
-  add_test(
     NAME zk_proof_systems_r1cs_ppzksnark_test
     COMMAND zk_proof_systems_r1cs_ppzksnark_test
   )
@@ -442,7 +334,6 @@ if ("${IS_LIBSNARK_PARENT}")
   add_dependencies(check gadgetlib1_simple_test)
   add_dependencies(check gadgetlib1_r1cs_ppzksnark_verifier_gadget_test)
   add_dependencies(check relations_qap_test)
-  add_dependencies(check relations_sap_test)
   add_dependencies(check zk_proof_systems_r1cs_ppzksnark_test)
   add_dependencies(check zk_proof_systems_r1cs_se_ppzksnark_test)
   add_dependencies(check zk_proof_systems_r1cs_gg_ppzksnark_test)
