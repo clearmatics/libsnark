@@ -19,13 +19,7 @@ add_library(
   snark
   STATIC
 
-  common/data_structures/integer_permutation.cpp
   common/data_structures/set_commitment.cpp
-  common/default_types/r1cs_ppzkpcd_pp.cpp
-  common/default_types/tinyram_ppzksnark_pp.cpp
-  common/default_types/tinyram_zksnark_pp.cpp
-  common/routing_algorithms/as_waksman_routing_algorithm.cpp
-  common/routing_algorithms/benes_routing_algorithm.cpp
   gadgetlib1/constraint_profiling.cpp
 )
 if("${USE_LINKED_LIBRARIES}")
@@ -78,30 +72,6 @@ install(
 
 # Profiling
 add_executable(
-  profile_routing_algorithms
-  EXCLUDE_FROM_ALL
-
-  common/routing_algorithms/profiling/profile_routing_algorithms.cpp
-)
-target_link_libraries(
-  profile_routing_algorithms
-
-  snark
-)
-
-add_executable(
-  profile_routing_gadgets
-  EXCLUDE_FROM_ALL
-
-  gadgetlib1/gadgets/routing/profiling/profile_routing_gadgets.cpp
-)
-target_link_libraries(
-  profile_routing_gadgets
-
-  snark
-)
-
-add_executable(
   profile_r1cs_ppzksnark
   EXCLUDE_FROM_ALL
 
@@ -140,18 +110,6 @@ target_link_libraries(
 # Tests
 if ("${IS_LIBSNARK_PARENT}")
   add_executable(
-    common_routing_algorithms_test
-    EXCLUDE_FROM_ALL
-
-    common/routing_algorithms/tests/test_routing_algorithms.cpp
-  )
-  target_link_libraries(
-    common_routing_algorithms_test
-
-    snark
-  )
-
-  add_executable(
     gadgetlib1_simple_test
     EXCLUDE_FROM_ALL
 
@@ -162,18 +120,6 @@ if ("${IS_LIBSNARK_PARENT}")
 
     snark
     gtest_main
-  )
-
-  add_executable(
-    gadgetlib1_fooram_test
-    EXCLUDE_FROM_ALL
-
-    gadgetlib1/gadgets/cpu_checkers/fooram/examples/test_fooram.cpp
-  )
-  target_link_libraries(
-    gadgetlib1_fooram_test
-
-    snark
   )
 
   add_executable(
@@ -286,10 +232,6 @@ if ("${IS_LIBSNARK_PARENT}")
 
   include(CTest)
   add_test(
-    NAME common_routing_algorithms_test
-    COMMAND common_routing_algorithms_test
-  )
-  add_test(
     NAME gadgetlib1_simple_test
     COMMAND gadgetlib1_simple_test
   )
@@ -330,7 +272,6 @@ if ("${IS_LIBSNARK_PARENT}")
     COMMAND test_sha256_gadget
   )
 
-  add_dependencies(check common_routing_algorithms_test)
   add_dependencies(check gadgetlib1_simple_test)
   add_dependencies(check gadgetlib1_r1cs_ppzksnark_verifier_gadget_test)
   add_dependencies(check relations_qap_test)
