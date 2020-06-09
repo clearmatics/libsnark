@@ -50,7 +50,7 @@ public:
 
     void generate_r1cs_equals_const_constraints(const Fp2T &el);
     void generate_r1cs_witness(const Fp2T &el);
-    Fp2T get_element();
+    Fp2T get_element() const;
 
     Fp2_variable<Fp2T> operator*(const FieldT &coeff) const;
     Fp2_variable<Fp2T> operator+(const Fp2_variable<Fp2T> &other) const;

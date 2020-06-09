@@ -90,7 +90,7 @@ void Fp2_variable<Fp2T>::generate_r1cs_witness(const Fp2T &el)
 }
 
 template<typename Fp2T>
-Fp2T Fp2_variable<Fp2T>::get_element()
+Fp2T Fp2_variable<Fp2T>::get_element() const
 {
     Fp2T el;
     el.c0 = this->pb.lc_val(c0);
