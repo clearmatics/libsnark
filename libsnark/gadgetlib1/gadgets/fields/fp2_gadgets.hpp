@@ -53,6 +53,7 @@ public:
     Fp2T get_element() const;
 
     Fp2_variable<Fp2T> operator*(const FieldT &coeff) const;
+    Fp2_variable<Fp2T> operator*(const Fp2T &fp2_const) const;
     Fp2_variable<Fp2T> operator+(const Fp2_variable<Fp2T> &other) const;
     Fp2_variable<Fp2T> operator+(const Fp2T &other) const;
     Fp2_variable<Fp2T> mul_by_X() const;

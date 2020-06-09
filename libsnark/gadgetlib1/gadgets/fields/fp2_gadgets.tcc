@@ -108,6 +108,15 @@ Fp2_variable<Fp2T> Fp2_variable<Fp2T>::operator*(const FieldT &coeff) const
 }
 
 template<typename Fp2T>
+Fp2_variable<Fp2T> Fp2_variable<Fp2T>::operator*(const Fp2T &fp2_const) const
+{
+    pb_linear_combination<FieldT> new_c0, new_c1;
+    new_c0.assign(this->pb, this->c0 * fp2_const.c0 + (Fp2T::non_residue) * this->c1 * fp2_const.c1);
+    new_c1.assign(this->pb, this->c1 * fp2_const.c0 + this->c0 * fp2_const.c1);
+    return Fp2_variable<Fp2T>(this->pb, new_c0, new_c1, FMT(this->annotation_prefix, " operator*"));
+}
+
+template<typename Fp2T>
 Fp2_variable<Fp2T> Fp2_variable<Fp2T>::operator+(const Fp2_variable<Fp2T> &other) const
 {
     pb_linear_combination<FieldT> new_c0, new_c1;
