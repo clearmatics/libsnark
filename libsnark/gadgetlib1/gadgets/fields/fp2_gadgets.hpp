@@ -56,6 +56,7 @@ public:
     Fp2_variable<Fp2T> operator*(const Fp2T &fp2_const) const;
     Fp2_variable<Fp2T> operator+(const Fp2_variable<Fp2T> &other) const;
     Fp2_variable<Fp2T> operator+(const Fp2T &other) const;
+    Fp2_variable<Fp2T> operator-(const Fp2_variable<Fp2T> &other) const;
     Fp2_variable<Fp2T> mul_by_X() const;
     void evaluate() const;
     bool is_constant() const;

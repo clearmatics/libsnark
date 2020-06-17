@@ -135,6 +135,15 @@ Fp2_variable<Fp2T> Fp2_variable<Fp2T>::operator+(const Fp2T &other) const
 }
 
 template<typename Fp2T>
+Fp2_variable<Fp2T> Fp2_variable<Fp2T>::operator-(const Fp2_variable<Fp2T> &other) const
+{
+    pb_linear_combination<FieldT> new_c0, new_c1;
+    new_c0.assign(this->pb, this->c0 - other.c0);
+    new_c1.assign(this->pb, this->c1 - other.c1);
+    return Fp2_variable<Fp2T>(this->pb, new_c0, new_c1, FMT(this->annotation_prefix, " operator-"));
+}
+
+template<typename Fp2T>
 Fp2_variable<Fp2T> Fp2_variable<Fp2T>::mul_by_X() const
 {
     pb_linear_combination<FieldT> new_c0, new_c1;
