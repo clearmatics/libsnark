@@ -144,12 +144,30 @@ Fp2_variable<Fp2T> Fp2_variable<Fp2T>::operator-(const Fp2_variable<Fp2T> &other
 }
 
 template<typename Fp2T>
+Fp2_variable<Fp2T> Fp2_variable<Fp2T>::operator-() const
+{
+    pb_linear_combination<FieldT> new_c0, new_c1;
+    new_c0.assign(this->pb, -this->c0);
+    new_c1.assign(this->pb, -this->c1);
+    return Fp2_variable<Fp2T>(this->pb, new_c0, new_c1, FMT(this->annotation_prefix, " operator-"));
+}
+
+template<typename Fp2T>
 Fp2_variable<Fp2T> Fp2_variable<Fp2T>::mul_by_X() const
 {
     pb_linear_combination<FieldT> new_c0, new_c1;
     new_c0.assign(this->pb, this->c1 * Fp2T::non_residue);
     new_c1.assign(this->pb, this->c0);
     return Fp2_variable<Fp2T>(this->pb, new_c0, new_c1, FMT(this->annotation_prefix, " mul_by_X"));
+}
+
+template<typename Fp2T>
+Fp2_variable<Fp2T> Fp2_variable<Fp2T>::frobenius_map(size_t power) const
+{
+    pb_linear_combination<FieldT> new_c0, new_c1;
+    new_c0.assign(this->pb, this->c0);
+    new_c1.assign(this->pb, this->c1 * Fp2T::Frobenius_coeffs_c1[power % 2]);
+    return Fp2_variable<Fp2T>(this->pb, new_c0, new_c1, FMT(this->annotation_prefix, " frobenius"));
 }
 
 template<typename Fp2T>
