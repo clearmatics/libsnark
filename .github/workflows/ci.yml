@@ -1,0 +1,29 @@
+name: Clearmatics libsnark library
+
+on:
+  push:
+  pull_request:
+
+strategy:
+  matrix:
+    compiler: [gcc, clang]
+
+jobs:
+  build-ubuntu:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: init-submodules
+      run: git submodule init && git submodule update
+    - name: install-dependencies
+      run: sudo apt-get install build-essential git libboost-all-dev cmake libgmp3-dev libssl-dev libprocps3-dev pkg-config
+    - name: configure
+      env:
+        COMPILER: ${{ matrix.compiler }}
+      run: mkdir build && cd build && cmake -DCMAKE_CXX_COMPILER={COMPILER} ..
+    - name: build
+      run: make
+    - name: test
+      run: make check
