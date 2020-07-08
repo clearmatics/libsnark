@@ -21,8 +21,8 @@ jobs:
       run: git submodule init && git submodule update
     - name: configure
       env:
-        COMPILER: ${{ matrix.compiler }}
-      run: mkdir build && cd build && cmake -DCMAKE_CXX_COMPILER={COMPILER} ..
+        CXX: ${{ matrix.compiler }}
+      run: mkdir build && cd build && cmake ..
     - name: build
       run: make
     - name: test
