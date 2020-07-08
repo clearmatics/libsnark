@@ -15,10 +15,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install-dependencies
       run: sudo apt-get install build-essential git libboost-all-dev cmake libgmp3-dev libssl-dev libprocps-dev pkg-config
-    - name: init-submodules
-      run: git submodule init && git submodule update
     - name: configure
       env:
         CXX: ${{ matrix.compiler }}
