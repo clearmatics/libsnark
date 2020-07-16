@@ -50,7 +50,7 @@ GLA::constraint_sys_t GLA::convert(const ConstraintSystem& constraint_sys) const
 
 GLA::assignment_t GLA::convert(const VariableAssignment& assignment) const {
     assignment_t retval;
-    for (const auto assignmentPair : assignment) {
+    for (const auto &assignmentPair : assignment) {
         const variable_index_t var = assignmentPair.first.index_;
         const Fp_elem_t elem = convert(assignmentPair.second);
         retval[var] = elem;
