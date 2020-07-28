@@ -38,8 +38,8 @@ Fp2_variable<Fp2T>::Fp2_variable(protoboard<FieldT> &pb,
                                  const std::string &annotation_prefix) :
     gadget<FieldT>(pb, annotation_prefix)
 {
-    c0.assign(pb, el.c0);
-    c1.assign(pb, el.c1);
+    c0.assign(pb, el.coeffs[0]);
+    c1.assign(pb, el.coeffs[1]);
 
     c0.evaluate(pb);
     c1.evaluate(pb);
@@ -55,8 +55,8 @@ Fp2_variable<Fp2T>::Fp2_variable(protoboard<FieldT> &pb,
                                  const std::string &annotation_prefix) :
     gadget<FieldT>(pb, annotation_prefix)
 {
-    c0.assign(pb, el.c0 * coeff);
-    c1.assign(pb, el.c1 * coeff);
+    c0.assign(pb, el.coeffs[0] * coeff);
+    c1.assign(pb, el.coeffs[1] * coeff);
 
     all_vars.emplace_back(c0);
     all_vars.emplace_back(c1);
@@ -76,25 +76,25 @@ Fp2_variable<Fp2T>::Fp2_variable(protoboard<FieldT> &pb,
 template<typename Fp2T>
 void Fp2_variable<Fp2T>::generate_r1cs_equals_const_constraints(const Fp2T &el)
 {
-    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, el.c0, c0),
+    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, el.coeffs[0], c0),
                                  FMT(this->annotation_prefix, " c0"));
-    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, el.c1, c1),
+    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, el.coeffs[1], c1),
                                  FMT(this->annotation_prefix, " c1"));
 }
 
 template<typename Fp2T>
 void Fp2_variable<Fp2T>::generate_r1cs_witness(const Fp2T &el)
 {
-    this->pb.lc_val(c0) = el.c0;
-    this->pb.lc_val(c1) = el.c1;
+    this->pb.lc_val(c0) = el.coeffs[0];
+    this->pb.lc_val(c1) = el.coeffs[1];
 }
 
 template<typename Fp2T>
 Fp2T Fp2_variable<Fp2T>::get_element() const
 {
     Fp2T el;
-    el.c0 = this->pb.lc_val(c0);
-    el.c1 = this->pb.lc_val(c1);
+    el.coeffs[0] = this->pb.lc_val(c0);
+    el.coeffs[1] = this->pb.lc_val(c1);
     return el;
 }
 
@@ -111,8 +111,8 @@ template<typename Fp2T>
 Fp2_variable<Fp2T> Fp2_variable<Fp2T>::operator*(const Fp2T &fp2_const) const
 {
     pb_linear_combination<FieldT> new_c0, new_c1;
-    new_c0.assign(this->pb, this->c0 * fp2_const.c0 + (Fp2T::non_residue) * this->c1 * fp2_const.c1);
-    new_c1.assign(this->pb, this->c1 * fp2_const.c0 + this->c0 * fp2_const.c1);
+    new_c0.assign(this->pb, this->c0 * fp2_const.coeffs[0] + (Fp2T::non_residue) * this->c1 * fp2_const.coeffs[1]);
+    new_c1.assign(this->pb, this->c1 * fp2_const.coeffs[0] + this->c0 * fp2_const.coeffs[1]);
     return Fp2_variable<Fp2T>(this->pb, new_c0, new_c1, FMT(this->annotation_prefix, " operator*"));
 }
 
@@ -129,8 +129,8 @@ template<typename Fp2T>
 Fp2_variable<Fp2T> Fp2_variable<Fp2T>::operator+(const Fp2T &fp2_const) const
 {
     pb_linear_combination<FieldT> new_c0, new_c1;
-    new_c0.assign(this->pb, this->c0 + fp2_const.c0);
-    new_c1.assign(this->pb, this->c1 + fp2_const.c1);
+    new_c0.assign(this->pb, this->c0 + fp2_const.coeffs[0]);
+    new_c1.assign(this->pb, this->c1 + fp2_const.coeffs[1]);
     return Fp2_variable<Fp2T>(this->pb, new_c0, new_c1, FMT(this->annotation_prefix, " operator+"));
 }
 

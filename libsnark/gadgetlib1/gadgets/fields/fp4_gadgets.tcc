@@ -26,7 +26,7 @@ template<typename Fp4T>
 Fp4_variable<Fp4T>::Fp4_variable(protoboard<FieldT> &pb,
                                  const Fp4T &el,
                                  const std::string &annotation_prefix) :
-    gadget<FieldT>(pb, annotation_prefix), c0(pb, el.c0, FMT(annotation_prefix, " c0")), c1(pb, el.c1, FMT(annotation_prefix, " c1"))
+    gadget<FieldT>(pb, annotation_prefix), c0(pb, el.coeffs[0], FMT(annotation_prefix, " c0")), c1(pb, el.coeffs[1], FMT(annotation_prefix, " c1"))
 {
 }
 
@@ -39,23 +39,23 @@ Fp4_variable<Fp4T>::Fp4_variable(protoboard<FieldT> &pb, const Fp2_variable<Fp2T
 template<typename Fp4T>
 void Fp4_variable<Fp4T>::generate_r1cs_equals_const_constraints(const Fp4T &el)
 {
-    c0.generate_r1cs_equals_const_constraints(el.c0);
-    c1.generate_r1cs_equals_const_constraints(el.c1);
+    c0.generate_r1cs_equals_const_constraints(el.coeffs[0]);
+    c1.generate_r1cs_equals_const_constraints(el.coeffs[1]);
 }
 
 template<typename Fp4T>
 void Fp4_variable<Fp4T>::generate_r1cs_witness(const Fp4T &el)
 {
-    c0.generate_r1cs_witness(el.c0);
-    c1.generate_r1cs_witness(el.c1);
+    c0.generate_r1cs_witness(el.coeffs[0]);
+    c1.generate_r1cs_witness(el.coeffs[1]);
 }
 
 template<typename Fp4T>
 Fp4T Fp4_variable<Fp4T>::get_element()
 {
     Fp4T el;
-    el.c0 = c0.get_element();
-    el.c1 = c1.get_element();
+    el.coeffs[0] = c0.get_element();
+    el.coeffs[1] = c1.get_element();
     return el;
 }
 

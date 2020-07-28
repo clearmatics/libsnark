@@ -26,7 +26,7 @@ template<typename Fp6T>
 Fp6_variable<Fp6T>::Fp6_variable(protoboard<FieldT> &pb,
                                  const Fp6T &el,
                                  const std::string &annotation_prefix) :
-    gadget<FieldT>(pb, annotation_prefix), c0(pb, el.c0, FMT(annotation_prefix, " c0")), c1(pb, el.c1, FMT(annotation_prefix, " c1"))
+    gadget<FieldT>(pb, annotation_prefix), c0(pb, el.coeffs[0], FMT(annotation_prefix, " c0")), c1(pb, el.coeffs[1], FMT(annotation_prefix, " c1"))
 {
 }
 
@@ -39,23 +39,23 @@ Fp6_variable<Fp6T>::Fp6_variable(protoboard<FieldT> &pb, const Fp3_variable<Fp3T
 template<typename Fp6T>
 void Fp6_variable<Fp6T>::generate_r1cs_equals_const_constraints(const Fp6T &el)
 {
-    c0.generate_r1cs_equals_const_constraints(el.c0);
-    c1.generate_r1cs_equals_const_constraints(el.c1);
+    c0.generate_r1cs_equals_const_constraints(el.coeffs[0]);
+    c1.generate_r1cs_equals_const_constraints(el.coeffs[1]);
 }
 
 template<typename Fp6T>
 void Fp6_variable<Fp6T>::generate_r1cs_witness(const Fp6T &el)
 {
-    c0.generate_r1cs_witness(el.c0);
-    c1.generate_r1cs_witness(el.c1);
+    c0.generate_r1cs_witness(el.coeffs[0]);
+    c1.generate_r1cs_witness(el.coeffs[1]);
 }
 
 template<typename Fp6T>
 Fp6T Fp6_variable<Fp6T>::get_element()
 {
     Fp6T el;
-    el.c0 = c0.get_element();
-    el.c1 = c1.get_element();
+    el.coeffs[0] = c0.get_element();
+    el.coeffs[1] = c1.get_element();
     return el;
 }
 
@@ -264,8 +264,8 @@ void Fp6_mul_by_2345_gadget<Fp6T>::generate_r1cs_witness()
 
     const Fp3T A_c0_val = A.c0.get_element();
     const Fp3T B_c0_val = B.c0.get_element();
-    assert(B_c0_val.c0.is_zero());
-    assert(B_c0_val.c1.is_zero());
+    assert(B_c0_val.coeffs[0].is_zero());
+    assert(B_c0_val.coeffs[1].is_zero());
 
     const Fp3T v0_val = A_c0_val * B_c0_val;
     v0->generate_r1cs_witness(v0_val);

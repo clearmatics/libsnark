@@ -41,9 +41,9 @@ Fp3_variable<Fp3T>::Fp3_variable(protoboard<FieldT> &pb,
                                  const std::string &annotation_prefix) :
     gadget<FieldT>(pb, annotation_prefix)
 {
-    c0.assign(pb, el.c0);
-    c1.assign(pb, el.c1);
-    c2.assign(pb, el.c2);
+    c0.assign(pb, el.coeffs[0]);
+    c1.assign(pb, el.coeffs[1]);
+    c2.assign(pb, el.coeffs[2]);
 
     c0.evaluate(pb);
     c1.evaluate(pb);
@@ -61,9 +61,9 @@ Fp3_variable<Fp3T>::Fp3_variable(protoboard<FieldT> &pb,
                                  const std::string &annotation_prefix) :
     gadget<FieldT>(pb, annotation_prefix)
 {
-    c0.assign(pb, el.c0 * coeff);
-    c1.assign(pb, el.c1 * coeff);
-    c2.assign(pb, el.c2 * coeff);
+    c0.assign(pb, el.coeffs[0] * coeff);
+    c1.assign(pb, el.coeffs[1] * coeff);
+    c2.assign(pb, el.coeffs[2] * coeff);
 
     all_vars.emplace_back(c0);
     all_vars.emplace_back(c1);
@@ -86,29 +86,29 @@ Fp3_variable<Fp3T>::Fp3_variable(protoboard<FieldT> &pb,
 template<typename Fp3T>
 void Fp3_variable<Fp3T>::generate_r1cs_equals_const_constraints(const Fp3T &el)
 {
-    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, el.c0, c0),
+    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, el.coeffs[0], c0),
                                  FMT(this->annotation_prefix, " c0"));
-    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, el.c1, c1),
+    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, el.coeffs[1], c1),
                                  FMT(this->annotation_prefix, " c1"));
-    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, el.c2, c2),
+    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, el.coeffs[2], c2),
                                  FMT(this->annotation_prefix, " c2"));
 }
 
 template<typename Fp3T>
 void Fp3_variable<Fp3T>::generate_r1cs_witness(const Fp3T &el)
 {
-    this->pb.lc_val(c0) = el.c0;
-    this->pb.lc_val(c1) = el.c1;
-    this->pb.lc_val(c2) = el.c2;
+    this->pb.lc_val(c0) = el.coeffs[0];
+    this->pb.lc_val(c1) = el.coeffs[1];
+    this->pb.lc_val(c2) = el.coeffs[2];
 }
 
 template<typename Fp3T>
 Fp3T Fp3_variable<Fp3T>::get_element()
 {
     Fp3T el;
-    el.c0 = this->pb.lc_val(c0);
-    el.c1 = this->pb.lc_val(c1);
-    el.c2 = this->pb.lc_val(c2);
+    el.coeffs[0] = this->pb.lc_val(c0);
+    el.coeffs[1] = this->pb.lc_val(c1);
+    el.coeffs[2] = this->pb.lc_val(c2);
     return el;
 }
 
@@ -133,12 +133,12 @@ Fp3_variable<Fp3T> Fp3_variable<Fp3T>::operator+(const Fp3_variable<Fp3T> &other
 }
 
 template<typename Fp3T>
-Fp3_variable<Fp3T> Fp3_variable<Fp3T>::operator+(const Fp3T &other) const
+Fp3_variable<Fp3T> Fp3_variable<Fp3T>::operator+(const Fp3T &fp3_const) const
 {
     pb_linear_combination<FieldT> new_c0, new_c1, new_c2;
-    new_c0.assign(this->pb, this->c0 + other.c0);
-    new_c1.assign(this->pb, this->c1 + other.c1);
-    new_c2.assign(this->pb, this->c2 + other.c2);
+    new_c0.assign(this->pb, this->c0 + fp3_const.coeffs[0]);
+    new_c1.assign(this->pb, this->c1 + fp3_const.coeffs[1]);
+    new_c2.assign(this->pb, this->c2 + fp3_const.coeffs[2]);
     return Fp3_variable<Fp3T>(this->pb, new_c0, new_c1, new_c2, FMT(this->annotation_prefix, " operator+"));
 }
 
