@@ -45,6 +45,11 @@ public:
                 const libff::G2<other_curve<ppT> > &Q,
                 const std::string &annotation_prefix);
 
+    G2_variable(protoboard<FieldT> &pb,
+                const Fqe_variable<ppT> &X,
+                const Fqe_variable<ppT> &Y,
+                const std::string &annotation_prefix);
+
     void generate_r1cs_witness(const libff::G2<other_curve<ppT> > &Q);
 
     // (See a comment in r1cs_ppzksnark_verifier_gadget.hpp about why

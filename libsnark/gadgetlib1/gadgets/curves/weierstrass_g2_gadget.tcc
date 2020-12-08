@@ -47,6 +47,19 @@ G2_variable<ppT>::G2_variable(protoboard<FieldT> &pb,
 }
 
 template<typename ppT>
+G2_variable<ppT>::G2_variable(protoboard<FieldT> &pb,
+                              const Fqe_variable<ppT> &X_coord,
+                              const Fqe_variable<ppT> &Y_coord,
+                              const std::string &annotation_prefix) :
+    gadget<FieldT>(pb, annotation_prefix),
+    X(new Fqe_variable<ppT>(X_coord)),
+    Y(new Fqe_variable<ppT>(Y_coord))
+{
+    all_vars.insert(all_vars.end(), X->all_vars.begin(), X->all_vars.end());
+    all_vars.insert(all_vars.end(), Y->all_vars.begin(), Y->all_vars.end());
+}
+
+template<typename ppT>
 void G2_variable<ppT>::generate_r1cs_witness(const libff::G2<other_curve<ppT> > &Q)
 {
     libff::G2<other_curve<ppT> > Qcopy = Q;
