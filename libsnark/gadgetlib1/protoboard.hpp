@@ -68,6 +68,13 @@ public:
     friend class pb_linear_combination<FieldT>;
 
 private:
+    // The default copy constructor and assignment operator do not properly
+    // copy protoboard, rendering it unusable. The following prevents copying.
+    // It is unlikely to be the right thing to do (for performance reasons) and
+    // it causes subtle errors.
+    protoboard(const protoboard &);
+    const protoboard &operator=(const protoboard &);
+
     var_index_t allocate_var_index(const std::string &annotation="");
     lc_index_t allocate_lc_index();
 };
