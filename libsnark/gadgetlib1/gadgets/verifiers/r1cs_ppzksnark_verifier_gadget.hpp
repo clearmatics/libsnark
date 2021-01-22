@@ -100,6 +100,10 @@ public:
     libff::bit_vector get_bits() const;
     static size_t __attribute__((noinline)) size_in_bits(const size_t input_size);
     static libff::bit_vector get_verification_key_bits(const r1cs_ppzksnark_verification_key<other_curve<ppT> > &r1cs_vk);
+
+    const pb_linear_combination_array<FieldT> &get_all_vars() const;
+    static std::vector<FieldT> get_verification_key_scalars(
+        const r1cs_ppzksnark_verification_key<other_curve<ppT> > &r1cs_vk);
 };
 
 template<typename ppT>

@@ -232,6 +232,39 @@ libff::bit_vector r1cs_ppzksnark_verification_key_variable<ppT>::get_verificatio
 }
 
 template<typename ppT>
+const pb_linear_combination_array<libff::Fr<ppT>> &
+r1cs_ppzksnark_verification_key_variable<ppT>::get_all_vars() const
+{
+    return all_vars;
+}
+
+template<typename ppT>
+std::vector<libff::Fr<ppT>>
+r1cs_ppzksnark_verification_key_variable<ppT>::get_verification_key_scalars(
+    const r1cs_ppzksnark_verification_key<other_curve<ppT> > &r1cs_vk)
+{
+    typedef libff::Fr<ppT> FieldT;
+
+    const size_t input_size_in_elts = r1cs_vk.encoded_IC_query.rest.indices.size(); // this might be approximate for bound verification keys, however they are not supported by r1cs_ppzksnark_verification_key_variable
+    const size_t vk_size_in_bits = r1cs_ppzksnark_verification_key_variable<ppT>::size_in_bits(input_size_in_elts);
+
+    protoboard<FieldT> pb;
+    pb_variable_array<FieldT> vk_bits;
+    vk_bits.allocate(pb, vk_size_in_bits, "vk_bits");
+    r1cs_ppzksnark_verification_key_variable<ppT> vk(pb, vk_bits, input_size_in_elts, "translation_step_vk");
+    vk.generate_r1cs_witness(r1cs_vk);
+
+    const size_t num_scalars = vk.all_vars.size();
+    std::vector<FieldT> scalars;
+    scalars.reserve(num_scalars);
+    for (size_t i = 0; i < num_scalars; ++i) {
+        scalars.push_back(pb.lc_val(vk.all_vars[i]));
+    }
+
+    return scalars;
+}
+
+template<typename ppT>
 r1cs_ppzksnark_preprocessed_r1cs_ppzksnark_verification_key_variable<ppT>::r1cs_ppzksnark_preprocessed_r1cs_ppzksnark_verification_key_variable()
 {
     // will be allocated outside
