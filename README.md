@@ -1,5 +1,6 @@
 libsnark: a C++ library for zkSNARK proofs
 ================================================================================
+(forked from https://github.com/scipr-lab/libsnark)
 
 --------------------------------------------------------------------------------
 Authors and contacts
