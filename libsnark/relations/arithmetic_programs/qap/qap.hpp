@@ -41,6 +41,11 @@ class qap_witness;
  * - the number of variables, the degree, and the number of inputs; and
  * - coefficients of the A,B,C polynomials in the Lagrange basis.
  *
+ * (Each entry in the vector corresponds to a single input, representing a map
+ * of condition idx to the coefficients of that input in the linear combination
+ * A/B/C for that condition - namely the coefficients of the Lagrange
+ * polynomials forming u_i(\cdot), where A = \sum_i a_i * u_i(t)).
+ *
  * There is no need to store the Z polynomial because it is uniquely
  * determined by the domain (as Z is its vanishing polynomial).
  */
@@ -108,7 +113,10 @@ public:
 
     FieldT t;
 
-    std::vector<FieldT> At, Bt, Ct, Ht;
+    std::vector<FieldT> At;
+    std::vector<FieldT> Bt;
+    std::vector<FieldT> Ct;
+    std::vector<FieldT> Ht;
 
     FieldT Zt;
 

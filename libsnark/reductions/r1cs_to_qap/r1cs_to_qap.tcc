@@ -201,12 +201,14 @@ qap_instance_evaluation<FieldT> r1cs_to_qap_instance_map_with_evaluation(
  *   m = number of variables of the QAP
  *   n = degree of the QAP
  *
- * This is done as follows:
+ *
+ * This is done as follows, where T is the coset gS of S, for g the
+ * multiplicative generator of the field, (i.e. T={g*s | s \in S}):
  *  (1) compute evaluations of A,B,C on S = {sigma_1,...,sigma_n}
- *  (2) compute coefficients of A,B,C
- *  (3) compute evaluations of A,B,C on T = "coset of S"
- *  (4) compute evaluation of H on T
- *  (5) compute coefficients of H
+ *  (2) compute coefficients of A,B,C (iFFT)
+ *  (3) compute evaluations of A,B,C on T (cosetFFT)
+ *  (4) compute evaluation of H on T (in terms of evaluations of A, B, C)
+ *  (5) compute coefficients of H (icosetFFT)
  *  (6) patch H to account for d1,d2,d3 (i.e., add coefficients of the polynomial (A d2 + B d1 - d3) + d1*d2*Z )
  *
  * The code below is not as simple as the above high-level description due to

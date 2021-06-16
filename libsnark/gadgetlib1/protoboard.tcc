@@ -166,7 +166,7 @@ void protoboard<FieldT>::set_input_sizes(const size_t primary_input_size)
 }
 
 template<typename FieldT>
-r1cs_variable_assignment<FieldT> protoboard<FieldT>::full_variable_assignment() const
+const r1cs_variable_assignment<FieldT> &protoboard<FieldT>::full_variable_assignment() const
 {
     return values;
 }
@@ -184,7 +184,7 @@ r1cs_auxiliary_input<FieldT> protoboard<FieldT>::auxiliary_input() const
 }
 
 template<typename FieldT>
-r1cs_constraint_system<FieldT> protoboard<FieldT>::get_constraint_system() const
+const r1cs_constraint_system<FieldT> &protoboard<FieldT>::get_constraint_system() const
 {
     return constraint_system;
 }

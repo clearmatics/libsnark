@@ -59,10 +59,10 @@ public:
 
     void set_input_sizes(const size_t primary_input_size);
 
-    r1cs_variable_assignment<FieldT> full_variable_assignment() const;
+    const r1cs_variable_assignment<FieldT> &full_variable_assignment() const;
     r1cs_primary_input<FieldT> primary_input() const;
     r1cs_auxiliary_input<FieldT> auxiliary_input() const;
-    r1cs_constraint_system<FieldT> get_constraint_system() const;
+    const r1cs_constraint_system<FieldT> &get_constraint_system() const;
 
     friend class pb_variable<FieldT>;
     friend class pb_linear_combination<FieldT>;
