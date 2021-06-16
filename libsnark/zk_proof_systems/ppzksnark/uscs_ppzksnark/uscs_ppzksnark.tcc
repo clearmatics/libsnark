@@ -338,6 +338,12 @@ uscs_ppzksnark_proof<ppT> uscs_ppzksnark_prover(const uscs_ppzksnark_proving_key
                                                 const uscs_ppzksnark_primary_input<ppT> &primary_input,
                                                 const uscs_ppzksnark_auxiliary_input<ppT> &auxiliary_input)
 {
+#ifdef USE_MIXED_ADDITION
+    constexpr libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_special;
+#else
+    constexpr libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal;
+#endif
+
     libff::enter_block("Call to uscs_ppzksnark_prover");
 
     const libff::Fr<ppT> d = libff::Fr<ppT>::random_element();
@@ -375,18 +381,20 @@ uscs_ppzksnark_proof<ppT> uscs_ppzksnark_prover(const uscs_ppzksnark_proving_key
     libff::enter_block("Compute the proof");
 
     libff::enter_block("Compute V_g1, the 1st component of the proof", false);
-    V_g1 = V_g1 + libff::multi_exp_with_mixed_addition<libff::G1<ppT>,
-                                                       libff::Fr<ppT>,
-                                                       libff::multi_exp_method_BDLO12>(
+    V_g1 = V_g1 + libff::multi_exp_filter_one_zero<libff::G1<ppT>,
+                                                   libff::Fr<ppT>,
+                                                   libff::multi_exp_method_BDLO12,
+                                                   BaseForm>(
         pk.V_g1_query.begin(), pk.V_g1_query.begin()+(ssp_wit.num_variables()-ssp_wit.num_inputs()),
         ssp_wit.coefficients_for_Vs.begin()+ssp_wit.num_inputs(), ssp_wit.coefficients_for_Vs.begin()+ssp_wit.num_variables(),
         chunks);
     libff::leave_block("Compute V_g1, the 1st component of the proof", false);
 
     libff::enter_block("Compute alpha_V_g1, the 2nd component of the proof", false);
-    alpha_V_g1 = alpha_V_g1 + libff::multi_exp_with_mixed_addition<libff::G1<ppT>,
-                                                                   libff::Fr<ppT>,
-                                                                   libff::multi_exp_method_BDLO12>(
+    alpha_V_g1 = alpha_V_g1 + libff::multi_exp_filter_one_zero<libff::G1<ppT>,
+                                                               libff::Fr<ppT>,
+                                                               libff::multi_exp_method_BDLO12,
+                                                               BaseForm>(
         pk.alpha_V_g1_query.begin(), pk.alpha_V_g1_query.begin()+(ssp_wit.num_variables()-ssp_wit.num_inputs()),
         ssp_wit.coefficients_for_Vs.begin()+ssp_wit.num_inputs(), ssp_wit.coefficients_for_Vs.begin()+ssp_wit.num_variables(),
         chunks);
