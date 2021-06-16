@@ -412,7 +412,7 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(
     return std::move(key_pair);
 }
 
-template <typename ppT>
+template <typename ppT, libff::multi_exp_method Method, libff::multi_exp_base_form BaseForm>
 r1cs_gg_ppzksnark_proof<ppT> r1cs_gg_ppzksnark_prover(
     const r1cs_gg_ppzksnark_proving_key<ppT> &pk,
     const r1cs_gg_ppzksnark_primary_input<ppT> &primary_input,
@@ -475,49 +475,45 @@ r1cs_gg_ppzksnark_proof<ppT> r1cs_gg_ppzksnark_prover(
     libff::Fr_vector<ppT> const_padded_assignment(1, libff::Fr<ppT>::one());
     const_padded_assignment.insert(const_padded_assignment.end(), qap_wit.coefficients_for_ABCs.begin(), qap_wit.coefficients_for_ABCs.end());
 
-    libff::G1<ppT> evaluation_At = libff::multi_exp_with_mixed_addition<libff::G1<ppT>,
-                                                                        libff::Fr<ppT>,
-                                                                        libff::multi_exp_method_BDLO12>(
-        pk.A_query.begin(),
-        pk.A_query.begin() + qap_wit.num_variables() + 1,
-        const_padded_assignment.begin(),
-        const_padded_assignment.begin() + qap_wit.num_variables() + 1,
-        chunks);
+    libff::G1<ppT> evaluation_At = libff::multi_exp_filter_one_zero<
+        libff::G1<ppT>, libff::Fr<ppT>, Method, BaseForm>(
+            pk.A_query.begin(),
+            pk.A_query.begin() + qap_wit.num_variables() + 1,
+            const_padded_assignment.begin(),
+            const_padded_assignment.begin() + qap_wit.num_variables() + 1,
+            chunks);
     libff::leave_block("Compute evaluation to A-query", false);
 
     libff::enter_block("Compute evaluation to B-query", false);
-    knowledge_commitment<libff::G2<ppT>, libff::G1<ppT> > evaluation_Bt = kc_multi_exp_with_mixed_addition<libff::G2<ppT>,
-                                                                                                           libff::G1<ppT>,
-                                                                                                           libff::Fr<ppT>,
-                                                                                                           libff::multi_exp_method_BDLO12>(
-        pk.B_query,
-        0,
-        qap_wit.num_variables() + 1,
-        const_padded_assignment.begin(),
-        const_padded_assignment.begin() + qap_wit.num_variables() + 1,
-        chunks);
+    knowledge_commitment<libff::G2<ppT>, libff::G1<ppT> > evaluation_Bt =
+        kc_multi_exp_with_mixed_addition<
+            libff::G2<ppT>, libff::G1<ppT>, libff::Fr<ppT>, Method, BaseForm>(
+                pk.B_query,
+                0,
+                qap_wit.num_variables() + 1,
+                const_padded_assignment.begin(),
+                const_padded_assignment.begin() + qap_wit.num_variables() + 1,
+                chunks);
     libff::leave_block("Compute evaluation to B-query", false);
 
     libff::enter_block("Compute evaluation to H-query", false);
-    libff::G1<ppT> evaluation_Ht = libff::multi_exp<libff::G1<ppT>,
-                                                    libff::Fr<ppT>,
-                                                    libff::multi_exp_method_BDLO12>(
-        pk.H_query.begin(),
-        pk.H_query.begin() + (qap_wit.degree() - 1),
-        qap_wit.coefficients_for_H.begin(),
-        qap_wit.coefficients_for_H.begin() + (qap_wit.degree() - 1),
-        chunks);
+    libff::G1<ppT> evaluation_Ht = libff::multi_exp<
+        libff::G1<ppT>, libff::Fr<ppT>, Method, BaseForm>(
+            pk.H_query.begin(),
+            pk.H_query.begin() + (qap_wit.degree() - 1),
+            qap_wit.coefficients_for_H.begin(),
+            qap_wit.coefficients_for_H.begin() + (qap_wit.degree() - 1),
+            chunks);
     libff::leave_block("Compute evaluation to H-query", false);
 
     libff::enter_block("Compute evaluation to L-query", false);
-    libff::G1<ppT> evaluation_Lt = libff::multi_exp_with_mixed_addition<libff::G1<ppT>,
-                                                                        libff::Fr<ppT>,
-                                                                        libff::multi_exp_method_BDLO12>(
-        pk.L_query.begin(),
-        pk.L_query.end(),
-        const_padded_assignment.begin() + qap_wit.num_inputs() + 1,
-        const_padded_assignment.begin() + qap_wit.num_variables() + 1,
-        chunks);
+    libff::G1<ppT> evaluation_Lt = libff::multi_exp_filter_one_zero<
+        libff::G1<ppT>, libff::Fr<ppT>, Method, BaseForm>(
+            pk.L_query.begin(),
+            pk.L_query.end(),
+            const_padded_assignment.begin() + qap_wit.num_inputs() + 1,
+            const_padded_assignment.begin() + qap_wit.num_variables() + 1,
+            chunks);
     libff::leave_block("Compute evaluation to L-query", false);
 
     /* A = alpha + sum_i(a_i*A_i(t)) + r*delta */

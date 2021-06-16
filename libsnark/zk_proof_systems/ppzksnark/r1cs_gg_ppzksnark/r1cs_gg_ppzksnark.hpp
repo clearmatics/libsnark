@@ -389,10 +389,14 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(
  *
  * Given a R1CS primary input X and a R1CS auxiliary input Y, this algorithm
  * produces a proof (of knowledge) that attests to the following statement:
- *               ``there exists Y such that CS(X,Y)=0''.
- * Above, CS is the R1CS constraint system that was given as input to the generator algorithm.
+ *   ''there exists Y such that CS(X,Y)=0''
+ * Above, CS is the R1CS constraint system that was given as input to the
+ * generator algorithm.
  */
-template<typename ppT>
+template<
+    typename ppT,
+    libff::multi_exp_method Method = libff::multi_exp_method_BDLO12,
+    libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal>
 r1cs_gg_ppzksnark_proof<ppT> r1cs_gg_ppzksnark_prover(
     const r1cs_gg_ppzksnark_proving_key<ppT> &pk,
     const r1cs_gg_ppzksnark_primary_input<ppT> &primary_input,
