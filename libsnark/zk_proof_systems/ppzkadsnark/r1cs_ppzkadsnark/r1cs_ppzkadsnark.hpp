@@ -554,7 +554,7 @@ public:
 /**
  * R1CS ppZKADSNARK authentication parameters generator algorithm.
  */
-template<typename ppT>
+template<typename ppT, libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal>
 r1cs_ppzkadsnark_auth_keys<ppT> r1cs_ppzkadsnark_auth_generator(void);
 
 /**

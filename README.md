@@ -382,17 +382,10 @@ to control these (you can see the default at the top of CMakeLists.txt).
     of the corresponding algebraic objects. This option works for all
     curves except bn128.
 
-*    `cmake -DUSE_ASM=ON` (enabled by default)
+*   `cmake -DUSE_ASM=ON` (enabled by default)
 
     Use architecture-specific assembly routines for F[p] arithmetic and heap in
     multi-exponentiation. (If disabled, use GMP's `mpn_*` routines instead.)
-
-*   `cmake -DUSE_MIXED_ADDITION=ON`
-
-    Convert each element of the proving key and verification key to
-    affine coordinates. This allows using mixed addition formulas in
-    multiexponentiation and results in slightly faster prover and
-    verifier runtime at expense of increased generator runtime.
 
 *   `cmake -DPERFORMANCE=ON`
 

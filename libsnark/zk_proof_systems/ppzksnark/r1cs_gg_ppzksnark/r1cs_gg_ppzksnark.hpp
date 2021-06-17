@@ -363,7 +363,7 @@ public:
  * produce the proving and verification keys for CS.  Optionally force
  * the domain size
  */
-template<typename ppT>
+template<typename ppT, libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal>
 r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
     const r1cs_gg_ppzksnark_constraint_system<ppT> &cs,
     const libff::Fr<ppT> &t,
@@ -379,7 +379,7 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
  *
  * Given a R1CS constraint system CS, this algorithm produces proving and verification keys for CS.
  */
-template<typename ppT>
+template<typename ppT, libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal>
 r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(
     const r1cs_gg_ppzksnark_constraint_system<ppT> &cs,
     bool force_pow_2_domain=false);

@@ -141,7 +141,8 @@ knowledge_commitment_vector<T1, T2> kc_batch_exp(const size_t scalar_size,
                                                  const FieldT &T1_coeff,
                                                  const FieldT &T2_coeff,
                                                  const std::vector<FieldT> &v,
-                                                 const size_t suggested_num_chunks)
+                                                 const size_t suggested_num_chunks,
+                                                 bool output_special)
 {
     knowledge_commitment_vector<T1, T2> res;
     res.domain_size_ = v.size();
@@ -190,9 +191,10 @@ knowledge_commitment_vector<T1, T2> kc_batch_exp(const size_t scalar_size,
     {
         tmp[i] = kc_batch_exp_internal<T1, T2, FieldT>(scalar_size, T1_window, T2_window, T1_table, T2_table, T1_coeff, T2_coeff, v,
                                                        chunk_pos[i], chunk_pos[i+1], i == num_chunks - 1 ? last_chunk : chunk_size);
-#ifdef USE_MIXED_ADDITION
-        libff::batch_to_special<knowledge_commitment<T1, T2>>(tmp[i].values);
-#endif
+        if (output_special)
+        {
+            libff::batch_to_special<knowledge_commitment<T1, T2>>(tmp[i].values);
+        }
     }
 
     if (num_chunks == 1)

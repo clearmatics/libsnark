@@ -239,7 +239,7 @@ r1cs_ppzksnark_verification_key<ppT> r1cs_ppzksnark_verification_key<ppT>::dummy
     return result;
 }
 
-template <typename ppT>
+template <typename ppT, libff::multi_exp_base_form BaseForm>
 r1cs_ppzksnark_keypair<ppT> r1cs_ppzksnark_generator(const r1cs_ppzksnark_constraint_system<ppT> &cs)
 {
     libff::enter_block("Call to r1cs_ppzksnark_generator");
@@ -350,29 +350,61 @@ r1cs_ppzksnark_keypair<ppT> r1cs_ppzksnark_generator(const r1cs_ppzksnark_constr
 
     libff::enter_block("Generate knowledge commitments");
     libff::enter_block("Compute the A-query", false);
-    knowledge_commitment_vector<libff::G1<ppT>, libff::G1<ppT> > A_query = kc_batch_exp(libff::Fr<ppT>::size_in_bits(), g1_window, g1_window, g1_table, g1_table, rA, rA*alphaA, At, chunks);
+    knowledge_commitment_vector<libff::G1<ppT>, libff::G1<ppT> > A_query = kc_batch_exp(
+        libff::Fr<ppT>::size_in_bits(),
+        g1_window,
+        g1_window,
+        g1_table,
+        g1_table,
+        rA,
+        rA*alphaA,
+        At,
+        chunks,
+        BaseForm == libff::multi_exp_base_form_special);
     libff::leave_block("Compute the A-query", false);
 
     libff::enter_block("Compute the B-query", false);
-    knowledge_commitment_vector<libff::G2<ppT>, libff::G1<ppT> > B_query = kc_batch_exp(libff::Fr<ppT>::size_in_bits(), g2_window, g1_window, g2_table, g1_table, rB, rB*alphaB, Bt, chunks);
+    knowledge_commitment_vector<libff::G2<ppT>, libff::G1<ppT> > B_query = kc_batch_exp(
+        libff::Fr<ppT>::size_in_bits(),
+        g2_window,
+        g1_window,
+        g2_table,
+        g1_table,
+        rB,
+        rB*alphaB,
+        Bt,
+        chunks,
+        BaseForm == libff::multi_exp_base_form_special);
     libff::leave_block("Compute the B-query", false);
 
     libff::enter_block("Compute the C-query", false);
-    knowledge_commitment_vector<libff::G1<ppT>, libff::G1<ppT> > C_query = kc_batch_exp(libff::Fr<ppT>::size_in_bits(), g1_window, g1_window, g1_table, g1_table, rC, rC*alphaC, Ct, chunks);
+    knowledge_commitment_vector<libff::G1<ppT>, libff::G1<ppT> > C_query = kc_batch_exp(
+        libff::Fr<ppT>::size_in_bits(),
+        g1_window,
+        g1_window,
+        g1_table,
+        g1_table,
+        rC,
+        rC*alphaC,
+        Ct,
+        chunks,
+        BaseForm == libff::multi_exp_base_form_special);
     libff::leave_block("Compute the C-query", false);
 
     libff::enter_block("Compute the H-query", false);
     libff::G1_vector<ppT> H_query = batch_exp(libff::Fr<ppT>::size_in_bits(), g1_window, g1_table, Ht);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(H_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(H_query);
+    }
     libff::leave_block("Compute the H-query", false);
 
     libff::enter_block("Compute the K-query", false);
     libff::G1_vector<ppT> K_query = batch_exp(libff::Fr<ppT>::size_in_bits(), g1_window, g1_table, Kt);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(K_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(K_query);
+    }
     libff::leave_block("Compute the K-query", false);
 
     libff::leave_block("Generate knowledge commitments");
@@ -426,17 +458,12 @@ r1cs_ppzksnark_keypair<ppT> r1cs_ppzksnark_generator(const r1cs_ppzksnark_constr
     return r1cs_ppzksnark_keypair<ppT>(std::move(pk), std::move(vk));
 }
 
-template <typename ppT>
-r1cs_ppzksnark_proof<ppT> r1cs_ppzksnark_prover(const r1cs_ppzksnark_proving_key<ppT> &pk,
-                                                const r1cs_ppzksnark_primary_input<ppT> &primary_input,
-                                                const r1cs_ppzksnark_auxiliary_input<ppT> &auxiliary_input)
+template <typename ppT, libff::multi_exp_method Method, libff::multi_exp_base_form BaseForm>
+r1cs_ppzksnark_proof<ppT> r1cs_ppzksnark_prover(
+    const r1cs_ppzksnark_proving_key<ppT> &pk,
+    const r1cs_ppzksnark_primary_input<ppT> &primary_input,
+    const r1cs_ppzksnark_auxiliary_input<ppT> &auxiliary_input)
 {
-#ifdef USE_MIXED_ADDITION
-    constexpr libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_special;
-#else
-    constexpr libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal;
-#endif
-
     libff::enter_block("Call to r1cs_ppzksnark_prover");
 
 #ifdef DEBUG
@@ -491,7 +518,7 @@ r1cs_ppzksnark_proof<ppT> r1cs_ppzksnark_prover(const r1cs_ppzksnark_proving_key
     g_A = g_A + kc_multi_exp_with_mixed_addition<libff::G1<ppT>,
                                                  libff::G1<ppT>,
                                                  libff::Fr<ppT>,
-                                                 libff::multi_exp_method_bos_coster,
+                                                 Method,
                                                  BaseForm>(
         pk.A_query,
         1, 1+qap_wit.num_variables(),
@@ -503,7 +530,7 @@ r1cs_ppzksnark_proof<ppT> r1cs_ppzksnark_prover(const r1cs_ppzksnark_proving_key
     g_B = g_B + kc_multi_exp_with_mixed_addition<libff::G2<ppT>,
                                                  libff::G1<ppT>,
                                                  libff::Fr<ppT>,
-                                                 libff::multi_exp_method_bos_coster,
+                                                 Method,
                                                  BaseForm>(
         pk.B_query,
         1, 1+qap_wit.num_variables(),
@@ -515,7 +542,7 @@ r1cs_ppzksnark_proof<ppT> r1cs_ppzksnark_prover(const r1cs_ppzksnark_proving_key
     g_C = g_C + kc_multi_exp_with_mixed_addition<libff::G1<ppT>,
                                                  libff::G1<ppT>,
                                                  libff::Fr<ppT>,
-                                                 libff::multi_exp_method_bos_coster,
+                                                 Method,
                                                  BaseForm>(
         pk.C_query,
         1, 1+qap_wit.num_variables(),
@@ -526,7 +553,7 @@ r1cs_ppzksnark_proof<ppT> r1cs_ppzksnark_prover(const r1cs_ppzksnark_proving_key
     libff::enter_block("Compute answer to H-query", false);
     g_H = g_H + libff::multi_exp<libff::G1<ppT>,
                                  libff::Fr<ppT>,
-                                 libff::multi_exp_method_BDLO12,
+                                 Method,
                                  BaseForm>(
         pk.H_query.begin(), pk.H_query.begin()+qap_wit.degree()+1,
         qap_wit.coefficients_for_H.begin(), qap_wit.coefficients_for_H.begin()+qap_wit.degree()+1,
@@ -536,7 +563,7 @@ r1cs_ppzksnark_proof<ppT> r1cs_ppzksnark_prover(const r1cs_ppzksnark_proving_key
     libff::enter_block("Compute answer to K-query", false);
     g_K = g_K + libff::multi_exp_filter_one_zero<libff::G1<ppT>,
                                                  libff::Fr<ppT>,
-                                                 libff::multi_exp_method_bos_coster,
+                                                 Method,
                                                  BaseForm>(
         pk.K_query.begin()+1, pk.K_query.begin()+1+qap_wit.num_variables(),
         qap_wit.coefficients_for_ABCs.begin(), qap_wit.coefficients_for_ABCs.begin()+qap_wit.num_variables(),

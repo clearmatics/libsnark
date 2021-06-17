@@ -212,7 +212,7 @@ r1cs_gg_ppzksnark_verification_key<ppT> r1cs_gg_ppzksnark_verification_key<ppT>:
     return result;
 }
 
-template <typename ppT>
+template <typename ppT, libff::multi_exp_base_form BaseForm>
 r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
     const r1cs_gg_ppzksnark_constraint_system<ppT> &r1cs,
     const libff::Fr<ppT> &t,
@@ -327,29 +327,41 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
     libff::enter_block("Generate queries");
     libff::enter_block("Compute the A-query", false);
     libff::G1_vector<ppT> A_query = batch_exp(g1_scalar_size, g1_window_size, g1_table, At);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(A_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(A_query);
+    }
     libff::leave_block("Compute the A-query", false);
 
     libff::enter_block("Compute the B-query", false);
-    knowledge_commitment_vector<libff::G2<ppT>, libff::G1<ppT> > B_query = kc_batch_exp(libff::Fr<ppT>::size_in_bits(), g2_window_size, g1_window_size, g2_table, g1_table, libff::Fr<ppT>::one(), libff::Fr<ppT>::one(), Bt, chunks);
-    // NOTE: if USE_MIXED_ADDITION is defined,
-    // kc_batch_exp will convert its output to special form internally
+    // Force kc_batch_exp to convert to special form, if BaseForm == libff::multi_exp_base_form_special.
+    knowledge_commitment_vector<libff::G2<ppT>, libff::G1<ppT> > B_query = kc_batch_exp(
+        libff::Fr<ppT>::size_in_bits(),
+        g2_window_size,
+        g1_window_size,
+        g2_table,
+        g1_table,
+        libff::Fr<ppT>::one(),
+        libff::Fr<ppT>::one(),
+        Bt,
+        chunks,
+        BaseForm == libff::multi_exp_base_form_special);
     libff::leave_block("Compute the B-query", false);
 
     libff::enter_block("Compute the H-query", false);
     libff::G1_vector<ppT> H_query = batch_exp_with_coeff(g1_scalar_size, g1_window_size, g1_table, qap.Zt * delta_inverse, Ht);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(H_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(H_query);
+    }
     libff::leave_block("Compute the H-query", false);
 
     libff::enter_block("Compute the L-query", false);
     libff::G1_vector<ppT> L_query = batch_exp(g1_scalar_size, g1_window_size, g1_table, Lt);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(L_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(L_query);
+    }
     libff::leave_block("Compute the L-query", false);
     libff::leave_block("Generate queries");
 
@@ -389,7 +401,7 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator_from_secrets(
     return r1cs_gg_ppzksnark_keypair<ppT>(std::move(pk), std::move(vk));
 }
 
-template <typename ppT>
+template <typename ppT, libff::multi_exp_base_form BaseForm>
 r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(
     const r1cs_gg_ppzksnark_constraint_system<ppT> &r1cs,
     bool force_pow_2_domain)
@@ -404,7 +416,7 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(
     const libff::G1<ppT> g1_generator = libff::G1<ppT>::one();
     const libff::G2<ppT> g2_generator = libff::G2<ppT>::one();
 
-    r1cs_gg_ppzksnark_keypair<ppT> key_pair = r1cs_gg_ppzksnark_generator_from_secrets<ppT>(
+    r1cs_gg_ppzksnark_keypair<ppT> key_pair = r1cs_gg_ppzksnark_generator_from_secrets<ppT, BaseForm>(
         r1cs, t, alpha, beta, delta, g1_generator, g2_generator, force_pow_2_domain);
 
     libff::leave_block("Call to r1cs_gg_ppzksnark_generator");
