@@ -56,11 +56,6 @@ option(
   "Collect counts for field and curve operations"
   OFF
 )
-option(
-  USE_MIXED_ADDITION
-  "Convert each element of the key pair to affine coordinates"
-  OFF
-)
 
 option(
   WITH_SUPERCOP
@@ -216,10 +211,6 @@ endif()
 
 if("${PROFILE_OP_COUNTS}")
   add_definitions(-DPROFILE_OP_COUNTS=1)
-endif()
-
-if("${USE_MIXED_ADDITION}")
-  add_definitions(-DUSE_MIXED_ADDITION=1)
 endif()
 
 if("${CPPDEBUG}")

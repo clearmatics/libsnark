@@ -346,7 +346,7 @@ public:
  *
  * Given a USCS constraint system CS, this algorithm produces proving and verification keys for CS.
  */
-template<typename ppT>
+template<typename ppT, libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal>
 uscs_ppzksnark_keypair<ppT> uscs_ppzksnark_generator(const uscs_ppzksnark_constraint_system<ppT> &cs);
 
 /**
@@ -357,7 +357,9 @@ uscs_ppzksnark_keypair<ppT> uscs_ppzksnark_generator(const uscs_ppzksnark_constr
  *               ``there exists Y such that CS(X,Y)=0''.
  * Above, CS is the USCS constraint system that was given as input to the generator algorithm.
  */
-template<typename ppT>
+template<typename ppT,
+         libff::multi_exp_method Method = libff::multi_exp_method_BDLO12,
+         libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal>
 uscs_ppzksnark_proof<ppT> uscs_ppzksnark_prover(const uscs_ppzksnark_proving_key<ppT> &pk,
                                                 const uscs_ppzksnark_primary_input<ppT> &primary_input,
                                                 const uscs_ppzksnark_auxiliary_input<ppT> &auxiliary_input);

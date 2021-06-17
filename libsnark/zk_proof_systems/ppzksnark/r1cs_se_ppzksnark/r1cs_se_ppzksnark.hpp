@@ -384,7 +384,7 @@ public:
  *
  * Given a R1CS constraint system CS, this algorithm produces proving and verification keys for CS.
  */
-template<typename ppT>
+template<typename ppT, libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal>
 r1cs_se_ppzksnark_keypair<ppT> r1cs_se_ppzksnark_generator(const r1cs_se_ppzksnark_constraint_system<ppT> &cs);
 
 /**
@@ -395,7 +395,9 @@ r1cs_se_ppzksnark_keypair<ppT> r1cs_se_ppzksnark_generator(const r1cs_se_ppzksna
  *               ``there exists Y such that CS(X,Y)=0''.
  * Above, CS is the R1CS constraint system that was given as input to the generator algorithm.
  */
-template<typename ppT>
+template<typename ppT,
+         libff::multi_exp_method Method = libff::multi_exp_method_BDLO12,
+         libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal>
 r1cs_se_ppzksnark_proof<ppT> r1cs_se_ppzksnark_prover(const r1cs_se_ppzksnark_proving_key<ppT> &pk,
                                                       const r1cs_se_ppzksnark_primary_input<ppT> &primary_input,
                                                       const r1cs_se_ppzksnark_auxiliary_input<ppT> &auxiliary_input);

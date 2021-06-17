@@ -202,7 +202,7 @@ uscs_ppzksnark_verification_key<ppT> uscs_ppzksnark_verification_key<ppT>::dummy
     return result;
 }
 
-template <typename ppT>
+template <typename ppT, libff::multi_exp_base_form BaseForm>
 uscs_ppzksnark_keypair<ppT> uscs_ppzksnark_generator(const uscs_ppzksnark_constraint_system<ppT> &cs)
 {
     libff::enter_block("Call to uscs_ppzksnark_generator");
@@ -267,30 +267,34 @@ uscs_ppzksnark_keypair<ppT> uscs_ppzksnark_generator(const uscs_ppzksnark_constr
 
     libff::enter_block("Compute the query for V_g1", false);
     libff::G1_vector<ppT> V_g1_query = batch_exp(libff::Fr<ppT>::size_in_bits(), g1_window, g1_table, Vt_table_minus_Xt_table);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(V_g1_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(V_g1_query);
+    }
     libff::leave_block("Compute the query for V_g1", false);
 
     libff::enter_block("Compute the query for alpha_V_g1", false);
     libff::G1_vector<ppT> alpha_V_g1_query = batch_exp_with_coeff(libff::Fr<ppT>::size_in_bits(), g1_window, g1_table, alpha, Vt_table_minus_Xt_table);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(alpha_V_g1_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(alpha_V_g1_query);
+    }
     libff::leave_block("Compute the query for alpha_V_g1", false);
 
     libff::enter_block("Compute the query for H_g1", false);
     libff::G1_vector<ppT> H_g1_query = batch_exp(libff::Fr<ppT>::size_in_bits(), g1_window, g1_table, Ht_table);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(H_g1_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(H_g1_query);
+    }
     libff::leave_block("Compute the query for H_g1", false);
 
     libff::enter_block("Compute the query for V_g2", false);
     libff::G2_vector<ppT> V_g2_query = batch_exp(libff::Fr<ppT>::size_in_bits(), g2_window, g2_table, Vt_table);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G2<ppT> >(V_g2_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G2<ppT> >(V_g2_query);
+    }
     libff::leave_block("Compute the query for V_g2", false);
 
     libff::leave_block("Generate proof components");
@@ -333,17 +337,11 @@ uscs_ppzksnark_keypair<ppT> uscs_ppzksnark_generator(const uscs_ppzksnark_constr
     return uscs_ppzksnark_keypair<ppT>(std::move(pk), std::move(vk));
 }
 
-template <typename ppT>
+template <typename ppT, libff::multi_exp_method Method, libff::multi_exp_base_form BaseForm>
 uscs_ppzksnark_proof<ppT> uscs_ppzksnark_prover(const uscs_ppzksnark_proving_key<ppT> &pk,
                                                 const uscs_ppzksnark_primary_input<ppT> &primary_input,
                                                 const uscs_ppzksnark_auxiliary_input<ppT> &auxiliary_input)
 {
-#ifdef USE_MIXED_ADDITION
-    constexpr libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_special;
-#else
-    constexpr libff::multi_exp_base_form BaseForm = libff::multi_exp_base_form_normal;
-#endif
-
     libff::enter_block("Call to uscs_ppzksnark_prover");
 
     const libff::Fr<ppT> d = libff::Fr<ppT>::random_element();
@@ -381,10 +379,7 @@ uscs_ppzksnark_proof<ppT> uscs_ppzksnark_prover(const uscs_ppzksnark_proving_key
     libff::enter_block("Compute the proof");
 
     libff::enter_block("Compute V_g1, the 1st component of the proof", false);
-    V_g1 = V_g1 + libff::multi_exp_filter_one_zero<libff::G1<ppT>,
-                                                   libff::Fr<ppT>,
-                                                   libff::multi_exp_method_BDLO12,
-                                                   BaseForm>(
+    V_g1 = V_g1 + libff::multi_exp_filter_one_zero<libff::G1<ppT>, libff::Fr<ppT>, Method, BaseForm>(
         pk.V_g1_query.begin(), pk.V_g1_query.begin()+(ssp_wit.num_variables()-ssp_wit.num_inputs()),
         ssp_wit.coefficients_for_Vs.begin()+ssp_wit.num_inputs(), ssp_wit.coefficients_for_Vs.begin()+ssp_wit.num_variables(),
         chunks);
@@ -393,7 +388,7 @@ uscs_ppzksnark_proof<ppT> uscs_ppzksnark_prover(const uscs_ppzksnark_proving_key
     libff::enter_block("Compute alpha_V_g1, the 2nd component of the proof", false);
     alpha_V_g1 = alpha_V_g1 + libff::multi_exp_filter_one_zero<libff::G1<ppT>,
                                                                libff::Fr<ppT>,
-                                                               libff::multi_exp_method_BDLO12,
+                                                               Method,
                                                                BaseForm>(
         pk.alpha_V_g1_query.begin(), pk.alpha_V_g1_query.begin()+(ssp_wit.num_variables()-ssp_wit.num_inputs()),
         ssp_wit.coefficients_for_Vs.begin()+ssp_wit.num_inputs(), ssp_wit.coefficients_for_Vs.begin()+ssp_wit.num_variables(),
@@ -401,18 +396,14 @@ uscs_ppzksnark_proof<ppT> uscs_ppzksnark_prover(const uscs_ppzksnark_proving_key
     libff::leave_block("Compute alpha_V_g1, the 2nd component of the proof", false);
 
     libff::enter_block("Compute H_g1, the 3rd component of the proof", false);
-    H_g1 = H_g1 + libff::multi_exp<libff::G1<ppT>,
-                                   libff::Fr<ppT>,
-                                   libff::multi_exp_method_BDLO12>(
+    H_g1 = H_g1 + libff::multi_exp<libff::G1<ppT>, libff::Fr<ppT>, Method, BaseForm>(
         pk.H_g1_query.begin(), pk.H_g1_query.begin()+ssp_wit.degree()+1,
         ssp_wit.coefficients_for_H.begin(), ssp_wit.coefficients_for_H.begin()+ssp_wit.degree()+1,
         chunks);
     libff::leave_block("Compute H_g1, the 3rd component of the proof", false);
 
     libff::enter_block("Compute V_g2, the 4th component of the proof", false);
-    V_g2 = V_g2 + libff::multi_exp<libff::G2<ppT>,
-                                   libff::Fr<ppT>,
-                                   libff::multi_exp_method_BDLO12>(
+    V_g2 = V_g2 + libff::multi_exp<libff::G2<ppT>, libff::Fr<ppT>, Method, BaseForm>(
         pk.V_g2_query.begin()+1, pk.V_g2_query.begin()+ssp_wit.num_variables()+1,
         ssp_wit.coefficients_for_Vs.begin(), ssp_wit.coefficients_for_Vs.begin()+ssp_wit.num_variables(),
         chunks);
@@ -422,7 +413,8 @@ uscs_ppzksnark_proof<ppT> uscs_ppzksnark_prover(const uscs_ppzksnark_proving_key
 
     libff::leave_block("Call to uscs_ppzksnark_prover");
 
-    uscs_ppzksnark_proof<ppT> proof = uscs_ppzksnark_proof<ppT>(std::move(V_g1), std::move(alpha_V_g1), std::move(H_g1), std::move(V_g2));
+    uscs_ppzksnark_proof<ppT> proof = uscs_ppzksnark_proof<ppT>(
+        std::move(V_g1), std::move(alpha_V_g1), std::move(H_g1), std::move(V_g2));
 
     proof.print_size();
 

@@ -446,7 +446,7 @@ bool r1cs_ppzkadsnark_auth_verify(const std::vector<libff::Fr<snark_pp<ppT>>> &d
     return res;
 }
 
-template <typename ppT>
+template <typename ppT, libff::multi_exp_base_form BaseForm>
 r1cs_ppzkadsnark_keypair<ppT> r1cs_ppzkadsnark_generator(const r1cs_ppzkadsnark_constraint_system<ppT> &cs,
                                                          const r1cs_ppzkadsnark_pub_auth_prms<ppT> &prms)
 {
@@ -555,33 +555,35 @@ r1cs_ppzkadsnark_keypair<ppT> r1cs_ppzkadsnark_generator(const r1cs_ppzkadsnark_
     libff::enter_block("Compute the A-query", false);
     knowledge_commitment_vector<libff::G1<snark_pp<ppT>>, libff::G1<snark_pp<ppT>> > A_query =
         kc_batch_exp(libff::Fr<snark_pp<ppT>>::size_in_bits(), g1_window, g1_window, g1_table,
-                     g1_table, rA, rA*alphaA, At, chunks);
+                     g1_table, rA, rA*alphaA, At, chunks, BaseForm == libff::multi_exp_base_form_special);
     libff::leave_block("Compute the A-query", false);
 
     libff::enter_block("Compute the B-query", false);
     knowledge_commitment_vector<libff::G2<snark_pp<ppT>>, libff::G1<snark_pp<ppT>> > B_query =
         kc_batch_exp(libff::Fr<snark_pp<ppT>>::size_in_bits(), g2_window, g1_window, g2_table,
-                     g1_table, rB, rB*alphaB, Bt, chunks);
+                     g1_table, rB, rB*alphaB, Bt, chunks, BaseForm == libff::multi_exp_base_form_special);
     libff::leave_block("Compute the B-query", false);
 
     libff::enter_block("Compute the C-query", false);
     knowledge_commitment_vector<libff::G1<snark_pp<ppT>>, libff::G1<snark_pp<ppT>> > C_query =
         kc_batch_exp(libff::Fr<snark_pp<ppT>>::size_in_bits(), g1_window, g1_window, g1_table,
-                     g1_table, rC, rC*alphaC, Ct, chunks);
+                     g1_table, rC, rC*alphaC, Ct, chunks, BaseForm == libff::multi_exp_base_form_special);
     libff::leave_block("Compute the C-query", false);
 
     libff::enter_block("Compute the H-query", false);
     libff::G1_vector<snark_pp<ppT>> H_query = batch_exp(libff::Fr<snark_pp<ppT>>::size_in_bits(), g1_window, g1_table, Ht);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<snark_pp<ppT>> >(H_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<snark_pp<ppT>> >(H_query);
+    }
     libff::leave_block("Compute the H-query", false);
 
     libff::enter_block("Compute the K-query", false);
     libff::G1_vector<snark_pp<ppT>> K_query = batch_exp(libff::Fr<snark_pp<ppT>>::size_in_bits(), g1_window, g1_table, Kt);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<snark_pp<ppT>> >(K_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<snark_pp<ppT>> >(K_query);
+    }
     libff::leave_block("Compute the K-query", false);
 
     libff::leave_block("Generate knowledge commitments");

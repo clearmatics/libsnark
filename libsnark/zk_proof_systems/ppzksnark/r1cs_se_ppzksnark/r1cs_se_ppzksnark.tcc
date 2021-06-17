@@ -223,7 +223,7 @@ r1cs_se_ppzksnark_verification_key<ppT> r1cs_se_ppzksnark_verification_key<ppT>:
     return result;
 }
 
-template <typename ppT>
+template <typename ppT, libff::multi_exp_base_form BaseForm>
 r1cs_se_ppzksnark_keypair<ppT> r1cs_se_ppzksnark_generator(const r1cs_se_ppzksnark_constraint_system<ppT> &cs)
 {
     libff::enter_block("Call to r1cs_se_ppzksnark_generator");
@@ -329,9 +329,10 @@ r1cs_se_ppzksnark_keypair<ppT> r1cs_se_ppzksnark_generator(const r1cs_se_ppzksna
         G_table,
         tmp_exponents);
     tmp_exponents.clear();
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(A_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(A_query);
+    }
     libff::leave_block("Compute the A-query", false);
 
     libff::enter_block("Compute the B-query", false);
@@ -341,9 +342,10 @@ r1cs_se_ppzksnark_keypair<ppT> r1cs_se_ppzksnark_generator(const r1cs_se_ppzksna
         H_gamma_window,
         H_gamma_table,
         At);
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G2<ppT> >(B_query);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G2<ppT> >(B_query);
+    }
     libff::leave_block("Compute the B-query", false);
 
     libff::enter_block("Compute the G_gamma-query", false);
@@ -369,9 +371,10 @@ r1cs_se_ppzksnark_keypair<ppT> r1cs_se_ppzksnark_generator(const r1cs_se_ppzksna
         G_table,
         tmp_exponents);
     tmp_exponents.clear();
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(G_gamma2_Z_t);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(G_gamma2_Z_t);
+    }
     libff::leave_block("Compute the G_gamma-query", false);
 
     libff::enter_block("Compute the C_1-query", false);
@@ -390,9 +393,10 @@ r1cs_se_ppzksnark_keypair<ppT> r1cs_se_ppzksnark_generator(const r1cs_se_ppzksna
         G_table,
         tmp_exponents);
     tmp_exponents.clear();
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(C_query_1);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(C_query_1);
+    }
     libff::leave_block("Compute the C_1-query", false);
 
     libff::enter_block("Compute the C_2-query", false);
@@ -410,9 +414,10 @@ r1cs_se_ppzksnark_keypair<ppT> r1cs_se_ppzksnark_generator(const r1cs_se_ppzksna
         G_table,
         tmp_exponents);
     tmp_exponents.clear();
-#ifdef USE_MIXED_ADDITION
-    libff::batch_to_special<libff::G1<ppT> >(C_query_2);
-#endif
+    if (BaseForm == libff::multi_exp_base_form_special)
+    {
+        libff::batch_to_special<libff::G1<ppT> >(C_query_2);
+    }
     libff::leave_block("Compute the C_2-query", false);
 
     libff::leave_block("Generate R1CS proving key");
@@ -436,7 +441,7 @@ r1cs_se_ppzksnark_keypair<ppT> r1cs_se_ppzksnark_generator(const r1cs_se_ppzksna
     return r1cs_se_ppzksnark_keypair<ppT>(std::move(pk), std::move(vk));
 }
 
-template <typename ppT>
+template <typename ppT, libff::multi_exp_method Method, libff::multi_exp_base_form BaseForm>
 r1cs_se_ppzksnark_proof<ppT> r1cs_se_ppzksnark_prover(const r1cs_se_ppzksnark_proving_key<ppT> &pk,
                                                 const r1cs_se_ppzksnark_primary_input<ppT> &primary_input,
                                                 const r1cs_se_ppzksnark_auxiliary_input<ppT> &auxiliary_input)
@@ -491,7 +496,8 @@ r1cs_se_ppzksnark_proof<ppT> r1cs_se_ppzksnark_prover(const r1cs_se_ppzksnark_pr
         sap_wit.d1 * pk.G_gamma_Z + // ZK-patch
         libff::multi_exp<libff::G1<ppT>,
                          libff::Fr<ppT>,
-                         libff::multi_exp_method_BDLO12>(
+                         Method,
+                         BaseForm>(
             pk.A_query.begin() + 1,
             pk.A_query.end(),
             sap_wit.coefficients_for_ACs.begin(),
@@ -509,7 +515,8 @@ r1cs_se_ppzksnark_proof<ppT> r1cs_se_ppzksnark_prover(const r1cs_se_ppzksnark_pr
         sap_wit.d1 * pk.H_gamma_Z + // ZK-patch
         libff::multi_exp<libff::G2<ppT>,
                          libff::Fr<ppT>,
-                         libff::multi_exp_method_BDLO12>(
+                         Method,
+                         BaseForm>(
             pk.B_query.begin() + 1,
             pk.B_query.end(),
             sap_wit.coefficients_for_ACs.begin(),
@@ -530,7 +537,8 @@ r1cs_se_ppzksnark_proof<ppT> r1cs_se_ppzksnark_prover(const r1cs_se_ppzksnark_pr
      */
     libff::G1<ppT> C = libff::multi_exp<libff::G1<ppT>,
                                         libff::Fr<ppT>,
-                                        libff::multi_exp_method_BDLO12>(
+                                        Method,
+                                        BaseForm>(
             pk.C_query_1.begin(),
             pk.C_query_1.end(),
             sap_wit.coefficients_for_ACs.begin() + sap_wit.num_inputs(),
@@ -541,18 +549,14 @@ r1cs_se_ppzksnark_proof<ppT> r1cs_se_ppzksnark_prover(const r1cs_se_ppzksnark_pr
         sap_wit.d1 * pk.G_ab_gamma_Z + // ZK-patch
         r * pk.C_query_2[0] + // i = 0 is a special case for C_query_2
         (r + r) * sap_wit.d1 * pk.G_gamma2_Z2 + // ZK-patch for C_query_2
-        r * libff::multi_exp<libff::G1<ppT>,
-                             libff::Fr<ppT>,
-                             libff::multi_exp_method_BDLO12>(
+        r * libff::multi_exp<libff::G1<ppT>, libff::Fr<ppT>, Method, BaseForm>(
             pk.C_query_2.begin() + 1,
             pk.C_query_2.end(),
             sap_wit.coefficients_for_ACs.begin(),
             sap_wit.coefficients_for_ACs.end(),
             chunks) +
         sap_wit.d2 * pk.G_gamma2_Z_t[0] + // ZK-patch
-        libff::multi_exp<libff::G1<ppT>,
-                          libff::Fr<ppT>,
-                          libff::multi_exp_method_BDLO12>(
+        libff::multi_exp<libff::G1<ppT>, libff::Fr<ppT>, Method, BaseForm>(
             pk.G_gamma2_Z_t.begin(),
             pk.G_gamma2_Z_t.end(),
             sap_wit.coefficients_for_H.begin(),
