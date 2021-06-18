@@ -25,22 +25,9 @@ knowledge_commitment<T1,T2>::knowledge_commitment(const T1 &g, const T2 &h) :
 }
 
 template<typename T1, typename T2>
-knowledge_commitment<T1,T2> knowledge_commitment<T1,T2>::zero()
+knowledge_commitment<T1,T2> knowledge_commitment<T1,T2>::add(const knowledge_commitment<T1,T2> &other) const
 {
-    return knowledge_commitment<T1,T2>(T1::zero(), T2::zero());
-}
-
-template<typename T1, typename T2>
-knowledge_commitment<T1,T2> knowledge_commitment<T1,T2>::one()
-{
-    return knowledge_commitment<T1,T2>(T1::one(), T2::one());
-}
-
-template<typename T1, typename T2>
-knowledge_commitment<T1,T2> knowledge_commitment<T1,T2>::operator+(const knowledge_commitment<T1,T2> &other) const
-{
-    return knowledge_commitment<T1,T2>(this->g + other.g,
-                                       this->h + other.h);
+    return knowledge_commitment<T1,T2>(this->g.add(other.g), this->h.add(other.h));
 }
 
 template<typename T1, typename T2>
@@ -53,8 +40,19 @@ knowledge_commitment<T1,T2> knowledge_commitment<T1,T2>::mixed_add(const knowled
 template<typename T1, typename T2>
 knowledge_commitment<T1,T2> knowledge_commitment<T1,T2>::dbl() const
 {
-    return knowledge_commitment<T1,T2>(this->g.dbl(),
-                                       this->h.dbl());
+    return knowledge_commitment<T1,T2>(this->g.dbl(), this->h.dbl());
+}
+
+template<typename T1, typename T2>
+knowledge_commitment<T1,T2> knowledge_commitment<T1,T2>::operator+(const knowledge_commitment<T1,T2> &other) const
+{
+    return add(other);
+}
+
+template<typename T1, typename T2>
+knowledge_commitment<T1,T2> knowledge_commitment<T1,T2>::operator-() const
+{
+    return knowledge_commitment<T1,T2>(-(this->g), -(this->h));
 }
 
 template<typename T1, typename T2>
@@ -87,6 +85,18 @@ template<typename T1, typename T2>
 bool knowledge_commitment<T1,T2>::operator!=(const knowledge_commitment<T1,T2> &other) const
 {
     return !((*this) == other);
+}
+
+template<typename T1, typename T2>
+knowledge_commitment<T1,T2> knowledge_commitment<T1,T2>::zero()
+{
+    return knowledge_commitment<T1,T2>(T1::zero(), T2::zero());
+}
+
+template<typename T1, typename T2>
+knowledge_commitment<T1,T2> knowledge_commitment<T1,T2>::one()
+{
+    return knowledge_commitment<T1,T2>(T1::one(), T2::one());
 }
 
 template<typename T1, typename T2, mp_size_t m>
