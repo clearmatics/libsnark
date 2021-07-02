@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 2.8)
 
+# Change the compiler BEFORE the first `project()` command to avoid an infinite loop.
+# See: https://public.kitware.com/pipermail/cmake/2009-November/033133.html
+if(APPLE)
+  # If custom llvm compilers are available, use them (for openmp
+  # support), otherwise disable multicore.
+  if(EXISTS "/usr/local/opt/llvm/bin/clang")
+    set(CMAKE_C_COMPILER "/usr/local/opt/llvm/bin/clang")
+    set(CMAKE_CXX_COMPILER "/usr/local/opt/llvm/bin/clang++")
+  endif()
+endif()
+
 project (libsnark)
 
 set(
@@ -43,11 +54,6 @@ option(
 option(
   PROFILE_OP_COUNTS
   "Collect counts for field and curve operations"
-  OFF
-)
-option(
-  USE_MIXED_ADDITION
-  "Convert each element of the key pair to affine coordinates"
   OFF
 )
 
@@ -205,10 +211,6 @@ endif()
 
 if("${PROFILE_OP_COUNTS}")
   add_definitions(-DPROFILE_OP_COUNTS=1)
-endif()
-
-if("${USE_MIXED_ADDITION}")
-  add_definitions(-DUSE_MIXED_ADDITION=1)
 endif()
 
 if("${CPPDEBUG}")
