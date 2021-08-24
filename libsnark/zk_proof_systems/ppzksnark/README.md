@@ -1,6 +1,8 @@
+# R1CS benchmarks
+
 Below is performance information about several preprocessing zkSNARKs in `libsnark` that work with the R1CS relation.
 
-# Empirical performance
+## Empirical performance
 
 We benchmark proof systems on an R1CS instance with 10<sup>6</sup> constraints and 10<sup>6</sup> variables, of which 10 are input variables. The benchmarks were obtained using a 3.40 GHz Intel Core i7-4770 CPU, in single-threaded mode, using the BN128 curve.
 
@@ -23,7 +25,7 @@ Abbreviations used: <i>PK</i> = proving key, <i>VK</i> = verifying key, <i>MB</i
 | [Groth16](r1cs_gg_ppzksnark) | 201 | 4048574 | 1000004 || 558 | 10 | 2 || 127 | 2 | 1 |
 | [GM17](r1cs_se_ppzksnark) | 385 | 8097184 | 2000014 || 605 | 13 | 3 || 127 | 2 | 1 |
 
-# Asymptotic performance
+## Asymptotic performance
 
 We estimate asymptotic performance of the proof systems.
 
