@@ -174,12 +174,28 @@ The libsnark library relies on the following:
     - [xbyak](https://github.com/herumi/xbyak) just-in-time assembler, for the BN128 elliptic curve
     - [Subset of SUPERCOP](https://github.com/mbbarbosa/libsnark-supercop) for crypto primitives needed by ADSNARK
 
+Furthermore, Doxygen is used to generate the documentation.
+
 So far we have tested these only on Linux, though we have been able to make the
 libsnark work, with some features disabled (such as memory profiling or GTest tests),
 on Windows via Cygwin and on Mac OS X. See also the notes on [portability](#portability)
 below. (If you port libsnark to additional platforms, please let us know!)
 
 Concretely, here are the requisite packages in some Linux distributions:
+
+* On Ubuntu 20.04 LTS:
+
+```console
+sudo apt install \
+    build-essential \
+    git \
+    libboost-all-dev \
+    cmake \
+    libgmp3-dev \
+    libssl-dev \
+    libprocps-dev \
+    pkg-config
+```
 
 * On Ubuntu 16.04 LTS:
 
