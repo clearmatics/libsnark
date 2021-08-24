@@ -28,7 +28,7 @@ namespace libsnark {
  * Note that the power is a constant (i.e., hardcoded into the gadget).
  */
 template<typename FpkT, template<class> class Fpk_variableT, template<class> class Fpk_mul_gadgetT, template<class> class Fpk_sqr_gadgetT, mp_size_t m>
-class exponentiation_gadget : gadget<typename FpkT::my_Fp> {
+class exponentiation_gadget : public gadget<typename FpkT::my_Fp> {
 public:
     typedef typename FpkT::my_Fp FieldT;
     std::vector<long> NAF;
