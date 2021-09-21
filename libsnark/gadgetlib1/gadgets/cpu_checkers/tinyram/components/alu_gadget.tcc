@@ -14,32 +14,27 @@
 #ifndef ALU_GADGET_TCC_
 #define ALU_GADGET_TCC_
 
-namespace libsnark {
-
-template<typename FieldT>
-void ALU_gadget<FieldT>::generate_r1cs_constraints()
+namespace libsnark
 {
-    for (size_t i = 0; i < 1ul<<this->pb.ap.opcode_width(); ++i)
-    {
-        if (components[i])
-        {
+
+template<typename FieldT> void ALU_gadget<FieldT>::generate_r1cs_constraints()
+{
+    for (size_t i = 0; i < 1ul << this->pb.ap.opcode_width(); ++i) {
+        if (components[i]) {
             components[i]->generate_r1cs_constraints();
         }
     }
 }
 
-template<typename FieldT>
-void ALU_gadget<FieldT>::generate_r1cs_witness()
+template<typename FieldT> void ALU_gadget<FieldT>::generate_r1cs_witness()
 {
-    for (size_t i = 0; i < 1ul<<this->pb.ap.opcode_width(); ++i)
-    {
-        if (components[i])
-        {
+    for (size_t i = 0; i < 1ul << this->pb.ap.opcode_width(); ++i) {
+        if (components[i]) {
             components[i]->generate_r1cs_witness();
         }
     }
 }
 
-} // libsnark
+} // namespace libsnark
 
 #endif // ALU_GADGET_TCC_

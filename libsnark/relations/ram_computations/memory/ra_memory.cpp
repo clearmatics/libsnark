@@ -12,33 +12,33 @@
  *****************************************************************************/
 
 #include <cassert>
-
 #include <libsnark/relations/ram_computations/memory/ra_memory.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-ra_memory::ra_memory(const size_t num_addresses, const size_t value_size) :
-    memory_interface(num_addresses, value_size)
+ra_memory::ra_memory(const size_t num_addresses, const size_t value_size)
+    : memory_interface(num_addresses, value_size)
 {
 }
 
-ra_memory::ra_memory(const size_t num_addresses,
-                     const size_t value_size,
-                     const std::vector<size_t> &contents_as_vector) :
-    memory_interface(num_addresses, value_size)
+ra_memory::ra_memory(
+    const size_t num_addresses,
+    const size_t value_size,
+    const std::vector<size_t> &contents_as_vector)
+    : memory_interface(num_addresses, value_size)
 {
     /* copy std::vector into std::map */
-    for (size_t i = 0; i < contents_as_vector.size(); ++i)
-    {
+    for (size_t i = 0; i < contents_as_vector.size(); ++i) {
         contents[i] = contents_as_vector[i];
     }
 }
 
-
-ra_memory::ra_memory(const size_t num_addresses,
-                     const size_t value_size,
-                     const memory_contents &contents) :
-    memory_interface(num_addresses, value_size), contents(contents)
+ra_memory::ra_memory(
+    const size_t num_addresses,
+    const size_t value_size,
+    const memory_contents &contents)
+    : memory_interface(num_addresses, value_size), contents(contents)
 {
 }
 
@@ -54,4 +54,4 @@ void ra_memory::set_value(const size_t address, const size_t value)
     contents[address] = value;
 }
 
-} // libsnark
+} // namespace libsnark

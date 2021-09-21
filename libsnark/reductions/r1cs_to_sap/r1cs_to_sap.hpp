@@ -36,27 +36,31 @@
 #include <libsnark/relations/arithmetic_programs/sap/sap.hpp>
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/r1cs.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Helper function to find evaluation domain that will be used by the reduction
  * for a given R1CS instance.
  */
 template<typename FieldT>
-std::shared_ptr<libfqfft::evaluation_domain<FieldT> > r1cs_to_sap_get_domain(const r1cs_constraint_system<FieldT> &cs);
+std::shared_ptr<libfqfft::evaluation_domain<FieldT>> r1cs_to_sap_get_domain(
+    const r1cs_constraint_system<FieldT> &cs);
 
 /**
  * Instance map for the R1CS-to-QAP reduction.
  */
 template<typename FieldT>
-sap_instance<FieldT> r1cs_to_sap_instance_map(const r1cs_constraint_system<FieldT> &cs);
+sap_instance<FieldT> r1cs_to_sap_instance_map(
+    const r1cs_constraint_system<FieldT> &cs);
 
 /**
- * Instance map for the R1CS-to-QAP reduction followed by evaluation of the resulting QAP instance.
+ * Instance map for the R1CS-to-QAP reduction followed by evaluation of the
+ * resulting QAP instance.
  */
 template<typename FieldT>
-sap_instance_evaluation<FieldT> r1cs_to_sap_instance_map_with_evaluation(const r1cs_constraint_system<FieldT> &cs,
-                                                                         const FieldT &t);
+sap_instance_evaluation<FieldT> r1cs_to_sap_instance_map_with_evaluation(
+    const r1cs_constraint_system<FieldT> &cs, const FieldT &t);
 
 /**
  * Witness map for the R1CS-to-QAP reduction.
@@ -64,13 +68,14 @@ sap_instance_evaluation<FieldT> r1cs_to_sap_instance_map_with_evaluation(const r
  * The witness map takes zero knowledge into account when d1,d2 are random.
  */
 template<typename FieldT>
-sap_witness<FieldT> r1cs_to_sap_witness_map(const r1cs_constraint_system<FieldT> &cs,
-                                            const r1cs_primary_input<FieldT> &primary_input,
-                                            const r1cs_auxiliary_input<FieldT> &auxiliary_input,
-                                            const FieldT &d1,
-                                            const FieldT &d2);
+sap_witness<FieldT> r1cs_to_sap_witness_map(
+    const r1cs_constraint_system<FieldT> &cs,
+    const r1cs_primary_input<FieldT> &primary_input,
+    const r1cs_auxiliary_input<FieldT> &auxiliary_input,
+    const FieldT &d1,
+    const FieldT &d2);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/reductions/r1cs_to_sap/r1cs_to_sap.tcc>
 

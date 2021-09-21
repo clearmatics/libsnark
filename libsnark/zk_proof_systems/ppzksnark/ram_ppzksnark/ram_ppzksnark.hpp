@@ -21,7 +21,8 @@
 
  "R1CS" = "Rank-1 Constraint Systems"
  "RAM" = "Random-Access Machines"
- "ppzkSNARK" = "Pre-Processing Zero-Knowledge Succinct Non-interactive ARgument of Knowledge"
+ "ppzkSNARK" = "Pre-Processing Zero-Knowledge Succinct Non-interactive ARgument
+ of Knowledge"
 
  References:
 
@@ -46,30 +47,31 @@
 #ifndef RAM_PPZKSNARK_HPP_
 #define RAM_PPZKSNARK_HPP_
 
-#include <memory>
-
 #include <libsnark/reductions/ram_to_r1cs/ram_to_r1cs.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/ram_ppzksnark/ram_ppzksnark_params.hpp>
+#include <memory>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /******************************** Proving key ********************************/
 
-template<typename ram_ppzksnark_ppT>
-class ram_ppzksnark_proving_key;
+template<typename ram_ppzksnark_ppT> class ram_ppzksnark_proving_key;
 
 template<typename ram_ppzksnark_ppT>
-std::ostream& operator<<(std::ostream &out, const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &pk);
+std::ostream &operator<<(
+    std::ostream &out, const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &pk);
 
 template<typename ram_ppzksnark_ppT>
-std::istream& operator>>(std::istream &in, ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &pk);
+std::istream &operator>>(
+    std::istream &in, ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &pk);
 
 /**
  * A proving key for the RAM ppzkSNARK.
  */
-template<typename ram_ppzksnark_ppT>
-class ram_ppzksnark_proving_key {
+template<typename ram_ppzksnark_ppT> class ram_ppzksnark_proving_key
+{
 public:
     typedef ram_ppzksnark_snark_pp<ram_ppzksnark_ppT> snark_ppT;
 
@@ -79,42 +81,52 @@ public:
     size_t time_bound;
 
     ram_ppzksnark_proving_key() {}
-    ram_ppzksnark_proving_key(const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &other) = default;
-    ram_ppzksnark_proving_key(ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &&other) = default;
-    ram_ppzksnark_proving_key(r1cs_ppzksnark_proving_key<snark_ppT> &&r1cs_pk,
-                              const ram_ppzksnark_architecture_params<ram_ppzksnark_ppT> &ap,
-                              const size_t primary_input_size_bound,
-                              const size_t time_bound) :
-        r1cs_pk(std::move(r1cs_pk)),
-        ap(ap),
-        primary_input_size_bound(primary_input_size_bound),
-        time_bound(time_bound)
-    {}
+    ram_ppzksnark_proving_key(
+        const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &other) = default;
+    ram_ppzksnark_proving_key(
+        ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &&other) = default;
+    ram_ppzksnark_proving_key(
+        r1cs_ppzksnark_proving_key<snark_ppT> &&r1cs_pk,
+        const ram_ppzksnark_architecture_params<ram_ppzksnark_ppT> &ap,
+        const size_t primary_input_size_bound,
+        const size_t time_bound)
+        : r1cs_pk(std::move(r1cs_pk))
+        , ap(ap)
+        , primary_input_size_bound(primary_input_size_bound)
+        , time_bound(time_bound)
+    {
+    }
 
-    ram_ppzksnark_proving_key<ram_ppzksnark_ppT>& operator=(const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &other) = default;
+    ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &operator=(
+        const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &other) = default;
 
-    bool operator==(const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &other) const;
-    friend std::ostream& operator<< <ram_ppzksnark_ppT>(std::ostream &out, const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &pk);
-    friend std::istream& operator>> <ram_ppzksnark_ppT>(std::istream &in, ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &pk);
+    bool operator==(
+        const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &other) const;
+    friend std::ostream &operator<<<ram_ppzksnark_ppT>(
+        std::ostream &out,
+        const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &pk);
+    friend std::istream &operator>><ram_ppzksnark_ppT>(
+        std::istream &in, ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &pk);
 };
-
 
 /******************************* Verification key ****************************/
 
-template<typename ram_ppzksnark_ppT>
-class ram_ppzksnark_verification_key;
+template<typename ram_ppzksnark_ppT> class ram_ppzksnark_verification_key;
 
 template<typename ram_ppzksnark_ppT>
-std::ostream& operator<<(std::ostream &out, const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &vk);
+std::ostream &operator<<(
+    std::ostream &out,
+    const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &vk);
 
 template<typename ram_ppzksnark_ppT>
-std::istream& operator>>(std::istream &in, ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &vk);
+std::istream &operator>>(
+    std::istream &in, ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &vk);
 
 /**
  * A verification key for the RAM ppzkSNARK.
  */
-template<typename ram_ppzksnark_ppT>
-class ram_ppzksnark_verification_key {
+template<typename ram_ppzksnark_ppT> class ram_ppzksnark_verification_key
+{
 public:
     typedef ram_ppzksnark_snark_pp<ram_ppzksnark_ppT> snark_ppT;
 
@@ -126,49 +138,64 @@ public:
     std::set<size_t> bound_primary_input_locations;
 
     ram_ppzksnark_verification_key() = default;
-    ram_ppzksnark_verification_key(const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &other) = default;
-    ram_ppzksnark_verification_key(ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &&other) = default;
-    ram_ppzksnark_verification_key(const r1cs_ppzksnark_verification_key<snark_ppT> &r1cs_vk,
-                                   const ram_ppzksnark_architecture_params<ram_ppzksnark_ppT> &ap,
-                                   const size_t primary_input_size_bound,
-                                   const size_t time_bound) :
-        r1cs_vk(r1cs_vk),
-        ap(ap),
-        primary_input_size_bound(primary_input_size_bound),
-        time_bound(time_bound)
-    {}
+    ram_ppzksnark_verification_key(
+        const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &other) =
+        default;
+    ram_ppzksnark_verification_key(
+        ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &&other) = default;
+    ram_ppzksnark_verification_key(
+        const r1cs_ppzksnark_verification_key<snark_ppT> &r1cs_vk,
+        const ram_ppzksnark_architecture_params<ram_ppzksnark_ppT> &ap,
+        const size_t primary_input_size_bound,
+        const size_t time_bound)
+        : r1cs_vk(r1cs_vk)
+        , ap(ap)
+        , primary_input_size_bound(primary_input_size_bound)
+        , time_bound(time_bound)
+    {
+    }
 
-    ram_ppzksnark_verification_key<ram_ppzksnark_ppT>& operator=(const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &other) = default;
+    ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &operator=(
+        const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &other) =
+        default;
 
-    ram_ppzksnark_verification_key<ram_ppzksnark_ppT> bind_primary_input(const ram_ppzksnark_primary_input<ram_ppzksnark_ppT> &primary_input) const;
+    ram_ppzksnark_verification_key<ram_ppzksnark_ppT> bind_primary_input(
+        const ram_ppzksnark_primary_input<ram_ppzksnark_ppT> &primary_input)
+        const;
 
-    bool operator==(const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &other) const;
-    friend std::ostream& operator<< <ram_ppzksnark_ppT>(std::ostream &out, const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &vk);
-    friend std::istream& operator>> <ram_ppzksnark_ppT>(std::istream &in, ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &vk);
+    bool operator==(
+        const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &other) const;
+    friend std::ostream &operator<<<ram_ppzksnark_ppT>(
+        std::ostream &out,
+        const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &vk);
+    friend std::istream &operator>><ram_ppzksnark_ppT>(
+        std::istream &in,
+        ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &vk);
 };
-
 
 /********************************** Key pair *********************************/
 
 /**
- * A key pair for the RAM ppzkSNARK, which consists of a proving key and a verification key.
+ * A key pair for the RAM ppzkSNARK, which consists of a proving key and a
+ * verification key.
  */
-template<typename ram_ppzksnark_ppT>
-struct ram_ppzksnark_keypair {
+template<typename ram_ppzksnark_ppT> struct ram_ppzksnark_keypair {
 public:
     ram_ppzksnark_proving_key<ram_ppzksnark_ppT> pk;
     ram_ppzksnark_verification_key<ram_ppzksnark_ppT> vk;
 
     ram_ppzksnark_keypair() = default;
-    ram_ppzksnark_keypair(ram_ppzksnark_keypair<ram_ppzksnark_ppT> &&other) = default;
-    ram_ppzksnark_keypair(const ram_ppzksnark_keypair<ram_ppzksnark_ppT> &other) = default;
-    ram_ppzksnark_keypair(ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &&pk,
-                          ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &&vk) :
-        pk(std::move(pk)),
-        vk(std::move(vk))
-    {}
+    ram_ppzksnark_keypair(ram_ppzksnark_keypair<ram_ppzksnark_ppT> &&other) =
+        default;
+    ram_ppzksnark_keypair(
+        const ram_ppzksnark_keypair<ram_ppzksnark_ppT> &other) = default;
+    ram_ppzksnark_keypair(
+        ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &&pk,
+        ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &&vk)
+        : pk(std::move(pk)), vk(std::move(vk))
+    {
+    }
 };
-
 
 /*********************************** Proof ***********************************/
 
@@ -176,21 +203,23 @@ public:
  * A proof for the RAM ppzkSNARK.
  */
 template<typename ram_ppzksnark_ppT>
-using ram_ppzksnark_proof = r1cs_ppzksnark_proof<ram_ppzksnark_snark_pp<ram_ppzksnark_ppT> >;
-
+using ram_ppzksnark_proof =
+    r1cs_ppzksnark_proof<ram_ppzksnark_snark_pp<ram_ppzksnark_ppT>>;
 
 /***************************** Main algorithms *******************************/
 
 /**
  * A generator algorithm for the RAM ppzkSNARK.
  *
- * Given a choice of architecture parameters and computation bounds, this algorithm
- * produces proving and verification keys for all computations that respect these choices.
+ * Given a choice of architecture parameters and computation bounds, this
+ * algorithm produces proving and verification keys for all computations that
+ * respect these choices.
  */
 template<typename ram_ppzksnark_ppT>
-ram_ppzksnark_keypair<ram_ppzksnark_ppT> ram_ppzksnark_generator(const ram_ppzksnark_architecture_params<ram_ppzksnark_ppT> &ap,
-                                                                 const size_t primary_input_size_bound,
-                                                                 const size_t time_bound);
+ram_ppzksnark_keypair<ram_ppzksnark_ppT> ram_ppzksnark_generator(
+    const ram_ppzksnark_architecture_params<ram_ppzksnark_ppT> &ap,
+    const size_t primary_input_size_bound,
+    const size_t time_bound);
 
 /**
  * A prover algorithm for the RAM ppzkSNARK.
@@ -204,9 +233,10 @@ ram_ppzksnark_keypair<ram_ppzksnark_ppT> ram_ppzksnark_generator(const ram_ppzks
  * - the time to compute X(Y) is at most time_bound.
  */
 template<typename ram_ppzksnark_ppT>
-ram_ppzksnark_proof<ram_ppzksnark_ppT> ram_ppzksnark_prover(const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &pk,
-                                                            const ram_ppzksnark_primary_input<ram_ppzksnark_ppT> &primary_input,
-                                                            const ram_ppzksnark_auxiliary_input<ram_ppzksnark_ppT> &auxiliary_input);
+ram_ppzksnark_proof<ram_ppzksnark_ppT> ram_ppzksnark_prover(
+    const ram_ppzksnark_proving_key<ram_ppzksnark_ppT> &pk,
+    const ram_ppzksnark_primary_input<ram_ppzksnark_ppT> &primary_input,
+    const ram_ppzksnark_auxiliary_input<ram_ppzksnark_ppT> &auxiliary_input);
 
 /**
  * A verifier algorithm for the RAM ppzkSNARK.
@@ -216,11 +246,12 @@ ram_ppzksnark_proof<ram_ppzksnark_ppT> ram_ppzksnark_prover(const ram_ppzksnark_
  * provided that the computation respects the bounds.
  */
 template<typename ram_ppzksnark_ppT>
-bool ram_ppzksnark_verifier(const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &vk,
-                            const ram_ppzksnark_primary_input<ram_ppzksnark_ppT> &primary_input,
-                            const ram_ppzksnark_proof<ram_ppzksnark_ppT> &proof);
+bool ram_ppzksnark_verifier(
+    const ram_ppzksnark_verification_key<ram_ppzksnark_ppT> &vk,
+    const ram_ppzksnark_primary_input<ram_ppzksnark_ppT> &primary_input,
+    const ram_ppzksnark_proof<ram_ppzksnark_ppT> &proof);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/zk_proof_systems/ppzksnark/ram_ppzksnark/ram_ppzksnark.tcc>
 

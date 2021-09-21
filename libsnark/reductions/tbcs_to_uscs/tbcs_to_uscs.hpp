@@ -2,7 +2,8 @@
  *****************************************************************************
 
  Declaration of interfaces for a TBCS-to-USCS reduction, that is, constructing
- a USCS ("Unitary-Square Constraint System") from a TBCS ("Two-input Boolean Circuit Satisfiability").
+ a USCS ("Unitary-Square Constraint System") from a TBCS ("Two-input Boolean
+ Circuit Satisfiability").
 
  The reduction is straightforward: each non-output wire is mapped to a
  corresponding USCS constraint that enforces the wire to carry a boolean value;
@@ -32,23 +33,26 @@
 #include <libsnark/relations/circuit_satisfaction_problems/tbcs/tbcs.hpp>
 #include <libsnark/relations/constraint_satisfaction_problems/uscs/uscs.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Instance map for the TBCS-to-USCS reduction.
  */
 template<typename FieldT>
-uscs_constraint_system<FieldT> tbcs_to_uscs_instance_map(const tbcs_circuit &circuit);
+uscs_constraint_system<FieldT> tbcs_to_uscs_instance_map(
+    const tbcs_circuit &circuit);
 
 /**
  * Witness map for the TBCS-to-USCS reduction.
  */
 template<typename FieldT>
-uscs_variable_assignment<FieldT> tbcs_to_uscs_witness_map(const tbcs_circuit &circuit,
-                                                               const tbcs_primary_input &primary_input,
-                                                               const tbcs_auxiliary_input &auxiliary_input);
+uscs_variable_assignment<FieldT> tbcs_to_uscs_witness_map(
+    const tbcs_circuit &circuit,
+    const tbcs_primary_input &primary_input,
+    const tbcs_auxiliary_input &auxiliary_input);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/reductions/tbcs_to_uscs/tbcs_to_uscs.tcc>
 

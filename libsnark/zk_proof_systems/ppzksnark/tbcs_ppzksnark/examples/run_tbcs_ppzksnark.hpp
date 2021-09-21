@@ -15,7 +15,8 @@
 
 #include <libsnark/relations/circuit_satisfaction_problems/tbcs/examples/tbcs_examples.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Runs the ppzkSNARK (generator, prover, and verifier) for a given
@@ -25,10 +26,10 @@ namespace libsnark {
  * (This takes additional time.)
  */
 template<typename ppT>
-bool run_tbcs_ppzksnark(const tbcs_example &example,
-                        const bool test_serialization);
+bool run_tbcs_ppzksnark(
+    const tbcs_example &example, const bool test_serialization);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/zk_proof_systems/ppzksnark/tbcs_ppzksnark/examples/run_tbcs_ppzksnark.tcc>
 

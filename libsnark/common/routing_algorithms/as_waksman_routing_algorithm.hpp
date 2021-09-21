@@ -1,12 +1,14 @@
 /** @file
  *****************************************************************************
 
- Declaration of interfaces for functionality for routing on an arbitrary-size (AS) Waksman network.
+ Declaration of interfaces for functionality for routing on an arbitrary-size
+ (AS) Waksman network.
 
  AS-Waksman networks were introduced in \[BD02]. An AS-Waksman network for
- N packets is recursively defined as follows: place a column of floor(N/2) switches on
- the left, and a column of floor(N/2) switches on the right; then place two AS-Waksman
- sub-networks, for floor(N/2) and ceil(N/2) packets respectively, in the middle.
+ N packets is recursively defined as follows: place a column of floor(N/2)
+ switches on the left, and a column of floor(N/2) switches on the right; then
+ place two AS-Waksman sub-networks, for floor(N/2) and ceil(N/2) packets
+ respectively, in the middle.
 
  Note that unlike for Beneš networks where each switch handles routing
  of one packet to one of its two possible destinations, AS-Waksman
@@ -39,14 +41,13 @@
 #define AS_WAKSMAN_ROUTING_ALGORITHM_HPP_
 
 #include <cstddef>
+#include <libff/common/utils.hpp>
+#include <libsnark/common/data_structures/integer_permutation.hpp>
 #include <map>
 #include <vector>
 
-#include <libff/common/utils.hpp>
-
-#include <libsnark/common/data_structures/integer_permutation.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * When laid out on num_packets \times num_columns grid, each switch
@@ -79,7 +80,7 @@ namespace libsnark {
  * two indices are set to be equal and the packet is always routed to
  * the specified destination at the column_idx+1-th column.
  */
-typedef std::vector<std::vector<std::pair<size_t, size_t> > > as_waksman_topology;
+typedef std::vector<std::vector<std::pair<size_t, size_t>>> as_waksman_topology;
 
 /**
  * A routing assigns a bit to each switch in the AS-Waksman routing network.
@@ -98,10 +99,11 @@ typedef std::vector<std::vector<std::pair<size_t, size_t> > > as_waksman_topolog
  * entries for the positions associated with the bottom ports of the
  * switches, i.e. only canonical positions are present.
  */
-typedef std::vector<std::map<size_t, bool> > as_waksman_routing;
+typedef std::vector<std::map<size_t, bool>> as_waksman_routing;
 
 /**
- * Return the number of (switch) columns in a AS-Waksman network for a given number of packets.
+ * Return the number of (switch) columns in a AS-Waksman network for a given
+ * number of packets.
  *
  * For example:
  * - as_waksman_num_columns(2) = 1,
@@ -121,13 +123,15 @@ as_waksman_topology generate_as_waksman_topology(const size_t num_packets);
 /**
  * Route the given permutation on an AS-Waksman network of suitable size.
  */
-as_waksman_routing get_as_waksman_routing(const integer_permutation &permutation);
+as_waksman_routing get_as_waksman_routing(
+    const integer_permutation &permutation);
 
 /**
  * Check if a routing "implements" the given permutation.
  */
-bool valid_as_waksman_routing(const integer_permutation &permutation, const as_waksman_routing &routing);
+bool valid_as_waksman_routing(
+    const integer_permutation &permutation, const as_waksman_routing &routing);
 
-} // libsnark
+} // namespace libsnark
 
 #endif // AS_WAKSMAN_ROUTING_ALGORITHM_HPP_

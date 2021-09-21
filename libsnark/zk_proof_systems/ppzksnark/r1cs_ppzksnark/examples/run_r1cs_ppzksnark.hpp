@@ -14,10 +14,10 @@
 #define RUN_R1CS_PPZKSNARK_HPP_
 
 #include <libff/common/default_types/ec_pp.hpp>
-
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Runs the ppzkSNARK (generator, prover, and verifier) for a given
@@ -27,10 +27,10 @@ namespace libsnark {
  * (This takes additional time.)
  */
 template<typename ppT>
-bool run_r1cs_ppzksnark(const r1cs_example<libff::Fr<ppT> > &example,
-                        const bool test_serialization);
+bool run_r1cs_ppzksnark(
+    const r1cs_example<libff::Fr<ppT>> &example, const bool test_serialization);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/examples/run_r1cs_ppzksnark.tcc>
 

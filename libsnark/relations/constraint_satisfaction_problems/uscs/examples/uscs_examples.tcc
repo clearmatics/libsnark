@@ -16,14 +16,14 @@
 #define USCS_EXAMPLES_TCC_
 
 #include <cassert>
-
 #include <libff/common/utils.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename FieldT>
-uscs_example<FieldT> generate_uscs_example_with_field_input(const size_t num_constraints,
-                                                            const size_t num_inputs)
+uscs_example<FieldT> generate_uscs_example_with_field_input(
+    const size_t num_constraints, const size_t num_inputs)
 {
     libff::enter_block("Call to generate_uscs_example_with_field_input");
 
@@ -35,17 +35,14 @@ uscs_example<FieldT> generate_uscs_example_with_field_input(const size_t num_con
     cs.auxiliary_input_size = num_constraints - num_inputs;
 
     uscs_variable_assignment<FieldT> full_variable_assignment;
-    for (size_t i = 0; i < num_constraints; ++i)
-    {
+    for (size_t i = 0; i < num_constraints; ++i) {
         full_variable_assignment.emplace_back(FieldT(std::rand()));
     }
 
-    for (size_t i = 0; i < num_constraints; ++i)
-    {
+    for (size_t i = 0; i < num_constraints; ++i) {
         size_t x, y, z;
 
-        do
-        {
+        do {
             x = std::rand() % num_constraints;
             y = std::rand() % num_constraints;
             z = std::rand() % num_constraints;
@@ -53,20 +50,27 @@ uscs_example<FieldT> generate_uscs_example_with_field_input(const size_t num_con
 
         const FieldT x_coeff = FieldT(std::rand());
         const FieldT y_coeff = FieldT(std::rand());
-        const FieldT val = (std::rand() % 2 == 0 ? FieldT::one() : -FieldT::one());
-        const FieldT z_coeff = (val - x_coeff * full_variable_assignment[x] - y_coeff * full_variable_assignment[y]) * full_variable_assignment[z].inverse();
+        const FieldT val =
+            (std::rand() % 2 == 0 ? FieldT::one() : -FieldT::one());
+        const FieldT z_coeff = (val - x_coeff * full_variable_assignment[x] -
+                                y_coeff * full_variable_assignment[y]) *
+                               full_variable_assignment[z].inverse();
 
         uscs_constraint<FieldT> constr;
-        constr.add_term(x+1, x_coeff);
-        constr.add_term(y+1, y_coeff);
-        constr.add_term(z+1, z_coeff);
+        constr.add_term(x + 1, x_coeff);
+        constr.add_term(y + 1, y_coeff);
+        constr.add_term(z + 1, z_coeff);
 
         cs.add_constraint(constr);
     }
 
     /* split variable assignment */
-    uscs_primary_input<FieldT> primary_input(full_variable_assignment.begin(), full_variable_assignment.begin() + num_inputs);
-    uscs_primary_input<FieldT> auxiliary_input(full_variable_assignment.begin() + num_inputs, full_variable_assignment.end());
+    uscs_primary_input<FieldT> primary_input(
+        full_variable_assignment.begin(),
+        full_variable_assignment.begin() + num_inputs);
+    uscs_primary_input<FieldT> auxiliary_input(
+        full_variable_assignment.begin() + num_inputs,
+        full_variable_assignment.end());
 
     /* sanity checks */
     assert(cs.num_variables() == full_variable_assignment.size());
@@ -77,12 +81,13 @@ uscs_example<FieldT> generate_uscs_example_with_field_input(const size_t num_con
 
     libff::leave_block("Call to generate_uscs_example_with_field_input");
 
-    return uscs_example<FieldT>(std::move(cs), std::move(primary_input), std::move(auxiliary_input));
+    return uscs_example<FieldT>(
+        std::move(cs), std::move(primary_input), std::move(auxiliary_input));
 }
 
 template<typename FieldT>
-uscs_example<FieldT> generate_uscs_example_with_binary_input(const size_t num_constraints,
-                                                             const size_t num_inputs)
+uscs_example<FieldT> generate_uscs_example_with_binary_input(
+    const size_t num_constraints, const size_t num_inputs)
 {
     libff::enter_block("Call to generate_uscs_example_with_binary_input");
 
@@ -93,14 +98,12 @@ uscs_example<FieldT> generate_uscs_example_with_binary_input(const size_t num_co
     cs.auxiliary_input_size = num_constraints;
 
     uscs_variable_assignment<FieldT> full_variable_assignment;
-    for (size_t i = 0; i < num_inputs; ++i)
-    {
+    for (size_t i = 0; i < num_inputs; ++i) {
         full_variable_assignment.push_back(FieldT(std::rand() % 2));
     }
 
-    size_t lastvar = num_inputs-1;
-    for (size_t i = 0; i < num_constraints; ++i)
-    {
+    size_t lastvar = num_inputs - 1;
+    for (size_t i = 0; i < num_constraints; ++i) {
         ++lastvar;
 
         /* chose two random bits and XOR them together */
@@ -108,18 +111,26 @@ uscs_example<FieldT> generate_uscs_example_with_binary_input(const size_t num_co
         const size_t v = (i == 0 ? std::rand() % num_inputs : std::rand() % i);
 
         uscs_constraint<FieldT> constr;
-        constr.add_term(u+1, 1);
-        constr.add_term(v+1, 1);
-        constr.add_term(lastvar+1, 1);
-        constr.add_term(0,-FieldT::one()); // shift constant term (which is 0) by 1
+        constr.add_term(u + 1, 1);
+        constr.add_term(v + 1, 1);
+        constr.add_term(lastvar + 1, 1);
+        constr.add_term(
+            0, -FieldT::one()); // shift constant term (which is 0) by 1
 
         cs.add_constraint(constr);
-        full_variable_assignment.push_back(full_variable_assignment[u] + full_variable_assignment[v] - full_variable_assignment[u] * full_variable_assignment[v] - full_variable_assignment[u] * full_variable_assignment[v]);
+        full_variable_assignment.push_back(
+            full_variable_assignment[u] + full_variable_assignment[v] -
+            full_variable_assignment[u] * full_variable_assignment[v] -
+            full_variable_assignment[u] * full_variable_assignment[v]);
     }
 
     /* split variable assignment */
-    uscs_primary_input<FieldT> primary_input(full_variable_assignment.begin(), full_variable_assignment.begin() + num_inputs);
-    uscs_primary_input<FieldT> auxiliary_input(full_variable_assignment.begin() + num_inputs, full_variable_assignment.end());
+    uscs_primary_input<FieldT> primary_input(
+        full_variable_assignment.begin(),
+        full_variable_assignment.begin() + num_inputs);
+    uscs_primary_input<FieldT> auxiliary_input(
+        full_variable_assignment.begin() + num_inputs,
+        full_variable_assignment.end());
 
     /* sanity checks */
     assert(cs.num_variables() == full_variable_assignment.size());
@@ -130,8 +141,9 @@ uscs_example<FieldT> generate_uscs_example_with_binary_input(const size_t num_co
 
     libff::leave_block("Call to generate_uscs_example_with_binary_input");
 
-    return uscs_example<FieldT>(std::move(cs), std::move(primary_input), std::move(auxiliary_input));
+    return uscs_example<FieldT>(
+        std::move(cs), std::move(primary_input), std::move(auxiliary_input));
 }
 
-} // libsnark
+} // namespace libsnark
 #endif // USCS_EXAMPLES_TCC

@@ -1,4 +1,5 @@
-/** @file *****************************************************************************
+/** @file
+ *****************************************************************************
  Unit tests for gadgetlib2
  *****************************************************************************
  * @author     This file is part of libsnark, developed by SCIPR Lab
@@ -7,15 +8,16 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
-
 #include <libsnark/gadgetlib2/adapters.hpp>
 #include <libsnark/gadgetlib2/pp.hpp>
 
 using namespace gadgetlib2;
 
-namespace {
+namespace
+{
 
-TEST(GadgetLibAdapter, LinearTerm) {
+TEST(GadgetLibAdapter, LinearTerm)
+{
     initPublicParamsFromDefaultPp();
     const GadgetLibAdapter adapter;
     adapter.resetVariableIndex();
@@ -26,12 +28,13 @@ TEST(GadgetLibAdapter, LinearTerm) {
     EXPECT_EQ(new_lt.second, Fp(5));
 }
 
-TEST(GadgetLibAdapter, LinearCombination) {
+TEST(GadgetLibAdapter, LinearCombination)
+{
     initPublicParamsFromDefaultPp();
     const GadgetLibAdapter adapter;
     const Variable x("x");
     const Variable y("y");
-    const LinearCombination lc = 5*x + 3*y + 42;
+    const LinearCombination lc = 5 * x + 3 * y + 42;
     const auto new_lc = adapter.convert(lc);
     EXPECT_EQ(new_lc.second, Fp(42));
     EXPECT_EQ(new_lc.first.size(), 2u);
@@ -39,7 +42,8 @@ TEST(GadgetLibAdapter, LinearCombination) {
     EXPECT_EQ(new_lc.first[1], adapter.convert(3 * y));
 }
 
-TEST(GadgetLibAdapter, Constraint) {
+TEST(GadgetLibAdapter, Constraint)
+{
     using ::std::get;
     initPublicParamsFromDefaultPp();
     const GadgetLibAdapter adapter;
@@ -52,7 +56,8 @@ TEST(GadgetLibAdapter, Constraint) {
     EXPECT_EQ(get<2>(new_constraint), adapter.convert(LinearCombination(0)));
 }
 
-TEST(GadgetLibAdapter, ConstraintSystem) {
+TEST(GadgetLibAdapter, ConstraintSystem)
+{
     initPublicParamsFromDefaultPp();
     const GadgetLibAdapter adapter;
     const Variable x("x");
@@ -68,7 +73,8 @@ TEST(GadgetLibAdapter, ConstraintSystem) {
     EXPECT_EQ(new_constraint_sys.at(1), adapter.convert(constraint1));
 }
 
-TEST(GadgetLibAdapter, VariableAssignment) {
+TEST(GadgetLibAdapter, VariableAssignment)
+{
     initPublicParamsFromDefaultPp();
     const GadgetLibAdapter adapter;
     adapter.resetVariableIndex();
@@ -85,7 +91,8 @@ TEST(GadgetLibAdapter, VariableAssignment) {
     }
 }
 
-TEST(GadgetLibAdapter, Protoboard) {
+TEST(GadgetLibAdapter, Protoboard)
+{
     initPublicParamsFromDefaultPp();
     const GadgetLibAdapter adapter;
     adapter.resetVariableIndex();
@@ -100,6 +107,5 @@ TEST(GadgetLibAdapter, Protoboard) {
     EXPECT_EQ(new_pb.first, adapter.convert(pb->constraintSystem()));
     EXPECT_EQ(new_pb.second, adapter.convert(pb->assignment()));
 }
-
 
 } // namespace

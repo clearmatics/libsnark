@@ -36,9 +36,7 @@ public:
     using witness = typename scheme::witness;
 
     evaluation_and_witness(
-        const Field &i,
-        const Field &phi_i,
-        const witness &w);
+        const Field &i, const Field &phi_i, const witness &w);
 
     /// The point at which the polynomial is evaluated.
     Field i;
@@ -67,23 +65,28 @@ public:
 ///       typename witness;
 ///
 ///       /// Intended primarily for testing.
-///       static srs setup_from_secret(size_t max_degree, const libff::Fr<ppT> &alpha);
+///       static srs setup_from_secret(size_t max_degree, const libff::Fr<ppT>
+///       &alpha);
 ///
 ///       /// Generate an SRS
 ///       static srs setup(size_t max_degree);
 ///
 ///       /// Generate a commitment for a specific polynomial
-///       static commitment commit(const srs &srs, const polynomial<libff::Fr<ppT>> &phi);
+///       static commitment commit(const srs &srs, const
+///       polynomial<libff::Fr<ppT>> &phi);
 ///
 ///       /// Verify that a commitment C (generated with some srs) is a valid
 ///       /// commitment for some polynomial phi.
 ///       static bool verify_poly(
-///           const srs &srs, commitment C, const polynomial<libff::Fr<ppT>> &phi);
+///           const srs &srs, commitment C, const polynomial<libff::Fr<ppT>>
+///           &phi);
 ///
-///       /// Evaluate a polynomial at some point i and generate a witness for that
+///       /// Evaluate a polynomial at some point i and generate a witness for
+///       that
 ///       /// evaluation.
 ///       ///
-///       /// TODO: If multiple schemes are implemented, it may be more convenient
+///       /// TODO: If multiple schemes are implemented, it may be more
+///       convenient
 ///       /// to extract out the polynomial evaluation code, and pass the
 ///       /// evaluation in here. For now, we follow the form given in [KZG10].
 ///       static evaluation_and_witness<ppT, kzg10<ppT>> create_witness(
@@ -113,8 +116,7 @@ public:
     class srs
     {
     public:
-        srs(
-            std::vector<libff::G1<ppT>> &&alpha_powers_g1,
+        srs(std::vector<libff::G1<ppT>> &&alpha_powers_g1,
             const libff::G2<ppT> &alpha_g2);
 
         /// Array of powers of secret \alpha, encoded in G1:

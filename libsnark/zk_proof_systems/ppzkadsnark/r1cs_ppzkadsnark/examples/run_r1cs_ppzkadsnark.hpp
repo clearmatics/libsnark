@@ -14,11 +14,11 @@
 #define RUN_R1CS_PPZKADSNARK_HPP_
 
 #include <libff/algebra/curves/public_params.hpp>
-
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp>
 #include <libsnark/zk_proof_systems/ppzkadsnark/r1cs_ppzkadsnark/r1cs_ppzkadsnark_params.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Runs the ppzkADSNARK (generator, prover, and verifier) for a given
@@ -28,10 +28,11 @@ namespace libsnark {
  * (This takes additional time.)
  */
 template<typename ppT>
-bool run_r1cs_ppzkadsnark(const r1cs_example<libff::Fr<snark_pp<ppT>> > &example,
-                          const bool test_serialization);
+bool run_r1cs_ppzkadsnark(
+    const r1cs_example<libff::Fr<snark_pp<ppT>>> &example,
+    const bool test_serialization);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/zk_proof_systems/ppzkadsnark/r1cs_ppzkadsnark/examples/run_r1cs_ppzkadsnark.tcc>
 

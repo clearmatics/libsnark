@@ -10,9 +10,7 @@
  *****************************************************************************/
 
 #include <cassert>
-
 #include <libff/common/profiling.hpp>
-
 #include <libsnark/common/routing_algorithms/as_waksman_routing_algorithm.hpp>
 #include <libsnark/common/routing_algorithms/benes_routing_algorithm.hpp>
 
@@ -52,16 +50,16 @@ int main(void)
 
     libff::enter_block("Test Benes network routing algorithm");
     size_t bn_size = 8;
-    libff::print_indent(); printf("* for all permutations on %zu elements\n", bn_size);
+    libff::print_indent();
+    printf("* for all permutations on %zu elements\n", bn_size);
     test_benes(bn_size);
     libff::leave_block("Test Benes network routing algorithm");
 
-
     libff::enter_block("Test AS-Waksman network routing algorithm");
     size_t asw_max_size = 9;
-    for (size_t i = 2; i <= asw_max_size; ++i)
-    {
-        libff::print_indent(); printf("* for all permutations on %zu elements\n", i);
+    for (size_t i = 2; i <= asw_max_size; ++i) {
+        libff::print_indent();
+        printf("* for all permutations on %zu elements\n", i);
         test_as_waksman(i);
     }
     libff::leave_block("Test AS-Waksman network routing algorithm");

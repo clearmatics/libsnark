@@ -19,13 +19,13 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <libsnark/relations/variable.hpp>
 #include <map>
 #include <string>
 #include <vector>
 
-#include <libsnark/relations/variable.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /************************* USCS constraint ***********************************/
 
@@ -38,9 +38,7 @@ namespace libsnark {
  *
  * A USCS constraint is used to construct a USCS constraint system (see below).
  */
-template<typename FieldT>
-using uscs_constraint = linear_combination<FieldT>;
-
+template<typename FieldT> using uscs_constraint = linear_combination<FieldT>;
 
 /************************* USCS variable assignment **************************/
 
@@ -48,27 +46,22 @@ using uscs_constraint = linear_combination<FieldT>;
  * A USCS variable assignment is a vector of <FieldT> elements that represents
  * a candidate solution to a USCS constraint system (see below).
  */
-template<typename FieldT>
-using uscs_primary_input = std::vector<FieldT>;
+template<typename FieldT> using uscs_primary_input = std::vector<FieldT>;
 
-template<typename FieldT>
-using uscs_auxiliary_input = std::vector<FieldT>;
+template<typename FieldT> using uscs_auxiliary_input = std::vector<FieldT>;
 
-template<typename FieldT>
-using uscs_variable_assignment = std::vector<FieldT>;
-
-
+template<typename FieldT> using uscs_variable_assignment = std::vector<FieldT>;
 
 /************************* USCS constraint system ****************************/
 
-template<typename FieldT>
-class uscs_constraint_system;
+template<typename FieldT> class uscs_constraint_system;
 
 template<typename FieldT>
-std::ostream& operator<<(std::ostream &out, const uscs_constraint_system<FieldT> &cs);
+std::ostream &operator<<(
+    std::ostream &out, const uscs_constraint_system<FieldT> &cs);
 
 template<typename FieldT>
-std::istream& operator>>(std::istream &in, uscs_constraint_system<FieldT> &cs);
+std::istream &operator>>(std::istream &in, uscs_constraint_system<FieldT> &cs);
 
 /**
  * A system of USCS constraints looks like
@@ -82,15 +75,15 @@ std::istream& operator>>(std::istream &in, uscs_constraint_system<FieldT> &cs);
  * The 0-th variable (i.e., "x_{0}") always represents the constant 1.
  * Thus, the 0-th variable is not included in num_variables.
  */
-template<typename FieldT>
-class uscs_constraint_system {
+template<typename FieldT> class uscs_constraint_system
+{
 public:
     size_t primary_input_size;
     size_t auxiliary_input_size;
 
-    std::vector<uscs_constraint<FieldT> > constraints;
+    std::vector<uscs_constraint<FieldT>> constraints;
 
-    uscs_constraint_system() : primary_input_size(0), auxiliary_input_size(0) {};
+    uscs_constraint_system() : primary_input_size(0), auxiliary_input_size(0){};
 
     size_t num_inputs() const;
     size_t num_variables() const;
@@ -102,22 +95,26 @@ public:
 #endif
 
     bool is_valid() const;
-    bool is_satisfied(const uscs_primary_input<FieldT> &primary_input,
-                      const uscs_auxiliary_input<FieldT> &auxiliary_input) const;
+    bool is_satisfied(
+        const uscs_primary_input<FieldT> &primary_input,
+        const uscs_auxiliary_input<FieldT> &auxiliary_input) const;
 
     void add_constraint(const uscs_constraint<FieldT> &constraint);
-    void add_constraint(const uscs_constraint<FieldT> &constraint, const std::string &annotation);
+    void add_constraint(
+        const uscs_constraint<FieldT> &constraint,
+        const std::string &annotation);
 
     bool operator==(const uscs_constraint_system<FieldT> &other) const;
 
-    friend std::ostream& operator<< <FieldT>(std::ostream &out, const uscs_constraint_system<FieldT> &cs);
-    friend std::istream& operator>> <FieldT>(std::istream &in, uscs_constraint_system<FieldT> &cs);
+    friend std::ostream &operator<<<FieldT>(
+        std::ostream &out, const uscs_constraint_system<FieldT> &cs);
+    friend std::istream &operator>>
+        <FieldT>(std::istream &in, uscs_constraint_system<FieldT> &cs);
 
     void report_linear_constraint_statistics() const;
 };
 
-
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/relations/constraint_satisfaction_problems/uscs/uscs.tcc>
 

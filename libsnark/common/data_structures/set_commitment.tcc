@@ -12,11 +12,13 @@
 #ifndef SET_COMMITMENT_TCC_
 #define SET_COMMITMENT_TCC_
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename HashT>
-set_commitment_accumulator<HashT>::set_commitment_accumulator(const size_t max_entries, const size_t value_size) :
-    value_size(value_size)
+set_commitment_accumulator<HashT>::set_commitment_accumulator(
+    const size_t max_entries, const size_t value_size)
+    : value_size(value_size)
 {
     depth = libff::log2(max_entries);
     digest_size = HashT::get_digest_len();
@@ -29,8 +31,7 @@ void set_commitment_accumulator<HashT>::add(const libff::bit_vector &value)
 {
     assert(value_size == 0 || value.size() == value_size);
     const libff::bit_vector hash = HashT::get_hash(value);
-    if (hash_to_pos.find(hash) == hash_to_pos.end())
-    {
+    if (hash_to_pos.find(hash) == hash_to_pos.end()) {
         const size_t pos = hash_to_pos.size();
         tree->set_value(pos, hash);
         hash_to_pos[hash] = pos;
@@ -38,7 +39,8 @@ void set_commitment_accumulator<HashT>::add(const libff::bit_vector &value)
 }
 
 template<typename HashT>
-bool set_commitment_accumulator<HashT>::is_in_set(const libff::bit_vector &value) const
+bool set_commitment_accumulator<HashT>::is_in_set(
+    const libff::bit_vector &value) const
 {
     assert(value_size == 0 || value.size() == value_size);
     const libff::bit_vector hash = HashT::get_hash(value);
@@ -52,7 +54,8 @@ set_commitment set_commitment_accumulator<HashT>::get_commitment() const
 }
 
 template<typename HashT>
-set_membership_proof set_commitment_accumulator<HashT>::get_membership_proof(const libff::bit_vector &value) const
+set_membership_proof set_commitment_accumulator<HashT>::get_membership_proof(
+    const libff::bit_vector &value) const
 {
     const libff::bit_vector hash = HashT::get_hash(value);
     auto it = hash_to_pos.find(hash);
@@ -65,6 +68,6 @@ set_membership_proof set_commitment_accumulator<HashT>::get_membership_proof(con
     return proof;
 }
 
-} // libsnark
+} // namespace libsnark
 
 #endif // SET_COMMITMENT_TCC_

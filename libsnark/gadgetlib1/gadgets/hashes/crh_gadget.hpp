@@ -9,7 +9,8 @@
 
 #include <libsnark/gadgetlib1/gadgets/hashes/knapsack/knapsack_gadget.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 // for now all CRH gadgets are knapsack CRH's; can be easily extended
 // later to more expressive selector types.
@@ -19,6 +20,6 @@ using CRH_with_field_out_gadget = knapsack_CRH_with_field_out_gadget<FieldT>;
 template<typename FieldT>
 using CRH_with_bit_out_gadget = knapsack_CRH_with_bit_out_gadget<FieldT>;
 
-} // libsnark
+} // namespace libsnark
 
 #endif // CRH_GADGET_HPP_

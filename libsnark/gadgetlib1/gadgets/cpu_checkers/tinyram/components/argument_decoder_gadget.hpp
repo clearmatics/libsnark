@@ -14,25 +14,28 @@
 
 #include <libsnark/gadgetlib1/gadgets/cpu_checkers/tinyram/components/tinyram_protoboard.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename FieldT>
-class argument_decoder_gadget : public tinyram_standard_gadget<FieldT> {
+class argument_decoder_gadget : public tinyram_standard_gadget<FieldT>
+{
 private:
     pb_variable<FieldT> packed_desidx;
     pb_variable<FieldT> packed_arg1idx;
     pb_variable<FieldT> packed_arg2idx;
 
-    std::shared_ptr<packing_gadget<FieldT> > pack_desidx;
-    std::shared_ptr<packing_gadget<FieldT> > pack_arg1idx;
-    std::shared_ptr<packing_gadget<FieldT> > pack_arg2idx;
+    std::shared_ptr<packing_gadget<FieldT>> pack_desidx;
+    std::shared_ptr<packing_gadget<FieldT>> pack_arg1idx;
+    std::shared_ptr<packing_gadget<FieldT>> pack_arg2idx;
 
     pb_variable<FieldT> arg2_demux_result;
     pb_variable<FieldT> arg2_demux_success;
 
-    std::shared_ptr<loose_multiplexing_gadget<FieldT> > demux_des;
-    std::shared_ptr<loose_multiplexing_gadget<FieldT> > demux_arg1;
-    std::shared_ptr<loose_multiplexing_gadget<FieldT> > demux_arg2;
+    std::shared_ptr<loose_multiplexing_gadget<FieldT>> demux_des;
+    std::shared_ptr<loose_multiplexing_gadget<FieldT>> demux_arg1;
+    std::shared_ptr<loose_multiplexing_gadget<FieldT>> demux_arg2;
+
 public:
     pb_variable<FieldT> arg2_is_imm;
     pb_variable_array<FieldT> desidx;
@@ -43,25 +46,25 @@ public:
     pb_variable<FieldT> packed_arg1val;
     pb_variable<FieldT> packed_arg2val;
 
-    argument_decoder_gadget(tinyram_protoboard<FieldT> &pb,
-                            const pb_variable<FieldT> &arg2_is_imm,
-                            const pb_variable_array<FieldT> &desidx,
-                            const pb_variable_array<FieldT> &arg1idx,
-                            const pb_variable_array<FieldT> &arg2idx,
-                            const pb_variable_array<FieldT> &packed_registers,
-                            const pb_variable<FieldT> &packed_desval,
-                            const pb_variable<FieldT> &packed_arg1val,
-                            const pb_variable<FieldT> &packed_arg2val,
-                            const std::string &annotation_prefix="");
+    argument_decoder_gadget(
+        tinyram_protoboard<FieldT> &pb,
+        const pb_variable<FieldT> &arg2_is_imm,
+        const pb_variable_array<FieldT> &desidx,
+        const pb_variable_array<FieldT> &arg1idx,
+        const pb_variable_array<FieldT> &arg2idx,
+        const pb_variable_array<FieldT> &packed_registers,
+        const pb_variable<FieldT> &packed_desval,
+        const pb_variable<FieldT> &packed_arg1val,
+        const pb_variable<FieldT> &packed_arg2val,
+        const std::string &annotation_prefix = "");
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
 
-template<typename FieldT>
-void test_argument_decoder_gadget();
+template<typename FieldT> void test_argument_decoder_gadget();
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/cpu_checkers/tinyram/components/argument_decoder_gadget.tcc>
 

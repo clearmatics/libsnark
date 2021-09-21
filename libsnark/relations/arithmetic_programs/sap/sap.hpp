@@ -23,16 +23,15 @@
 #ifndef SAP_HPP_
 #define SAP_HPP_
 
+#include <libfqfft/evaluation_domain/evaluation_domain.hpp>
 #include <map>
 #include <memory>
 
-#include <libfqfft/evaluation_domain/evaluation_domain.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /* forward declaration */
-template<typename FieldT>
-class sap_witness;
+template<typename FieldT> class sap_witness;
 
 /**
  * A SAP instance.
@@ -45,37 +44,39 @@ class sap_witness;
  * There is no need to store the Z polynomial because it is uniquely
  * determined by the domain (as Z is its vanishing polynomial).
  */
-template<typename FieldT>
-class sap_instance {
+template<typename FieldT> class sap_instance
+{
 private:
     size_t num_variables_;
     size_t degree_;
     size_t num_inputs_;
 
 public:
-    std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain;
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain;
 
-    std::vector<std::map<size_t, FieldT> > A_in_Lagrange_basis;
-    std::vector<std::map<size_t, FieldT> > C_in_Lagrange_basis;
+    std::vector<std::map<size_t, FieldT>> A_in_Lagrange_basis;
+    std::vector<std::map<size_t, FieldT>> C_in_Lagrange_basis;
 
-    sap_instance(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                 const size_t num_variables,
-                 const size_t degree,
-                 const size_t num_inputs,
-                 const std::vector<std::map<size_t, FieldT> > &A_in_Lagrange_basis,
-                 const std::vector<std::map<size_t, FieldT> > &C_in_Lagrange_basis);
+    sap_instance(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const std::vector<std::map<size_t, FieldT>> &A_in_Lagrange_basis,
+        const std::vector<std::map<size_t, FieldT>> &C_in_Lagrange_basis);
 
-    sap_instance(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                 const size_t num_variables,
-                 const size_t degree,
-                 const size_t num_inputs,
-                 std::vector<std::map<size_t, FieldT> > &&A_in_Lagrange_basis,
-                 std::vector<std::map<size_t, FieldT> > &&C_in_Lagrange_basis);
+    sap_instance(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        std::vector<std::map<size_t, FieldT>> &&A_in_Lagrange_basis,
+        std::vector<std::map<size_t, FieldT>> &&C_in_Lagrange_basis);
 
     sap_instance(const sap_instance<FieldT> &other) = default;
     sap_instance(sap_instance<FieldT> &&other) = default;
-    sap_instance& operator=(const sap_instance<FieldT> &other) = default;
-    sap_instance& operator=(sap_instance<FieldT> &&other) = default;
+    sap_instance &operator=(const sap_instance<FieldT> &other) = default;
+    sap_instance &operator=(sap_instance<FieldT> &&other) = default;
 
     size_t num_variables() const;
     size_t degree() const;
@@ -85,7 +86,8 @@ public:
 };
 
 /**
- * A SAP instance evaluation is a SAP instance that is evaluated at a field element t.
+ * A SAP instance evaluation is a SAP instance that is evaluated at a field
+ * element t.
  *
  * Specifically, the datastructure stores:
  * - a choice of domain (corresponding to a certain subset of the field);
@@ -95,14 +97,15 @@ public:
  * - evaluations of all monomials of t;
  * - counts about how many of the above evaluations are in fact non-zero.
  */
-template<typename FieldT>
-class sap_instance_evaluation {
+template<typename FieldT> class sap_instance_evaluation
+{
 private:
     size_t num_variables_;
     size_t degree_;
     size_t num_inputs_;
+
 public:
-    std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain;
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain;
 
     FieldT t;
 
@@ -110,29 +113,34 @@ public:
 
     FieldT Zt;
 
-    sap_instance_evaluation(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                            const size_t num_variables,
-                            const size_t degree,
-                            const size_t num_inputs,
-                            const FieldT &t,
-                            const std::vector<FieldT> &At,
-                            const std::vector<FieldT> &Ct,
-                            const std::vector<FieldT> &Ht,
-                            const FieldT &Zt);
-    sap_instance_evaluation(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                            const size_t num_variables,
-                            const size_t degree,
-                            const size_t num_inputs,
-                            const FieldT &t,
-                            std::vector<FieldT> &&At,
-                            std::vector<FieldT> &&Ct,
-                            std::vector<FieldT> &&Ht,
-                            const FieldT &Zt);
+    sap_instance_evaluation(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &t,
+        const std::vector<FieldT> &At,
+        const std::vector<FieldT> &Ct,
+        const std::vector<FieldT> &Ht,
+        const FieldT &Zt);
+    sap_instance_evaluation(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &t,
+        std::vector<FieldT> &&At,
+        std::vector<FieldT> &&Ct,
+        std::vector<FieldT> &&Ht,
+        const FieldT &Zt);
 
-    sap_instance_evaluation(const sap_instance_evaluation<FieldT> &other) = default;
+    sap_instance_evaluation(const sap_instance_evaluation<FieldT> &other) =
+        default;
     sap_instance_evaluation(sap_instance_evaluation<FieldT> &&other) = default;
-    sap_instance_evaluation& operator=(const sap_instance_evaluation<FieldT> &other) = default;
-    sap_instance_evaluation& operator=(sap_instance_evaluation<FieldT> &&other) = default;
+    sap_instance_evaluation &operator=(
+        const sap_instance_evaluation<FieldT> &other) = default;
+    sap_instance_evaluation &operator=(
+        sap_instance_evaluation<FieldT> &&other) = default;
 
     size_t num_variables() const;
     size_t degree() const;
@@ -144,8 +152,8 @@ public:
 /**
  * A SAP witness.
  */
-template<typename FieldT>
-class sap_witness {
+template<typename FieldT> class sap_witness
+{
 private:
     size_t num_variables_;
     size_t degree_;
@@ -157,33 +165,35 @@ public:
     std::vector<FieldT> coefficients_for_ACs;
     std::vector<FieldT> coefficients_for_H;
 
-    sap_witness(const size_t num_variables,
-                const size_t degree,
-                const size_t num_inputs,
-                const FieldT &d1,
-                const FieldT &d2,
-                const std::vector<FieldT> &coefficients_for_ACs,
-                const std::vector<FieldT> &coefficients_for_H);
+    sap_witness(
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &d1,
+        const FieldT &d2,
+        const std::vector<FieldT> &coefficients_for_ACs,
+        const std::vector<FieldT> &coefficients_for_H);
 
-    sap_witness(const size_t num_variables,
-                const size_t degree,
-                const size_t num_inputs,
-                const FieldT &d1,
-                const FieldT &d2,
-                const std::vector<FieldT> &coefficients_for_ACs,
-                std::vector<FieldT> &&coefficients_for_H);
+    sap_witness(
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &d1,
+        const FieldT &d2,
+        const std::vector<FieldT> &coefficients_for_ACs,
+        std::vector<FieldT> &&coefficients_for_H);
 
     sap_witness(const sap_witness<FieldT> &other) = default;
     sap_witness(sap_witness<FieldT> &&other) = default;
-    sap_witness& operator=(const sap_witness<FieldT> &other) = default;
-    sap_witness& operator=(sap_witness<FieldT> &&other) = default;
+    sap_witness &operator=(const sap_witness<FieldT> &other) = default;
+    sap_witness &operator=(sap_witness<FieldT> &&other) = default;
 
     size_t num_variables() const;
     size_t degree() const;
     size_t num_inputs() const;
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/relations/arithmetic_programs/sap/sap.tcc>
 

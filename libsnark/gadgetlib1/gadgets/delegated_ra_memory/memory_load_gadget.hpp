@@ -15,11 +15,12 @@
 
 #include <libsnark/gadgetlib1/gadgets/merkle_tree/merkle_tree_check_read_gadget.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename FieldT, typename HashT>
 using memory_load_gadget = merkle_tree_check_read_gadget<FieldT, HashT>;
 
-} // libsnark
+} // namespace libsnark
 
 #endif // MEMORY_LOAD_GADGET_HPP_

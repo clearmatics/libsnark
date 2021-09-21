@@ -2,7 +2,8 @@
  *****************************************************************************
 
  Declaration of interfaces for a BACS-to-R1CS reduction, that is, constructing
- a R1CS ("Rank-1 Constraint System") from a BACS ("Bilinear Arithmetic Circuit Satisfiability").
+ a R1CS ("Rank-1 Constraint System") from a BACS ("Bilinear Arithmetic Circuit
+ Satisfiability").
 
  The reduction is straightforward: each bilinear gate gives rises to a
  corresponding R1CS constraint that enforces correct computation of the gate;
@@ -21,23 +22,26 @@
 #include <libsnark/relations/circuit_satisfaction_problems/bacs/bacs.hpp>
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/r1cs.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Instance map for the BACS-to-R1CS reduction.
  */
 template<typename FieldT>
-r1cs_constraint_system<FieldT> bacs_to_r1cs_instance_map(const bacs_circuit<FieldT> &circuit);
+r1cs_constraint_system<FieldT> bacs_to_r1cs_instance_map(
+    const bacs_circuit<FieldT> &circuit);
 
 /**
  * Witness map for the BACS-to-R1CS reduction.
  */
 template<typename FieldT>
-r1cs_variable_assignment<FieldT> bacs_to_r1cs_witness_map(const bacs_circuit<FieldT> &circuit,
-                                                               const bacs_primary_input<FieldT> &primary_input,
-                                                               const bacs_auxiliary_input<FieldT> &auxiliary_input);
+r1cs_variable_assignment<FieldT> bacs_to_r1cs_witness_map(
+    const bacs_circuit<FieldT> &circuit,
+    const bacs_primary_input<FieldT> &primary_input,
+    const bacs_auxiliary_input<FieldT> &auxiliary_input);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/reductions/bacs_to_r1cs/bacs_to_r1cs.tcc>
 

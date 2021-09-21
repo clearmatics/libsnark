@@ -20,23 +20,27 @@
 
 #include <libsnark/zk_proof_systems/ppzkadsnark/r1cs_ppzkadsnark/r1cs_ppzkadsnark_signature.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-class ed25519_sigT {
+class ed25519_sigT
+{
 public:
     unsigned char sig_bytes[64];
 };
 
-class ed25519_vkT {
+class ed25519_vkT
+{
 public:
     unsigned char vk_bytes[32];
 };
 
-class ed25519_skT {
+class ed25519_skT
+{
 public:
     unsigned char sk_bytes[64];
 };
 
-} // libsnark
+} // namespace libsnark
 
 #endif // ED25519SIG_HPP_
