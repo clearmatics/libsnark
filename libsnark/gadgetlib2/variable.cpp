@@ -595,9 +595,9 @@ FElem LinearCombination::eval(const VariableAssignment &assignment) const
         retval += " + " + constant_.asString();
     }
     return retval;
-#else // ifdef DEBUG
+#else
     return "";
-#endif // ifdef DEBUG
+#endif
 }
 
 const Variable::set LinearCombination::getUsedVariables() const
@@ -670,9 +670,9 @@ const FElem Monomial::getCoefficient() const { return coeff_; }
         retval += "*" + iter->name();
     }
     return retval;
-#else // ifdef DEBUG
+#else
     return "";
-#endif // ifdef DEBUG
+#endif
 }
 
 Monomial Monomial::operator-() const
