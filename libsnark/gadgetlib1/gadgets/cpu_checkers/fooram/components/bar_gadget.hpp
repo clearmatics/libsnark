@@ -15,7 +15,8 @@
 #include <libsnark/gadgetlib1/gadget.hpp>
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * The bar gadget checks linear combination
@@ -28,8 +29,8 @@ namespace libsnark {
  * - load_addr = 2 * x + PC'
  * - store_addr = x + PC
  */
-template<typename FieldT>
-class bar_gadget : public gadget<FieldT> {
+template<typename FieldT> class bar_gadget : public gadget<FieldT>
+{
 public:
     pb_linear_combination_array<FieldT> X;
     FieldT a;
@@ -42,22 +43,23 @@ public:
     pb_variable_array<FieldT> overflow;
     pb_variable_array<FieldT> unpacked_result;
 
-    std::shared_ptr<packing_gadget<FieldT> > unpack_result;
-    std::shared_ptr<packing_gadget<FieldT> > pack_Z;
+    std::shared_ptr<packing_gadget<FieldT>> unpack_result;
+    std::shared_ptr<packing_gadget<FieldT>> pack_Z;
 
     size_t width;
-    bar_gadget(protoboard<FieldT> &pb,
-               const pb_linear_combination_array<FieldT> &X,
-               const FieldT &a,
-               const pb_linear_combination_array<FieldT> &Y,
-               const FieldT &b,
-               const pb_linear_combination<FieldT> &Z_packed,
-               const std::string &annotation_prefix);
+    bar_gadget(
+        protoboard<FieldT> &pb,
+        const pb_linear_combination_array<FieldT> &X,
+        const FieldT &a,
+        const pb_linear_combination_array<FieldT> &Y,
+        const FieldT &b,
+        const pb_linear_combination<FieldT> &Z_packed,
+        const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/cpu_checkers/fooram/components/bar_gadget.tcc>
 

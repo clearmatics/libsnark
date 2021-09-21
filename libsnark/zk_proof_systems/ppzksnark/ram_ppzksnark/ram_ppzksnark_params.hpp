@@ -14,7 +14,8 @@
 
 #include <libsnark/relations/ram_computations/rams/ram_params.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * The interfaces of the RAM ppzkSNARK are templatized via the parameter
@@ -36,11 +37,13 @@ namespace libsnark {
  *       typedef my_machine_pp machine_pp;
  *       static void init_public params()
  *       {
- *           snark_pp::init_public_params(); // and additional initialization if needed
+ *           snark_pp::init_public_params(); // and additional initialization if
+ * needed
  *       }
  *   };
  *
- * Having done the above, my_ram_ppzksnark_pp can be used as a template parameter.
+ * Having done the above, my_ram_ppzksnark_pp can be used as a template
+ * parameter.
  *
  * Look for for default_tinyram_ppzksnark_pp in the file
  *
@@ -61,14 +64,17 @@ template<typename ram_ppzksnark_ppT>
 using ram_ppzksnark_machine_pp = typename ram_ppzksnark_ppT::machine_pp;
 
 template<typename ram_ppzksnark_ppT>
-using ram_ppzksnark_architecture_params = ram_architecture_params<ram_ppzksnark_machine_pp<ram_ppzksnark_ppT> >;
+using ram_ppzksnark_architecture_params =
+    ram_architecture_params<ram_ppzksnark_machine_pp<ram_ppzksnark_ppT>>;
 
 template<typename ram_ppzksnark_ppT>
-using ram_ppzksnark_primary_input = ram_boot_trace<ram_ppzksnark_machine_pp<ram_ppzksnark_ppT> >;
+using ram_ppzksnark_primary_input =
+    ram_boot_trace<ram_ppzksnark_machine_pp<ram_ppzksnark_ppT>>;
 
 template<typename ram_ppzksnark_ppT>
-using ram_ppzksnark_auxiliary_input = ram_input_tape<ram_ppzksnark_machine_pp<ram_ppzksnark_ppT> >;
+using ram_ppzksnark_auxiliary_input =
+    ram_input_tape<ram_ppzksnark_machine_pp<ram_ppzksnark_ppT>>;
 
-} // libsnark
+} // namespace libsnark
 
 #endif // RAM_PPZKSNARK_PARAMS_HPP_

@@ -9,11 +9,12 @@
 
 #include <libsnark/common/default_types/tinyram_zksnark_pp.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 void default_tinyram_zksnark_pp::init_public_params()
 {
     PCD_pp::init_public_params();
 }
 
-} // libsnark
+} // namespace libsnark

@@ -17,11 +17,12 @@
 
 #include <libsnark/gadgetlib1/gadgets/merkle_tree/merkle_tree_check_update_gadget.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename FieldT, typename HashT>
 using memory_load_store_gadget = merkle_tree_check_update_gadget<FieldT, HashT>;
 
-} // libsnark
+} // namespace libsnark
 
 #endif // MEMORY_LOAD_STORE_GADGET_HPP_

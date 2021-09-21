@@ -12,26 +12,30 @@
 #include <libsnark/gadgetlib1/gadget.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/hash_io.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename FieldT, typename HashT>
-class merkle_authentication_path_variable : public gadget<FieldT> {
+class merkle_authentication_path_variable : public gadget<FieldT>
+{
 public:
-
     const size_t tree_depth;
-    std::vector<digest_variable<FieldT> > left_digests;
-    std::vector<digest_variable<FieldT> > right_digests;
+    std::vector<digest_variable<FieldT>> left_digests;
+    std::vector<digest_variable<FieldT>> right_digests;
 
-    merkle_authentication_path_variable(protoboard<FieldT> &pb,
-                                        const size_t tree_depth,
-                                        const std::string &annotation_prefix);
+    merkle_authentication_path_variable(
+        protoboard<FieldT> &pb,
+        const size_t tree_depth,
+        const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
-    void generate_r1cs_witness(const size_t address, const merkle_authentication_path &path);
-    merkle_authentication_path get_authentication_path(const size_t address) const;
+    void generate_r1cs_witness(
+        const size_t address, const merkle_authentication_path &path);
+    merkle_authentication_path get_authentication_path(
+        const size_t address) const;
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/merkle_tree/merkle_authentication_path_variable.tcc>
 

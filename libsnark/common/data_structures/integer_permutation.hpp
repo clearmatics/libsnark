@@ -1,7 +1,8 @@
 /** @file
  *****************************************************************************
 
- Declaration of interfaces for a permutation of the integers in {min_element,...,max_element}.
+ Declaration of interfaces for a permutation of the integers in
+ {min_element,...,max_element}.
 
  *****************************************************************************
  * @author     This file is part of libsnark, developed by SCIPR Lab
@@ -15,9 +16,11 @@
 #include <cstddef>
 #include <vector>
 
-namespace libsnark {
+namespace libsnark
+{
 
-class integer_permutation {
+class integer_permutation
+{
 private:
     std::vector<size_t> contents; /* offset by min_element */
 
@@ -28,7 +31,7 @@ public:
     integer_permutation(const size_t size = 0);
     integer_permutation(const size_t min_element, const size_t max_element);
 
-    integer_permutation& operator=(const integer_permutation &other) = default;
+    integer_permutation &operator=(const integer_permutation &other) = default;
 
     size_t size() const;
     bool operator==(const integer_permutation &other) const;
@@ -38,7 +41,8 @@ public:
 
     bool is_valid() const;
     integer_permutation inverse() const;
-    integer_permutation slice(const size_t slice_min_element, const size_t slice_max_element) const;
+    integer_permutation slice(
+        const size_t slice_min_element, const size_t slice_max_element) const;
 
     /* Similarly to std::next_permutation this transforms the current
     integer permutation into the next lexicographically ordered
@@ -49,6 +53,6 @@ public:
     void random_shuffle();
 };
 
-} // libsnark
+} // namespace libsnark
 
 #endif // INTEGER_PERMUTATION_HPP_

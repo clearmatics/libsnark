@@ -15,17 +15,17 @@
 #ifndef FP2_GADGETS_HPP_
 #define FP2_GADGETS_HPP_
 
+#include <libsnark/gadgetlib1/gadget.hpp>
 #include <memory>
 
-#include <libsnark/gadgetlib1/gadget.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Gadget that represents an Fp2 variable.
  */
-template<typename Fp2T>
-class Fp2_variable : public gadget<typename Fp2T::my_Fp> {
+template<typename Fp2T> class Fp2_variable : public gadget<typename Fp2T::my_Fp>
+{
 public:
     typedef typename Fp2T::my_Fp FieldT;
 
@@ -34,19 +34,21 @@ public:
 
     pb_linear_combination_array<FieldT> all_vars;
 
-    Fp2_variable(protoboard<FieldT> &pb,
-                 const std::string &annotation_prefix);
-    Fp2_variable(protoboard<FieldT> &pb,
-                 const Fp2T &el,
-                 const std::string &annotation_prefix);
-    Fp2_variable(protoboard<FieldT> &pb,
-                 const Fp2T &el,
-                 const pb_linear_combination<FieldT> &coeff,
-                 const std::string &annotation_prefix);
-    Fp2_variable(protoboard<FieldT> &pb,
-                 const pb_linear_combination<FieldT> &c0,
-                 const pb_linear_combination<FieldT> &c1,
-                 const std::string &annotation_prefix);
+    Fp2_variable(protoboard<FieldT> &pb, const std::string &annotation_prefix);
+    Fp2_variable(
+        protoboard<FieldT> &pb,
+        const Fp2T &el,
+        const std::string &annotation_prefix);
+    Fp2_variable(
+        protoboard<FieldT> &pb,
+        const Fp2T &el,
+        const pb_linear_combination<FieldT> &coeff,
+        const std::string &annotation_prefix);
+    Fp2_variable(
+        protoboard<FieldT> &pb,
+        const pb_linear_combination<FieldT> &c0,
+        const pb_linear_combination<FieldT> &c1,
+        const std::string &annotation_prefix);
 
     void generate_r1cs_equals_const_constraints(const Fp2T &el);
     void generate_r1cs_witness(const Fp2T &el);
@@ -71,7 +73,8 @@ public:
  * Gadget that creates constraints for Fp2 by Fp2 multiplication.
  */
 template<typename Fp2T>
-class Fp2_mul_gadget : public gadget<typename Fp2T::my_Fp> {
+class Fp2_mul_gadget : public gadget<typename Fp2T::my_Fp>
+{
 public:
     typedef typename Fp2T::my_Fp FieldT;
 
@@ -81,20 +84,23 @@ public:
 
     pb_variable<FieldT> v1;
 
-    Fp2_mul_gadget(protoboard<FieldT> &pb,
-                   const Fp2_variable<Fp2T> &A,
-                   const Fp2_variable<Fp2T> &B,
-                   const Fp2_variable<Fp2T> &result,
-                   const std::string &annotation_prefix);
+    Fp2_mul_gadget(
+        protoboard<FieldT> &pb,
+        const Fp2_variable<Fp2T> &A,
+        const Fp2_variable<Fp2T> &B,
+        const Fp2_variable<Fp2T> &result,
+        const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
 
 /**
- * Gadget that creates constraints for Fp2 multiplication by a linear combination.
+ * Gadget that creates constraints for Fp2 multiplication by a linear
+ * combination.
  */
 template<typename Fp2T>
-class Fp2_mul_by_lc_gadget : public gadget<typename Fp2T::my_Fp> {
+class Fp2_mul_by_lc_gadget : public gadget<typename Fp2T::my_Fp>
+{
 public:
     typedef typename Fp2T::my_Fp FieldT;
 
@@ -102,11 +108,12 @@ public:
     pb_linear_combination<FieldT> lc;
     Fp2_variable<Fp2T> result;
 
-    Fp2_mul_by_lc_gadget(protoboard<FieldT> &pb,
-                         const Fp2_variable<Fp2T> &A,
-                         const pb_linear_combination<FieldT> &lc,
-                         const Fp2_variable<Fp2T> &result,
-                         const std::string &annotation_prefix);
+    Fp2_mul_by_lc_gadget(
+        protoboard<FieldT> &pb,
+        const Fp2_variable<Fp2T> &A,
+        const pb_linear_combination<FieldT> &lc,
+        const Fp2_variable<Fp2T> &result,
+        const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
@@ -115,22 +122,24 @@ public:
  * Gadget that creates constraints for Fp2 squaring.
  */
 template<typename Fp2T>
-class Fp2_sqr_gadget : public gadget<typename Fp2T::my_Fp> {
+class Fp2_sqr_gadget : public gadget<typename Fp2T::my_Fp>
+{
 public:
     typedef typename Fp2T::my_Fp FieldT;
 
     Fp2_variable<Fp2T> A;
     Fp2_variable<Fp2T> result;
 
-    Fp2_sqr_gadget(protoboard<FieldT> &pb,
-                   const Fp2_variable<Fp2T> &A,
-                   const Fp2_variable<Fp2T> &result,
-                   const std::string &annotation_prefix);
+    Fp2_sqr_gadget(
+        protoboard<FieldT> &pb,
+        const Fp2_variable<Fp2T> &A,
+        const Fp2_variable<Fp2T> &result,
+        const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.tcc>
 

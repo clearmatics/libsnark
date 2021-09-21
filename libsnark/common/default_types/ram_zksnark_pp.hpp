@@ -15,10 +15,11 @@
 
 #include <libsnark/common/default_types/tinyram_zksnark_pp.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 typedef default_tinyram_zksnark_pp default_ram_zksnark_pp;
 
-} // libsnark
+} // namespace libsnark
 
 #endif // RAM_ZKSNARK_PP_HPP_

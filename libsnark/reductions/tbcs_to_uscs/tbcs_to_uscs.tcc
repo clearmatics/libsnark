@@ -16,10 +16,12 @@ See tbcs_to_uscs.hpp .
 
 #include <libff/algebra/fields/field_utils.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename FieldT>
-uscs_constraint_system<FieldT> tbcs_to_uscs_instance_map(const tbcs_circuit &circuit)
+uscs_constraint_system<FieldT> tbcs_to_uscs_instance_map(
+    const tbcs_circuit &circuit)
 {
     assert(circuit.is_valid());
     uscs_constraint_system<FieldT> result;
@@ -29,23 +31,25 @@ uscs_constraint_system<FieldT> tbcs_to_uscs_instance_map(const tbcs_circuit &cir
 #endif
 
     result.primary_input_size = circuit.primary_input_size;
-    result.auxiliary_input_size = circuit.auxiliary_input_size + circuit.gates.size();
+    result.auxiliary_input_size =
+        circuit.auxiliary_input_size + circuit.gates.size();
 
-    for (auto &g : circuit.gates)
-    {
+    for (auto &g : circuit.gates) {
         const variable<FieldT> x(g.left_wire);
         const variable<FieldT> y(g.right_wire);
         const variable<FieldT> z(g.output);
 
 #ifdef DEBUG
         auto it = circuit.gate_annotations.find(g.output);
-        const std::string annotation = (it != circuit.gate_annotations.end() ? it->second : FMT("", "compute_wire_%zu", g.output));
+        const std::string annotation =
+            (it != circuit.gate_annotations.end()
+                 ? it->second
+                 : FMT("", "compute_wire_%zu", g.output));
 #else
         const std::string annotation = "";
 #endif
 
-        switch (g.type)
-        {
+        switch (g.type) {
         case TBCS_GATE_CONSTANT_0:
             /* Truth table (00, 01, 10, 11): (0, 0, 0, 0)
                0 * x + 0 * y + 1 * z + 1 \in {-1, 1} */
@@ -131,18 +135,22 @@ uscs_constraint_system<FieldT> tbcs_to_uscs_instance_map(const tbcs_circuit &cir
         }
     }
 
-    for (size_t i = 0; i < circuit.primary_input_size + circuit.auxiliary_input_size + circuit.gates.size(); ++i)
-    {
+    for (size_t i = 0;
+         i < circuit.primary_input_size + circuit.auxiliary_input_size +
+                 circuit.gates.size();
+         ++i) {
         /* require that 2 * wire - 1 \in {-1,1}, that is wire \in {0,1} */
-        result.add_constraint(2 * variable<FieldT>(i) - 1, FMT("", "wire_%zu", i));
+        result.add_constraint(
+            2 * variable<FieldT>(i) - 1, FMT("", "wire_%zu", i));
     }
 
-    for (auto &g : circuit.gates)
-    {
-        if (g.is_circuit_output)
-        {
-            /* require that output + 1 \in {-1,1}, this together with output binary (above) enforces output = 0 */
-            result.add_constraint(variable<FieldT>(g.output) + 1, FMT("", "output_%zu", g.output));
+    for (auto &g : circuit.gates) {
+        if (g.is_circuit_output) {
+            /* require that output + 1 \in {-1,1}, this together with output
+             * binary (above) enforces output = 0 */
+            result.add_constraint(
+                variable<FieldT>(g.output) + 1,
+                FMT("", "output_%zu", g.output));
         }
     }
 
@@ -150,16 +158,18 @@ uscs_constraint_system<FieldT> tbcs_to_uscs_instance_map(const tbcs_circuit &cir
 }
 
 template<typename FieldT>
-uscs_variable_assignment<FieldT> tbcs_to_uscs_witness_map(const tbcs_circuit &circuit,
-                                                               const tbcs_primary_input &primary_input,
-                                                               const tbcs_auxiliary_input &auxiliary_input)
+uscs_variable_assignment<FieldT> tbcs_to_uscs_witness_map(
+    const tbcs_circuit &circuit,
+    const tbcs_primary_input &primary_input,
+    const tbcs_auxiliary_input &auxiliary_input)
 {
-    const tbcs_variable_assignment all_wires = circuit.get_all_wires(primary_input, auxiliary_input);
-    const uscs_variable_assignment<FieldT> result = libff::convert_bit_vector_to_field_element_vector<FieldT>(all_wires);
+    const tbcs_variable_assignment all_wires =
+        circuit.get_all_wires(primary_input, auxiliary_input);
+    const uscs_variable_assignment<FieldT> result =
+        libff::convert_bit_vector_to_field_element_vector<FieldT>(all_wires);
     return result;
 }
 
-} // libsnark
-
+} // namespace libsnark
 
 #endif // TBCS_TO_USCS_TCC_

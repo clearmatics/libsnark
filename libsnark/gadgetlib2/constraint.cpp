@@ -10,42 +10,43 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <libsnark/gadgetlib2/constraint.hpp>
+#include <libsnark/gadgetlib2/variable.hpp>
 #include <memory>
 #include <set>
 
-#include <libsnark/gadgetlib2/constraint.hpp>
-#include <libsnark/gadgetlib2/variable.hpp>
-
+using ::std::cerr;
+using ::std::cout;
+using ::std::endl;
+using ::std::set;
+using ::std::shared_ptr;
 using ::std::string;
 using ::std::vector;
-using ::std::set;
-using ::std::cout;
-using ::std::cerr;
-using ::std::endl;
-using ::std::shared_ptr;
 
-namespace gadgetlib2 {
+namespace gadgetlib2
+{
 
 /*************************************************************************************************/
 /*************************************************************************************************/
-/*******************                                                            ******************/
-/*******************                    class Constraint                        ******************/
-/*******************                                                            ******************/
+/******************* ******************/
+/*******************                    class Constraint ******************/
+/******************* ******************/
 /*************************************************************************************************/
 /*************************************************************************************************/
 
 #ifdef DEBUG
-Constraint::Constraint(const string& name) : name_(name) {}
+Constraint::Constraint(const string &name) : name_(name) {}
 #else
-Constraint::Constraint(const string& name) { libff::UNUSED(name); }
+Constraint::Constraint(const string &name) { libff::UNUSED(name); }
 #endif
 
-string Constraint::name() const {
-#   ifdef DEBUG
-        return name_;
-#   else
-        return "";
-#   endif
+string Constraint::name() const
+{
+#ifdef DEBUG
+    return name_;
+#else
+    return "";
+#endif
 }
 
 /***********************************/
@@ -54,59 +55,69 @@ string Constraint::name() const {
 
 /*************************************************************************************************/
 /*************************************************************************************************/
-/*******************                                                            ******************/
-/*******************                 class Rank1Constraint                       ******************/
-/*******************                                                            ******************/
+/******************* ******************/
+/*******************                 class Rank1Constraint ******************/
+/******************* ******************/
 /*************************************************************************************************/
 /*************************************************************************************************/
 
-Rank1Constraint::Rank1Constraint(const LinearCombination &a,
-                               const LinearCombination &b,
-                               const LinearCombination &c,
-                               const string& name)
-    : Constraint(name), a_(a), b_(b), c_(c) {}
+Rank1Constraint::Rank1Constraint(
+    const LinearCombination &a,
+    const LinearCombination &b,
+    const LinearCombination &c,
+    const string &name)
+    : Constraint(name), a_(a), b_(b), c_(c)
+{
+}
 
-LinearCombination Rank1Constraint::a() const {return a_;}
-LinearCombination Rank1Constraint::b() const {return b_;}
-LinearCombination Rank1Constraint::c() const {return c_;}
+LinearCombination Rank1Constraint::a() const { return a_; }
+LinearCombination Rank1Constraint::b() const { return b_; }
+LinearCombination Rank1Constraint::c() const { return c_; }
 
-bool Rank1Constraint::isSatisfied(const VariableAssignment& assignment,
-                                  const PrintOptions& printOnFail) const {
+bool Rank1Constraint::isSatisfied(
+    const VariableAssignment &assignment, const PrintOptions &printOnFail) const
+{
     const FElem ares = a_.eval(assignment);
     const FElem bres = b_.eval(assignment);
     const FElem cres = c_.eval(assignment);
-    if (ares*bres != cres) {
-#       ifdef DEBUG
+    if (ares * bres != cres) {
+#ifdef DEBUG
         if (printOnFail == PrintOptions::DBG_PRINT_IF_NOT_SATISFIED) {
-            cerr << GADGETLIB2_FMT("Constraint named \"%s\" not satisfied. Constraint is:",
-                name().c_str()) << endl;
+            cerr << GADGETLIB2_FMT(
+                        "Constraint named \"%s\" not satisfied. Constraint is:",
+                        name().c_str())
+                 << endl;
             cerr << annotation() << endl;
             cerr << "Variable assignments are:" << endl;
             const Variable::set varSet = getUsedVariables();
-            for(const Variable& var : varSet) {
-                cerr <<  var.name() << ": " << assignment.at(var).asString() << endl;
+            for (const Variable &var : varSet) {
+                cerr << var.name() << ": " << assignment.at(var).asString()
+                     << endl;
             }
             cerr << "a:   " << ares.asString() << endl;
             cerr << "b:   " << bres.asString() << endl;
-            cerr << "a*b: " << (ares*bres).asString() << endl;
+            cerr << "a*b: " << (ares * bres).asString() << endl;
             cerr << "c:   " << cres.asString() << endl;
         }
-#       else
+#else
         libff::UNUSED(printOnFail);
-#       endif
+#endif
         return false;
     }
     return true;
 }
 
-string Rank1Constraint::annotation() const {
-#   ifndef DEBUG
-        return "";
-#   endif
-    return string("( ") + a_.asString() + " ) * ( " + b_.asString() + " ) = "+ c_.asString();
+string Rank1Constraint::annotation() const
+{
+#ifndef DEBUG
+    return "";
+#endif
+    return string("( ") + a_.asString() + " ) * ( " + b_.asString() +
+           " ) = " + c_.asString();
 }
 
-const Variable::set Rank1Constraint::getUsedVariables() const {
+const Variable::set Rank1Constraint::getUsedVariables() const
+{
     Variable::set retSet;
     const Variable::set aSet = a_.getUsedVariables();
     retSet.insert(aSet.begin(), aSet.end());
@@ -123,49 +134,59 @@ const Variable::set Rank1Constraint::getUsedVariables() const {
 
 /*************************************************************************************************/
 /*************************************************************************************************/
-/*******************                                                            ******************/
-/*******************                 class PolynomialConstraint                 ******************/
-/*******************                                                            ******************/
+/******************* ******************/
+/*******************                 class PolynomialConstraint
+ * ******************/
+/******************* ******************/
 /*************************************************************************************************/
 /*************************************************************************************************/
 
-PolynomialConstraint::PolynomialConstraint(const Polynomial& a, const Polynomial& b,
-        const string& name) : Constraint(name), a_(a), b_(b) {}
+PolynomialConstraint::PolynomialConstraint(
+    const Polynomial &a, const Polynomial &b, const string &name)
+    : Constraint(name), a_(a), b_(b)
+{
+}
 
-bool PolynomialConstraint::isSatisfied(const VariableAssignment& assignment,
-                                       const PrintOptions& printOnFail) const {
+bool PolynomialConstraint::isSatisfied(
+    const VariableAssignment &assignment, const PrintOptions &printOnFail) const
+{
     const FElem aEval = a_.eval(assignment);
     const FElem bEval = b_.eval(assignment);
     if (aEval != bEval) {
-#       ifdef DEBUG
-            if(printOnFail == PrintOptions::DBG_PRINT_IF_NOT_SATISFIED) {
-                cerr << GADGETLIB2_FMT("Constraint named \"%s\" not satisfied. Constraint is:",
-                    name().c_str()) << endl;
-                cerr << annotation() << endl;
-				cerr << "Expecting: " << aEval << " == " << bEval << endl;
-                cerr << "Variable assignments are:" << endl;
-                const Variable::set varSet = getUsedVariables();
-                for(const Variable& var : varSet) {
-                    cerr <<  var.name() << ": " << assignment.at(var).asString() << endl;
-                }
+#ifdef DEBUG
+        if (printOnFail == PrintOptions::DBG_PRINT_IF_NOT_SATISFIED) {
+            cerr << GADGETLIB2_FMT(
+                        "Constraint named \"%s\" not satisfied. Constraint is:",
+                        name().c_str())
+                 << endl;
+            cerr << annotation() << endl;
+            cerr << "Expecting: " << aEval << " == " << bEval << endl;
+            cerr << "Variable assignments are:" << endl;
+            const Variable::set varSet = getUsedVariables();
+            for (const Variable &var : varSet) {
+                cerr << var.name() << ": " << assignment.at(var).asString()
+                     << endl;
             }
-#       else
-            libff::UNUSED(printOnFail);
-#       endif
+        }
+#else
+        libff::UNUSED(printOnFail);
+#endif
 
         return false;
     }
     return true;
 }
 
-string PolynomialConstraint::annotation() const {
-#   ifndef DEBUG
-        return "";
-#   endif
+string PolynomialConstraint::annotation() const
+{
+#ifndef DEBUG
+    return "";
+#endif
     return a_.asString() + " == " + b_.asString();
 }
 
-const Variable::set PolynomialConstraint::getUsedVariables() const {
+const Variable::set PolynomialConstraint::getUsedVariables() const
+{
     Variable::set retSet;
     const Variable::set aSet = a_.getUsedVariables();
     retSet.insert(aSet.begin(), aSet.end());
@@ -178,36 +199,42 @@ const Variable::set PolynomialConstraint::getUsedVariables() const {
 /***   END OF CLASS DEFINITION   ***/
 /***********************************/
 
-
-void ConstraintSystem::addConstraint(const Rank1Constraint& c) {
-    constraintsPtrs_.emplace_back(::std::shared_ptr<Constraint>(new Rank1Constraint(c)));
+void ConstraintSystem::addConstraint(const Rank1Constraint &c)
+{
+    constraintsPtrs_.emplace_back(
+        ::std::shared_ptr<Constraint>(new Rank1Constraint(c)));
 }
 
-void ConstraintSystem::addConstraint(const PolynomialConstraint& c) {
-    constraintsPtrs_.emplace_back(::std::shared_ptr<Constraint>(new PolynomialConstraint(c)));
+void ConstraintSystem::addConstraint(const PolynomialConstraint &c)
+{
+    constraintsPtrs_.emplace_back(
+        ::std::shared_ptr<Constraint>(new PolynomialConstraint(c)));
 }
 
-bool ConstraintSystem::isSatisfied(const VariableAssignment& assignment,
-                                   const PrintOptions& printOnFail) const {
-    for(size_t i = 0; i < constraintsPtrs_.size(); ++i) {
-        if (!constraintsPtrs_[i]->isSatisfied(assignment, printOnFail)){
+bool ConstraintSystem::isSatisfied(
+    const VariableAssignment &assignment, const PrintOptions &printOnFail) const
+{
+    for (size_t i = 0; i < constraintsPtrs_.size(); ++i) {
+        if (!constraintsPtrs_[i]->isSatisfied(assignment, printOnFail)) {
             return false;
         }
     }
     return true;
 }
 
-string ConstraintSystem::annotation() const {
+string ConstraintSystem::annotation() const
+{
     string retVal("\n");
-    for(auto i = constraintsPtrs_.begin(); i != constraintsPtrs_.end(); ++i) {
+    for (auto i = constraintsPtrs_.begin(); i != constraintsPtrs_.end(); ++i) {
         retVal += (*i)->annotation() + '\n';
     }
     return retVal;
 }
 
-Variable::set ConstraintSystem::getUsedVariables() const {
+Variable::set ConstraintSystem::getUsedVariables() const
+{
     Variable::set retSet;
-    for(auto& pConstraint : constraintsPtrs_) {
+    for (auto &pConstraint : constraintsPtrs_) {
         const Variable::set curSet = pConstraint->getUsedVariables();
         retSet.insert(curSet.begin(), curSet.end());
     }

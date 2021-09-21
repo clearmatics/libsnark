@@ -13,15 +13,16 @@
 #define R1CS_PPZKADSNARK_PARAMS_HPP_
 
 #include <libff/algebra/curves/public_params.hpp>
-
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/r1cs.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-class labelT {
+class labelT
+{
 public:
     unsigned char label_bytes[16];
-    labelT() {};
+    labelT(){};
 };
 
 /**
@@ -32,13 +33,16 @@ template<typename r1cs_ppzkadsnark_ppT>
 using snark_pp = typename r1cs_ppzkadsnark_ppT::snark_pp;
 
 template<typename r1cs_ppzkadsnark_ppT>
-using r1cs_ppzkadsnark_constraint_system = r1cs_constraint_system<libff::Fr<snark_pp<r1cs_ppzkadsnark_ppT>>>;
+using r1cs_ppzkadsnark_constraint_system =
+    r1cs_constraint_system<libff::Fr<snark_pp<r1cs_ppzkadsnark_ppT>>>;
 
 template<typename r1cs_ppzkadsnark_ppT>
-using r1cs_ppzkadsnark_primary_input = r1cs_primary_input<libff::Fr<snark_pp<r1cs_ppzkadsnark_ppT>> >;
+using r1cs_ppzkadsnark_primary_input =
+    r1cs_primary_input<libff::Fr<snark_pp<r1cs_ppzkadsnark_ppT>>>;
 
 template<typename r1cs_ppzkadsnark_ppT>
-using r1cs_ppzkadsnark_auxiliary_input = r1cs_auxiliary_input<libff::Fr<snark_pp<r1cs_ppzkadsnark_ppT>> >;
+using r1cs_ppzkadsnark_auxiliary_input =
+    r1cs_auxiliary_input<libff::Fr<snark_pp<r1cs_ppzkadsnark_ppT>>>;
 
 template<typename r1cs_ppzkadsnark_ppT>
 using r1cs_ppzkadsnark_skT = typename r1cs_ppzkadsnark_ppT::skT;
@@ -52,8 +56,6 @@ using r1cs_ppzkadsnark_sigT = typename r1cs_ppzkadsnark_ppT::sigT;
 template<typename r1cs_ppzkadsnark_ppT>
 using r1cs_ppzkadsnark_prfKeyT = typename r1cs_ppzkadsnark_ppT::prfKeyT;
 
-
-} // libsnark
+} // namespace libsnark
 
 #endif // R1CS_PPZKADSNARK_PARAMS_HPP_
-

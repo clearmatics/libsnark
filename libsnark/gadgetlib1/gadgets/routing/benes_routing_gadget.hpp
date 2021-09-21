@@ -20,10 +20,11 @@
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
 #include <libsnark/gadgetlib1/protoboard.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-template<typename FieldT>
-class benes_routing_gadget : public gadget<FieldT> {
+template<typename FieldT> class benes_routing_gadget : public gadget<FieldT>
+{
 private:
     /*
       Indexing conventions:
@@ -36,8 +37,8 @@ private:
       (2*dimension-1 for switch bits/topology) and packet_idx is in
       range 0 .. num_packets-1.
     */
-    std::vector<std::vector<pb_variable_array<FieldT> > > routed_packets;
-    std::vector<multipacking_gadget<FieldT> > pack_inputs, unpack_outputs;
+    std::vector<std::vector<pb_variable_array<FieldT>>> routed_packets;
+    std::vector<multipacking_gadget<FieldT>> pack_inputs, unpack_outputs;
 
     /*
       If #packets = 1 then we can route without explicit routing bits
@@ -49,22 +50,24 @@ private:
     */
     std::vector<pb_variable_array<FieldT>> benes_switch_bits;
     benes_topology neighbors;
+
 public:
     const size_t num_packets;
     const size_t num_columns;
 
-    const std::vector<pb_variable_array<FieldT> > routing_input_bits;
-    const std::vector<pb_variable_array<FieldT> > routing_output_bits;
+    const std::vector<pb_variable_array<FieldT>> routing_input_bits;
+    const std::vector<pb_variable_array<FieldT>> routing_output_bits;
     size_t lines_to_unpack;
 
     const size_t packet_size, num_subpackets;
 
-    benes_routing_gadget(protoboard<FieldT> &pb,
-                         const size_t num_packets,
-                         const std::vector<pb_variable_array<FieldT>> &routing_input_bits,
-                         const std::vector<pb_variable_array<FieldT>> &routing_output_bits,
-                         const size_t lines_to_unpack,
-                         const std::string& annotation_prefix="");
+    benes_routing_gadget(
+        protoboard<FieldT> &pb,
+        const size_t num_packets,
+        const std::vector<pb_variable_array<FieldT>> &routing_input_bits,
+        const std::vector<pb_variable_array<FieldT>> &routing_output_bits,
+        const size_t lines_to_unpack,
+        const std::string &annotation_prefix = "");
 
     void generate_r1cs_constraints();
 
@@ -72,9 +75,10 @@ public:
 };
 
 template<typename FieldT>
-void test_benes_routing_gadget(const size_t num_packets, const size_t packet_size);
+void test_benes_routing_gadget(
+    const size_t num_packets, const size_t packet_size);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/routing/benes_routing_gadget.tcc>
 

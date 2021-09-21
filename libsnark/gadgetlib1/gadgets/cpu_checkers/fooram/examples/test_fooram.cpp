@@ -5,16 +5,17 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 #include <libff/common/utils.hpp>
-
 #include <libsnark/common/default_types/r1cs_ppzkpcd_pp.hpp>
 #include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp>
 #include <libsnark/relations/ram_computations/rams/fooram/fooram_params.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/ram_ppzksnark/examples/run_ram_ppzksnark.hpp>
 #include <libsnark/zk_proof_systems/zksnark/ram_zksnark/examples/run_ram_zksnark.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-class default_fooram_zksnark_pp {
+class default_fooram_zksnark_pp
+{
 public:
     typedef default_r1cs_ppzkpcd_pp PCD_pp;
     typedef typename PCD_pp::scalar_field_A FieldT;
@@ -23,7 +24,8 @@ public:
     static void init_public_params() { PCD_pp::init_public_params(); }
 };
 
-class default_fooram_ppzksnark_pp {
+class default_fooram_ppzksnark_pp
+{
 public:
     typedef default_r1cs_ppzksnark_pp snark_pp;
     typedef libff::Fr<default_r1cs_ppzksnark_pp> FieldT;
@@ -32,12 +34,11 @@ public:
     static void init_public_params() { snark_pp::init_public_params(); }
 };
 
-} // libsnark
+} // namespace libsnark
 
 using namespace libsnark;
 
-template<typename ppT>
-void profile_ram_zksnark(const size_t w)
+template<typename ppT> void profile_ram_zksnark(const size_t w)
 {
     typedef ram_zksnark_machine_pp<ppT> ramT;
 
@@ -50,8 +51,7 @@ void profile_ram_zksnark(const size_t w)
     assert(bit);
 }
 
-template<typename ppT>
-void profile_ram_ppzksnark(const size_t w)
+template<typename ppT> void profile_ram_ppzksnark(const size_t w)
 {
     typedef ram_ppzksnark_machine_pp<ppT> ramT;
 
@@ -64,19 +64,16 @@ void profile_ram_ppzksnark(const size_t w)
     assert(bit);
 }
 
-int main(int argc, const char* argv[])
+int main(int argc, const char *argv[])
 {
     libff::UNUSED(argv);
     libff::start_profiling();
     default_fooram_ppzksnark_pp::init_public_params();
     default_fooram_zksnark_pp::init_public_params();
 
-    if (argc == 1)
-    {
+    if (argc == 1) {
         profile_ram_zksnark<default_fooram_zksnark_pp>(32);
-    }
-    else
-    {
+    } else {
         profile_ram_ppzksnark<default_fooram_ppzksnark_pp>(8);
     }
 }

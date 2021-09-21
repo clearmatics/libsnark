@@ -2,7 +2,8 @@
  *****************************************************************************
 
  Declaration of interfaces for a R1CS-to-QAP reduction, that is, constructing
- a QAP ("Quadratic Arithmetic Program") from a R1CS ("Rank-1 Constraint System").
+ a QAP ("Quadratic Arithmetic Program") from a R1CS ("Rank-1 Constraint
+ System").
 
  QAPs are defined in \[GGPR13], and constructed for R1CS also in \[GGPR13].
 
@@ -35,24 +36,25 @@
 #include <libsnark/relations/arithmetic_programs/qap/qap.hpp>
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/r1cs.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Instance map for the R1CS-to-QAP reduction.
  */
 template<typename FieldT>
 qap_instance<FieldT> r1cs_to_qap_instance_map(
-    const r1cs_constraint_system<FieldT> &cs,
-    bool force_pow_2_domain=false);
+    const r1cs_constraint_system<FieldT> &cs, bool force_pow_2_domain = false);
 
 /**
- * Instance map for the R1CS-to-QAP reduction followed by evaluation of the resulting QAP instance.
+ * Instance map for the R1CS-to-QAP reduction followed by evaluation of the
+ * resulting QAP instance.
  */
 template<typename FieldT>
 qap_instance_evaluation<FieldT> r1cs_to_qap_instance_map_with_evaluation(
     const r1cs_constraint_system<FieldT> &cs,
     const FieldT &t,
-    bool force_pow_2_domain=false);
+    bool force_pow_2_domain = false);
 
 /**
  * Witness map for the R1CS-to-QAP reduction.
@@ -67,9 +69,9 @@ qap_witness<FieldT> r1cs_to_qap_witness_map(
     const FieldT &d1,
     const FieldT &d2,
     const FieldT &d3,
-    bool force_pow_2_domain=false);
+    bool force_pow_2_domain = false);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/reductions/r1cs_to_qap/r1cs_to_qap.tcc>
 

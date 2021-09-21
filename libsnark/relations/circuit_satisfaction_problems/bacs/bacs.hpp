@@ -19,40 +19,37 @@
 #ifndef BACS_HPP_
 #define BACS_HPP_
 
+#include <libsnark/relations/variable.hpp>
 #include <vector>
 
-#include <libsnark/relations/variable.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /*********************** BACS variable assignment ****************************/
 
 /**
  * A BACS variable assignment is a vector of field elements.
  */
-template<typename FieldT>
-using bacs_variable_assignment = std::vector<FieldT>;
-
+template<typename FieldT> using bacs_variable_assignment = std::vector<FieldT>;
 
 /**************************** BACS gate **************************************/
 
-template<typename FieldT>
-struct bacs_gate;
+template<typename FieldT> struct bacs_gate;
 
 template<typename FieldT>
-std::ostream& operator<<(std::ostream &out, const bacs_gate<FieldT> &g);
+std::ostream &operator<<(std::ostream &out, const bacs_gate<FieldT> &g);
 
 template<typename FieldT>
-std::istream& operator>>(std::istream &in, bacs_gate<FieldT> &g);
+std::istream &operator>>(std::istream &in, bacs_gate<FieldT> &g);
 
 /**
  * A BACS gate is a formal expression of the form lhs * rhs = output ,
- * where lhs and rhs are linear combinations (of variables) and output is a variable.
+ * where lhs and rhs are linear combinations (of variables) and output is a
+ * variable.
  *
  * In other words, a BACS gate is an arithmetic gate that is bilinear.
  */
-template<typename FieldT>
-struct bacs_gate {
+template<typename FieldT> struct bacs_gate {
 
     linear_combination<FieldT> lhs;
     linear_combination<FieldT> rhs;
@@ -61,14 +58,17 @@ struct bacs_gate {
     bool is_circuit_output;
 
     FieldT evaluate(const bacs_variable_assignment<FieldT> &input) const;
-    void print(const std::map<size_t, std::string> &variable_annotations = std::map<size_t, std::string>()) const;
+    void print(
+        const std::map<size_t, std::string> &variable_annotations =
+            std::map<size_t, std::string>()) const;
 
     bool operator==(const bacs_gate<FieldT> &other) const;
 
-    friend std::ostream& operator<< <FieldT>(std::ostream &out, const bacs_gate<FieldT> &g);
-    friend std::istream& operator>> <FieldT>(std::istream &in, bacs_gate<FieldT> &g);
+    friend std::ostream &operator<<<FieldT>(
+        std::ostream &out, const bacs_gate<FieldT> &g);
+    friend std::istream &operator>>
+        <FieldT>(std::istream &in, bacs_gate<FieldT> &g);
 };
-
 
 /****************************** BACS inputs **********************************/
 
@@ -84,34 +84,33 @@ using bacs_primary_input = bacs_variable_assignment<FieldT>;
 template<typename FieldT>
 using bacs_auxiliary_input = bacs_variable_assignment<FieldT>;
 
-
 /************************** BACS circuit *************************************/
 
-template<typename FieldT>
-class bacs_circuit;
+template<typename FieldT> class bacs_circuit;
 
 template<typename FieldT>
-std::ostream& operator<<(std::ostream &out, const bacs_circuit<FieldT> &circuit);
+std::ostream &operator<<(
+    std::ostream &out, const bacs_circuit<FieldT> &circuit);
 
 template<typename FieldT>
-std::istream& operator>>(std::istream &in, bacs_circuit<FieldT> &circuit);
+std::istream &operator>>(std::istream &in, bacs_circuit<FieldT> &circuit);
 
 /**
  * A BACS circuit is an arithmetic circuit in which every gate is a BACS gate.
  *
- * Given a BACS primary input and a BACS auxiliary input, the circuit can be evaluated.
- * If every output evaluates to zero, then the circuit is satisfied.
+ * Given a BACS primary input and a BACS auxiliary input, the circuit can be
+ * evaluated. If every output evaluates to zero, then the circuit is satisfied.
  *
  * NOTE:
  * The 0-th variable (i.e., "x_{0}") always represents the constant 1.
  * Thus, the 0-th variable is not included in num_variables.
  */
-template<typename FieldT>
-class bacs_circuit {
+template<typename FieldT> class bacs_circuit
+{
 public:
     size_t primary_input_size;
     size_t auxiliary_input_size;
-    std::vector<bacs_gate<FieldT> > gates;
+    std::vector<bacs_gate<FieldT>> gates;
 
     bacs_circuit() : primary_input_size(0), auxiliary_input_size(0) {}
 
@@ -128,13 +127,16 @@ public:
 #endif
 
     bool is_valid() const;
-    bool is_satisfied(const bacs_primary_input<FieldT> &primary_input,
-                      const bacs_auxiliary_input<FieldT> &auxiliary_input) const;
+    bool is_satisfied(
+        const bacs_primary_input<FieldT> &primary_input,
+        const bacs_auxiliary_input<FieldT> &auxiliary_input) const;
 
-    bacs_variable_assignment<FieldT> get_all_outputs(const bacs_primary_input<FieldT> &primary_input,
-                                                     const bacs_auxiliary_input<FieldT> &auxiliary_input) const;
-    bacs_variable_assignment<FieldT> get_all_wires(const bacs_primary_input<FieldT> &primary_input,
-                                                   const bacs_auxiliary_input<FieldT> &auxiliary_input) const;
+    bacs_variable_assignment<FieldT> get_all_outputs(
+        const bacs_primary_input<FieldT> &primary_input,
+        const bacs_auxiliary_input<FieldT> &auxiliary_input) const;
+    bacs_variable_assignment<FieldT> get_all_wires(
+        const bacs_primary_input<FieldT> &primary_input,
+        const bacs_auxiliary_input<FieldT> &auxiliary_input) const;
 
     void add_gate(const bacs_gate<FieldT> &g);
     void add_gate(const bacs_gate<FieldT> &g, const std::string &annotation);
@@ -144,11 +146,13 @@ public:
     void print() const;
     void print_info() const;
 
-    friend std::ostream& operator<< <FieldT>(std::ostream &out, const bacs_circuit<FieldT> &circuit);
-    friend std::istream& operator>> <FieldT>(std::istream &in, bacs_circuit<FieldT> &circuit);
+    friend std::ostream &operator<<<FieldT>(
+        std::ostream &out, const bacs_circuit<FieldT> &circuit);
+    friend std::istream &operator>>
+        <FieldT>(std::istream &in, bacs_circuit<FieldT> &circuit);
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/relations/circuit_satisfaction_problems/bacs/bacs.tcc>
 

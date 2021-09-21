@@ -25,13 +25,12 @@
 #ifndef BENES_ROUTING_ALGORITHM_HPP_
 #define BENES_ROUTING_ALGORITHM_HPP_
 
+#include <libff/common/utils.hpp>
+#include <libsnark/common/data_structures/integer_permutation.hpp>
 #include <vector>
 
-#include <libff/common/utils.hpp>
-
-#include <libsnark/common/data_structures/integer_permutation.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * A data structure that stores the topology of a Benes network.
@@ -40,14 +39,16 @@ namespace libsnark {
  * benes_topology[column_idx][packet_idx] specifies the two possible
  * destinations where the packet_idx-th packet in the column_idx-th column
  * could be routed. This information is stored as a pair of indices, where:
- * - the first index denotes the destination when the switch is in "straight" mode, and
- * - the second index denotes the destination when the switch is in "cross" mode.
+ * - the first index denotes the destination when the switch is in "straight"
+ * mode, and
+ * - the second index denotes the destination when the switch is in "cross"
+ * mode.
  *
  * (The topology has a very succinct description and can be easily
  * queried at an arbitrary position, see implementation of
  * generate_benes_topology for details.)
  */
-typedef std::vector<std::vector<std::pair<size_t, size_t> > > benes_topology;
+typedef std::vector<std::vector<std::pair<size_t, size_t>>> benes_topology;
 
 /**
  * A routing assigns a bit to each switch in a Benes network.
@@ -60,7 +61,8 @@ typedef std::vector<std::vector<std::pair<size_t, size_t> > > benes_topology;
 typedef std::vector<libff::bit_vector> benes_routing;
 
 /**
- * Return the number of (switch) columns in a Benes network for a given number of packets.
+ * Return the number of (switch) columns in a Benes network for a given number
+ * of packets.
  *
  * For example:
  * - benes_num_columns(2) = 2,
@@ -85,8 +87,9 @@ benes_routing get_benes_routing(const integer_permutation &permutation);
 /**
  * Check if a routing "implements" the given permutation.
  */
-bool valid_benes_routing(const integer_permutation &permutation, const benes_routing &routing);
+bool valid_benes_routing(
+    const integer_permutation &permutation, const benes_routing &routing);
 
-} // libsnark
+} // namespace libsnark
 
 #endif // BENES_ROUTING_ALGORITHM_HPP_

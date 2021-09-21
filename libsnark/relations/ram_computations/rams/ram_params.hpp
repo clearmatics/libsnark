@@ -12,16 +12,16 @@
 #ifndef RAM_PARAMS_HPP_
 #define RAM_PARAMS_HPP_
 
+#include <libff/common/utils.hpp>
+#include <libsnark/relations/ram_computations/memory/memory_store_trace.hpp>
 #include <vector>
 
-#include <libff/common/utils.hpp>
-
-#include <libsnark/relations/ram_computations/memory/memory_store_trace.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /*
-  When declaring a new ramT one should do a make it a class that declares typedefs for:
+  When declaring a new ramT one should do a make it a class that declares
+  typedefs for:
 
   base_field_type
   ram_cpu_checker_type
@@ -37,29 +37,22 @@ namespace libsnark {
   length.
 */
 
-template<typename ramT>
-using ram_base_field = typename ramT::base_field_type;
+template<typename ramT> using ram_base_field = typename ramT::base_field_type;
 
-template<typename ramT>
-using ram_cpu_state = libff::bit_vector;
+template<typename ramT> using ram_cpu_state = libff::bit_vector;
 
-template<typename ramT>
-using ram_boot_trace = memory_store_trace;
+template<typename ramT> using ram_boot_trace = memory_store_trace;
 
-template<typename ramT>
-using ram_protoboard = typename ramT::protoboard_type;
+template<typename ramT> using ram_protoboard = typename ramT::protoboard_type;
 
-template<typename ramT>
-using ram_gadget_base = typename ramT::gadget_base_type;
+template<typename ramT> using ram_gadget_base = typename ramT::gadget_base_type;
 
-template<typename ramT>
-using ram_cpu_checker = typename ramT::cpu_checker_type;
+template<typename ramT> using ram_cpu_checker = typename ramT::cpu_checker_type;
 
 template<typename ramT>
 using ram_architecture_params = typename ramT::architecture_params_type;
 
-template<typename ramT>
-using ram_input_tape = std::vector<size_t>;
+template<typename ramT> using ram_input_tape = std::vector<size_t>;
 
 /*
   One should also make the following methods for ram_architecture_params
@@ -76,6 +69,6 @@ using ram_input_tape = std::vector<size_t>;
   libff::bit_vector initial_cpu_state();
 */
 
-} // libsnark
+} // namespace libsnark
 
 #endif // RAM_PARAMS_HPP_

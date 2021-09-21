@@ -10,13 +10,14 @@
 
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename FieldT>
-r1cs_example<FieldT> gen_r1cs_example_from_protoboard(const size_t num_constraints,
-                                                      const size_t num_inputs);
+r1cs_example<FieldT> gen_r1cs_example_from_protoboard(
+    const size_t num_constraints, const size_t num_inputs);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/examples/simple_example.tcc>
 

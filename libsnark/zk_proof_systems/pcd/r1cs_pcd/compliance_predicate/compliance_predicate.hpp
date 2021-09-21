@@ -17,11 +17,11 @@
 #ifndef COMPLIANCE_PREDICATE_HPP_
 #define COMPLIANCE_PREDICATE_HPP_
 
+#include <libsnark/relations/constraint_satisfaction_problems/r1cs/r1cs.hpp>
 #include <memory>
 
-#include <libsnark/relations/constraint_satisfaction_problems/r1cs/r1cs.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /********************************* Message ***********************************/
 
@@ -32,13 +32,14 @@ namespace libsnark {
  * - a type (a positive integer), and
  * - a payload (a vector of field elements).
  */
-template<typename FieldT>
-class r1cs_pcd_message {
+template<typename FieldT> class r1cs_pcd_message
+{
 public:
     size_t type;
 
     r1cs_pcd_message(const size_t type);
-    virtual r1cs_variable_assignment<FieldT> payload_as_r1cs_variable_assignment() const = 0;
+    virtual r1cs_variable_assignment<FieldT> payload_as_r1cs_variable_assignment()
+        const = 0;
     r1cs_variable_assignment<FieldT> as_r1cs_variable_assignment() const;
 
     virtual void print() const;
@@ -50,29 +51,30 @@ public:
 /**
  * A local data for R1CS PCD.
  */
-template<typename FieldT>
-class r1cs_pcd_local_data {
+template<typename FieldT> class r1cs_pcd_local_data
+{
 public:
     r1cs_pcd_local_data() = default;
-    virtual r1cs_variable_assignment<FieldT> as_r1cs_variable_assignment() const = 0;
+    virtual r1cs_variable_assignment<FieldT> as_r1cs_variable_assignment()
+        const = 0;
     virtual ~r1cs_pcd_local_data() = default;
 };
 
 /******************************** Witness ************************************/
 
-template<typename FieldT>
-using r1cs_pcd_witness = std::vector<FieldT>;
+template<typename FieldT> using r1cs_pcd_witness = std::vector<FieldT>;
 
 /*************************** Compliance predicate ****************************/
 
-template<typename FieldT>
-class r1cs_pcd_compliance_predicate;
+template<typename FieldT> class r1cs_pcd_compliance_predicate;
 
 template<typename FieldT>
-std::ostream& operator<<(std::ostream &out, const r1cs_pcd_compliance_predicate<FieldT> &cp);
+std::ostream &operator<<(
+    std::ostream &out, const r1cs_pcd_compliance_predicate<FieldT> &cp);
 
 template<typename FieldT>
-std::istream& operator>>(std::istream &in, r1cs_pcd_compliance_predicate<FieldT> &cp);
+std::istream &operator>>(
+    std::istream &in, r1cs_pcd_compliance_predicate<FieldT> &cp);
 
 /**
  * A compliance predicate for R1CS PCD.
@@ -106,10 +108,9 @@ std::istream& operator>>(std::istream &in, r1cs_pcd_compliance_predicate<FieldT>
  * relies_on_same_type_inputs=false).
  */
 
-template<typename FieldT>
-class r1cs_pcd_compliance_predicate {
+template<typename FieldT> class r1cs_pcd_compliance_predicate
+{
 public:
-
     size_t name;
     size_t type;
 
@@ -125,37 +126,44 @@ public:
     std::set<size_t> accepted_input_types;
 
     r1cs_pcd_compliance_predicate() = default;
-    r1cs_pcd_compliance_predicate(r1cs_pcd_compliance_predicate<FieldT> &&other) = default;
-    r1cs_pcd_compliance_predicate(const r1cs_pcd_compliance_predicate<FieldT> &other) = default;
-    r1cs_pcd_compliance_predicate(const size_t name,
-                                  const size_t type,
-                                  const r1cs_constraint_system<FieldT> &constraint_system,
-                                  const size_t outgoing_message_payload_length,
-                                  const size_t max_arity,
-                                  const std::vector<size_t> &incoming_message_payload_lengths,
-                                  const size_t local_data_length,
-                                  const size_t witness_length,
-                                  const bool relies_on_same_type_inputs,
-                                  const std::set<size_t> accepted_input_types = std::set<size_t>());
+    r1cs_pcd_compliance_predicate(
+        r1cs_pcd_compliance_predicate<FieldT> &&other) = default;
+    r1cs_pcd_compliance_predicate(
+        const r1cs_pcd_compliance_predicate<FieldT> &other) = default;
+    r1cs_pcd_compliance_predicate(
+        const size_t name,
+        const size_t type,
+        const r1cs_constraint_system<FieldT> &constraint_system,
+        const size_t outgoing_message_payload_length,
+        const size_t max_arity,
+        const std::vector<size_t> &incoming_message_payload_lengths,
+        const size_t local_data_length,
+        const size_t witness_length,
+        const bool relies_on_same_type_inputs,
+        const std::set<size_t> accepted_input_types = std::set<size_t>());
 
-    r1cs_pcd_compliance_predicate<FieldT> & operator=(const r1cs_pcd_compliance_predicate<FieldT> &other) = default;
+    r1cs_pcd_compliance_predicate<FieldT> &operator=(
+        const r1cs_pcd_compliance_predicate<FieldT> &other) = default;
 
     bool is_well_formed() const;
     bool has_equal_input_and_output_lengths() const;
     bool has_equal_input_lengths() const;
 
-    bool is_satisfied(const std::shared_ptr<r1cs_pcd_message<FieldT> > &outgoing_message,
-                      const std::vector<std::shared_ptr<r1cs_pcd_message<FieldT> > > &incoming_messages,
-                      const std::shared_ptr<r1cs_pcd_local_data<FieldT> > &local_data,
-                      const r1cs_pcd_witness<FieldT> &witness) const;
+    bool is_satisfied(
+        const std::shared_ptr<r1cs_pcd_message<FieldT>> &outgoing_message,
+        const std::vector<std::shared_ptr<r1cs_pcd_message<FieldT>>>
+            &incoming_messages,
+        const std::shared_ptr<r1cs_pcd_local_data<FieldT>> &local_data,
+        const r1cs_pcd_witness<FieldT> &witness) const;
 
     bool operator==(const r1cs_pcd_compliance_predicate<FieldT> &other) const;
-    friend std::ostream& operator<< <FieldT>(std::ostream &out, const r1cs_pcd_compliance_predicate<FieldT> &cp);
-    friend std::istream& operator>> <FieldT>(std::istream &in, r1cs_pcd_compliance_predicate<FieldT> &cp);
+    friend std::ostream &operator<<<FieldT>(
+        std::ostream &out, const r1cs_pcd_compliance_predicate<FieldT> &cp);
+    friend std::istream &operator>>
+        <FieldT>(std::istream &in, r1cs_pcd_compliance_predicate<FieldT> &cp);
 };
 
-
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/zk_proof_systems/pcd/r1cs_pcd/compliance_predicate/compliance_predicate.tcc>
 

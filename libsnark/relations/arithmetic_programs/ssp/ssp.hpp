@@ -22,16 +22,15 @@
 #ifndef SSP_HPP_
 #define SSP_HPP_
 
+#include <libfqfft/evaluation_domain/evaluation_domain.hpp>
 #include <map>
 #include <memory>
 
-#include <libfqfft/evaluation_domain/evaluation_domain.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /* forward declaration */
-template<typename FieldT>
-class ssp_witness;
+template<typename FieldT> class ssp_witness;
 
 /**
  * A SSP instance.
@@ -44,33 +43,35 @@ class ssp_witness;
  * There is no need to store the Z polynomial because it is uniquely
  * determined by the domain (as Z is its vanishing polynomial).
  */
-template<typename FieldT>
-class ssp_instance {
+template<typename FieldT> class ssp_instance
+{
 private:
     size_t num_variables_;
     size_t degree_;
     size_t num_inputs_;
 
 public:
-    std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain;
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain;
 
-    std::vector<std::map<size_t, FieldT> > V_in_Lagrange_basis;
+    std::vector<std::map<size_t, FieldT>> V_in_Lagrange_basis;
 
-    ssp_instance(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                 const size_t num_variables,
-                 const size_t degree,
-                 const size_t num_inputs,
-                 const std::vector<std::map<size_t, FieldT> > &V_in_Lagrange_basis);
-    ssp_instance(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                 const size_t num_variables,
-                 const size_t degree,
-                 const size_t num_inputs,
-                 std::vector<std::map<size_t, FieldT> > &&V_in_Lagrange_basis);
+    ssp_instance(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const std::vector<std::map<size_t, FieldT>> &V_in_Lagrange_basis);
+    ssp_instance(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        std::vector<std::map<size_t, FieldT>> &&V_in_Lagrange_basis);
 
     ssp_instance(const ssp_instance<FieldT> &other) = default;
     ssp_instance(ssp_instance<FieldT> &&other) = default;
-    ssp_instance& operator=(const ssp_instance<FieldT> &other) = default;
-    ssp_instance& operator=(ssp_instance<FieldT> &&other) = default;
+    ssp_instance &operator=(const ssp_instance<FieldT> &other) = default;
+    ssp_instance &operator=(ssp_instance<FieldT> &&other) = default;
 
     size_t num_variables() const;
     size_t degree() const;
@@ -79,9 +80,9 @@ public:
     bool is_satisfied(const ssp_witness<FieldT> &witness) const;
 };
 
-
 /**
- * A SSP instance evaluation is a SSP instance that is evaluated at a field element t.
+ * A SSP instance evaluation is a SSP instance that is evaluated at a field
+ * element t.
  *
  * Specifically, the datastructure stores:
  * - a choice of domain (corresponding to a certain subset of the field);
@@ -90,15 +91,15 @@ public:
  * - evaluations of the V (and Z) polynomials at t;
  * - evaluations of all monomials of t.
  */
-template<typename FieldT>
-class ssp_instance_evaluation {
+template<typename FieldT> class ssp_instance_evaluation
+{
 private:
     size_t num_variables_;
     size_t degree_;
     size_t num_inputs_;
 
 public:
-    std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain;
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain;
 
     FieldT t;
 
@@ -106,27 +107,32 @@ public:
 
     FieldT Zt;
 
-    ssp_instance_evaluation(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                            const size_t num_variables,
-                            const size_t degree,
-                            const size_t num_inputs,
-                            const FieldT &t,
-                            const std::vector<FieldT> &Vt,
-                            const std::vector<FieldT> &Ht,
-                            const FieldT &Zt);
-    ssp_instance_evaluation(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                            const size_t num_variables,
-                            const size_t degree,
-                            const size_t num_inputs,
-                            const FieldT &t,
-                            std::vector<FieldT> &&Vt,
-                            std::vector<FieldT> &&Ht,
-                            const FieldT &Zt);
+    ssp_instance_evaluation(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &t,
+        const std::vector<FieldT> &Vt,
+        const std::vector<FieldT> &Ht,
+        const FieldT &Zt);
+    ssp_instance_evaluation(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &t,
+        std::vector<FieldT> &&Vt,
+        std::vector<FieldT> &&Ht,
+        const FieldT &Zt);
 
-    ssp_instance_evaluation(const ssp_instance_evaluation<FieldT> &other) = default;
+    ssp_instance_evaluation(const ssp_instance_evaluation<FieldT> &other) =
+        default;
     ssp_instance_evaluation(ssp_instance_evaluation<FieldT> &&other) = default;
-    ssp_instance_evaluation& operator=(const ssp_instance_evaluation<FieldT> &other) = default;
-    ssp_instance_evaluation& operator=(ssp_instance_evaluation<FieldT> &&other) = default;
+    ssp_instance_evaluation &operator=(
+        const ssp_instance_evaluation<FieldT> &other) = default;
+    ssp_instance_evaluation &operator=(
+        ssp_instance_evaluation<FieldT> &&other) = default;
 
     size_t num_variables() const;
     size_t degree() const;
@@ -138,8 +144,8 @@ public:
 /**
  * A SSP witness.
  */
-template<typename FieldT>
-class ssp_witness {
+template<typename FieldT> class ssp_witness
+{
 private:
     size_t num_variables_;
     size_t degree_;
@@ -151,30 +157,32 @@ public:
     std::vector<FieldT> coefficients_for_Vs;
     std::vector<FieldT> coefficients_for_H;
 
-    ssp_witness(const size_t num_variables,
-                const size_t degree,
-                const size_t num_inputs,
-                const FieldT &d,
-                const std::vector<FieldT> &coefficients_for_Vs,
-                const std::vector<FieldT> &coefficients_for_H);
-    ssp_witness(const size_t num_variables,
-                const size_t degree,
-                const size_t num_inputs,
-                const FieldT &d,
-                const std::vector<FieldT> &coefficients_for_Vs,
-                std::vector<FieldT> &&coefficients_for_H);
+    ssp_witness(
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &d,
+        const std::vector<FieldT> &coefficients_for_Vs,
+        const std::vector<FieldT> &coefficients_for_H);
+    ssp_witness(
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &d,
+        const std::vector<FieldT> &coefficients_for_Vs,
+        std::vector<FieldT> &&coefficients_for_H);
 
     ssp_witness(const ssp_witness<FieldT> &other) = default;
     ssp_witness(ssp_witness<FieldT> &&other) = default;
-    ssp_witness& operator=(const ssp_witness<FieldT> &other) = default;
-    ssp_witness& operator=(ssp_witness<FieldT> &&other) = default;
+    ssp_witness &operator=(const ssp_witness<FieldT> &other) = default;
+    ssp_witness &operator=(ssp_witness<FieldT> &&other) = default;
 
     size_t num_variables() const;
     size_t degree() const;
     size_t num_inputs() const;
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/relations/arithmetic_programs/ssp/ssp.tcc>
 

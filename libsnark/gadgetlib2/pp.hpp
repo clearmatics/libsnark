@@ -10,18 +10,18 @@
 #ifndef LIBSNARK_GADGETLIB2_INCLUDE_GADGETLIB2_PP_HPP_
 #define LIBSNARK_GADGETLIB2_INCLUDE_GADGETLIB2_PP_HPP_
 
+#include <libff/common/default_types/ec_pp.hpp>
 #include <memory>
 #include <vector>
 
-#include <libff/common/default_types/ec_pp.hpp>
-
-namespace gadgetlib2 {
+namespace gadgetlib2
+{
 
 /*************************************************************************************************/
 /*************************************************************************************************/
-/*******************                                                            ******************/
-/*******************                        R1P World                           ******************/
-/*******************                                                            ******************/
+/******************* ******************/
+/*******************                        R1P World ******************/
+/******************* ******************/
 /*************************************************************************************************/
 /*************************************************************************************************/
 
@@ -30,7 +30,8 @@ typedef libff::Fr<libff::default_ec_pp> Fp;
 
 typedef std::vector<Fp> FpVector;
 
-class PublicParams {
+class PublicParams
+{
 public:
     size_t log_p;
     PublicParams(const std::size_t log_p);

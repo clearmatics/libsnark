@@ -17,37 +17,38 @@
 #ifndef MINDEPS
 namespace po = boost::program_options;
 
-bool process_verifier_command_line(const int argc, const char** argv,
-                                   std::string &processed_assembly_fn,
-                                   std::string &verification_key_fn,
-                                   std::string &primary_input_fn,
-                                   std::string &proof_fn,
-                                   std::string &verification_result_fn)
+bool process_verifier_command_line(
+    const int argc,
+    const char **argv,
+    std::string &processed_assembly_fn,
+    std::string &verification_key_fn,
+    std::string &primary_input_fn,
+    std::string &proof_fn,
+    std::string &verification_result_fn)
 {
-    try
-    {
+    try {
         po::options_description desc("Usage");
-        desc.add_options()
-            ("help", "print this help message")
-            ("processed_assembly", po::value<std::string>(&processed_assembly_fn)->required())
-            ("verification_key", po::value<std::string>(&verification_key_fn)->required())
-            ("primary_input", po::value<std::string>(&primary_input_fn)->required())
-            ("proof", po::value<std::string>(&proof_fn)->required())
-            ("verification_result", po::value<std::string>(&verification_result_fn)->required());
+        desc.add_options()("help", "print this help message")(
+            "processed_assembly",
+            po::value<std::string>(&processed_assembly_fn)->required())(
+            "verification_key",
+            po::value<std::string>(&verification_key_fn)->required())(
+            "primary_input",
+            po::value<std::string>(&primary_input_fn)->required())(
+            "proof", po::value<std::string>(&proof_fn)->required())(
+            "verification_result",
+            po::value<std::string>(&verification_result_fn)->required());
 
         po::variables_map vm;
         po::store(po::parse_command_line(argc, argv, desc), vm);
 
-        if (vm.count("help"))
-        {
+        if (vm.count("help")) {
             std::cout << desc << "\n";
             return false;
         }
 
         po::notify(vm);
-    }
-    catch(std::exception& e)
-    {
+    } catch (std::exception &e) {
         std::cerr << "Error: " << e.what() << "\n";
         return false;
     }
@@ -58,7 +59,7 @@ bool process_verifier_command_line(const int argc, const char** argv,
 
 using namespace libsnark;
 
-int main(int argc, const char * argv[])
+int main(int argc, const char *argv[])
 {
     default_tinyram_ppzksnark_pp::init_public_params();
 
@@ -75,8 +76,14 @@ int main(int argc, const char * argv[])
     std::string primary_input_fn;
     std::string verification_result_fn;
 
-    if (!process_verifier_command_line(argc, argv, processed_assembly_fn, verification_key_fn, primary_input_fn, proof_fn, verification_result_fn))
-    {
+    if (!process_verifier_command_line(
+            argc,
+            argv,
+            processed_assembly_fn,
+            verification_key_fn,
+            primary_input_fn,
+            proof_fn,
+            verification_result_fn)) {
         return 1;
     }
 #endif
@@ -98,12 +105,17 @@ int main(int argc, const char * argv[])
     proof_file >> pi;
     proof_file.close();
 
-    const ram_boot_trace<default_tinyram_ppzksnark_pp> boot_trace = tinyram_boot_trace_from_program_and_input(vk.ap, vk.primary_input_size_bound, program, primary_input);
-    const bool bit = ram_ppzksnark_verifier<default_tinyram_ppzksnark_pp>(vk, boot_trace, pi);
+    const ram_boot_trace<default_tinyram_ppzksnark_pp> boot_trace =
+        tinyram_boot_trace_from_program_and_input(
+            vk.ap, vk.primary_input_size_bound, program, primary_input);
+    const bool bit = ram_ppzksnark_verifier<default_tinyram_ppzksnark_pp>(
+        vk, boot_trace, pi);
 
-    printf("================================================================================\n");
+    printf("==================================================================="
+           "=============\n");
     printf("The verification result is: %s\n", (bit ? "PASS" : "FAIL"));
-    printf("================================================================================\n");
+    printf("==================================================================="
+           "=============\n");
     std::ofstream vr_file(verification_result_fn);
     vr_file << bit << "\n";
     vr_file.close();

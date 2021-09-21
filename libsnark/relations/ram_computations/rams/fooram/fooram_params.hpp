@@ -16,10 +16,11 @@
 #include <libsnark/relations/ram_computations/rams/fooram/fooram_aux.hpp>
 #include <libsnark/relations/ram_computations/rams/ram_params.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-template<typename FieldT>
-class ram_fooram {
+template<typename FieldT> class ram_fooram
+{
 public:
     typedef FieldT base_field_type;
     typedef fooram_protoboard<FieldT> protoboard_type;
@@ -30,9 +31,8 @@ public:
     static size_t timestamp_length;
 };
 
-template<typename FieldT>
-size_t ram_fooram<FieldT>::timestamp_length = 300;
+template<typename FieldT> size_t ram_fooram<FieldT>::timestamp_length = 300;
 
-} // libsnark
+} // namespace libsnark
 
 #endif // FOORAM_PARAMS_HPP_

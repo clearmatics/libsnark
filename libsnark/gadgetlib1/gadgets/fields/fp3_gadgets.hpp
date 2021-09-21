@@ -15,17 +15,17 @@
 #ifndef FP3_GADGETS_HPP_
 #define FP3_GADGETS_HPP_
 
+#include <libsnark/gadgetlib1/gadget.hpp>
 #include <memory>
 
-#include <libsnark/gadgetlib1/gadget.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Gadget that represents an Fp3 variable.
  */
-template<typename Fp3T>
-class Fp3_variable : public gadget<typename Fp3T::my_Fp> {
+template<typename Fp3T> class Fp3_variable : public gadget<typename Fp3T::my_Fp>
+{
 public:
     typedef typename Fp3T::my_Fp FieldT;
 
@@ -35,20 +35,22 @@ public:
 
     pb_linear_combination_array<FieldT> all_vars;
 
-    Fp3_variable(protoboard<FieldT> &pb,
-                 const std::string &annotation_prefix);
-    Fp3_variable(protoboard<FieldT> &pb,
-                 const Fp3T &el,
-                 const std::string &annotation_prefix);
-    Fp3_variable(protoboard<FieldT> &pb,
-                 const Fp3T &el,
-                 const pb_linear_combination<FieldT> &coeff,
-                 const std::string &annotation_prefix);
-    Fp3_variable(protoboard<FieldT> &pb,
-                 const pb_linear_combination<FieldT> &c0,
-                 const pb_linear_combination<FieldT> &c1,
-                 const pb_linear_combination<FieldT> &c2,
-                 const std::string &annotation_prefix);
+    Fp3_variable(protoboard<FieldT> &pb, const std::string &annotation_prefix);
+    Fp3_variable(
+        protoboard<FieldT> &pb,
+        const Fp3T &el,
+        const std::string &annotation_prefix);
+    Fp3_variable(
+        protoboard<FieldT> &pb,
+        const Fp3T &el,
+        const pb_linear_combination<FieldT> &coeff,
+        const std::string &annotation_prefix);
+    Fp3_variable(
+        protoboard<FieldT> &pb,
+        const pb_linear_combination<FieldT> &c0,
+        const pb_linear_combination<FieldT> &c1,
+        const pb_linear_combination<FieldT> &c2,
+        const std::string &annotation_prefix);
 
     void generate_r1cs_equals_const_constraints(const Fp3T &el);
     void generate_r1cs_witness(const Fp3T &el);
@@ -69,7 +71,8 @@ public:
  * Gadget that creates constraints for Fp3 by Fp3 multiplication.
  */
 template<typename Fp3T>
-class Fp3_mul_gadget : public gadget<typename Fp3T::my_Fp> {
+class Fp3_mul_gadget : public gadget<typename Fp3T::my_Fp>
+{
 public:
     typedef typename Fp3T::my_Fp FieldT;
 
@@ -80,20 +83,23 @@ public:
     pb_variable<FieldT> v0;
     pb_variable<FieldT> v4;
 
-    Fp3_mul_gadget(protoboard<FieldT> &pb,
-                   const Fp3_variable<Fp3T> &A,
-                   const Fp3_variable<Fp3T> &B,
-                   const Fp3_variable<Fp3T> &result,
-                   const std::string &annotation_prefix);
+    Fp3_mul_gadget(
+        protoboard<FieldT> &pb,
+        const Fp3_variable<Fp3T> &A,
+        const Fp3_variable<Fp3T> &B,
+        const Fp3_variable<Fp3T> &result,
+        const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
 
 /**
- * Gadget that creates constraints for Fp3 multiplication by a linear combination.
+ * Gadget that creates constraints for Fp3 multiplication by a linear
+ * combination.
  */
 template<typename Fp3T>
-class Fp3_mul_by_lc_gadget : public gadget<typename Fp3T::my_Fp> {
+class Fp3_mul_by_lc_gadget : public gadget<typename Fp3T::my_Fp>
+{
 public:
     typedef typename Fp3T::my_Fp FieldT;
 
@@ -101,11 +107,12 @@ public:
     pb_linear_combination<FieldT> lc;
     Fp3_variable<Fp3T> result;
 
-    Fp3_mul_by_lc_gadget(protoboard<FieldT> &pb,
-                         const Fp3_variable<Fp3T> &A,
-                         const pb_linear_combination<FieldT> &lc,
-                         const Fp3_variable<Fp3T> &result,
-                         const std::string &annotation_prefix);
+    Fp3_mul_by_lc_gadget(
+        protoboard<FieldT> &pb,
+        const Fp3_variable<Fp3T> &A,
+        const pb_linear_combination<FieldT> &lc,
+        const Fp3_variable<Fp3T> &result,
+        const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
@@ -114,25 +121,26 @@ public:
  * Gadget that creates constraints for Fp3 squaring.
  */
 template<typename Fp3T>
-class Fp3_sqr_gadget : public gadget<typename Fp3T::my_Fp> {
+class Fp3_sqr_gadget : public gadget<typename Fp3T::my_Fp>
+{
 public:
     typedef typename Fp3T::my_Fp FieldT;
 
     Fp3_variable<Fp3T> A;
     Fp3_variable<Fp3T> result;
 
-    std::shared_ptr<Fp3_mul_gadget<Fp3T> > mul;
+    std::shared_ptr<Fp3_mul_gadget<Fp3T>> mul;
 
-    Fp3_sqr_gadget(protoboard<FieldT> &pb,
-                   const Fp3_variable<Fp3T> &A,
-                   const Fp3_variable<Fp3T> &result,
-                   const std::string &annotation_prefix);
+    Fp3_sqr_gadget(
+        protoboard<FieldT> &pb,
+        const Fp3_variable<Fp3T> &A,
+        const Fp3_variable<Fp3T> &result,
+        const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
 
-
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/fields/fp3_gadgets.tcc>
 

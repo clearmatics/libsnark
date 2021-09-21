@@ -14,20 +14,23 @@
 #ifndef FOORAM_PROTOBOARD_TCC_
 #define FOORAM_PROTOBOARD_TCC_
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename FieldT>
-fooram_protoboard<FieldT>::fooram_protoboard(const fooram_architecture_params &ap) :
-    protoboard<FieldT>(), ap(ap)
+fooram_protoboard<FieldT>::fooram_protoboard(
+    const fooram_architecture_params &ap)
+    : protoboard<FieldT>(), ap(ap)
 {
 }
 
 template<typename FieldT>
-fooram_gadget<FieldT>::fooram_gadget(fooram_protoboard<FieldT> &pb, const std::string &annotation_prefix) :
-    gadget<FieldT>(pb, annotation_prefix), pb(pb)
+fooram_gadget<FieldT>::fooram_gadget(
+    fooram_protoboard<FieldT> &pb, const std::string &annotation_prefix)
+    : gadget<FieldT>(pb, annotation_prefix), pb(pb)
 {
 }
 
-} // libsnark
+} // namespace libsnark
 
 #endif // FOORAM_PROTOBOARD_HPP_

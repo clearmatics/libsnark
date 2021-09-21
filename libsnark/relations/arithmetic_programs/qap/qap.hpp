@@ -22,16 +22,15 @@
 #ifndef QAP_HPP_
 #define QAP_HPP_
 
+#include <libfqfft/evaluation_domain/evaluation_domain.hpp>
 #include <map>
 #include <memory>
 
-#include <libfqfft/evaluation_domain/evaluation_domain.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /* forward declaration */
-template<typename FieldT>
-class qap_witness;
+template<typename FieldT> class qap_witness;
 
 /**
  * A QAP instance.
@@ -49,40 +48,42 @@ class qap_witness;
  * There is no need to store the Z polynomial because it is uniquely
  * determined by the domain (as Z is its vanishing polynomial).
  */
-template<typename FieldT>
-class qap_instance {
+template<typename FieldT> class qap_instance
+{
 private:
     size_t num_variables_;
     size_t degree_;
     size_t num_inputs_;
 
 public:
-    std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain;
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain;
 
-    std::vector<std::map<size_t, FieldT> > A_in_Lagrange_basis;
-    std::vector<std::map<size_t, FieldT> > B_in_Lagrange_basis;
-    std::vector<std::map<size_t, FieldT> > C_in_Lagrange_basis;
+    std::vector<std::map<size_t, FieldT>> A_in_Lagrange_basis;
+    std::vector<std::map<size_t, FieldT>> B_in_Lagrange_basis;
+    std::vector<std::map<size_t, FieldT>> C_in_Lagrange_basis;
 
-    qap_instance(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                 const size_t num_variables,
-                 const size_t degree,
-                 const size_t num_inputs,
-                 const std::vector<std::map<size_t, FieldT> > &A_in_Lagrange_basis,
-                 const std::vector<std::map<size_t, FieldT> > &B_in_Lagrange_basis,
-                 const std::vector<std::map<size_t, FieldT> > &C_in_Lagrange_basis);
+    qap_instance(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const std::vector<std::map<size_t, FieldT>> &A_in_Lagrange_basis,
+        const std::vector<std::map<size_t, FieldT>> &B_in_Lagrange_basis,
+        const std::vector<std::map<size_t, FieldT>> &C_in_Lagrange_basis);
 
-    qap_instance(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                 const size_t num_variables,
-                 const size_t degree,
-                 const size_t num_inputs,
-                 std::vector<std::map<size_t, FieldT> > &&A_in_Lagrange_basis,
-                 std::vector<std::map<size_t, FieldT> > &&B_in_Lagrange_basis,
-                 std::vector<std::map<size_t, FieldT> > &&C_in_Lagrange_basis);
+    qap_instance(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        std::vector<std::map<size_t, FieldT>> &&A_in_Lagrange_basis,
+        std::vector<std::map<size_t, FieldT>> &&B_in_Lagrange_basis,
+        std::vector<std::map<size_t, FieldT>> &&C_in_Lagrange_basis);
 
     qap_instance(const qap_instance<FieldT> &other) = default;
     qap_instance(qap_instance<FieldT> &&other) = default;
-    qap_instance& operator=(const qap_instance<FieldT> &other) = default;
-    qap_instance& operator=(qap_instance<FieldT> &&other) = default;
+    qap_instance &operator=(const qap_instance<FieldT> &other) = default;
+    qap_instance &operator=(qap_instance<FieldT> &&other) = default;
 
     size_t num_variables() const;
     size_t degree() const;
@@ -92,7 +93,8 @@ public:
 };
 
 /**
- * A QAP instance evaluation is a QAP instance that is evaluated at a field element t.
+ * A QAP instance evaluation is a QAP instance that is evaluated at a field
+ * element t.
  *
  * Specifically, the datastructure stores:
  * - a choice of domain (corresponding to a certain subset of the field);
@@ -102,14 +104,15 @@ public:
  * - evaluations of all monomials of t;
  * - counts about how many of the above evaluations are in fact non-zero.
  */
-template<typename FieldT>
-class qap_instance_evaluation {
+template<typename FieldT> class qap_instance_evaluation
+{
 private:
     size_t num_variables_;
     size_t degree_;
     size_t num_inputs_;
+
 public:
-    std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain;
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain;
 
     FieldT t;
 
@@ -120,31 +123,36 @@ public:
 
     FieldT Zt;
 
-    qap_instance_evaluation(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                            const size_t num_variables,
-                            const size_t degree,
-                            const size_t num_inputs,
-                            const FieldT &t,
-                            const std::vector<FieldT> &At,
-                            const std::vector<FieldT> &Bt,
-                            const std::vector<FieldT> &Ct,
-                            const std::vector<FieldT> &Ht,
-                            const FieldT &Zt);
-    qap_instance_evaluation(const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > &domain,
-                            const size_t num_variables,
-                            const size_t degree,
-                            const size_t num_inputs,
-                            const FieldT &t,
-                            std::vector<FieldT> &&At,
-                            std::vector<FieldT> &&Bt,
-                            std::vector<FieldT> &&Ct,
-                            std::vector<FieldT> &&Ht,
-                            const FieldT &Zt);
+    qap_instance_evaluation(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &t,
+        const std::vector<FieldT> &At,
+        const std::vector<FieldT> &Bt,
+        const std::vector<FieldT> &Ct,
+        const std::vector<FieldT> &Ht,
+        const FieldT &Zt);
+    qap_instance_evaluation(
+        const std::shared_ptr<libfqfft::evaluation_domain<FieldT>> &domain,
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &t,
+        std::vector<FieldT> &&At,
+        std::vector<FieldT> &&Bt,
+        std::vector<FieldT> &&Ct,
+        std::vector<FieldT> &&Ht,
+        const FieldT &Zt);
 
-    qap_instance_evaluation(const qap_instance_evaluation<FieldT> &other) = default;
+    qap_instance_evaluation(const qap_instance_evaluation<FieldT> &other) =
+        default;
     qap_instance_evaluation(qap_instance_evaluation<FieldT> &&other) = default;
-    qap_instance_evaluation& operator=(const qap_instance_evaluation<FieldT> &other) = default;
-    qap_instance_evaluation& operator=(qap_instance_evaluation<FieldT> &&other) = default;
+    qap_instance_evaluation &operator=(
+        const qap_instance_evaluation<FieldT> &other) = default;
+    qap_instance_evaluation &operator=(
+        qap_instance_evaluation<FieldT> &&other) = default;
 
     size_t num_variables() const;
     size_t degree() const;
@@ -156,8 +164,8 @@ public:
 /**
  * A QAP witness.
  */
-template<typename FieldT>
-class qap_witness {
+template<typename FieldT> class qap_witness
+{
 private:
     size_t num_variables_;
     size_t degree_;
@@ -169,35 +177,37 @@ public:
     std::vector<FieldT> coefficients_for_ABCs;
     std::vector<FieldT> coefficients_for_H;
 
-    qap_witness(const size_t num_variables,
-                const size_t degree,
-                const size_t num_inputs,
-                const FieldT &d1,
-                const FieldT &d2,
-                const FieldT &d3,
-                const std::vector<FieldT> &coefficients_for_ABCs,
-                const std::vector<FieldT> &coefficients_for_H);
+    qap_witness(
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &d1,
+        const FieldT &d2,
+        const FieldT &d3,
+        const std::vector<FieldT> &coefficients_for_ABCs,
+        const std::vector<FieldT> &coefficients_for_H);
 
-    qap_witness(const size_t num_variables,
-                const size_t degree,
-                const size_t num_inputs,
-                const FieldT &d1,
-                const FieldT &d2,
-                const FieldT &d3,
-                const std::vector<FieldT> &coefficients_for_ABCs,
-                std::vector<FieldT> &&coefficients_for_H);
+    qap_witness(
+        const size_t num_variables,
+        const size_t degree,
+        const size_t num_inputs,
+        const FieldT &d1,
+        const FieldT &d2,
+        const FieldT &d3,
+        const std::vector<FieldT> &coefficients_for_ABCs,
+        std::vector<FieldT> &&coefficients_for_H);
 
     qap_witness(const qap_witness<FieldT> &other) = default;
     qap_witness(qap_witness<FieldT> &&other) = default;
-    qap_witness& operator=(const qap_witness<FieldT> &other) = default;
-    qap_witness& operator=(qap_witness<FieldT> &&other) = default;
+    qap_witness &operator=(const qap_witness<FieldT> &other) = default;
+    qap_witness &operator=(qap_witness<FieldT> &&other) = default;
 
     size_t num_variables() const;
     size_t degree() const;
     size_t num_inputs() const;
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/relations/arithmetic_programs/qap/qap.tcc>
 

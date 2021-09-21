@@ -7,29 +7,31 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#include <set>
-
-#include <gtest/gtest.h>
-
 #include "libsnark/gadgetlib2/constraint.hpp"
 #include "libsnark/gadgetlib2/pp.hpp"
+
+#include <gtest/gtest.h>
+#include <set>
 
 using ::std::set;
 using namespace gadgetlib2;
 
-namespace {
+namespace
+{
 
-TEST(gadgetLib2, Rank1Constraint) {
+TEST(gadgetLib2, Rank1Constraint)
+{
     initPublicParamsFromDefaultPp();
-    VariableArray x(10,"x");
+    VariableArray x(10, "x");
     VariableAssignment assignment;
-    for(int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i) {
         assignment[x[i]] = Fp(i);
     }
-    LinearCombination a = x[0] + x[1] + 2;     // <a,assignment> = 0+1+2=3
-    LinearCombination b = 2*x[2] - 3*x[3] + 4; // <b,assignment> = 2*2-3*3+4=-1
-    LinearCombination c = x[5];                // <c,assignment> = 5
-    Rank1Constraint c1(a,b,c,"c1");
+    LinearCombination a = x[0] + x[1] + 2; // <a,assignment> = 0+1+2=3
+    LinearCombination b =
+        2 * x[2] - 3 * x[3] + 4; // <b,assignment> = 2*2-3*3+4=-1
+    LinearCombination c = x[5];  // <c,assignment> = 5
+    Rank1Constraint c1(a, b, c, "c1");
     EXPECT_EQ(c1.a().eval(assignment), a.eval(assignment));
     EXPECT_EQ(c1.b().eval(assignment), b.eval(assignment));
     EXPECT_EQ(c1.c().eval(assignment), c.eval(assignment));
@@ -47,6 +49,5 @@ TEST(gadgetLib2, Rank1Constraint) {
     EXPECT_TRUE(varSet.find(x[4]) == varSet.end());
     EXPECT_TRUE(varSet.find(x[5]) != varSet.end());
 }
-
 
 } // namespace

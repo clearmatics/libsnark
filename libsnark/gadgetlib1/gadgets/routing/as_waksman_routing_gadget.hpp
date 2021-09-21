@@ -20,10 +20,12 @@
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
 #include <libsnark/gadgetlib1/protoboard.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename FieldT>
-class as_waksman_routing_gadget : public gadget<FieldT> {
+class as_waksman_routing_gadget : public gadget<FieldT>
+{
 private:
     /*
       Indexing conventions:
@@ -41,8 +43,8 @@ private:
       allocated variables.
 
     */
-    std::vector<std::vector<pb_variable_array<FieldT> > > routed_packets;
-    std::vector<multipacking_gadget<FieldT> > pack_inputs, unpack_outputs;
+    std::vector<std::vector<pb_variable_array<FieldT>>> routed_packets;
+    std::vector<multipacking_gadget<FieldT>> pack_inputs, unpack_outputs;
 
     /*
       If #packets = 1 then we can route without explicit switch bits
@@ -53,8 +55,9 @@ private:
       connection), and 1 corresponds to switch on (crossed
       connection).
     */
-    std::vector<std::map<size_t, pb_variable<FieldT> > > asw_switch_bits;
+    std::vector<std::map<size_t, pb_variable<FieldT>>> asw_switch_bits;
     as_waksman_topology neighbors;
+
 public:
     const size_t num_packets;
     const size_t num_columns;
@@ -63,19 +66,21 @@ public:
 
     const size_t packet_size, num_subpackets;
 
-    as_waksman_routing_gadget(protoboard<FieldT> &pb,
-                              const size_t num_packets,
-                              const std::vector<pb_variable_array<FieldT>> &routing_input_bits,
-                              const std::vector<pb_variable_array<FieldT>> &routing_output_bits,
-                              const std::string& annotation_prefix="");
+    as_waksman_routing_gadget(
+        protoboard<FieldT> &pb,
+        const size_t num_packets,
+        const std::vector<pb_variable_array<FieldT>> &routing_input_bits,
+        const std::vector<pb_variable_array<FieldT>> &routing_output_bits,
+        const std::string &annotation_prefix = "");
     void generate_r1cs_constraints();
-    void generate_r1cs_witness(const integer_permutation& permutation);
+    void generate_r1cs_witness(const integer_permutation &permutation);
 };
 
 template<typename FieldT>
-void test_as_waksman_routing_gadget(const size_t num_packets, const size_t packet_size);
+void test_as_waksman_routing_gadget(
+    const size_t num_packets, const size_t packet_size);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/routing/as_waksman_routing_gadget.tcc>
 

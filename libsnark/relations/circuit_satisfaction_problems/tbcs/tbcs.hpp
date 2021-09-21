@@ -18,10 +18,10 @@
 #define TBCS_HPP_
 
 #include <libff/common/profiling.hpp>
-
 #include <libsnark/relations/variable.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /*********************** BACS variable assignment ****************************/
 
@@ -29,7 +29,6 @@ namespace libsnark {
  * A TBCS variable assignment is a vector of bools.
  */
 typedef std::vector<bool> tbcs_variable_assignment;
-
 
 /**************************** TBCS gate **************************************/
 
@@ -50,7 +49,8 @@ typedef size_t tbcs_wire_t;
  *
  * References:
  *
- * [1] = https://mitpress.mit.edu/sites/default/files/titles/content/9780262640688_sch_0001.pdf
+ * [1] =
+ * https://mitpress.mit.edu/sites/default/files/titles/content/9780262640688_sch_0001.pdf
  */
 enum tbcs_gate_type {
     TBCS_GATE_CONSTANT_0 = 0,
@@ -84,9 +84,9 @@ static const int num_tbcs_gate_types = 16;
  *
  * A TBCS gate is used to construct a TBCS circuit (see below).
  */
-class tbcs_gate {
+class tbcs_gate
+{
 public:
-
     tbcs_wire_t left_wire;
     tbcs_wire_t right_wire;
 
@@ -97,13 +97,14 @@ public:
     bool is_circuit_output;
 
     bool evaluate(const tbcs_variable_assignment &input) const;
-    void print(const std::map<size_t, std::string> &variable_annotations = std::map<size_t, std::string>()) const;
+    void print(
+        const std::map<size_t, std::string> &variable_annotations =
+            std::map<size_t, std::string>()) const;
     bool operator==(const tbcs_gate &other) const;
 
-    friend std::ostream& operator<<(std::ostream &out, const tbcs_gate &g);
-    friend std::istream& operator>>(std::istream &in, tbcs_gate &g);
+    friend std::ostream &operator<<(std::ostream &out, const tbcs_gate &g);
+    friend std::istream &operator>>(std::istream &in, tbcs_gate &g);
 };
-
 
 /****************************** TBCS inputs **********************************/
 
@@ -117,7 +118,6 @@ typedef tbcs_variable_assignment tbcs_primary_input;
  */
 typedef tbcs_variable_assignment tbcs_auxiliary_input;
 
-
 /************************** TBCS circuit *************************************/
 
 /**
@@ -130,7 +130,8 @@ typedef tbcs_variable_assignment tbcs_auxiliary_input;
  * The 0-th variable (i.e., "x_{0}") always represents the constant 1.
  * Thus, the 0-th variable is not included in num_variables.
  */
-class tbcs_circuit {
+class tbcs_circuit
+{
 public:
     size_t primary_input_size;
     size_t auxiliary_input_size;
@@ -151,13 +152,16 @@ public:
 #endif
 
     bool is_valid() const;
-    bool is_satisfied(const tbcs_primary_input &primary_input,
-                      const tbcs_auxiliary_input &auxiliary_input) const;
+    bool is_satisfied(
+        const tbcs_primary_input &primary_input,
+        const tbcs_auxiliary_input &auxiliary_input) const;
 
-    tbcs_variable_assignment get_all_wires(const tbcs_primary_input &primary_input,
-                                           const tbcs_auxiliary_input &auxiliary_input) const;
-    tbcs_variable_assignment get_all_outputs(const tbcs_primary_input &primary_input,
-                                             const tbcs_auxiliary_input &auxiliary_input) const;
+    tbcs_variable_assignment get_all_wires(
+        const tbcs_primary_input &primary_input,
+        const tbcs_auxiliary_input &auxiliary_input) const;
+    tbcs_variable_assignment get_all_outputs(
+        const tbcs_primary_input &primary_input,
+        const tbcs_auxiliary_input &auxiliary_input) const;
 
     void add_gate(const tbcs_gate &g);
     void add_gate(const tbcs_gate &g, const std::string &annotation);
@@ -167,10 +171,11 @@ public:
     void print() const;
     void print_info() const;
 
-    friend std::ostream& operator<<(std::ostream &out, const tbcs_circuit &circuit);
-    friend std::istream& operator>>(std::istream &in, tbcs_circuit &circuit);
+    friend std::ostream &operator<<(
+        std::ostream &out, const tbcs_circuit &circuit);
+    friend std::istream &operator>>(std::istream &in, tbcs_circuit &circuit);
 };
 
-} // libsnark
+} // namespace libsnark
 
 #endif // TBCS_HPP_

@@ -17,7 +17,8 @@
 #include <string>
 #include <vector>
 
-namespace libsnark {
+namespace libsnark
+{
 
 extern size_t constraint_profiling_indent;
 
@@ -29,14 +30,21 @@ struct constraint_profiling_entry {
 
 extern std::vector<constraint_profiling_entry> constraint_profiling_table;
 
-#define PROFILE_CONSTRAINTS(pb, annotation)                             \
-    for (size_t _num_constraints_before = pb.num_constraints(), _iter = (++libsnark::constraint_profiling_indent, 0), _cp_pos = libsnark::constraint_profiling_table.size(); \
-         _iter == 0;                                                    \
-         libsnark::constraint_profiling_table.insert(libsnark::constraint_profiling_table.begin() + _cp_pos, libsnark::constraint_profiling_entry{--libsnark::constraint_profiling_indent, annotation, pb.num_constraints() - _num_constraints_before}), \
-         _iter = 1)
+#define PROFILE_CONSTRAINTS(pb, annotation)                                    \
+    for (size_t _num_constraints_before = pb.num_constraints(),                \
+                _iter = (++libsnark::constraint_profiling_indent, 0),          \
+                _cp_pos = libsnark::constraint_profiling_table.size();         \
+         _iter == 0;                                                           \
+         libsnark::constraint_profiling_table.insert(                          \
+             libsnark::constraint_profiling_table.begin() + _cp_pos,           \
+             libsnark::constraint_profiling_entry{                             \
+                 --libsnark::constraint_profiling_indent,                      \
+                 annotation,                                                   \
+                 pb.num_constraints() - _num_constraints_before}),             \
+                _iter = 1)
 
 size_t PRINT_CONSTRAINT_PROFILING(); // returns # of top level constraints
 
-} // libsnark
+} // namespace libsnark
 
 #endif // CONSTRAINT_PROFILING_HPP_
