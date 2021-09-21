@@ -143,7 +143,7 @@ string Protoboard::annotation() const
         retVal += varName + ": " + varAssignedValue + "\n";
     }
     return retVal;
-#else // not DEBUG
+#else
     return "";
 #endif
 }

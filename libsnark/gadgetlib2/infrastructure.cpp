@@ -45,7 +45,7 @@ const static size_t MAX_FMT = 256;
         " string or increase buffer size defined in \"MAX_FMT\".");
     return ::std::string(buf);
 }
-#else // not DEBUG
+#else
 ::std::string GADGETLIB2_FMT(const char *format, ...)
 {
     libff::UNUSED(format);
@@ -76,7 +76,7 @@ void ErrorHandling::fatalError(const ::std::string &msg)
     ::std::cerr << "ERROR:  " << msg << ::std::endl << ::std::endl;
     printStacktrace();
     throw ::std::runtime_error(msg);
-#else // not DEBUG
+#else
     libff::UNUSED(msg);
     const ::std::string releaseMsg(
         "Fatal error encountered. Run debug build for more"
