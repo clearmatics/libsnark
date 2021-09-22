@@ -11,11 +11,11 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef WEIERSTRASS_FINAL_EXPONENTIATION_TCC_
-#define WEIERSTRASS_FINAL_EXPONENTIATION_TCC_
+#ifndef LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_FINAL_EXPONENTIATION_TCC_
+#define LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_FINAL_EXPONENTIATION_TCC_
 
-#include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/mnt_pairing_params.hpp>
+#include "libsnark/gadgetlib1/gadgets/basic_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
 
 namespace libsnark
 {
@@ -292,4 +292,4 @@ template<typename ppT> void mnt6_final_exp_gadget<ppT>::generate_r1cs_witness()
 
 } // namespace libsnark
 
-#endif // WEIERSTRASS_FINAL_EXPONENTIATION_TCC_
+#endif // LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_FINAL_EXPONENTIATION_TCC_

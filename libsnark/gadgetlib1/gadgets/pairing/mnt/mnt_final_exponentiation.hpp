@@ -12,11 +12,15 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef WEIERSTRASS_FINAL_EXPONENTIATION_HPP_
-#define WEIERSTRASS_FINAL_EXPONENTIATION_HPP_
+#ifndef LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_FINAL_EXPONENTIATION_HPP_
+#define LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_FINAL_EXPONENTIATION_HPP_
 
-#include <libsnark/gadgetlib1/gadgets/fields/exponentiation_gadget.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/mnt_pairing_params.hpp>
+#include "libsnark/gadgetlib1/gadgets/fields/exponentiation_gadget.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
+
+#include <libff/algebra/curves/mnt/mnt4/mnt4_pp.hpp>
+#include <libff/algebra/curves/mnt/mnt6/mnt6_pp.hpp>
+#include <libff/algebra/curves/public_params.hpp>
 #include <memory>
 
 namespace libsnark
@@ -134,6 +138,6 @@ public:
 
 } // namespace libsnark
 
-#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_final_exponentiation.tcc>
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_final_exponentiation.tcc"
 
-#endif // WEIERSTRASS_FINAL_EXPONENTIATION_HPP_
+#endif // LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_FINAL_EXPONENTIATION_HPP_

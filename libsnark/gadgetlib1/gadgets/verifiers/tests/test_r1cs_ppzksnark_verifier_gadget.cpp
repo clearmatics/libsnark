@@ -4,16 +4,21 @@
  *             and contributors (see AUTHORS).
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
+
+#include "libsnark/gadgetlib1/gadgets/fields/exponentiation_gadget.hpp"
+#include "libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/fields/fp3_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/fields/fp4_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/fields/fp6_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
+#include "libsnark/gadgetlib1/gadgets/verifiers/r1cs_ppzksnark_verifier_gadget.hpp"
+#include "libsnark/relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp"
+#include "libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp"
+
 #include <libff/algebra/curves/mnt/mnt4/mnt4_pp.hpp>
 #include <libff/algebra/curves/mnt/mnt6/mnt6_pp.hpp>
 #include <libff/algebra/fields/field_utils.hpp>
-#include <libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.hpp>
-#include <libsnark/gadgetlib1/gadgets/fields/fp3_gadgets.hpp>
-#include <libsnark/gadgetlib1/gadgets/fields/fp4_gadgets.hpp>
-#include <libsnark/gadgetlib1/gadgets/fields/fp6_gadgets.hpp>
-#include <libsnark/gadgetlib1/gadgets/verifiers/r1cs_ppzksnark_verifier_gadget.hpp>
-#include <libsnark/relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp>
-#include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
 
 using namespace libsnark;
 
@@ -23,6 +28,8 @@ template<typename FieldT> void dump_constraints(const protoboard<FieldT> &pb)
     for (auto s : pb.constraint_system.constraint_annotations) {
         printf("constraint: %s\n", s.second.c_str());
     }
+#else
+    UNUSED(pb);
 #endif
 }
 
@@ -490,21 +497,6 @@ int main(void)
 
     test_G2_checker_gadget<libff::mnt4_pp>("mnt4");
     test_G2_checker_gadget<libff::mnt6_pp>("mnt6");
-
-    test_G1_variable_precomp<libff::mnt4_pp>("mnt4");
-    test_G1_variable_precomp<libff::mnt6_pp>("mnt6");
-
-    test_G2_variable_precomp<libff::mnt4_pp>("mnt4");
-    test_G2_variable_precomp<libff::mnt6_pp>("mnt6");
-
-    test_mnt_miller_loop<libff::mnt4_pp>("mnt4");
-    test_mnt_miller_loop<libff::mnt6_pp>("mnt6");
-
-    test_mnt_e_over_e_miller_loop<libff::mnt4_pp>("mnt4");
-    test_mnt_e_over_e_miller_loop<libff::mnt6_pp>("mnt6");
-
-    test_mnt_e_times_e_over_e_miller_loop<libff::mnt4_pp>("mnt4");
-    test_mnt_e_times_e_over_e_miller_loop<libff::mnt6_pp>("mnt6");
 
     test_full_pairing<libff::mnt4_pp>("mnt4");
     test_full_pairing<libff::mnt6_pp>("mnt6");

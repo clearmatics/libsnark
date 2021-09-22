@@ -12,11 +12,11 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef WEIERSTRASS_MILLER_LOOP_HPP_
-#define WEIERSTRASS_MILLER_LOOP_HPP_
+#ifndef LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_MILLER_LOOP_HPP_
+#define LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_MILLER_LOOP_HPP_
 
-#include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_precomputation.hpp"
+
 #include <memory>
 
 namespace libsnark
@@ -44,8 +44,8 @@ public:
     typedef libff::Fqe<other_curve<ppT>> FqeT;
     typedef libff::Fqk<other_curve<ppT>> FqkT;
 
-    G1_precomputation<ppT> prec_P;
-    precompute_G2_gadget_coeffs<ppT> c;
+    mnt_G1_precomputation<ppT> prec_P;
+    mnt_precompute_G2_gadget_coeffs<ppT> c;
     std::shared_ptr<Fqk_variable<ppT>> &g_RR_at_P; // reference from outside
 
     std::shared_ptr<Fqe_variable<ppT>> gamma_twist;
@@ -54,8 +54,8 @@ public:
 
     mnt_miller_loop_dbl_line_eval(
         protoboard<FieldT> &pb,
-        const G1_precomputation<ppT> &prec_P,
-        const precompute_G2_gadget_coeffs<ppT> &c,
+        const mnt_G1_precomputation<ppT> &prec_P,
+        const mnt_precompute_G2_gadget_coeffs<ppT> &c,
         std::shared_ptr<Fqk_variable<ppT>> &g_RR_at_P,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
@@ -85,8 +85,8 @@ public:
     typedef libff::Fqk<other_curve<ppT>> FqkT;
 
     bool invert_Q;
-    G1_precomputation<ppT> prec_P;
-    precompute_G2_gadget_coeffs<ppT> c;
+    mnt_G1_precomputation<ppT> prec_P;
+    mnt_precompute_G2_gadget_coeffs<ppT> c;
     G2_variable<ppT> Q;
     std::shared_ptr<Fqk_variable<ppT>> &g_RQ_at_P; // reference from outside
 
@@ -97,8 +97,8 @@ public:
     mnt_miller_loop_add_line_eval(
         protoboard<FieldT> &pb,
         const bool invert_Q,
-        const G1_precomputation<ppT> &prec_P,
-        const precompute_G2_gadget_coeffs<ppT> &c,
+        const mnt_G1_precomputation<ppT> &prec_P,
+        const mnt_precompute_G2_gadget_coeffs<ppT> &c,
         const G2_variable<ppT> &Q,
         std::shared_ptr<Fqk_variable<ppT>> &g_RQ_at_P,
         const std::string &annotation_prefix);
@@ -134,21 +134,19 @@ public:
     size_t add_count;
     size_t dbl_count;
 
-    G1_precomputation<ppT> prec_P;
-    G2_precomputation<ppT> prec_Q;
+    mnt_G1_precomputation<ppT> prec_P;
+    mnt_G2_precomputation<ppT> prec_Q;
     Fqk_variable<ppT> result;
 
     mnt_miller_loop_gadget(
         protoboard<FieldT> &pb,
-        const G1_precomputation<ppT> &prec_P,
-        const G2_precomputation<ppT> &prec_Q,
+        const mnt_G1_precomputation<ppT> &prec_P,
+        const mnt_G2_precomputation<ppT> &prec_Q,
         const Fqk_variable<ppT> &result,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
-
-template<typename ppT> void test_mnt_miller_loop(const std::string &annotation);
 
 /**
  * Gadget for verifying a double Miller loop (where the second is inverted).
@@ -186,26 +184,23 @@ public:
     size_t add_count;
     size_t dbl_count;
 
-    G1_precomputation<ppT> prec_P1;
-    G2_precomputation<ppT> prec_Q1;
-    G1_precomputation<ppT> prec_P2;
-    G2_precomputation<ppT> prec_Q2;
+    mnt_G1_precomputation<ppT> prec_P1;
+    mnt_G2_precomputation<ppT> prec_Q1;
+    mnt_G1_precomputation<ppT> prec_P2;
+    mnt_G2_precomputation<ppT> prec_Q2;
     Fqk_variable<ppT> result;
 
     mnt_e_over_e_miller_loop_gadget(
         protoboard<FieldT> &pb,
-        const G1_precomputation<ppT> &prec_P1,
-        const G2_precomputation<ppT> &prec_Q1,
-        const G1_precomputation<ppT> &prec_P2,
-        const G2_precomputation<ppT> &prec_Q2,
+        const mnt_G1_precomputation<ppT> &prec_P1,
+        const mnt_G2_precomputation<ppT> &prec_Q1,
+        const mnt_G1_precomputation<ppT> &prec_P2,
+        const mnt_G2_precomputation<ppT> &prec_Q2,
         const Fqk_variable<ppT> &result,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
-
-template<typename ppT>
-void test_mnt_e_over_e_miller_loop(const std::string &annotation);
 
 /**
  * Gadget for verifying a triple Miller loop (where the third is inverted).
@@ -251,33 +246,30 @@ public:
     size_t add_count;
     size_t dbl_count;
 
-    G1_precomputation<ppT> prec_P1;
-    G2_precomputation<ppT> prec_Q1;
-    G1_precomputation<ppT> prec_P2;
-    G2_precomputation<ppT> prec_Q2;
-    G1_precomputation<ppT> prec_P3;
-    G2_precomputation<ppT> prec_Q3;
+    mnt_G1_precomputation<ppT> prec_P1;
+    mnt_G2_precomputation<ppT> prec_Q1;
+    mnt_G1_precomputation<ppT> prec_P2;
+    mnt_G2_precomputation<ppT> prec_Q2;
+    mnt_G1_precomputation<ppT> prec_P3;
+    mnt_G2_precomputation<ppT> prec_Q3;
     Fqk_variable<ppT> result;
 
     mnt_e_times_e_over_e_miller_loop_gadget(
         protoboard<FieldT> &pb,
-        const G1_precomputation<ppT> &prec_P1,
-        const G2_precomputation<ppT> &prec_Q1,
-        const G1_precomputation<ppT> &prec_P2,
-        const G2_precomputation<ppT> &prec_Q2,
-        const G1_precomputation<ppT> &prec_P3,
-        const G2_precomputation<ppT> &prec_Q3,
+        const mnt_G1_precomputation<ppT> &prec_P1,
+        const mnt_G2_precomputation<ppT> &prec_Q1,
+        const mnt_G1_precomputation<ppT> &prec_P2,
+        const mnt_G2_precomputation<ppT> &prec_Q2,
+        const mnt_G1_precomputation<ppT> &prec_P3,
+        const mnt_G2_precomputation<ppT> &prec_Q3,
         const Fqk_variable<ppT> &result,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
 
-template<typename ppT>
-void test_mnt_e_times_e_over_e_miller_loop(const std::string &annotation);
-
 } // namespace libsnark
 
-#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_miller_loop.tcc>
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_miller_loop.tcc"
 
-#endif // WEIERSTRASS_MILLER_LOOP_HPP_
+#endif // LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_MILLER_LOOP_HPP_

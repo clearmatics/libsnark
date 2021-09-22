@@ -13,16 +13,20 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef MNT_PAIRING_PARAMS_HPP_
-#define MNT_PAIRING_PARAMS_HPP_
+#ifndef LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_PAIRING_PARAMS_HPP_
+#define LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_PAIRING_PARAMS_HPP_
+
+#include "libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/fields/fp3_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/fields/fp4_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/fields/fp6_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_final_exponentiation.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_miller_loop.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_precomputation.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
 
 #include <libff/algebra/curves/mnt/mnt4/mnt4_pp.hpp>
 #include <libff/algebra/curves/mnt/mnt6/mnt6_pp.hpp>
-#include <libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.hpp>
-#include <libsnark/gadgetlib1/gadgets/fields/fp3_gadgets.hpp>
-#include <libsnark/gadgetlib1/gadgets/fields/fp4_gadgets.hpp>
-#include <libsnark/gadgetlib1/gadgets/fields/fp6_gadgets.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
 
 namespace libsnark
 {
@@ -57,6 +61,11 @@ public:
 
     typedef libff::mnt6_pp other_curve_type;
 
+    typedef mnt_G1_precomputation<libff::mnt4_pp> G1_precomputation;
+    typedef mnt_G2_precomputation<libff::mnt4_pp> G2_precomputation;
+    typedef mnt_precompute_G1_gadget<libff::mnt4_pp> precompute_G1_gadget;
+    typedef mnt_precompute_G2_gadget<libff::mnt4_pp> precompute_G2_gadget;
+
     typedef mnt_e_over_e_miller_loop_gadget<libff::mnt4_pp>
         e_over_e_miller_loop_gadget_type;
     typedef mnt_e_times_e_over_e_miller_loop_gadget<libff::mnt4_pp>
@@ -90,6 +99,11 @@ public:
 
     typedef libff::mnt4_pp other_curve_type;
 
+    typedef mnt_G1_precomputation<libff::mnt6_pp> G1_precomputation;
+    typedef mnt_G2_precomputation<libff::mnt6_pp> G2_precomputation;
+    typedef mnt_precompute_G1_gadget<libff::mnt6_pp> precompute_G1_gadget;
+    typedef mnt_precompute_G2_gadget<libff::mnt6_pp> precompute_G2_gadget;
+
     typedef mnt_e_over_e_miller_loop_gadget<libff::mnt6_pp>
         e_over_e_miller_loop_gadget_type;
     typedef mnt_e_times_e_over_e_miller_loop_gadget<libff::mnt6_pp>
@@ -102,4 +116,4 @@ public:
 
 } // namespace libsnark
 
-#endif // MNT_PAIRING_PARAMS_HPP_
+#endif // LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_PAIRING_PARAMS_HPP_

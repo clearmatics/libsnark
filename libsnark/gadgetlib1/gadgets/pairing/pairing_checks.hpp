@@ -18,9 +18,8 @@
 #ifndef PAIRING_CHECKS_HPP_
 #define PAIRING_CHECKS_HPP_
 
-#include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_final_exponentiation.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_miller_loop.hpp>
+#include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
+
 #include <memory>
 
 namespace libsnark
