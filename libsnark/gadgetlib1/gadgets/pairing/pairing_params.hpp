@@ -106,10 +106,6 @@ template<typename ppT>
 using Fqk_mul_gadget = typename pairing_selector<ppT>::Fqk_mul_gadget_type;
 
 template<typename ppT>
-using Fqk_special_mul_gadget =
-    typename pairing_selector<ppT>::Fqk_special_mul_gadget_type;
-
-template<typename ppT>
 using Fqk_sqr_gadget = typename pairing_selector<ppT>::Fqk_sqr_gadget_type;
 
 template<typename ppT>
@@ -136,6 +132,11 @@ using e_over_e_miller_loop_gadget =
 template<typename ppT>
 using e_times_e_over_e_miller_loop_gadget =
     typename pairing_selector<ppT>::e_times_e_over_e_miller_loop_gadget_type;
+
+template<typename ppT>
+using e_times_e_times_e_over_e_miller_loop_gadget = typename pairing_selector<
+    ppT>::e_times_e_times_e_over_e_miller_loop_gadget_type;
+
 template<typename ppT>
 using final_exp_gadget = typename pairing_selector<ppT>::final_exp_gadget_type;
 
