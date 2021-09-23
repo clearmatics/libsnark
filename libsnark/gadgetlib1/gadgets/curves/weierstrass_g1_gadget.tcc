@@ -305,6 +305,8 @@ void G1_multiscalar_mul_gadget<ppT>::generate_r1cs_constraints()
     assert(
         num_constraints_after - num_constraints_before ==
         4 * (scalar_size - num_points) + (4 + 2) * scalar_size);
+    libff::UNUSED(num_constraints_before);
+    libff::UNUSED(num_constraints_after);
 }
 
 template<typename ppT>
