@@ -34,6 +34,12 @@ namespace libsnark
  * - Fqk_special_mul_gadget_type
  * - Fqk_sqr_gadget_type
  * - other_curve_type
+ * - G1_checker_type;
+ * - G2_checker_type;
+ * - G1_precompute_variable_type;
+ * - precompute_G1_gadget_type;
+ * - G2_precompute_variable_type;
+ * - precompute_G2_gadget_type;
  * - e_over_e_miller_loop_gadget_type
  * - e_times_e_over_e_miller_loop_gadget_type
  * - final_exp_gadget_type

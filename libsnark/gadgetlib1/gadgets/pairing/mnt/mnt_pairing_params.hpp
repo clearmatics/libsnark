@@ -61,6 +61,9 @@ public:
 
     typedef libff::mnt6_pp other_curve_type;
 
+    typedef G1_checker_gadget<libff::mnt4_pp> G1_checker_type;
+    typedef G2_checker_gadget<libff::mnt4_pp> G2_checker_type;
+
     typedef mnt_G1_precomputation<libff::mnt4_pp> G1_precomputation;
     typedef mnt_G2_precomputation<libff::mnt4_pp> G2_precomputation;
     typedef mnt_precompute_G1_gadget<libff::mnt4_pp> precompute_G1_gadget;
@@ -98,6 +101,9 @@ public:
     typedef Fp4_sqr_gadget<FqkT> Fqk_sqr_gadget_type;
 
     typedef libff::mnt4_pp other_curve_type;
+
+    typedef G1_checker_gadget<libff::mnt6_pp> G1_checker_type;
+    typedef G2_checker_gadget<libff::mnt6_pp> G2_checker_type;
 
     typedef mnt_G1_precomputation<libff::mnt6_pp> G1_precomputation;
     typedef mnt_G2_precomputation<libff::mnt6_pp> G2_precomputation;
