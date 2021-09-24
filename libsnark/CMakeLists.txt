@@ -154,7 +154,7 @@ if ("${IS_LIBSNARK_PARENT}")
 
   libsnark_test(common_routing_algorithms_test common/routing_algorithms/tests/test_routing_algorithms.cpp)
   libsnark_test(gadgetlib1_simple_test gadgetlib1/tests/gadgetlib1_test.cpp)
-  libsnark_test(gadgetlib1_r1cs_ppzksnark_verifier_gadget_test gadgetlib1/gadgets/verifiers/tests/test_r1cs_ppzksnark_verifier_gadget.cpp)
+  libsnark_test(gadgetlib1_r1cs_ppzksnark_verifier_gadget_test gadgetlib1/tests/test_r1cs_ppzksnark_verifier_gadget.cpp)
   libsnark_test(pairing_test gadgetlib1/tests/test_pairing.cpp)
   libsnark_test(gadgetlib2_adapters_test gadgetlib2/tests/adapters_UTEST.cpp)
   libsnark_test(gadgetlib2_constraint_test gadgetlib2/tests/constraint_UTEST.cpp)
@@ -198,6 +198,7 @@ if ("${IS_LIBSNARK_PARENT}")
   libsnark_test(test_bls12_377_pairing gadgetlib1/tests/test_bls12_377_pairing.cpp)
   libsnark_test(test_pairing gadgetlib1/tests/test_pairing.cpp)
   libsnark_test(test_pairing_checks gadgetlib1/tests/test_pairing_checks.cpp)
+  libsnark_test(test_r1cs_gg_ppzksnark_gadget gadgetlib1/tests/test_r1cs_gg_ppzksnark_verifier_gadget.cpp)
 
   # TODO (howardwu): Resolve runtime on targets:
   # libsnark_test(gadgetlib1_fooram_test gadgetlib1/gadgets/cpu_checkers/foora# m/examples/test_fooram.cpp)
