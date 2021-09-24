@@ -369,12 +369,7 @@ template<typename ppT>
 bool test_mnt_e_times_e_times_e_over_e_miller_loop(
     const std::string &annotation)
 {
-    // This `using` directive is used to avoid
-    // any trouble with the use the of libsnark macros
-    // in this function.
-    using namespace libsnark;
-
-    libsnark::protoboard<libff::Fr<ppT>> pb;
+    protoboard<libff::Fr<ppT>> pb;
     libff::G1<other_curve<ppT>> P1_val =
         libff::Fr<other_curve<ppT>>::random_element() *
         libff::G1<other_curve<ppT>>::one();
@@ -403,38 +398,38 @@ bool test_mnt_e_times_e_times_e_over_e_miller_loop(
         libff::Fr<other_curve<ppT>>::random_element() *
         libff::G2<other_curve<ppT>>::one();
 
-    libsnark::G1_variable<ppT> P1(pb, "P1");
-    libsnark::G2_variable<ppT> Q1(pb, "Q1");
-    libsnark::G1_variable<ppT> P2(pb, "P2");
-    libsnark::G2_variable<ppT> Q2(pb, "Q2");
-    libsnark::G1_variable<ppT> P3(pb, "P3");
-    libsnark::G2_variable<ppT> Q3(pb, "Q3");
-    libsnark::G1_variable<ppT> P4(pb, "P4");
-    libsnark::G2_variable<ppT> Q4(pb, "Q4");
+    G1_variable<ppT> P1(pb, "P1");
+    G2_variable<ppT> Q1(pb, "Q1");
+    G1_variable<ppT> P2(pb, "P2");
+    G2_variable<ppT> Q2(pb, "Q2");
+    G1_variable<ppT> P3(pb, "P3");
+    G2_variable<ppT> Q3(pb, "Q3");
+    G1_variable<ppT> P4(pb, "P4");
+    G2_variable<ppT> Q4(pb, "Q4");
 
-    libsnark::G1_precomputation<ppT> prec_P1;
-    libsnark::precompute_G1_gadget<ppT> compute_prec_P1(
+    G1_precomputation<ppT> prec_P1;
+    precompute_G1_gadget<ppT> compute_prec_P1(
         pb, P1, prec_P1, "compute_prec_P1");
-    libsnark::G1_precomputation<ppT> prec_P2;
-    libsnark::precompute_G1_gadget<ppT> compute_prec_P2(
+    G1_precomputation<ppT> prec_P2;
+    precompute_G1_gadget<ppT> compute_prec_P2(
         pb, P2, prec_P2, "compute_prec_P2");
-    libsnark::G1_precomputation<ppT> prec_P3;
-    libsnark::precompute_G1_gadget<ppT> compute_prec_P3(
+    G1_precomputation<ppT> prec_P3;
+    precompute_G1_gadget<ppT> compute_prec_P3(
         pb, P3, prec_P3, "compute_prec_P3");
-    libsnark::G1_precomputation<ppT> prec_P4;
-    libsnark::precompute_G1_gadget<ppT> compute_prec_P4(
+    G1_precomputation<ppT> prec_P4;
+    precompute_G1_gadget<ppT> compute_prec_P4(
         pb, P4, prec_P4, "compute_prec_P4");
-    libsnark::G2_precomputation<ppT> prec_Q1;
-    libsnark::precompute_G2_gadget<ppT> compute_prec_Q1(
+    G2_precomputation<ppT> prec_Q1;
+    precompute_G2_gadget<ppT> compute_prec_Q1(
         pb, Q1, prec_Q1, "compute_prec_Q1");
-    libsnark::G2_precomputation<ppT> prec_Q2;
-    libsnark::precompute_G2_gadget<ppT> compute_prec_Q2(
+    G2_precomputation<ppT> prec_Q2;
+    precompute_G2_gadget<ppT> compute_prec_Q2(
         pb, Q2, prec_Q2, "compute_prec_Q2");
-    libsnark::G2_precomputation<ppT> prec_Q3;
-    libsnark::precompute_G2_gadget<ppT> compute_prec_Q3(
+    G2_precomputation<ppT> prec_Q3;
+    precompute_G2_gadget<ppT> compute_prec_Q3(
         pb, Q3, prec_Q3, "compute_prec_Q3");
-    libsnark::G2_precomputation<ppT> prec_Q4;
-    libsnark::precompute_G2_gadget<ppT> compute_prec_Q4(
+    G2_precomputation<ppT> prec_Q4;
+    precompute_G2_gadget<ppT> compute_prec_Q4(
         pb, Q4, prec_Q4, "compute_prec_Q4");
 
     Fqk_variable<ppT> result(pb, "result");

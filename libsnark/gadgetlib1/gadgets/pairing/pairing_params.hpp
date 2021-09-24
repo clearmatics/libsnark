@@ -118,18 +118,26 @@ template<typename ppT>
 using other_curve = typename pairing_selector<ppT>::other_curve_type;
 
 template<typename ppT>
-using G1_precomputation = typename pairing_selector<ppT>::G1_precomputation;
+using G1_checker = typename pairing_selector<ppT>::G1_checker_type;
 
 template<typename ppT>
-using G2_precomputation = typename pairing_selector<ppT>::G2_precomputation;
+using G2_checker = typename pairing_selector<ppT>::G2_checker_type;
+
+template<typename ppT>
+using G1_precomputation =
+    typename pairing_selector<ppT>::G1_precomputation_type;
+
+template<typename ppT>
+using G2_precomputation =
+    typename pairing_selector<ppT>::G2_precomputation_type;
 
 template<typename ppT>
 using precompute_G1_gadget =
-    typename pairing_selector<ppT>::precompute_G1_gadget;
+    typename pairing_selector<ppT>::precompute_G1_gadget_type;
 
 template<typename ppT>
 using precompute_G2_gadget =
-    typename pairing_selector<ppT>::precompute_G2_gadget;
+    typename pairing_selector<ppT>::precompute_G2_gadget_type;
 
 template<typename ppT>
 using e_over_e_miller_loop_gadget =

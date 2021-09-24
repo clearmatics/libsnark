@@ -64,15 +64,17 @@ public:
     typedef G1_checker_gadget<libff::mnt4_pp> G1_checker_type;
     typedef G2_checker_gadget<libff::mnt4_pp> G2_checker_type;
 
-    typedef mnt_G1_precomputation<libff::mnt4_pp> G1_precomputation;
-    typedef mnt_G2_precomputation<libff::mnt4_pp> G2_precomputation;
-    typedef mnt_precompute_G1_gadget<libff::mnt4_pp> precompute_G1_gadget;
-    typedef mnt_precompute_G2_gadget<libff::mnt4_pp> precompute_G2_gadget;
+    typedef mnt_G1_precomputation<libff::mnt4_pp> G1_precomputation_type;
+    typedef mnt_G2_precomputation<libff::mnt4_pp> G2_precomputation_type;
+    typedef mnt_precompute_G1_gadget<libff::mnt4_pp> precompute_G1_gadget_type;
+    typedef mnt_precompute_G2_gadget<libff::mnt4_pp> precompute_G2_gadget_type;
 
     typedef mnt_e_over_e_miller_loop_gadget<libff::mnt4_pp>
         e_over_e_miller_loop_gadget_type;
     typedef mnt_e_times_e_over_e_miller_loop_gadget<libff::mnt4_pp>
         e_times_e_over_e_miller_loop_gadget_type;
+    typedef mnt_e_times_e_times_e_over_e_miller_loop_gadget<libff::mnt4_pp>
+        e_times_e_times_e_over_e_miller_loop_gadget_type;
     typedef mnt4_final_exp_gadget<libff::mnt4_pp> final_exp_gadget_type;
 
     static const constexpr libff::bigint<libff::mnt6_Fr::num_limbs>
@@ -105,15 +107,17 @@ public:
     typedef G1_checker_gadget<libff::mnt6_pp> G1_checker_type;
     typedef G2_checker_gadget<libff::mnt6_pp> G2_checker_type;
 
-    typedef mnt_G1_precomputation<libff::mnt6_pp> G1_precomputation;
-    typedef mnt_G2_precomputation<libff::mnt6_pp> G2_precomputation;
-    typedef mnt_precompute_G1_gadget<libff::mnt6_pp> precompute_G1_gadget;
-    typedef mnt_precompute_G2_gadget<libff::mnt6_pp> precompute_G2_gadget;
+    typedef mnt_G1_precomputation<libff::mnt6_pp> G1_precomputation_type;
+    typedef mnt_G2_precomputation<libff::mnt6_pp> G2_precomputation_type;
+    typedef mnt_precompute_G1_gadget<libff::mnt6_pp> precompute_G1_gadget_type;
+    typedef mnt_precompute_G2_gadget<libff::mnt6_pp> precompute_G2_gadget_type;
 
     typedef mnt_e_over_e_miller_loop_gadget<libff::mnt6_pp>
         e_over_e_miller_loop_gadget_type;
     typedef mnt_e_times_e_over_e_miller_loop_gadget<libff::mnt6_pp>
         e_times_e_over_e_miller_loop_gadget_type;
+    typedef mnt_e_times_e_times_e_over_e_miller_loop_gadget<libff::mnt6_pp>
+        e_times_e_times_e_over_e_miller_loop_gadget_type;
     typedef mnt6_final_exp_gadget<libff::mnt6_pp> final_exp_gadget_type;
 
     static const constexpr libff::bigint<libff::mnt4_Fr::num_limbs>

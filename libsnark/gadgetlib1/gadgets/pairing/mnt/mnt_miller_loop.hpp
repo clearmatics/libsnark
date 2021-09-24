@@ -15,6 +15,7 @@
 #ifndef LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_MILLER_LOOP_HPP_
 #define LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_MILLER_LOOP_HPP_
 
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_precomputation.hpp"
 
 #include <memory>
@@ -271,7 +272,7 @@ public:
 /// denotes the group operation in GT.
 template<typename ppT>
 class mnt_e_times_e_times_e_over_e_miller_loop_gadget
-    : public libsnark::gadget<libff::Fr<ppT>>
+    : public gadget<libff::Fr<ppT>>
 {
 public:
     typedef libff::Fr<ppT> FieldT;
@@ -290,21 +291,21 @@ public:
     std::vector<std::shared_ptr<Fqk_variable<ppT>>> g_RQ_at_P4s;
     std::vector<std::shared_ptr<Fqk_variable<ppT>>> fs;
 
-    std::vector<std::shared_ptr<libsnark::mnt_miller_loop_add_line_eval<ppT>>>
+    std::vector<std::shared_ptr<mnt_miller_loop_add_line_eval<ppT>>>
         addition_steps1;
-    std::vector<std::shared_ptr<libsnark::mnt_miller_loop_dbl_line_eval<ppT>>>
+    std::vector<std::shared_ptr<mnt_miller_loop_dbl_line_eval<ppT>>>
         doubling_steps1;
-    std::vector<std::shared_ptr<libsnark::mnt_miller_loop_add_line_eval<ppT>>>
+    std::vector<std::shared_ptr<mnt_miller_loop_add_line_eval<ppT>>>
         addition_steps2;
-    std::vector<std::shared_ptr<libsnark::mnt_miller_loop_dbl_line_eval<ppT>>>
+    std::vector<std::shared_ptr<mnt_miller_loop_dbl_line_eval<ppT>>>
         doubling_steps2;
-    std::vector<std::shared_ptr<libsnark::mnt_miller_loop_add_line_eval<ppT>>>
+    std::vector<std::shared_ptr<mnt_miller_loop_add_line_eval<ppT>>>
         addition_steps3;
-    std::vector<std::shared_ptr<libsnark::mnt_miller_loop_dbl_line_eval<ppT>>>
+    std::vector<std::shared_ptr<mnt_miller_loop_dbl_line_eval<ppT>>>
         doubling_steps3;
-    std::vector<std::shared_ptr<libsnark::mnt_miller_loop_add_line_eval<ppT>>>
+    std::vector<std::shared_ptr<mnt_miller_loop_add_line_eval<ppT>>>
         addition_steps4;
-    std::vector<std::shared_ptr<libsnark::mnt_miller_loop_dbl_line_eval<ppT>>>
+    std::vector<std::shared_ptr<mnt_miller_loop_dbl_line_eval<ppT>>>
         doubling_steps4;
 
     std::vector<std::shared_ptr<Fqk_sqr_gadget<ppT>>> dbl_sqrs;
@@ -321,26 +322,26 @@ public:
     size_t add_count;
     size_t dbl_count;
 
-    libsnark::G1_precomputation<ppT> prec_P1;
-    libsnark::G2_precomputation<ppT> prec_Q1;
-    libsnark::G1_precomputation<ppT> prec_P2;
-    libsnark::G2_precomputation<ppT> prec_Q2;
-    libsnark::G1_precomputation<ppT> prec_P3;
-    libsnark::G2_precomputation<ppT> prec_Q3;
-    libsnark::G1_precomputation<ppT> prec_P4;
-    libsnark::G2_precomputation<ppT> prec_Q4;
+    G1_precomputation<ppT> prec_P1;
+    G2_precomputation<ppT> prec_Q1;
+    G1_precomputation<ppT> prec_P2;
+    G2_precomputation<ppT> prec_Q2;
+    G1_precomputation<ppT> prec_P3;
+    G2_precomputation<ppT> prec_Q3;
+    G1_precomputation<ppT> prec_P4;
+    G2_precomputation<ppT> prec_Q4;
     Fqk_variable<ppT> result;
 
     mnt_e_times_e_times_e_over_e_miller_loop_gadget(
-        libsnark::protoboard<FieldT> &pb,
-        const libsnark::G1_precomputation<ppT> &prec_P1,
-        const libsnark::G2_precomputation<ppT> &prec_Q1,
-        const libsnark::G1_precomputation<ppT> &prec_P2,
-        const libsnark::G2_precomputation<ppT> &prec_Q2,
-        const libsnark::G1_precomputation<ppT> &prec_P3,
-        const libsnark::G2_precomputation<ppT> &prec_Q3,
-        const libsnark::G1_precomputation<ppT> &prec_P4,
-        const libsnark::G2_precomputation<ppT> &prec_Q4,
+        protoboard<FieldT> &pb,
+        const G1_precomputation<ppT> &prec_P1,
+        const G2_precomputation<ppT> &prec_Q1,
+        const G1_precomputation<ppT> &prec_P2,
+        const G2_precomputation<ppT> &prec_Q2,
+        const G1_precomputation<ppT> &prec_P3,
+        const G2_precomputation<ppT> &prec_Q3,
+        const G1_precomputation<ppT> &prec_P4,
+        const G2_precomputation<ppT> &prec_Q4,
         const Fqk_variable<ppT> &result,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
