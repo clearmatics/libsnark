@@ -3,7 +3,7 @@
 
  Implementation of interfaces for Fp6 gadgets.
 
- See fp6_gadgets.hpp .
+ See fp6_2over3_gadgets.hpp .
 
  *****************************************************************************
  * @author     This file is part of libsnark, developed by SCIPR Lab
@@ -18,7 +18,7 @@ namespace libsnark
 {
 
 template<typename Fp6T>
-Fp6_variable<Fp6T>::Fp6_variable(
+Fp6_2over3_variable<Fp6T>::Fp6_2over3_variable(
     protoboard<FieldT> &pb, const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
     , c0(pb, FMT(annotation_prefix, " c0"))
@@ -27,7 +27,7 @@ Fp6_variable<Fp6T>::Fp6_variable(
 }
 
 template<typename Fp6T>
-Fp6_variable<Fp6T>::Fp6_variable(
+Fp6_2over3_variable<Fp6T>::Fp6_2over3_variable(
     protoboard<FieldT> &pb,
     const Fp6T &el,
     const std::string &annotation_prefix)
@@ -38,7 +38,7 @@ Fp6_variable<Fp6T>::Fp6_variable(
 }
 
 template<typename Fp6T>
-Fp6_variable<Fp6T>::Fp6_variable(
+Fp6_2over3_variable<Fp6T>::Fp6_2over3_variable(
     protoboard<FieldT> &pb,
     const Fp3_variable<Fp3T> &c0,
     const Fp3_variable<Fp3T> &c1,
@@ -48,20 +48,21 @@ Fp6_variable<Fp6T>::Fp6_variable(
 }
 
 template<typename Fp6T>
-void Fp6_variable<Fp6T>::generate_r1cs_equals_const_constraints(const Fp6T &el)
+void Fp6_2over3_variable<Fp6T>::generate_r1cs_equals_const_constraints(
+    const Fp6T &el)
 {
     c0.generate_r1cs_equals_const_constraints(el.coeffs[0]);
     c1.generate_r1cs_equals_const_constraints(el.coeffs[1]);
 }
 
 template<typename Fp6T>
-void Fp6_variable<Fp6T>::generate_r1cs_witness(const Fp6T &el)
+void Fp6_2over3_variable<Fp6T>::generate_r1cs_witness(const Fp6T &el)
 {
     c0.generate_r1cs_witness(el.coeffs[0]);
     c1.generate_r1cs_witness(el.coeffs[1]);
 }
 
-template<typename Fp6T> Fp6T Fp6_variable<Fp6T>::get_element()
+template<typename Fp6T> Fp6T Fp6_2over3_variable<Fp6T>::get_element()
 {
     Fp6T el;
     el.coeffs[0] = c0.get_element();
@@ -70,7 +71,8 @@ template<typename Fp6T> Fp6T Fp6_variable<Fp6T>::get_element()
 }
 
 template<typename Fp6T>
-Fp6_variable<Fp6T> Fp6_variable<Fp6T>::Frobenius_map(const size_t power) const
+Fp6_2over3_variable<Fp6T> Fp6_2over3_variable<Fp6T>::Frobenius_map(
+    const size_t power) const
 {
     pb_linear_combination<FieldT> new_c0c0, new_c0c1, new_c0c2, new_c1c0,
         new_c1c1, new_c1c2;
@@ -87,7 +89,7 @@ Fp6_variable<Fp6T> Fp6_variable<Fp6T>::Frobenius_map(const size_t power) const
         c1.c2 * (Fp6T::Frobenius_coeffs_c1[power % 6] *
                  Fp3T::Frobenius_coeffs_c2[power % 3]));
 
-    return Fp6_variable<Fp6T>(
+    return Fp6_2over3_variable<Fp6T>(
         this->pb,
         Fp3_variable<Fp3T>(
             this->pb,
@@ -104,18 +106,18 @@ Fp6_variable<Fp6T> Fp6_variable<Fp6T>::Frobenius_map(const size_t power) const
         FMT(this->annotation_prefix, " Frobenius_map"));
 }
 
-template<typename Fp6T> void Fp6_variable<Fp6T>::evaluate() const
+template<typename Fp6T> void Fp6_2over3_variable<Fp6T>::evaluate() const
 {
     c0.evaluate();
     c1.evaluate();
 }
 
 template<typename Fp6T>
-Fp6_mul_gadget<Fp6T>::Fp6_mul_gadget(
+Fp6_2over3_mul_gadget<Fp6T>::Fp6_2over3_mul_gadget(
     protoboard<FieldT> &pb,
-    const Fp6_variable<Fp6T> &A,
-    const Fp6_variable<Fp6T> &B,
-    const Fp6_variable<Fp6T> &result,
+    const Fp6_2over3_variable<Fp6T> &A,
+    const Fp6_2over3_variable<Fp6T> &B,
+    const Fp6_2over3_variable<Fp6T> &result,
     const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix), A(A), B(B), result(result)
 {
@@ -188,14 +190,16 @@ Fp6_mul_gadget<Fp6T>::Fp6_mul_gadget(
         FMT(annotation_prefix, " compute_result_c1")));
 }
 
-template<typename Fp6T> void Fp6_mul_gadget<Fp6T>::generate_r1cs_constraints()
+template<typename Fp6T>
+void Fp6_2over3_mul_gadget<Fp6T>::generate_r1cs_constraints()
 {
     compute_v0->generate_r1cs_constraints();
     compute_v1->generate_r1cs_constraints();
     compute_result_c1->generate_r1cs_constraints();
 }
 
-template<typename Fp6T> void Fp6_mul_gadget<Fp6T>::generate_r1cs_witness()
+template<typename Fp6T>
+void Fp6_2over3_mul_gadget<Fp6T>::generate_r1cs_witness()
 {
     compute_v0->generate_r1cs_witness();
     compute_v1->generate_r1cs_witness();
@@ -224,11 +228,11 @@ template<typename Fp6T> void Fp6_mul_gadget<Fp6T>::generate_r1cs_witness()
 }
 
 template<typename Fp6T>
-Fp6_mul_by_2345_gadget<Fp6T>::Fp6_mul_by_2345_gadget(
+Fp6_2over3_mul_by_2345_gadget<Fp6T>::Fp6_2over3_mul_by_2345_gadget(
     protoboard<FieldT> &pb,
-    const Fp6_variable<Fp6T> &A,
-    const Fp6_variable<Fp6T> &B,
-    const Fp6_variable<Fp6T> &result,
+    const Fp6_2over3_variable<Fp6T> &A,
+    const Fp6_2over3_variable<Fp6T> &B,
+    const Fp6_2over3_variable<Fp6T> &result,
     const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix), A(A), B(B), result(result)
 {
@@ -304,7 +308,7 @@ Fp6_mul_by_2345_gadget<Fp6T>::Fp6_mul_by_2345_gadget(
 }
 
 template<typename Fp6T>
-void Fp6_mul_by_2345_gadget<Fp6T>::generate_r1cs_constraints()
+void Fp6_2over3_mul_by_2345_gadget<Fp6T>::generate_r1cs_constraints()
 {
     compute_v1->generate_r1cs_constraints();
     this->pb.add_r1cs_constraint(
@@ -324,7 +328,7 @@ void Fp6_mul_by_2345_gadget<Fp6T>::generate_r1cs_constraints()
 }
 
 template<typename Fp6T>
-void Fp6_mul_by_2345_gadget<Fp6T>::generate_r1cs_witness()
+void Fp6_2over3_mul_by_2345_gadget<Fp6T>::generate_r1cs_witness()
 {
     compute_v1->generate_r1cs_witness();
 
@@ -360,34 +364,36 @@ void Fp6_mul_by_2345_gadget<Fp6T>::generate_r1cs_witness()
 }
 
 template<typename Fp6T>
-Fp6_sqr_gadget<Fp6T>::Fp6_sqr_gadget(
+Fp6_2over3_sqr_gadget<Fp6T>::Fp6_2over3_sqr_gadget(
     protoboard<FieldT> &pb,
-    const Fp6_variable<Fp6T> &A,
-    const Fp6_variable<Fp6T> &result,
+    const Fp6_2over3_variable<Fp6T> &A,
+    const Fp6_2over3_variable<Fp6T> &result,
     const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix), A(A), result(result)
 {
     // We can't do better than 3 Fp3_mul_gadget's for squaring, so we just use
     // multiplication.
-    mul.reset(new Fp6_mul_gadget<Fp6T>(
+    mul.reset(new Fp6_2over3_mul_gadget<Fp6T>(
         pb, A, A, result, FMT(annotation_prefix, " mul")));
 }
 
-template<typename Fp6T> void Fp6_sqr_gadget<Fp6T>::generate_r1cs_constraints()
+template<typename Fp6T>
+void Fp6_2over3_sqr_gadget<Fp6T>::generate_r1cs_constraints()
 {
     mul->generate_r1cs_constraints();
 }
 
-template<typename Fp6T> void Fp6_sqr_gadget<Fp6T>::generate_r1cs_witness()
+template<typename Fp6T>
+void Fp6_2over3_sqr_gadget<Fp6T>::generate_r1cs_witness()
 {
     mul->generate_r1cs_witness();
 }
 
 template<typename Fp6T>
-Fp6_cyclotomic_sqr_gadget<Fp6T>::Fp6_cyclotomic_sqr_gadget(
+Fp6_2over3_cyclotomic_sqr_gadget<Fp6T>::Fp6_2over3_cyclotomic_sqr_gadget(
     protoboard<FieldT> &pb,
-    const Fp6_variable<Fp6T> &A,
-    const Fp6_variable<Fp6T> &result,
+    const Fp6_2over3_variable<Fp6T> &A,
+    const Fp6_2over3_variable<Fp6T> &result,
     const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix), A(A), result(result)
 {
@@ -446,7 +452,7 @@ Fp6_cyclotomic_sqr_gadget<Fp6T>::Fp6_cyclotomic_sqr_gadget(
 }
 
 template<typename Fp6T>
-void Fp6_cyclotomic_sqr_gadget<Fp6T>::generate_r1cs_constraints()
+void Fp6_2over3_cyclotomic_sqr_gadget<Fp6T>::generate_r1cs_constraints()
 {
     compute_asq->generate_r1cs_constraints();
     compute_bsq->generate_r1cs_constraints();
@@ -454,7 +460,7 @@ void Fp6_cyclotomic_sqr_gadget<Fp6T>::generate_r1cs_constraints()
 }
 
 template<typename Fp6T>
-void Fp6_cyclotomic_sqr_gadget<Fp6T>::generate_r1cs_witness()
+void Fp6_2over3_cyclotomic_sqr_gadget<Fp6T>::generate_r1cs_witness()
 {
     const Fp6T Aval = A.get_element();
     const Fp6T Rval = Aval.cyclotomic_squared();

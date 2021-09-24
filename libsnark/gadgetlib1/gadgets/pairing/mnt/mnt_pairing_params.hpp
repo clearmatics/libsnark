@@ -19,7 +19,7 @@
 #include "libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.hpp"
 #include "libsnark/gadgetlib1/gadgets/fields/fp3_gadgets.hpp"
 #include "libsnark/gadgetlib1/gadgets/fields/fp4_gadgets.hpp"
-#include "libsnark/gadgetlib1/gadgets/fields/fp6_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/fields/fp6_2over3_gadgets.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_final_exponentiation.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_miller_loop.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_precomputation.hpp"
@@ -54,10 +54,10 @@ public:
     typedef Fp3_mul_by_lc_gadget<FqeT> Fqe_mul_by_lc_gadget_type;
     typedef Fp3_sqr_gadget<FqeT> Fqe_sqr_gadget_type;
 
-    typedef Fp6_variable<FqkT> Fqk_variable_type;
-    typedef Fp6_mul_gadget<FqkT> Fqk_mul_gadget_type;
-    typedef Fp6_mul_by_2345_gadget<FqkT> Fqk_special_mul_gadget_type;
-    typedef Fp6_sqr_gadget<FqkT> Fqk_sqr_gadget_type;
+    typedef Fp6_2over3_variable<FqkT> Fqk_variable_type;
+    typedef Fp6_2over3_mul_gadget<FqkT> Fqk_mul_gadget_type;
+    typedef Fp6_2over3_mul_by_2345_gadget<FqkT> Fqk_special_mul_gadget_type;
+    typedef Fp6_2over3_sqr_gadget<FqkT> Fqk_sqr_gadget_type;
 
     typedef libff::mnt6_pp other_curve_type;
 

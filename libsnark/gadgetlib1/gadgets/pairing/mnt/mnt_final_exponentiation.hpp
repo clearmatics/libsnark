@@ -59,16 +59,16 @@ public:
 
     std::shared_ptr<exponentiation_gadget<
         FqkT<ppT>,
-        Fp6_variable,
-        Fp6_mul_gadget,
-        Fp6_cyclotomic_sqr_gadget,
+        Fp6_2over3_variable,
+        Fp6_2over3_mul_gadget,
+        Fp6_2over3_cyclotomic_sqr_gadget,
         libff::mnt6_q_limbs>>
         compute_w1;
     std::shared_ptr<exponentiation_gadget<
         FqkT<ppT>,
-        Fp6_variable,
-        Fp6_mul_gadget,
-        Fp6_cyclotomic_sqr_gadget,
+        Fp6_2over3_variable,
+        Fp6_2over3_mul_gadget,
+        Fp6_2over3_cyclotomic_sqr_gadget,
         libff::mnt6_q_limbs>>
         compute_w0;
     std::shared_ptr<Fqk_mul_gadget<ppT>> compute_result;

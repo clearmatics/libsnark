@@ -9,7 +9,7 @@
 #include "libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.hpp"
 #include "libsnark/gadgetlib1/gadgets/fields/fp3_gadgets.hpp"
 #include "libsnark/gadgetlib1/gadgets/fields/fp4_gadgets.hpp"
-#include "libsnark/gadgetlib1/gadgets/fields/fp6_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/fields/fp6_2over3_gadgets.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/verifiers/r1cs_ppzksnark_verifier_gadget.hpp"
@@ -480,20 +480,22 @@ int main(void)
     test_mul<libff::mnt6_Fq3, Fp3_variable, Fp3_mul_gadget>("mnt6_Fp3");
     test_sqr<libff::mnt6_Fq3, Fp3_variable, Fp3_sqr_gadget>("mnt6_Fp3");
 
-    test_mul<libff::mnt6_Fq6, Fp6_variable, Fp6_mul_gadget>("mnt6_Fp6");
-    test_sqr<libff::mnt6_Fq6, Fp6_variable, Fp6_sqr_gadget>("mnt6_Fp6");
+    test_mul<libff::mnt6_Fq6, Fp6_2over3_variable, Fp6_2over3_mul_gadget>(
+        "mnt6_Fp6");
+    test_sqr<libff::mnt6_Fq6, Fp6_2over3_variable, Fp6_2over3_sqr_gadget>(
+        "mnt6_Fp6");
     test_cyclotomic_sqr<
         libff::mnt6_pp,
-        Fp6_variable,
-        Fp6_cyclotomic_sqr_gadget>("mnt6_Fp6");
+        Fp6_2over3_variable,
+        Fp6_2over3_cyclotomic_sqr_gadget>("mnt6_Fp6");
     test_exponentiation_gadget<
         libff::mnt6_Fq6,
-        Fp6_variable,
-        Fp6_mul_gadget,
-        Fp6_sqr_gadget,
+        Fp6_2over3_variable,
+        Fp6_2over3_mul_gadget,
+        Fp6_2over3_sqr_gadget,
         libff::mnt6_q_limbs>(
         libff::mnt6_final_exponent_last_chunk_abs_of_w0, "mnt6_Fq6");
-    test_Frobenius<libff::mnt6_Fq6, Fp6_variable>("mnt6_Fq6");
+    test_Frobenius<libff::mnt6_Fq6, Fp6_2over3_variable>("mnt6_Fq6");
 
     test_G2_checker_gadget<libff::mnt4_pp>("mnt4");
     test_G2_checker_gadget<libff::mnt6_pp>("mnt6");
