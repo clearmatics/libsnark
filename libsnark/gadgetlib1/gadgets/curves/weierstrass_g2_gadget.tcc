@@ -128,28 +128,228 @@ template<typename ppT> void G2_checker_gadget<ppT>::generate_r1cs_witness()
     curve_equation->generate_r1cs_witness();
 }
 
-template<typename ppT>
-void test_G2_checker_gadget(const std::string &annotation)
+template<typename wppT>
+G2_add_gadget<wppT>::G2_add_gadget(
+    protoboard<libff::Fr<wppT>> &pb,
+    const G2_variable<wppT> &A,
+    const G2_variable<wppT> &B,
+    const G2_variable<wppT> &result,
+    const std::string &annotation_prefix)
+    : gadget<libff::Fr<wppT>>(pb, annotation_prefix)
+    , A(A)
+    , B(B)
+    , result(result)
+    , lambda(pb, FMT(annotation_prefix, " lambda"))
+    // lambda = (By - Ay) / (Bx - Ax)
+    // <=>  lambda * (Bx - Ax) = By - Ay
+    , lambda_constraint(
+          pb,
+          lambda,
+          *B.X - *A.X,
+          *B.Y - *A.Y,
+          FMT(annotation_prefix, " lambda_constraint"))
+    // Rx = lambda^2 - Ax - Bx
+    // <=> lambda^2 = Rx + Ax + Bx
+    , Rx_constraint(
+          pb,
+          lambda,
+          lambda,
+          *result.X + *A.X + *B.X,
+          FMT(annotation_prefix, " Rx_constraint"))
+    // Ry = lambda * (Ax - Rx) - Ay
+    // <=> lambda * (Ax - Rx) = Ry + Ay
+    , Ry_constraint(
+          pb,
+          lambda,
+          (*A.X - *result.X),
+          *result.Y + *A.Y,
+          FMT(annotation_prefix, " Ry_constraint"))
 {
-    protoboard<libff::Fr<ppT>> pb;
-    G2_variable<ppT> g(pb, "g");
-    G2_checker_gadget<ppT> g_check(pb, g, "g_check");
-    g_check.generate_r1cs_constraints();
+}
 
-    printf("positive test\n");
-    g.generate_r1cs_witness(libff::G2<other_curve<ppT>>::one());
-    g_check.generate_r1cs_witness();
-    assert(pb.is_satisfied());
+template<typename wppT> void G2_add_gadget<wppT>::generate_r1cs_constraints()
+{
+    lambda_constraint.generate_r1cs_constraints();
+    Rx_constraint.generate_r1cs_constraints();
+    Ry_constraint.generate_r1cs_constraints();
+}
 
-    printf("negative test\n");
-    g.generate_r1cs_witness(libff::G2<other_curve<ppT>>::zero());
-    g_check.generate_r1cs_witness();
-    assert(!pb.is_satisfied());
+template<typename wppT> void G2_add_gadget<wppT>::generate_r1cs_witness()
+{
+    using nppT = other_curve<wppT>;
+    const libff::Fqe<nppT> Ax = A.X->get_element();
+    const libff::Fqe<nppT> Ay = A.Y->get_element();
+    const libff::Fqe<nppT> Bx = B.X->get_element();
+    const libff::Fqe<nppT> By = B.Y->get_element();
 
-    printf(
-        "number of constraints for G2 checker (Fr is %s)  = %zu\n",
-        annotation.c_str(),
-        pb.num_constraints());
+    // lambda = (By - Ay) / (Bx - Ax)
+    const libff::Fqe<nppT> lambda_value = (By - Ay) * (Bx - Ax).inverse();
+    lambda.generate_r1cs_witness(lambda_value);
+    lambda_constraint.B.evaluate();
+    lambda_constraint.result.evaluate();
+    lambda_constraint.generate_r1cs_witness();
+
+    // Rx = lambda^2 - Ax - Bx
+    // Ry = lambda * (Ax - Rx) - Ay
+    const libff::Fqe<nppT> Rx = lambda_value.squared() - Ax - Bx;
+    const libff::Fqe<nppT> Ry = lambda_value * (Ax - Rx) - Ay;
+    result.generate_r1cs_witness(
+        libff::G2<nppT>(Rx, Ry, libff::Fqe<nppT>::one()));
+
+    // lambda^2 = Rx + Ax + Bx
+    Rx_constraint.result.evaluate();
+    Rx_constraint.generate_r1cs_witness();
+
+    // lambda * (Ax - Rx) = Ry + Ay
+    Ry_constraint.B.evaluate();
+    Ry_constraint.result.evaluate();
+    Ry_constraint.generate_r1cs_witness();
+}
+
+template<typename wppT>
+G2_dbl_gadget<wppT>::G2_dbl_gadget(
+    protoboard<libff::Fr<wppT>> &pb,
+    const G2_variable<wppT> &A,
+    const G2_variable<wppT> &result,
+    const std::string &annotation_prefix)
+    : gadget<libff::Fr<wppT>>(pb, annotation_prefix)
+    , A(A)
+    , result(result)
+    , lambda(pb, FMT(annotation_prefix, " lambda"))
+    // Ax_squared = Ax * Ax
+    , Ax_squared_constraint(
+          pb,
+          *A.X,
+          *A.X,
+          Fqe_variable<wppT>(pb, FMT(annotation_prefix, " Ax^2")),
+          FMT(annotation_prefix, " _Ax_squared_constraint"))
+    // lambda = (3 * Ax^2 + a) / 2 * Ay
+    // <=> lambda * (Ay + Ay) = 3 * Ax_squared + a
+    , lambda_constraint(
+          pb,
+          lambda,
+          *A.Y + *A.Y,
+          Ax_squared_constraint.result * libff::Fr<wppT>(3) +
+              libff::G2<nppT>::coeff_a,
+          FMT(annotation_prefix, " lambda_constraint"))
+    // Bx = lambda^2 - 2 * Ax
+    // <=> lambda * lambda = Bx + Ax + Ax
+    , Bx_constraint(
+          pb,
+          lambda,
+          lambda,
+          *result.X + *A.X + *A.X,
+          FMT(annotation_prefix, " Bx_constraint"))
+    // By = lambda * (Ax - Bx) - Ay
+    // <=> lambda * (Ax - Bx) = By + Ay
+    , By_constraint(
+          pb,
+          lambda,
+          (*A.X - *result.X),
+          *result.Y + *A.Y,
+          FMT(annotation_prefix, " By_constraint"))
+{
+}
+
+template<typename wppT> void G2_dbl_gadget<wppT>::generate_r1cs_constraints()
+{
+    Ax_squared_constraint.generate_r1cs_constraints();
+    lambda_constraint.generate_r1cs_constraints();
+    Bx_constraint.generate_r1cs_constraints();
+    By_constraint.generate_r1cs_constraints();
+}
+
+template<typename wppT> void G2_dbl_gadget<wppT>::generate_r1cs_witness()
+{
+    const libff::Fqe<nppT> Ax = A.X->get_element();
+    const libff::Fqe<nppT> Ay = A.Y->get_element();
+
+    // Ax_squared = Ax * Ax
+    Ax_squared_constraint.generate_r1cs_witness();
+    Ax_squared_constraint.result.evaluate();
+    const libff::Fqe<nppT> Ax_squared =
+        Ax_squared_constraint.result.get_element();
+
+    // lambda = (3 * Ax^2 + a) / 2 * Ay
+    // <=> lambda * (Ay + Ay) = 3 * Ax_squared + a
+    const libff::Fqe<nppT> Ax_squared_plus_a =
+        Ax_squared + Ax_squared + Ax_squared + libff::G2<nppT>::coeff_a;
+    const libff::Fqe<nppT> lambda_value =
+        Ax_squared_plus_a * (Ay + Ay).inverse();
+    lambda.generate_r1cs_witness(lambda_value);
+    lambda_constraint.B.evaluate();
+    lambda_constraint.generate_r1cs_witness();
+
+    // Bx = lambda^2 - 2 * Ax
+    // By = lambda * (Ax - Bx) - Ay
+    const libff::Fqe<nppT> Bx = lambda_value.squared() - Ax - Ax;
+    const libff::Fqe<nppT> By = lambda_value * (Ax - Bx) - Ay;
+    result.generate_r1cs_witness(
+        libff::G2<nppT>(Bx, By, libff::Fqe<nppT>::one()));
+
+    // lambda * lambda = Bx + Ax + Ax
+    Bx_constraint.generate_r1cs_witness();
+
+    // lambda * (Ax - Bx) = By + Ay
+    By_constraint.B.evaluate();
+    By_constraint.generate_r1cs_witness();
+}
+
+template<typename wppT>
+G2_equality_gadget<wppT>::G2_equality_gadget(
+    protoboard<libff::Fr<wppT>> &pb,
+    const G2_variable<wppT> &A,
+    const G2_variable<wppT> &B,
+    const std::string &annotation_prefix)
+    : gadget<libff::Fr<wppT>>(pb, annotation_prefix), _A(A), _B(B)
+{
+}
+
+template<typename wppT>
+void G2_equality_gadget<wppT>::generate_r1cs_constraints()
+{
+    // A.X == B.X
+    generate_fpe_equality_constraints(*_A.X, *_B.X);
+    // A.Y == B.Y
+    generate_fpe_equality_constraints(*_A.X, *_B.X);
+}
+
+template<typename wppT> void G2_equality_gadget<wppT>::generate_r1cs_witness()
+{
+    // Nothing to do
+}
+
+template<typename wppT>
+void G2_equality_gadget<wppT>::generate_fpe_equality_constraints(
+    const Fp2_variable<libff::Fqe<other_curve<wppT>>> &a,
+    const Fp2_variable<libff::Fqe<other_curve<wppT>>> &b)
+{
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<libff::Fr<wppT>>(a.c0, 1, b.c0),
+        FMT(this->annotation_prefix, " c0"));
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<libff::Fr<wppT>>(a.c1, 1, b.c1),
+        FMT(this->annotation_prefix, " c1"));
+}
+
+template<typename wppT>
+G2_variable<wppT> g2_variable_negate(
+    protoboard<libff::Fr<wppT>> &pb,
+    const G2_variable<wppT> &g2,
+    const std::string &annotation_prefix)
+{
+    return G2_variable<wppT>(pb, *g2.X, -*g2.Y, annotation_prefix);
+}
+
+template<typename wppT>
+libff::G2<other_curve<wppT>> g2_variable_get_element(
+    const G2_variable<wppT> &var)
+{
+    using nppT = other_curve<wppT>;
+    return libff::G2<nppT>(
+        var.X->get_element(),
+        var.Y->get_element(),
+        libff::G2<nppT>::twist_field::one());
 }
 
 } // namespace libsnark

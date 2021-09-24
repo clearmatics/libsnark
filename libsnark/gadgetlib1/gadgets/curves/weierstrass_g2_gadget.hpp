@@ -15,17 +15,19 @@
 #ifndef WEIERSTRASS_G2_GADGET_HPP_
 #define WEIERSTRASS_G2_GADGET_HPP_
 
+#include "libsnark/gadgetlib1/gadget.hpp"
+#include "libsnark/gadgetlib1/gadgets/curves/scalar_multiplication.hpp"
+#include "libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
+
 #include <libff/algebra/curves/public_params.hpp>
-#include <libsnark/gadgetlib1/gadget.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
+#include <libff/algebra/fields/fp2.hpp>
 #include <memory>
 
 namespace libsnark
 {
 
-/**
- * Gadget that represents a G2 variable.
- */
+/// Gadget that represents a G2 variable.
 template<typename ppT> class G2_variable : public gadget<libff::Fr<ppT>>
 {
 public:
@@ -58,9 +60,7 @@ public:
     static size_t num_variables();
 };
 
-/**
- * Gadget that creates constraints for the validity of a G2 variable.
- */
+/// Gadget that creates constraints for the validity of a G2 variable.
 template<typename ppT> class G2_checker_gadget : public gadget<libff::Fr<ppT>>
 {
 public:
@@ -86,6 +86,140 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
+
+/// Gadget to add 2 G2 points
+template<typename wppT> class G2_add_gadget : public gadget<libff::Fr<wppT>>
+{
+public:
+    G2_variable<wppT> A;
+    G2_variable<wppT> B;
+    G2_variable<wppT> result;
+
+    Fqe_variable<wppT> lambda;
+
+    // For curve points A = (Ax, Ay), B = (Bx, By), we have that
+    // A + B = R = (Rx, Ry) is given by:
+    //
+    //   Rx = lambda^2 - Ax - Bx
+    //   Ry = lambda*(Ax - Rx) - Ay
+    //   where lambda = (By - Ay) / (Bx - Ax)
+
+    // lambda = (By - Ay) / (Bx - Ax)
+    // <=>  lambda * (Bx - Ax) = By - Ay
+    Fqe_mul_gadget<wppT> lambda_constraint;
+
+    // Rx = lambda^2 - Ax - Bx
+    // <=> lambda^2 = Rx + Ax + Bx
+    Fqe_mul_gadget<wppT> Rx_constraint;
+
+    // Ry = lambda * (Ax - Rx) - Ay
+    // <=> lambda * (Ax - Rx) = Ry + Ay
+    Fqe_mul_gadget<wppT> Ry_constraint;
+
+    G2_add_gadget(
+        protoboard<libff::Fr<wppT>> &pb,
+        const G2_variable<wppT> &A,
+        const G2_variable<wppT> &B,
+        const G2_variable<wppT> &result,
+        const std::string &annotation_prefix);
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
+/// Double a G2 point.
+template<typename wppT> class G2_dbl_gadget : gadget<libff::Fr<wppT>>
+{
+public:
+    using nppT = other_curve<wppT>;
+
+    G2_variable<wppT> A;
+    G2_variable<wppT> result;
+
+    Fqe_variable<wppT> lambda;
+
+    // For a curve point A = (Ax, Ay), we have that A + A = B = (Bx, By) is
+    // given by:
+    //
+    //   Bx = lambda^2 - 2 * Ax
+    //   By = lambda*(Ax - Bx) - Ay
+    //   where lambda = (3 * Ax^2) / 2 * Ay
+
+    // Ax_squared = Ax * Ax
+    Fqe_mul_gadget<wppT> Ax_squared_constraint;
+
+    // lambda = (3 * Ax^2 + a) / 2 * Ay
+    // <=> lambda * (Ay + Ay) = 3 * Ax_squared + a
+    Fqe_mul_gadget<wppT> lambda_constraint;
+
+    // Bx = lambda^2 - 2 * Ax
+    // <=> lambda * lambda = Bx + Ax + Ax
+    Fqe_mul_gadget<wppT> Bx_constraint;
+
+    // By = lambda * (Ax - Bx) - Ay
+    // <=> lambda * (Ax - Bx) = By + Ay
+    Fqe_mul_gadget<wppT> By_constraint;
+
+    G2_dbl_gadget(
+        protoboard<libff::Fr<wppT>> &pb,
+        const G2_variable<wppT> &A,
+        const G2_variable<wppT> &result,
+        const std::string &annotation_prefix);
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
+/// Check equality of 2 G2 points.
+template<typename wppT> class G2_equality_gadget : gadget<libff::Fr<wppT>>
+{
+public:
+    using nppT = other_curve<wppT>;
+    using FqeT = libff::Fqe<nppT>;
+
+    G2_variable<wppT> _A;
+    G2_variable<wppT> _B;
+
+    G2_equality_gadget(
+        protoboard<libff::Fr<wppT>> &pb,
+        const G2_variable<wppT> &A,
+        const G2_variable<wppT> &B,
+        const std::string &annotation_prefix);
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+
+private:
+    // There is no generic way to iterate over the components of Fp?_variable,
+    // so this method must be specialized per field extension. However, the
+    // version that expects 2 components may still compile on Fp3_variable,
+    // say. Hence we specify Fp2_variable explicitly in the parameters to avoid
+    // callers accidentally using this for other pairings and passing in
+    // Fp?_variable.
+    void generate_fpe_equality_constraints(
+        const Fp2_variable<FqeT> &a, const Fp2_variable<FqeT> &b);
+};
+
+/// Negate a G2 variable and return the result. (Note that evaluate should be
+/// called on the result, or its components, before using it in witness
+/// generation).
+template<typename wppT>
+G2_variable<wppT> g2_variable_negate(
+    protoboard<libff::Fr<wppT>> &pb,
+    const G2_variable<wppT> &g2,
+    const std::string &annotation_prefix);
+
+/// Multiplication by constant scalar (leverages
+/// point_mul_by_const_scalar_gadget - scalar_multiplication.hpp).
+template<typename wppT, mp_size_t scalarLimbs>
+using G2_mul_by_const_scalar_gadget = point_mul_by_const_scalar_gadget<
+    libff::G2<other_curve<wppT>>,
+    G2_variable<wppT>,
+    G2_add_gadget<wppT>,
+    G2_dbl_gadget<wppT>,
+    libff::bigint<scalarLimbs>>;
+
+/// Utility function to get the value from a (witnessed) G2_variable.
+template<typename wppT>
+libff::G2<libsnark::other_curve<wppT>> g2_variable_get_element(
+    const libsnark::G2_variable<wppT> &var);
 
 } // namespace libsnark
 

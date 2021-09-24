@@ -108,9 +108,9 @@ G1_add_gadget<ppT>::G1_add_gadget(
     protoboard<FieldT> &pb,
     const G1_variable<ppT> &A,
     const G1_variable<ppT> &B,
-    const G1_variable<ppT> &C,
+    const G1_variable<ppT> &result,
     const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix), A(A), B(B), C(C)
+    : gadget<FieldT>(pb, annotation_prefix), A(A), B(B), result(result)
 {
     /*
       lambda = (B.y - A.y)/(B.x - A.x)
@@ -140,11 +140,12 @@ template<typename ppT> void G1_add_gadget<ppT>::generate_r1cs_constraints()
         FMT(this->annotation_prefix, " calc_lambda"));
 
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>({lambda}, {lambda}, {C.X, A.X, B.X}),
+        r1cs_constraint<FieldT>({lambda}, {lambda}, {result.X, A.X, B.X}),
         FMT(this->annotation_prefix, " calc_X"));
 
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>({lambda}, {A.X, C.X * (-1)}, {C.Y, A.Y}),
+        r1cs_constraint<FieldT>(
+            {lambda}, {A.X, result.X * (-1)}, {result.Y, A.Y}),
         FMT(this->annotation_prefix, " calc_Y"));
 
     this->pb.add_r1cs_constraint(
@@ -157,10 +158,11 @@ template<typename ppT> void G1_add_gadget<ppT>::generate_r1cs_witness()
     this->pb.val(inv) = (this->pb.lc_val(B.X) - this->pb.lc_val(A.X)).inverse();
     this->pb.val(lambda) =
         (this->pb.lc_val(B.Y) - this->pb.lc_val(A.Y)) * this->pb.val(inv);
-    this->pb.lc_val(C.X) = this->pb.val(lambda).squared() -
-                           this->pb.lc_val(A.X) - this->pb.lc_val(B.X);
-    this->pb.lc_val(C.Y) =
-        this->pb.val(lambda) * (this->pb.lc_val(A.X) - this->pb.lc_val(C.X)) -
+    this->pb.lc_val(result.X) = this->pb.val(lambda).squared() -
+                                this->pb.lc_val(A.X) - this->pb.lc_val(B.X);
+    this->pb.lc_val(result.Y) =
+        this->pb.val(lambda) *
+            (this->pb.lc_val(A.X) - this->pb.lc_val(result.X)) -
         this->pb.lc_val(A.Y);
 }
 
@@ -168,9 +170,9 @@ template<typename ppT>
 G1_dbl_gadget<ppT>::G1_dbl_gadget(
     protoboard<FieldT> &pb,
     const G1_variable<ppT> &A,
-    const G1_variable<ppT> &B,
+    const G1_variable<ppT> &result,
     const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix), A(A), B(B)
+    : gadget<FieldT>(pb, annotation_prefix), A(A), result(result)
 {
     Xsquared.allocate(pb, FMT(annotation_prefix, " X_squared"));
     lambda.allocate(pb, FMT(annotation_prefix, " lambda"));
@@ -190,11 +192,12 @@ template<typename ppT> void G1_dbl_gadget<ppT>::generate_r1cs_constraints()
         FMT(this->annotation_prefix, " calc_lambda"));
 
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>({lambda}, {lambda}, {B.X, A.X * 2}),
+        r1cs_constraint<FieldT>({lambda}, {lambda}, {result.X, A.X * 2}),
         FMT(this->annotation_prefix, " calc_X"));
 
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>({lambda}, {A.X, B.X * (-1)}, {B.Y, A.Y}),
+        r1cs_constraint<FieldT>(
+            {lambda}, {A.X, result.X * (-1)}, {result.Y, A.Y}),
         FMT(this->annotation_prefix, " calc_Y"));
 }
 
@@ -204,10 +207,11 @@ template<typename ppT> void G1_dbl_gadget<ppT>::generate_r1cs_witness()
     this->pb.val(lambda) = (FieldT(3) * this->pb.val(Xsquared) +
                             libff::G1<other_curve<ppT>>::coeff_a) *
                            (FieldT(2) * this->pb.lc_val(A.Y)).inverse();
-    this->pb.lc_val(B.X) =
+    this->pb.lc_val(result.X) =
         this->pb.val(lambda).squared() - FieldT(2) * this->pb.lc_val(A.X);
-    this->pb.lc_val(B.Y) =
-        this->pb.val(lambda) * (this->pb.lc_val(A.X) - this->pb.lc_val(B.X)) -
+    this->pb.lc_val(result.Y) =
+        this->pb.val(lambda) *
+            (this->pb.lc_val(A.X) - this->pb.lc_val(result.X)) -
         this->pb.lc_val(A.Y);
 }
 
@@ -327,6 +331,34 @@ void G1_multiscalar_mul_gadget<ppT>::generate_r1cs_witness()
                  ? this->pb.lc_val(chosen_results[i].Y)
                  : this->pb.lc_val(computed_results[i].Y));
     }
+}
+
+namespace internal
+{
+
+// Internal class used to extract the value of a G1_variable.
+template<typename wppT>
+class G1_variable_with_get_element : public G1_variable<wppT>
+{
+public:
+    using nppT = other_curve<wppT>;
+    inline libff::G1<nppT> get_element() const
+    {
+        return libff::G1<nppT>(
+            this->pb.lc_val(this->X),
+            this->pb.lc_val(this->Y),
+            libff::Fq<nppT>::one());
+    }
+};
+
+} // namespace internal
+
+template<typename wppT>
+libff::G1<other_curve<wppT>> g1_variable_get_element(
+    const G1_variable<wppT> &var)
+{
+    return ((internal::G1_variable_with_get_element<wppT> *)(&var))
+        ->get_element();
 }
 
 } // namespace libsnark

@@ -497,9 +497,6 @@ int main(void)
         libff::mnt6_final_exponent_last_chunk_abs_of_w0, "mnt6_Fq6");
     test_Frobenius<libff::mnt6_Fq6, Fp6_2over3_variable>("mnt6_Fq6");
 
-    test_G2_checker_gadget<libff::mnt4_pp>("mnt4");
-    test_G2_checker_gadget<libff::mnt6_pp>("mnt6");
-
     test_full_pairing<libff::mnt4_pp>("mnt4");
     test_full_pairing<libff::mnt6_pp>("mnt6");
 

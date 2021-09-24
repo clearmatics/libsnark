@@ -15,9 +15,11 @@
 #ifndef WEIERSTRASS_G1_GADGET_HPP_
 #define WEIERSTRASS_G1_GADGET_HPP_
 
+#include "libsnark/gadgetlib1/gadget.hpp"
+#include "libsnark/gadgetlib1/gadgets/curves/scalar_multiplication.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
+
 #include <libff/algebra/curves/public_params.hpp>
-#include <libsnark/gadgetlib1/gadget.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
 
 namespace libsnark
 {
@@ -82,13 +84,13 @@ public:
 
     G1_variable<ppT> A;
     G1_variable<ppT> B;
-    G1_variable<ppT> C;
+    G1_variable<ppT> result;
 
     G1_add_gadget(
         protoboard<FieldT> &pb,
         const G1_variable<ppT> &A,
         const G1_variable<ppT> &B,
-        const G1_variable<ppT> &C,
+        const G1_variable<ppT> &result,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -106,12 +108,12 @@ public:
     pb_variable<FieldT> lambda;
 
     G1_variable<ppT> A;
-    G1_variable<ppT> B;
+    G1_variable<ppT> result;
 
     G1_dbl_gadget(
         protoboard<FieldT> &pb,
         const G1_variable<ppT> &A,
-        const G1_variable<ppT> &B,
+        const G1_variable<ppT> &result,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -152,6 +154,21 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
+
+/// Utility function to get the value from a (witnessed) G1_variable.
+template<typename wppT>
+libff::G1<libsnark::other_curve<wppT>> g1_variable_get_element(
+    const libsnark::G1_variable<wppT> &g1_variable);
+
+/// Multiplication by constant scalar (leverages
+/// point_mul_by_const_scalar_gadget - scalar_multiplication.hpp).
+template<typename wppT, mp_size_t scalarLimbs>
+using G1_mul_by_const_scalar_gadget = point_mul_by_const_scalar_gadget<
+    libff::G1<other_curve<wppT>>,
+    G1_variable<wppT>,
+    G1_add_gadget<wppT>,
+    G1_dbl_gadget<wppT>,
+    libff::bigint<scalarLimbs>>;
 
 } // namespace libsnark
 
