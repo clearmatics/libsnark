@@ -149,7 +149,7 @@ bool kzg10<ppT>::verify_eval(
     // Verify the equality:
     //
     //   \psi(\alpha) (\alpha - i) = \phi(\alpha) - \phi(i)
-    //                             = C - phi_i
+    //                             = commit - phi_i
     // via the pairing equality:
     //
     //   e([\psi(\alpha)]_1, [\alpha - i]_2) = e(C - [phi_i]_1, [1]_2)
