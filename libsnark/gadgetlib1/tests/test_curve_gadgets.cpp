@@ -9,6 +9,7 @@
 #include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bw6_761_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
+#include "libsnark/zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/r1cs_gg_ppzksnark.hpp"
 
 #include <gtest/gtest.h>
 #include <libff/algebra/curves/bls12_377/bls12_377_pp.hpp>
@@ -23,6 +24,21 @@ using npp = other_curve<wpp>;
 
 namespace
 {
+
+template<typename ppT>
+void generate_and_check_proof(protoboard<libff::Fr<ppT>> &pb)
+{
+    // Generate and check the proof
+    ASSERT_TRUE(pb.is_satisfied());
+    const r1cs_gg_ppzksnark_keypair<ppT> keypair =
+        r1cs_gg_ppzksnark_generator<ppT>(pb.get_constraint_system(), true);
+    r1cs_primary_input<libff::Fr<wpp>> primary_input = pb.primary_input();
+    r1cs_auxiliary_input<libff::Fr<ppT>> auxiliary_input = pb.auxiliary_input();
+    r1cs_gg_ppzksnark_proof<ppT> proof = r1cs_gg_ppzksnark_prover(
+        keypair.pk, primary_input, auxiliary_input, true);
+    ASSERT_TRUE(r1cs_gg_ppzksnark_verifier_strong_IC<ppT>(
+        keypair.vk, primary_input, proof));
+}
 
 template<typename ppT>
 void test_G2_checker_gadget(const std::string &annotation)

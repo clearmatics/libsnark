@@ -53,6 +53,32 @@ public:
     static size_t num_variables();
 };
 
+/// Depending on the value of a selector variable (which must be 0 or
+/// 1), choose between two G1_variable objects (zero_case and
+/// one_case),
+template<typename ppT>
+class G1_variable_selector_gadget : public gadget<libff::Fr<ppT>>
+{
+public:
+    using Field = libff::Fr<ppT>;
+
+    const pb_linear_combination<Field> selector;
+    const G1_variable<ppT> zero_case;
+    const G1_variable<ppT> one_case;
+    G1_variable<ppT> result;
+
+    G1_variable_selector_gadget(
+        protoboard<Field> &pb,
+        const pb_linear_combination<Field> &selector,
+        const G1_variable<ppT> &zero_case,
+        const G1_variable<ppT> &one_case,
+        const G1_variable<ppT> &result,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
 /**
  * Gadget that creates constraints for the validity of a G1 variable.
  */

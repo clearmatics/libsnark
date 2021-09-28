@@ -81,6 +81,73 @@ template<typename ppT> size_t G1_variable<ppT>::size_in_bits()
 template<typename ppT> size_t G1_variable<ppT>::num_variables() { return 2; }
 
 template<typename ppT>
+G1_variable_selector_gadget<ppT>::G1_variable_selector_gadget(
+    protoboard<Field> &pb,
+    const pb_linear_combination<Field> &selector,
+    const G1_variable<ppT> &zero_case,
+    const G1_variable<ppT> &one_case,
+    const G1_variable<ppT> &result,
+    const std::string &annotation_prefix)
+    : gadget<Field>(pb, annotation_prefix)
+    , selector(selector)
+    , zero_case(zero_case)
+    , one_case(one_case)
+    , result(result)
+{
+}
+
+template<typename ppT>
+void G1_variable_selector_gadget<ppT>::generate_r1cs_constraints()
+{
+    // For selector \in {0, 1}, and zero_case and one_case \in G_1, we
+    // require result \in G_1 to satisfy:
+    //
+    //      result = one_case if selector = 1, and
+    //      result = zero_case if selector = 0.
+    // or:
+    //      result.X = selector * one_case.X + (1 - selector) * zero_case.X
+    //      result.Y = selector * one_case.X + (1 - selector) * zero_case.Y
+    //
+    // This can be re-arranged in terms of a single constraint as
+    // follows:
+    //
+    //      result.X = selector * one_case.X + (1 - selector) * zero_case.X
+    //               = selector * (one_case.X - zero_case.X) + zero_case.X
+    //  <=> result.X - zero_case.X = selector * (one_case.X - zero_case.X)
+    //
+    // (and similarly for result.Y)
+
+    // selector * (one_case.X - zero_case.X) = result.X - zero_case.X
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<Field>(
+            selector, one_case.X - zero_case.X, result.X - zero_case.X),
+        FMT(this->annotation_prefix, " select X"));
+    // selector * (one_case.Y - zero_case.Y) = result.Y - zero_case.Y
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<Field>(
+            selector, one_case.Y - zero_case.Y, result.Y - zero_case.Y),
+        FMT(this->annotation_prefix, " select Y"));
+}
+
+template<typename ppT>
+void G1_variable_selector_gadget<ppT>::generate_r1cs_witness()
+{
+    protoboard<Field> &pb = this->pb;
+    selector.evaluate(pb);
+
+    zero_case.X.evaluate(pb);
+    zero_case.Y.evaluate(pb);
+    one_case.X.evaluate(pb);
+    one_case.Y.evaluate(pb);
+
+    if (pb.lc_val(selector) == Field::one()) {
+        result.generate_r1cs_witness(g1_variable_get_element(one_case));
+    } else {
+        result.generate_r1cs_witness(g1_variable_get_element(zero_case));
+    }
+}
+
+template<typename ppT>
 G1_checker_gadget<ppT>::G1_checker_gadget(
     protoboard<FieldT> &pb,
     const G1_variable<ppT> &P,
