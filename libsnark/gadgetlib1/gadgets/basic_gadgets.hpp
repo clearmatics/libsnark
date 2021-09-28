@@ -29,6 +29,10 @@ void generate_r1cs_equals_const_constraint(
     const FieldT &c,
     const std::string &annotation_prefix = "");
 
+/// Constrain a bit array to be equal to the binary encoding of some linear
+/// combination. Supports computing the bits from the linear combination, and
+/// vice-versa. Also supports constraining the bit array values to be boolean
+/// if this is not verified elsewhere.
 template<typename FieldT> class packing_gadget : public gadget<FieldT>
 {
 private:
