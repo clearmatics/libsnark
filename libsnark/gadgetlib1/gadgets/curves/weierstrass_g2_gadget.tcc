@@ -94,6 +94,61 @@ template<typename ppT> size_t G2_variable<ppT>::num_variables()
 }
 
 template<typename ppT>
+G2_variable_selector_gadget<ppT>::G2_variable_selector_gadget(
+    protoboard<Field> &pb,
+    const pb_linear_combination<Field> &selector,
+    const G2_variable<ppT> &zero_case,
+    const G2_variable<ppT> &one_case,
+    const G2_variable<ppT> &result,
+    const std::string &annotation_prefix)
+    : gadget<Field>(pb, annotation_prefix)
+    , selector(selector)
+    , zero_case(zero_case)
+    , one_case(one_case)
+    , result(result)
+    , mul_select_X(
+          pb,
+          *one_case.X - *zero_case.X,
+          selector,
+          *result.X - *zero_case.X,
+          FMT(annotation_prefix, " mul_select_X"))
+    , mul_select_Y(
+          pb,
+          *one_case.Y - *zero_case.Y,
+          selector,
+          *result.Y - *zero_case.Y,
+          FMT(annotation_prefix, " mul_select_Y"))
+{
+}
+
+template<typename ppT>
+void G2_variable_selector_gadget<ppT>::generate_r1cs_constraints()
+{
+    mul_select_X.generate_r1cs_constraints();
+    mul_select_Y.generate_r1cs_constraints();
+}
+
+template<typename ppT>
+void G2_variable_selector_gadget<ppT>::generate_r1cs_witness()
+{
+    protoboard<Field> &pb = this->pb;
+    selector.evaluate(pb);
+
+    zero_case.X->evaluate();
+    zero_case.Y->evaluate();
+    one_case.X->evaluate();
+    one_case.Y->evaluate();
+    mul_select_X.generate_r1cs_witness();
+    mul_select_Y.generate_r1cs_witness();
+
+    if (pb.lc_val(selector) == Field::one()) {
+        result.generate_r1cs_witness(one_case.get_element());
+    } else {
+        result.generate_r1cs_witness(zero_case.get_element());
+    }
+}
+
+template<typename ppT>
 G2_checker_gadget<ppT>::G2_checker_gadget(
     protoboard<FieldT> &pb,
     const G2_variable<ppT> &Q,

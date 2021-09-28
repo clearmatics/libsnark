@@ -141,9 +141,9 @@ void G1_variable_selector_gadget<ppT>::generate_r1cs_witness()
     one_case.Y.evaluate(pb);
 
     if (pb.lc_val(selector) == Field::one()) {
-        result.generate_r1cs_witness(g1_variable_get_element(one_case));
+        result.generate_r1cs_witness(one_case.get_element());
     } else {
-        result.generate_r1cs_witness(g1_variable_get_element(zero_case));
+        result.generate_r1cs_witness(zero_case.get_element());
     }
 }
 

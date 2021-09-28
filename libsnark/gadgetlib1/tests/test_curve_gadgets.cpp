@@ -205,6 +205,62 @@ TEST(TestCurveGadgets, G2SelectorGadget)
     generate_and_check_proof<wpp>(pb);
 }
 
+TEST(TestCurveGadgets, G2SelectorGadget)
+{
+    using Field = libff::Fr<wpp>;
+
+    protoboard<Field> pb;
+
+    G2_variable<wpp> zero_case(pb, "zero_case");
+    G2_variable<wpp> one_case(pb, "one_case");
+
+    pb_variable<Field> selector_zero;
+    selector_zero.allocate(pb, "selector_zero");
+    pb_variable<Field> selector_one;
+    selector_one.allocate(pb, "selector_one");
+
+    G2_variable<wpp> zero_result(pb, "zero_result");
+    G2_variable<wpp> one_result(pb, "one_result");
+
+    G2_variable_selector_gadget<wpp> selector_gadget_zero(
+        pb,
+        selector_zero,
+        zero_case,
+        one_case,
+        zero_result,
+        "selector_gadget_zero");
+    G2_variable_selector_gadget<wpp> selector_gadget_one(
+        pb,
+        selector_one,
+        zero_case,
+        one_case,
+        one_result,
+        "selector_gadget_one");
+
+    selector_gadget_zero.generate_r1cs_constraints();
+    selector_gadget_one.generate_r1cs_constraints();
+
+    // Assignments: zero_case = [2]_1, one_case = [-1]_1
+    libff::G2<npp> zero_case_val =
+        libff::G2<npp>::one() + libff::G2<npp>::one();
+    zero_case_val.to_affine_coordinates();
+    libff::G2<npp> one_case_val = -libff::G2<npp>::one();
+    one_case_val.to_affine_coordinates();
+
+    zero_case.generate_r1cs_witness(zero_case_val);
+    one_case.generate_r1cs_witness(one_case_val);
+    pb.val(selector_zero) = Field::zero();
+    pb.val(selector_one) = Field::one();
+    selector_gadget_zero.generate_r1cs_witness();
+    selector_gadget_one.generate_r1cs_witness();
+
+    ASSERT_EQ(zero_case_val, g2_variable_get_element(zero_result));
+    ASSERT_EQ(one_case_val, g2_variable_get_element(one_result));
+
+    // Verify in a proof
+    generate_and_check_proof<wpp>(pb);
+}
+
 TEST(TestCurveGadgets, G1MulByConstScalar)
 {
     // Compute inputs and results
