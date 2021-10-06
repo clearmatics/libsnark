@@ -73,7 +73,7 @@ void test_add_gadget(
     protoboard<libff::Fr<wpp>> pb;
     VarT A(pb, "A");
     VarT B(pb, "B");
-    VarT result(pb, "C");
+    VarT result(pb, "result");
     AddGadgetT add_gadget(pb, A, B, result, "add_gadget");
 
     add_gadget.generate_r1cs_constraints();
@@ -81,6 +81,26 @@ void test_add_gadget(
     A.generate_r1cs_witness(a_val);
     B.generate_r1cs_witness(b_val);
     add_gadget.generate_r1cs_witness();
+
+    const GroupT result_val = result.get_element();
+    ASSERT_TRUE(pb.is_satisfied());
+    ASSERT_EQ(expect_val, result_val);
+}
+
+template<typename ppT, typename GroupT, typename VarT, typename DblGadgetT>
+void test_dbl_gadget(const GroupT &a_val, const GroupT &expect_val)
+{
+    ASSERT_EQ(expect_val, a_val + a_val);
+
+    protoboard<libff::Fr<wpp>> pb;
+    VarT A(pb, "A");
+    VarT result(pb, "result");
+    DblGadgetT dbl_gadget(pb, A, result, "add_gadget");
+
+    dbl_gadget.generate_r1cs_constraints();
+
+    A.generate_r1cs_witness(a_val);
+    dbl_gadget.generate_r1cs_witness();
 
     const GroupT result_val = result.get_element();
     ASSERT_TRUE(pb.is_satisfied());
