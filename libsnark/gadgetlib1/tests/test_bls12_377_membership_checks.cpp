@@ -87,8 +87,7 @@ TEST(BLS12_377_Membership_Check, G2UntwistFrobeniusTwist)
 
     g2_uft.X->evaluate();
     g2_uft.Y->evaluate();
-    const libff::G2<npp> g2_uft_val =
-        libsnark::g2_variable_get_element<wpp>(g2_uft);
+    const libff::G2<npp> g2_uft_val = g2_uft.get_element();
     ASSERT_EQ(g2_uft_val_expect, g2_uft_val);
 }
 

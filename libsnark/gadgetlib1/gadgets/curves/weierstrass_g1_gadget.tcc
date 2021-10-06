@@ -63,6 +63,16 @@ void G1_variable<ppT>::generate_r1cs_witness(
     this->pb.lc_val(Y) = el_normalized.Y;
 }
 
+template<typename ppT>
+libff::G1<other_curve<ppT>> G1_variable<ppT>::get_element() const
+{
+    using nppT = other_curve<ppT>;
+    return libff::G1<nppT>(
+        this->pb.lc_val(this->X),
+        this->pb.lc_val(this->Y),
+        libff::Fq<nppT>::one());
+}
+
 template<typename ppT> size_t G1_variable<ppT>::size_in_bits()
 {
     return 2 * FieldT::size_in_bits();
@@ -331,34 +341,6 @@ void G1_multiscalar_mul_gadget<ppT>::generate_r1cs_witness()
                  ? this->pb.lc_val(chosen_results[i].Y)
                  : this->pb.lc_val(computed_results[i].Y));
     }
-}
-
-namespace internal
-{
-
-// Internal class used to extract the value of a G1_variable.
-template<typename wppT>
-class G1_variable_with_get_element : public G1_variable<wppT>
-{
-public:
-    using nppT = other_curve<wppT>;
-    inline libff::G1<nppT> get_element() const
-    {
-        return libff::G1<nppT>(
-            this->pb.lc_val(this->X),
-            this->pb.lc_val(this->Y),
-            libff::Fq<nppT>::one());
-    }
-};
-
-} // namespace internal
-
-template<typename wppT>
-libff::G1<other_curve<wppT>> g1_variable_get_element(
-    const G1_variable<wppT> &var)
-{
-    return ((internal::G1_variable_with_get_element<wppT> *)(&var))
-        ->get_element();
 }
 
 } // namespace libsnark

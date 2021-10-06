@@ -45,6 +45,8 @@ public:
 
     void generate_r1cs_witness(const libff::G1<other_curve<ppT>> &elt);
 
+    libff::G1<other_curve<ppT>> get_element() const;
+
     // (See a comment in r1cs_ppzksnark_verifier_gadget.hpp about why
     // we mark this function noinline.) TODO: remove later
     static size_t __attribute__((noinline)) size_in_bits();
@@ -154,11 +156,6 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
-
-/// Utility function to get the value from a (witnessed) G1_variable.
-template<typename wppT>
-libff::G1<libsnark::other_curve<wppT>> g1_variable_get_element(
-    const libsnark::G1_variable<wppT> &g1_variable);
 
 /// Multiplication by constant scalar (leverages
 /// point_mul_by_const_scalar_gadget - scalar_multiplication.hpp).

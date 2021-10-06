@@ -54,6 +54,8 @@ public:
 
     void generate_r1cs_witness(const libff::G2<other_curve<ppT>> &Q);
 
+    libff::G2<other_curve<ppT>> get_element() const;
+
     // (See a comment in r1cs_ppzksnark_verifier_gadget.hpp about why
     // we mark this function noinline.) TODO: remove later
     static size_t __attribute__((noinline)) size_in_bits();
@@ -216,10 +218,14 @@ using G2_mul_by_const_scalar_gadget = point_mul_by_const_scalar_gadget<
     G2_dbl_gadget<wppT>,
     libff::bigint<scalarLimbs>>;
 
-/// Utility function to get the value from a (witnessed) G2_variable.
 template<typename wppT>
-libff::G2<libsnark::other_curve<wppT>> g2_variable_get_element(
-    const libsnark::G2_variable<wppT> &var);
+using G2_mul_by_scalar_gadget = point_mul_by_scalar_gadget<
+    wppT,
+    libff::G2<other_curve<wppT>>,
+    G2_variable<wppT>,
+    G2_add_gadget<wppT>,
+    G2_dbl_gadget<wppT>,
+    G2_variable_selector_gadget<wppT>>;
 
 } // namespace libsnark
 

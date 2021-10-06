@@ -73,6 +73,16 @@ void G2_variable<ppT>::generate_r1cs_witness(
     Y->generate_r1cs_witness(Qcopy.Y);
 }
 
+template<typename ppT>
+libff::G2<other_curve<ppT>> G2_variable<ppT>::get_element() const
+{
+    using nppT = other_curve<ppT>;
+    return libff::G2<nppT>(
+        X->get_element(),
+        Y->get_element(),
+        libff::G2<nppT>::twist_field::one());
+}
+
 template<typename ppT> size_t G2_variable<ppT>::size_in_bits()
 {
     return 2 * Fqe_variable<ppT>::size_in_bits();
@@ -339,17 +349,6 @@ G2_variable<wppT> g2_variable_negate(
     const std::string &annotation_prefix)
 {
     return G2_variable<wppT>(pb, *g2.X, -*g2.Y, annotation_prefix);
-}
-
-template<typename wppT>
-libff::G2<other_curve<wppT>> g2_variable_get_element(
-    const G2_variable<wppT> &var)
-{
-    using nppT = other_curve<wppT>;
-    return libff::G2<nppT>(
-        var.X->get_element(),
-        var.Y->get_element(),
-        libff::G2<nppT>::twist_field::one());
 }
 
 } // namespace libsnark
