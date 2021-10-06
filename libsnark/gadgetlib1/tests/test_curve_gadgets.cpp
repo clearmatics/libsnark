@@ -205,60 +205,34 @@ TEST(TestCurveGadgets, G2SelectorGadget)
     generate_and_check_proof<wpp>(pb);
 }
 
-TEST(TestCurveGadgets, G2SelectorGadget)
+TEST(TestCurveGadgets, G1AddGadget)
 {
-    using Field = libff::Fr<wpp>;
+    test_add_gadget<wpp, libff::G1<npp>, G1_variable<wpp>, G1_add_gadget<wpp>>(
+        libff::Fr<npp>(13) * libff::G1<npp>::one(),
+        libff::Fr<npp>(12) * libff::G1<npp>::one(),
+        libff::Fr<npp>(12 + 13) * libff::G1<npp>::one());
+}
 
-    protoboard<Field> pb;
+TEST(TestCurveGadgets, G2AddGadget)
+{
+    test_add_gadget<wpp, libff::G2<npp>, G2_variable<wpp>, G2_add_gadget<wpp>>(
+        libff::Fr<npp>(13) * libff::G2<npp>::one(),
+        libff::Fr<npp>(12) * libff::G2<npp>::one(),
+        libff::Fr<npp>(12 + 13) * libff::G2<npp>::one());
+}
 
-    G2_variable<wpp> zero_case(pb, "zero_case");
-    G2_variable<wpp> one_case(pb, "one_case");
+TEST(TestCurveGadgets, G1DblGadget)
+{
+    test_dbl_gadget<wpp, libff::G1<npp>, G1_variable<wpp>, G1_dbl_gadget<wpp>>(
+        libff::Fr<npp>(13) * libff::G1<npp>::one(),
+        libff::Fr<npp>(13 + 13) * libff::G1<npp>::one());
+}
 
-    pb_variable<Field> selector_zero;
-    selector_zero.allocate(pb, "selector_zero");
-    pb_variable<Field> selector_one;
-    selector_one.allocate(pb, "selector_one");
-
-    G2_variable<wpp> zero_result(pb, "zero_result");
-    G2_variable<wpp> one_result(pb, "one_result");
-
-    G2_variable_selector_gadget<wpp> selector_gadget_zero(
-        pb,
-        selector_zero,
-        zero_case,
-        one_case,
-        zero_result,
-        "selector_gadget_zero");
-    G2_variable_selector_gadget<wpp> selector_gadget_one(
-        pb,
-        selector_one,
-        zero_case,
-        one_case,
-        one_result,
-        "selector_gadget_one");
-
-    selector_gadget_zero.generate_r1cs_constraints();
-    selector_gadget_one.generate_r1cs_constraints();
-
-    // Assignments: zero_case = [2]_1, one_case = [-1]_1
-    libff::G2<npp> zero_case_val =
-        libff::G2<npp>::one() + libff::G2<npp>::one();
-    zero_case_val.to_affine_coordinates();
-    libff::G2<npp> one_case_val = -libff::G2<npp>::one();
-    one_case_val.to_affine_coordinates();
-
-    zero_case.generate_r1cs_witness(zero_case_val);
-    one_case.generate_r1cs_witness(one_case_val);
-    pb.val(selector_zero) = Field::zero();
-    pb.val(selector_one) = Field::one();
-    selector_gadget_zero.generate_r1cs_witness();
-    selector_gadget_one.generate_r1cs_witness();
-
-    ASSERT_EQ(zero_case_val, g2_variable_get_element(zero_result));
-    ASSERT_EQ(one_case_val, g2_variable_get_element(one_result));
-
-    // Verify in a proof
-    generate_and_check_proof<wpp>(pb);
+TEST(TestCurveGadgets, G2DblGadget)
+{
+    test_dbl_gadget<wpp, libff::G2<npp>, G2_variable<wpp>, G2_dbl_gadget<wpp>>(
+        libff::Fr<npp>(13) * libff::G2<npp>::one(),
+        libff::Fr<npp>(13 + 13) * libff::G2<npp>::one());
 }
 
 TEST(TestCurveGadgets, G1MulByConstScalar)
@@ -338,45 +312,6 @@ TEST(TestCurveGadgets, G1MulByConstScalarWithKnownResult)
         result.generate_r1cs_witness(result_val);
         ASSERT_FALSE(pb.is_satisfied());
     }
-}
-
-TEST(TestCurveGadgets, G1AddGadget)
-{
-    test_add_gadget<wpp, libff::G1<npp>, G1_variable<wpp>, G1_add_gadget<wpp>>(
-        libff::Fr<npp>(13) * libff::G1<npp>::one(),
-        libff::Fr<npp>(12) * libff::G1<npp>::one(),
-        libff::Fr<npp>(12 + 13) * libff::G1<npp>::one());
-}
-
-TEST(TestCurveGadgets, G2AddGadget)
-{
-    test_add_gadget<wpp, libff::G2<npp>, G2_variable<wpp>, G2_add_gadget<wpp>>(
-        libff::Fr<npp>(13) * libff::G2<npp>::one(),
-        libff::Fr<npp>(12) * libff::G2<npp>::one(),
-        libff::Fr<npp>(12 + 13) * libff::G2<npp>::one());
-}
-
-TEST(TestCurveGadgets, G2DblGadget)
-{
-    // Compute inputs and results
-    const libff::G2<npp> A_val = libff::Fr<npp>(13) * libff::G2<npp>::one();
-    const libff::G2<npp> expect_B_val =
-        libff::Fr<npp>(13 + 13) * libff::G2<npp>::one();
-    ASSERT_EQ(A_val.dbl(), expect_B_val);
-
-    protoboard<libff::Fr<wpp>> pb;
-    G2_variable<wpp> A(pb, "A");
-    G2_variable<wpp> B(pb, "B");
-    G2_dbl_gadget<wpp> dbl_gadget(pb, A, B, "dbl_gadget");
-
-    dbl_gadget.generate_r1cs_constraints();
-
-    A.generate_r1cs_witness(A_val);
-    dbl_gadget.generate_r1cs_witness();
-
-    const libff::G2<npp> B_val = B.get_element();
-    ASSERT_TRUE(pb.is_satisfied());
-    ASSERT_EQ(expect_B_val, B_val);
 }
 
 TEST(TestCurveGadgets, G2MulByConstScalar)
