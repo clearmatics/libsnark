@@ -9,8 +9,6 @@
 #ifndef LIBSNARK_GADGETLIB1_GADGETS_CURVE_SCALAR_MULTIPLICATION_TCC_
 #define LIBSNARK_GADGETLIB1_GADGETS_CURVE_SCALAR_MULTIPLICATION_TCC_
 
-#include "libsnark/gadgetlib1/gadgets/curves/scalar_multiplication.hpp"
-
 namespace libsnark
 {
 
@@ -553,6 +551,274 @@ const groupVariableT &point_mul_by_const_scalar_gadget<
     scalarT>::result() const
 {
     return _result;
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+point_mul_by_scalar_gadget<
+    ppT,
+    groupT,
+    groupVarT,
+    selectorGadgetT,
+    addGadgetT,
+    dblGadgetT>::
+    point_mul_by_scalar_gadget(
+        protoboard<Field> &pb,
+        const pb_linear_combination<Field> &scalar,
+        const groupVarT &P,
+        const groupVarOrIdentity &result,
+        const std::string &annotation_prefix)
+    : gadget<Field>(pb, annotation_prefix)
+    , scalar_unpacked(
+          pb,
+          create_variable_array_for_bits(pb, annotation_prefix),
+          scalar,
+          FMT(annotation_prefix, " scalar_as_bits"))
+{
+    add_gadgets.reserve(nFr::num_bits - 1);
+    dbl_gadgets.reserve(nFr::num_bits - 1);
+    selector_gadgets.reserve(nFr::num_bits);
+
+    // Given n bits:
+    //  res = select(scalar_as_bits[n-1], P, one)
+    //  for i = n-2 ... 0:
+    //    res = dbl(res)
+    //    res = select(scalar_as_bits[i], add(res, P), res)
+
+    // Lowest order bit has smallest index in scalar_unpacked.bits
+
+    // First selector must choose (bit[num_bits - 1] ? P : zero)
+
+    selector_gadgets.emplace_back(
+        pb,
+        scalar_unpacked.bits[nFr::num_bits - 1],
+        groupVarOrIdentity(pb, groupT::zero(), FMT(annotation_prefix, " zero")),
+        P,
+        groupVarOrIdentity(
+            pb,
+            FMT(annotation_prefix, " select_result[%zu]", nFr::num_bits - 1)),
+        FMT(annotation_prefix, " selector_gadgets[%zu]", nFr::num_bits - 1));
+
+    for (size_t i = nFr::num_bits - 2; i > 0; --i) {
+        // Double
+        dbl_gadgets.emplace_back(
+            pb,
+            selector_gadgets.back().result,
+            groupVarOrIdentity(
+                pb, FMT(annotation_prefix, " dbl_result[%zu]", i)),
+            FMT(annotation_prefix, " dbl_gadgets[%zu]", i));
+
+        // Add
+        add_gadgets.emplace_back(
+            pb,
+            dbl_gadgets.back().result,
+            P,
+            groupVarT(pb, FMT(annotation_prefix, " add_result[%zu]", i)),
+            FMT(annotation_prefix, " add_gadgets[%zu]", i));
+
+        // Select the doubled or double-and-added output value, based on the
+        // currenet bit of scalar_unpacked.
+        //
+        // If bit == 0, the selector should output result of the dbl (*last).
+        // For bit == 1, it should output the result of the add.
+
+        selector_gadgets.emplace_back(
+            pb,
+            scalar_unpacked.bits[i],
+            dbl_gadgets.back().result,
+            add_gadgets.back().result,
+            groupVarOrIdentity(
+                pb, FMT(annotation_prefix, " select_result[%zu]", i)),
+            FMT(annotation_prefix, " selector_gadgets[%zu]", i));
+    }
+
+    // Handle the 0-th bit. Perform the double as usual, but adjust the inputs
+    // to the final add based on the 0-th bit (namely, if the 0-th bit is 0, we
+    // use a dummy addition to avoid division by 0 - see comment in
+    // scalar_multiplication.hpp).
+
+    dbl_gadgets.emplace_back(
+        pb,
+        selector_gadgets.back().result,
+        groupVarOrIdentity(pb, FMT(annotation_prefix, " dbl_result[0]")),
+        FMT(annotation_prefix, " dbl_gadgets[0]"));
+
+    // In psuedo-code:
+    //
+    //   if bits[0]:
+    //     left_input = dbl_gadgets.back().result
+    //     right_input = P
+    //   else:
+    //     left_input = GroupT::one()
+    //     right_input = GroupT::one() + GroupT::one()
+    //
+    //   final_add = addVarAndVarOrIdentityGadget(left_input, right_input)
+
+    pb_linear_combination<Field> final_add_input_select;
+    final_add_input_select.assign(
+        pb, pb_variable<Field>(0) - scalar_unpacked.bits[0]);
+
+    final_add_input_left.reset(new selectVarOrVarIdentityGadget(
+        pb,
+        final_add_input_select,
+        dbl_gadgets.back().result,
+        groupVarT(
+            pb,
+            groupT::one(),
+            FMT(annotation_prefix, " final_add_input_left_dummy")),
+        groupVarOrIdentity(
+            pb, FMT(annotation_prefix, " final_add_input_left_result")),
+        FMT(annotation_prefix, " final_add_input_left")));
+
+    final_add_input_right.reset(new selectorGadgetT(
+        pb,
+        final_add_input_select,
+        P,
+        groupVarT(
+            pb,
+            groupT::one() + groupT::one(),
+            FMT(annotation_prefix, " final_add_input_right_dummy")),
+        groupVarT(pb, FMT(annotation_prefix, " final_add_input_left_result")),
+        FMT(annotation_prefix, " final_add_input_right")));
+
+    add_gadgets.emplace_back(
+        pb,
+        final_add_input_left->result,
+        final_add_input_right->result,
+        groupVarT(pb, FMT(annotation_prefix, " add_result[0]")),
+        FMT(annotation_prefix, " add_gadgets[0]"));
+
+    // Final selector outputs to the result:
+    //
+    //   if bit[0]:
+    //     result = final_add
+    //   else:
+    //     result = dbl_gadgets.back().result
+
+    selector_gadgets.emplace_back(
+        pb,
+        scalar_unpacked.bits[0],
+        dbl_gadgets.back().result,
+        add_gadgets.back().result,
+        result,
+        FMT(annotation_prefix, " selector_gadgets[0]"));
+
+    assert(selector_gadgets.size() == nFr::num_bits);
+    assert(dbl_gadgets.size() == nFr::num_bits - 1);
+    assert(add_gadgets.size() == nFr::num_bits - 1);
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+void point_mul_by_scalar_gadget<
+    ppT,
+    groupT,
+    groupVarT,
+    selectorGadgetT,
+    addGadgetT,
+    dblGadgetT>::generate_r1cs_constraints()
+{
+    scalar_unpacked.generate_r1cs_constraints(true);
+    selector_gadgets[0].generate_r1cs_constraints();
+    for (size_t i = 0; i < nFr::num_bits - 2; ++i) {
+        dbl_gadgets[i].generate_r1cs_constraints();
+        add_gadgets[i].generate_r1cs_constraints();
+        selector_gadgets[i + 1].generate_r1cs_constraints();
+    }
+
+    dbl_gadgets.back().generate_r1cs_constraints();
+    final_add_input_left->generate_r1cs_constraints();
+    final_add_input_right->generate_r1cs_constraints();
+    add_gadgets.back().generate_r1cs_constraints();
+    selector_gadgets.back().generate_r1cs_constraints();
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+void point_mul_by_scalar_gadget<
+    ppT,
+    groupT,
+    groupVarT,
+    selectorGadgetT,
+    addGadgetT,
+    dblGadgetT>::generate_r1cs_witness()
+{
+    // Assign and evaluate in the same order as in the constructor /
+    // generate_r1cs_constraints - first selector_gadget is used first,
+    // followed by repeated double-add-select.
+
+    scalar_unpacked.generate_r1cs_witness_from_packed();
+    selector_gadgets[0].generate_r1cs_witness();
+
+    for (size_t i = 0; i < nFr::num_bits - 2; ++i) {
+        dbl_gadgets[i].generate_r1cs_witness();
+        add_gadgets[i].generate_r1cs_witness();
+
+        selector_gadgets[i + 1].generate_r1cs_witness();
+    }
+
+    dbl_gadgets.back().generate_r1cs_witness();
+    final_add_input_right->selector.evaluate(this->pb);
+
+    final_add_input_left->generate_r1cs_witness();
+    final_add_input_right->generate_r1cs_witness();
+    add_gadgets.back().generate_r1cs_witness();
+    selector_gadgets.back().generate_r1cs_witness();
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+const variable_or_identity<ppT, groupT, groupVarT> &point_mul_by_scalar_gadget<
+    ppT,
+    groupT,
+    groupVarT,
+    selectorGadgetT,
+    addGadgetT,
+    dblGadgetT>::result() const
+{
+    return selector_gadgets.back().result;
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+pb_variable_array<libff::Fr<ppT>> point_mul_by_scalar_gadget<
+    ppT,
+    groupT,
+    groupVarT,
+    selectorGadgetT,
+    addGadgetT,
+    dblGadgetT>::
+    create_variable_array_for_bits(
+        protoboard<Field> &pb, const std::string &annotation_prefix)
+{
+    pb_variable_array<Field> bits;
+    bits.allocate(pb, nFr::num_bits, FMT(annotation_prefix, " unpacked_bits"));
+    return bits;
 }
 
 } // namespace libsnark

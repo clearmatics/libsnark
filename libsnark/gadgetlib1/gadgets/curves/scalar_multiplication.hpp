@@ -10,7 +10,10 @@
 #define LIBSNARK_GADGETLIB1_GADGETS_CURVE_SCALAR_MULTIPLICATION_HPP_
 
 #include "libsnark/gadgetlib1/gadget.hpp"
+#include "libsnark/gadgetlib1/gadgets/basic_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
 
+#include <libff/algebra/curves/public_params.hpp>
 #include <memory>
 
 namespace libsnark
@@ -210,9 +213,8 @@ public:
     void generate_r1cs_witness();
 };
 
-/// Wrap an add gadget, extending it to support adding variable_or_identity
-/// elements. At most one element may be the identity, otherwise witness
-/// generation fails due to the implementation of the underlying add gadgets.
+/// Wrap an add gadget for group variables, extending it to support adding a
+/// variable_or_identity to a variable.
 template<
     typename ppT,
     typename groupT,
@@ -237,8 +239,8 @@ public:
     //
     //   result.value = variableSelectorT(
     //       A.is_identity,
-    //       add_result,              -- A != 0
-    //       B)
+    //       B,                       -- A == 0 case
+    //       add_result)              -- A != 0 case
 
     variableT result;
     variableT add_result;
@@ -326,6 +328,77 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
     const groupVariableT &result() const;
+};
+
+/// Generic gadget to perform scalar multiplication of group variables by
+/// variables. Used by the individual group element implementations.
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+class point_mul_by_scalar_gadget : public gadget<typename groupT::base_field>
+{
+public:
+    using Field = libff::Fr<ppT>;
+    using nFr = libff::Fr<other_curve<ppT>>;
+    using groupVarOrIdentity = variable_or_identity<ppT, groupT, groupVarT>;
+    using selectVarOrVarIdentityGadget =
+        variable_and_variable_or_identity_selector<
+            ppT,
+            groupT,
+            groupVarT,
+            selectorGadgetT>;
+    using addVarAndVarOrIdentityGadget = add_variable_and_variable_or_identity<
+        ppT,
+        groupT,
+        groupVarT,
+        selectorGadgetT,
+        addGadgetT>;
+    using dblVarOrIdentityGadget =
+        dbl_variable_or_identity<ppT, groupT, groupVarT, dblGadgetT>;
+
+    packing_gadget<Field> scalar_unpacked;
+    std::vector<dblVarOrIdentityGadget> dbl_gadgets;
+    std::vector<addVarAndVarOrIdentityGadget> add_gadgets;
+    std::vector<selectVarOrVarIdentityGadget> selector_gadgets;
+
+    // Use to avoid adding P + -P in the final loop.
+    //
+    // For scalar = -1, the final loop can result in a call to addGadgetT(P,
+    // -P), which is not supported (results in a division by zero since the X
+    // coordinates of P and -P are the same). This is because: after the final
+    // double, scalar * P = -P has been computed, and the final (lowest order)
+    // bit of scalar is 0 (i.e. no further addition is required). However,
+    // since the constraints must hold for all scalar values, the final
+    // addition is always performed (but filtered out).
+    //
+    // To handle this edge case, we "select" either the correct intermediate
+    // values (if the 0-th bit is 1), or some hard-coded values which are known
+    // to work with addGadgetT (if 0-th bit is 0). This situation should not
+    // arise in other cases, since all intermediate multiple of P are
+    // necessarily multiples strictly small than the (prime) order of the group
+    // - 1.
+
+    std::shared_ptr<selectVarOrVarIdentityGadget> final_add_input_left;
+    std::shared_ptr<selectorGadgetT> final_add_input_right;
+
+    point_mul_by_scalar_gadget(
+        protoboard<Field> &pb,
+        const pb_linear_combination<Field> &scalar,
+        const groupVarT &P,
+        const groupVarOrIdentity &result,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+    const groupVarOrIdentity &result() const;
+
+protected:
+    static pb_variable_array<Field> create_variable_array_for_bits(
+        protoboard<Field> &pb, const std::string &annotation_prefix);
 };
 
 } // namespace libsnark

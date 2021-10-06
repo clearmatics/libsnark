@@ -517,8 +517,8 @@ TEST(TestCurveGadgets, G1MulByConstScalarWithKnownResult)
         ASSERT_TRUE(pb.is_satisfied());
     }
 
-    // Invalid case. Use the gadget to ensure a specific value in the result,
-    // by assigning the expected value after the gadget.
+    // Invalid case. Use the gadget to ensure a specific value in the
+    // result, by assigning the expected value after the gadget.
     {
         // Circuit
         protoboard<libff::Fr<wpp>> pb;
@@ -634,6 +634,204 @@ TEST(TestCurveGadgets, G2EqualityGadget)
     Q.generate_r1cs_witness(Q_val);
     equality_gadget.generate_r1cs_witness();
     ASSERT_FALSE(pb.is_satisfied());
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename groupVarOrIdentityT,
+    typename scalarMulGadgetT>
+void test_mul_by_scalar_gadget(
+    const libff::Fr<other_curve<ppT>> &base_scalar,
+    const libff::Fr<other_curve<ppT>> &scalar)
+{
+    using nFr = libff::Fr<other_curve<ppT>>;
+
+    // Compute input and expected result values
+
+    groupT P_val = base_scalar * groupT::one();
+    const groupT expect_result_val_p = scalar * P_val;
+    P_val.to_affine_coordinates();
+
+    std::cout << "scalar: ";
+    scalar.print();
+    std::cout << "\n";
+
+    const size_t num_bits = nFr::num_bits;
+    const libff::bigint<nFr::num_limbs> scalar_bi = scalar.as_bigint();
+    for (size_t i = 0; i < num_bits; ++i) {
+        std::cout << (scalar_bi.test_bit(i) ? "1" : "0");
+    }
+    std::cout << "\n";
+
+    std::cout << "P: ";
+    P_val.print();
+    std::cout << "\n";
+
+    // Circuit
+
+    protoboard<libff::Fr<wpp>> pb;
+    pb_variable<libff::Fr<wpp>> scalar_var;
+    scalar_var.allocate(pb, "scalar_var");
+
+    groupVarT P(pb, "P");
+    groupVarOrIdentityT result_p(pb, "result_p");
+    scalarMulGadgetT mul_gadget_p(pb, scalar_var, P, result_p, "mul_gadget_p");
+
+    // Generate constraints
+
+    mul_gadget_p.generate_r1cs_constraints();
+
+#if 0
+    // Check packing
+    std::cout << "PACKING\n";
+    {
+        for (size_t i = 0; i < num_bits; ++i) {
+            const size_t bit_idx = num_bits - 1 - i;
+            const bool bit = scalar_bi.test_bit(bit_idx);
+            std::cout << "i: " << i << ", bit_idx: " << bit_idx
+                      << ", bit: " << bit << "\n";
+            std::cout << (bit ? "1" : "0");
+            ASSERT_EQ(
+                bit ? Field::one() : Field::zero(),
+                pb.lc_val(mul_gadget_p.scalar_unpacked.bits[bit_idx]));
+        }
+        std::cout << "\n";
+    }
+
+    // Assign and generate a witness
+
+    std::cout << "SCALAR\n";
+#endif
+    libff::Fr<wpp> w_scalar;
+    fp_from_fp(w_scalar, scalar);
+#if 0
+    {
+        std::cout << "w_scalar: ";
+        w_scalar.print();
+        std::cout << "\n";
+
+        const libff::bigint<Field::num_limbs> w_scalar_bi =
+            w_scalar.as_bigint();
+
+        nFr exp_sel_result =
+            scalar_bi.test_bit(num_bits - 1) ? base_scalar : nFr::zero();
+
+        for (size_t i = 0; i < num_bits - 1; ++i) {
+            const size_t bit_idx = num_bits - 2 - 1;
+            const bool bit = w_scalar_bi.test_bit(bit_idx);
+            std::cout << "i: " << i << ", bit_idx: " << bit_idx
+                      << ", bit: " << (bit ? "1" : "0") << "\n";
+
+            std::cout << "exp_sel_result: ";
+            exp_sel_result.print();
+            (exp_sel_result * groupT::one()).print();
+
+            // ASSERT_EQ(
+            //     exp_sel_result * groupT::one(),
+            //     mul_gadget_p.selector_gadgets[i].value_selector.get_element());
+
+            const nFr exp_dbl_result = exp_sel_result + exp_sel_result;
+            const nFr exp_add_result = exp_dbl_result + base_scalar;
+
+            std::cout << "exp_dbl_result: ";
+            exp_dbl_result.print();
+            (exp_dbl_result * groupT::one()).print();
+
+            std::cout << "exp_add_result: ";
+            exp_add_result.print();
+            (exp_add_result * groupT::one()).print();
+
+            if (exp_dbl_result == -base_scalar) {
+                std::cout << "** HERE **\n";
+            }
+
+            // ASSERT_EQ(
+            //     exp_dbl_result * groupT::one(),
+            //     mul_gadget_p.dbl_gadgets[i].result.get_element());
+            // ASSERT_EQ(
+            //     exp_dbl_result * groupT::one(),
+            //     mul_gadget_p.add_gadgets[i].result.get_element());
+
+            exp_sel_result = bit ? exp_add_result : exp_dbl_result;
+
+            std::cout << "\n";
+        }
+
+        std::cout << "FINAL exp_sel_result: ";
+        exp_sel_result.print();
+        (exp_sel_result * groupT::one()).print();
+    }
+#endif
+
+    pb.val(scalar_var) = w_scalar;
+    P.generate_r1cs_witness(P_val);
+    mul_gadget_p.generate_r1cs_witness();
+
+    // Check intermediate values
+
+    // Field
+
+    // Check circuit satisfaction and proof generation.
+
+    ASSERT_TRUE(pb.is_satisfied());
+
+    // Result of first selector, depending on highest-order bit
+
+    // libff::G1<npp> expect_result =
+    //     scalar_bi.test_bit(num_bits - 1) ? P_val :
+    //     (libff::G1<npp>::zero());
+    // std::cout << "expect_result: ";
+    // expect_result.print();
+    // std::cout << "\n";
+
+    // {
+    //     const libff::G1<npp> actual_result =
+    //         mul_gadget_p.selector_gadgets[0].result.get_element();
+    //     // std::cout << "actual_result: ";
+    //     // actual_result.print();
+    //     // std::cout << "\n";
+
+    //     ASSERT_EQ(
+    //         expect_result,
+    //         mul_gadget_p.selector_gadgets[0].result.get_element());
+    // }
+
+    // for (size_t i = 0; i < num_bits - 1; ++i) {
+    //     // Check double result
+    //     // Check add result
+    //     // Check selector result
+    // }
+
+    ASSERT_EQ(expect_result_val_p, result_p.get_element());
+
+    generate_and_check_proof<wpp>(pb);
+}
+
+TEST(TestCurveGadgets, G1MulScalarVar)
+{
+    auto test_g1_mul_by_scalar_gadget = test_mul_by_scalar_gadget<
+        wpp,
+        libff::G1<npp>,
+        G1_variable<wpp>,
+        G1_variable_or_identity<wpp>,
+        G1_mul_by_scalar_gadget<wpp>>;
+
+    auto test_g2_mul_by_scalar_gadget = test_mul_by_scalar_gadget<
+        wpp,
+        libff::G2<npp>,
+        G2_variable<wpp>,
+        G2_variable_or_identity<wpp>,
+        G2_mul_by_scalar_gadget<wpp>>;
+
+    test_g1_mul_by_scalar_gadget(libff::Fr<npp>(13), libff::Fr<npp>::zero());
+    test_g1_mul_by_scalar_gadget(libff::Fr<npp>(13), libff::Fr<npp>(127));
+    test_g1_mul_by_scalar_gadget(libff::Fr<npp>(13), -libff::Fr<npp>::one());
+
+    test_g2_mul_by_scalar_gadget(libff::Fr<npp>(13), libff::Fr<npp>::zero());
+    test_g2_mul_by_scalar_gadget(libff::Fr<npp>(13), libff::Fr<npp>(127));
+    test_g2_mul_by_scalar_gadget(libff::Fr<npp>(13), -libff::Fr<npp>::one());
 }
 
 } // namespace

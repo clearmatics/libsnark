@@ -245,6 +245,15 @@ using G1_dbl_variable_or_identity_gadget = dbl_variable_or_identity<
     G1_variable<wppT>,
     G1_dbl_gadget<wppT>>;
 
+template<typename wppT>
+using G1_mul_by_scalar_gadget = point_mul_by_scalar_gadget<
+    wppT,
+    libff::G1<other_curve<wppT>>,
+    G1_variable<wppT>,
+    G1_variable_selector_gadget<wppT>,
+    G1_add_gadget<wppT>,
+    G1_dbl_gadget<wppT>>;
+
 } // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g1_gadget.tcc>
