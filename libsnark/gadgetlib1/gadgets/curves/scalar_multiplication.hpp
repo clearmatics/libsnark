@@ -143,6 +143,46 @@ public:
     void generate_r1cs_witness();
 };
 
+/// Wrap a dbl gadget, extending it to support doubling variable_or_identity
+/// elements.
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVariableT,
+    typename dblGadgetT>
+class dbl_variable_or_identity : public gadget<libff::Fr<ppT>>
+{
+public:
+    using FieldT = libff::Fr<ppT>;
+    using variableOrIdentity =
+        variable_or_identity<ppT, groupT, groupVariableT>;
+
+    // The goal is:
+    //
+    //     result = select(A.is_identity, 0, double(A))
+    //
+    // which is achieved via:
+    //
+    //     result.value = double(A)
+    //     result.is_identity = A.is_identity
+    //
+    // Note: result.is_identity does not need to be allocated, but the current
+    // variable_or_identity interface always allocates. Ideally it would simply
+    // be set to pb_linear_combination(A.is_identity), which costs nothing
+
+    pb_linear_combination<FieldT> A_is_identity;
+    variableOrIdentity result;
+    dblGadgetT double_gadget;
+
+    dbl_variable_or_identity(
+        protoboard<FieldT> &pb,
+        const variableOrIdentity &A,
+        const variableOrIdentity &result,
+        const std::string &annotation_prefix);
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
 /// Generic gadget to perform scalar multiplication of group variables. Used by
 /// the individual group element implementations.
 template<

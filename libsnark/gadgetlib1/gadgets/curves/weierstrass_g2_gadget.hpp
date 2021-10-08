@@ -252,6 +252,13 @@ using G2_add_variable_or_identity_gadget = add_variable_or_identity<
     G2_variable_selector_gadget<wppT>,
     G2_add_gadget<wppT>>;
 
+template<typename wppT>
+using G2_dbl_variable_or_identity_gadget = dbl_variable_or_identity<
+    wppT,
+    libff::G2<other_curve<wppT>>,
+    G2_variable<wppT>,
+    G2_dbl_gadget<wppT>>;
+
 } // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g2_gadget.tcc>

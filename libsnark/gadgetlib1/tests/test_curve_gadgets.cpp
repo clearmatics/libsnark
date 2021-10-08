@@ -307,6 +307,38 @@ TEST(TestCurveGadgets, G2DblGadget)
         libff::Fr<npp>(13 + 13) * libff::G2<npp>::one());
 }
 
+TEST(TestCurveGadgets, G1DblVarOrIdentityGadget)
+{
+    auto test_dbl_variable_or_identity = test_dbl_gadget<
+        wpp,
+        libff::G1<npp>,
+        G1_variable_or_identity<wpp>,
+        G1_dbl_variable_or_identity_gadget<wpp>>;
+
+    test_dbl_variable_or_identity(
+        libff::Fr<npp>(13) * libff::G1<npp>::one(),
+        libff::Fr<npp>(13 + 13) * libff::G1<npp>::one());
+
+    test_dbl_variable_or_identity(
+        libff::G1<npp>::zero(), libff::G1<npp>::zero());
+}
+
+TEST(TestCurveGadgets, G2DblVarOrIdentityGadget)
+{
+    auto test_dbl_variable_or_identity = test_dbl_gadget<
+        wpp,
+        libff::G2<npp>,
+        G2_variable_or_identity<wpp>,
+        G2_dbl_variable_or_identity_gadget<wpp>>;
+
+    test_dbl_variable_or_identity(
+        libff::Fr<npp>(13) * libff::G2<npp>::one(),
+        libff::Fr<npp>(13 + 13) * libff::G2<npp>::one());
+
+    test_dbl_variable_or_identity(
+        libff::G2<npp>::zero(), libff::G2<npp>::zero());
+}
+
 TEST(TestCurveGadgets, G1MulByConstScalar)
 {
     // Compute inputs and results
