@@ -241,6 +241,58 @@ TEST(TestCurveGadgets, G2AddGadget)
         libff::Fr<npp>(12 + 13) * libff::G2<npp>::one());
 }
 
+TEST(TestCurveGadgets, G1AddVarOrIdentityGadget)
+{
+    auto test_add_variable_or_identity = test_add_gadget<
+        wpp,
+        libff::G1<npp>,
+        G1_variable_or_identity<wpp>,
+        G1_add_variable_or_identity_gadget<wpp>>;
+
+    test_add_variable_or_identity(
+        libff::Fr<npp>(13) * libff::G1<npp>::one(),
+        libff::Fr<npp>(12) * libff::G1<npp>::one(),
+        libff::Fr<npp>(12 + 13) * libff::G1<npp>::one());
+
+    test_add_variable_or_identity(
+        libff::Fr<npp>(0) * libff::G1<npp>::one(),
+        libff::Fr<npp>(12) * libff::G1<npp>::one(),
+        libff::Fr<npp>(12) * libff::G1<npp>::one());
+
+    test_add_variable_or_identity(
+        libff::Fr<npp>(13) * libff::G1<npp>::one(),
+        libff::Fr<npp>(0) * libff::G1<npp>::one(),
+        libff::Fr<npp>(13) * libff::G1<npp>::one());
+
+    // Note, the 0 + 0 case is not supported.
+}
+
+TEST(TestCurveGadgets, G2AddVarOrIdentityGadget)
+{
+    auto test_add_variable_or_identity = test_add_gadget<
+        wpp,
+        libff::G2<npp>,
+        G2_variable_or_identity<wpp>,
+        G2_add_variable_or_identity_gadget<wpp>>;
+
+    test_add_variable_or_identity(
+        libff::Fr<npp>(13) * libff::G2<npp>::one(),
+        libff::Fr<npp>(12) * libff::G2<npp>::one(),
+        libff::Fr<npp>(12 + 13) * libff::G2<npp>::one());
+
+    test_add_variable_or_identity(
+        libff::Fr<npp>(0) * libff::G2<npp>::one(),
+        libff::Fr<npp>(12) * libff::G2<npp>::one(),
+        libff::Fr<npp>(12) * libff::G2<npp>::one());
+
+    test_add_variable_or_identity(
+        libff::Fr<npp>(13) * libff::G2<npp>::one(),
+        libff::Fr<npp>(0) * libff::G2<npp>::one(),
+        libff::Fr<npp>(13) * libff::G2<npp>::one());
+
+    // Note, the 0 + 0 case is not supported.
+}
+
 TEST(TestCurveGadgets, G1DblGadget)
 {
     test_dbl_gadget<wpp, libff::G1<npp>, G1_variable<wpp>, G1_dbl_gadget<wpp>>(

@@ -63,6 +63,151 @@ groupT variable_or_identity<ppT, groupT, groupVariableT>::get_element() const
 }
 
 template<
+    typename ppT,
+    typename groupT,
+    typename groupVariableT,
+    typename variableSelectorT,
+    typename addGadgetT>
+add_variable_or_identity<
+    ppT,
+    groupT,
+    groupVariableT,
+    variableSelectorT,
+    addGadgetT>::
+    add_variable_or_identity(
+        protoboard<FieldT> &pb,
+        const variableOrIdentity &A,
+        const variableOrIdentity &B,
+        const variableOrIdentity &result,
+        const std::string &annotation_prefix)
+    : gadget<FieldT>(pb, annotation_prefix)
+    , add_result(pb, FMT(annotation_prefix, " add_result"))
+    , add(pb, A.value, B.value, add_result, FMT(annotation_prefix, " add"))
+    , A_not_identity_result(
+          pb, FMT(annotation_prefix, " A_not_identity_result"))
+    , selector_A_not_identity(
+          pb,
+          B.is_identity,
+          add_result,
+          A.value,
+          A_not_identity_result,
+          FMT(annotation_prefix, " selector_A_not_identity"))
+    , selector_A(
+          pb,
+          A.is_identity,
+          A_not_identity_result,
+          B.value,
+          result.value,
+          FMT(annotation_prefix, " selector_A"))
+    , result(result)
+{
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVariableT,
+    typename variableSelectorT,
+    typename addGadgetT>
+void add_variable_or_identity<
+    ppT,
+    groupT,
+    groupVariableT,
+    variableSelectorT,
+    addGadgetT>::generate_r1cs_constraints()
+{
+    add.generate_r1cs_constraints();
+    selector_A_not_identity.generate_r1cs_constraints();
+    selector_A.generate_r1cs_constraints();
+
+    // result.is_identity = A.is_identity * B.is_identity
+    // (no need to call generate_r1cs_constraints() on result itself)
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<libff::Fr<ppT>>(
+            selector_A.selector,              // A.is_identity
+            selector_A_not_identity.selector, // B.is_identity
+            result.is_identity),
+        FMT(this->annotation_prefix, " result.is_identity"));
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVariableT,
+    typename variableSelectorT,
+    typename addGadgetT>
+void add_variable_or_identity<
+    ppT,
+    groupT,
+    groupVariableT,
+    variableSelectorT,
+    addGadgetT>::generate_r1cs_witness()
+{
+    add.generate_r1cs_witness();
+    selector_A_not_identity.generate_r1cs_witness();
+
+    // Generate result.value via the result of selector_A, and set
+    // result.is_identity manually via result.generate_r1cs_witness().
+    selector_A.generate_r1cs_witness();
+
+    const libff::Fr<ppT> result_is_identity =
+        this->pb.lc_val(selector_A.selector) *
+        this->pb.lc_val(selector_A_not_identity.selector);
+    result.generate_r1cs_witness(result_is_identity == libff::Fr<ppT>::one());
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVariableT,
+    typename dblGadgetT>
+dbl_variable_or_identity<ppT, groupT, groupVariableT, dblGadgetT>::
+    dbl_variable_or_identity(
+        protoboard<FieldT> &pb,
+        const variableOrIdentity &A,
+        const variableOrIdentity &result,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , A_is_identity(A.is_identity)
+    , result(result)
+    , double_gadget(
+          pb, A.value, result.value, FMT(annotation_prefix, " double_gadget"))
+{
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVariableT,
+    typename dblGadgetT>
+void dbl_variable_or_identity<ppT, groupT, groupVariableT, dblGadgetT>::
+    generate_r1cs_constraints()
+{
+    // It should be possible to do this by simply assigning A.is_identity to
+    // result.is_identity, but result.is_identity has already been allocated at
+    // this stage.
+
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(
+            A_is_identity, libff::Fr<ppT>::one(), result.is_identity),
+        FMT(this->annotation_prefix, " result_is_identity_constraint"));
+    double_gadget.generate_r1cs_constraints();
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVariableT,
+    typename dblGadgetT>
+void dbl_variable_or_identity<ppT, groupT, groupVariableT, dblGadgetT>::
+    generate_r1cs_witness()
+{
+    A_is_identity.evaluate(this->pb);
+    this->pb.lc_val(result.is_identity) = this->pb.lc_val(A_is_identity);
+    double_gadget.generate_r1cs_witness();
+}
+
+template<
     typename groupT,
     typename groupVariableT,
     typename add_gadget,

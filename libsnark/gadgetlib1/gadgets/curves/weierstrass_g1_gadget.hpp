@@ -206,6 +206,14 @@ template<typename wppT>
 using G1_variable_or_identity =
     variable_or_identity<wppT, libff::G1<other_curve<wppT>>, G1_variable<wppT>>;
 
+template<typename wppT>
+using G1_add_variable_or_identity_gadget = add_variable_or_identity<
+    wppT,
+    libff::G1<other_curve<wppT>>,
+    G1_variable<wppT>,
+    G1_variable_selector_gadget<wppT>,
+    G1_add_gadget<wppT>>;
+
 } // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g1_gadget.tcc>

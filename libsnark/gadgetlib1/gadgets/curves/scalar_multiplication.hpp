@@ -69,6 +69,80 @@ protected:
     pb_variable<FieldT> is_identity_var;
 };
 
+/// Wrap an add gadget, extending it to support adding variable_or_identity
+/// elements. At most one element may be the identity, otherwise witness
+/// generation fails due to the implementation of the underlying add gadgets.
+template<
+    typename ppT,
+    typename groupT,
+    typename variableT,
+    typename variableSelectorT,
+    typename addGadgetT>
+class add_variable_or_identity : public gadget<libff::Fr<ppT>>
+{
+public:
+    using FieldT = libff::Fr<ppT>;
+    using variableOrIdentity = variable_or_identity<ppT, groupT, variableT>;
+
+    // Recall the form of the variable selector gadget parameters:
+    //   variableSelectorT(<flag>, <zero_case>, <one_case>)
+    //
+    // The `is_identity` flags of A, B and result are known to be boolean by
+    // the constraints in variable_or_identity.
+    //
+    // The output from this gadget should therefore be be:
+    //
+    //   result.is_identity = A.is_identity * B.is_identity
+    //
+    //   result.value = variableSelectorT(  -- selector_A
+    //       A.is_identity,
+    //       variableSelectorT(             -- selector_A_not_identity
+    //           B.is_identity,
+    //           add_result,                   -- A != 0 && B != 0
+    //           A.value),                     -- A != 0 && B == 0
+    //       variableSelectorT(             -- selector_A_is_identity
+    //           B.is_identity,
+    //           B.value,                      -- A == 0 && B != 0
+    //           groupT::one())                -- B == 0 && B == 0
+    //
+    // Note, this can be reduced to:
+    //
+    //   result.is_identity = A.is_identity * B.is_identity
+    //
+    //   result.value = variableSelectorT(  -- selector_A
+    //       A.is_identity,
+    //       variableSelectorT(             -- selector_A_not_identity
+    //           B.is_identity,
+    //           add_result,                   -- A != 0 && B != 0
+    //           A.value),                     -- A != 0 && B == 0
+    //       B.value)
+
+    variableT add_result;
+    addGadgetT add;
+
+    // A_not_identity_result = variableSelectorT(
+    //     B.is_identity, add_result, A.value)
+    variableT A_not_identity_result;
+    variableSelectorT selector_A_not_identity;
+
+    // result = variableSelectorT(
+    //     A.is_identity, A_not_identity_result, B.value)
+    variableSelectorT selector_A;
+
+    variableOrIdentity result;
+
+    add_variable_or_identity(
+        protoboard<FieldT> &pb,
+        const variableOrIdentity &A,
+        const variableOrIdentity &B,
+        const variableOrIdentity &result,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+
+    void generate_r1cs_witness();
+};
+
 /// Generic gadget to perform scalar multiplication of group variables. Used by
 /// the individual group element implementations.
 template<
