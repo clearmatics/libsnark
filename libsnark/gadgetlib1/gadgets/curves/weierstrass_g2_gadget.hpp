@@ -240,6 +240,10 @@ using G2_mul_by_const_scalar_gadget = point_mul_by_const_scalar_gadget<
     G2_dbl_gadget<wppT>,
     libff::bigint<scalarLimbs>>;
 
+template<typename wppT>
+using G2_variable_or_identity =
+    variable_or_identity<wppT, libff::G2<other_curve<wppT>>, G2_variable<wppT>>;
+
 } // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g2_gadget.tcc>

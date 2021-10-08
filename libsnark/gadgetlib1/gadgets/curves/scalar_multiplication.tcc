@@ -14,6 +14,54 @@
 namespace libsnark
 {
 
+template<typename ppT, typename groupT, typename groupVariableT>
+variable_or_identity<ppT, groupT, groupVariableT>::variable_or_identity(
+    protoboard<FieldT> &pb, const std::string &annotation_prefix)
+    : gadget<FieldT>(pb, annotation_prefix), value(pb, annotation_prefix)
+{
+    is_identity_var.allocate(pb, " is_identity");
+    is_identity = pb_linear_combination<FieldT>(is_identity_var);
+    generate_boolean_r1cs_constraint(
+        pb, is_identity, FMT(annotation_prefix, " is_identity_is_bool"));
+}
+
+template<typename ppT, typename groupT, typename groupVariableT>
+variable_or_identity<ppT, groupT, groupVariableT>::variable_or_identity(
+    protoboard<FieldT> &pb,
+    const groupT &P,
+    const std::string &annotation_prefix)
+    : gadget<FieldT>(pb, annotation_prefix), value(pb, P, annotation_prefix)
+{
+    is_identity.assign(pb, P.is_zero() ? FieldT::one() : FieldT::zero());
+    is_identity.evaluate(pb);
+}
+
+template<typename ppT, typename groupT, typename groupVariableT>
+void variable_or_identity<ppT, groupT, groupVariableT>::generate_r1cs_witness(
+    const groupT &elt)
+{
+    const bool is_zero = elt.is_zero();
+    value.generate_r1cs_witness(is_zero ? groupT::one() : elt);
+    generate_r1cs_witness(is_zero);
+}
+
+template<typename ppT, typename groupT, typename groupVariableT>
+void variable_or_identity<ppT, groupT, groupVariableT>::generate_r1cs_witness(
+    bool is_zero)
+{
+    this->pb.val(is_identity_var) = is_zero ? FieldT::one() : FieldT::zero();
+}
+
+template<typename ppT, typename groupT, typename groupVariableT>
+groupT variable_or_identity<ppT, groupT, groupVariableT>::get_element() const
+{
+    if (this->pb.lc_val(is_identity) == FieldT::one()) {
+        return groupT::zero();
+    }
+
+    return value.get_element();
+}
+
 template<
     typename groupT,
     typename groupVariableT,
