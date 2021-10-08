@@ -192,6 +192,12 @@ template<typename wppT> void G2_add_gadget<wppT>::generate_r1cs_witness()
     const libff::Fqe<nppT> Bx = B.X->get_element();
     const libff::Fqe<nppT> By = B.Y->get_element();
 
+    // Guard against the inverse operation failing.
+    if (Ax == Bx) {
+        throw std::runtime_error(
+            "A.X == B.X is not supported by G2_add_gadget");
+    }
+
     // lambda = (By - Ay) / (Bx - Ax)
     const libff::Fqe<nppT> lambda_value = (By - Ay) * (Bx - Ax).inverse();
     lambda.generate_r1cs_witness(lambda_value);

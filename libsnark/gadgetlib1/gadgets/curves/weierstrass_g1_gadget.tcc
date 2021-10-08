@@ -165,15 +165,22 @@ template<typename ppT> void G1_add_gadget<ppT>::generate_r1cs_constraints()
 
 template<typename ppT> void G1_add_gadget<ppT>::generate_r1cs_witness()
 {
-    this->pb.val(inv) = (this->pb.lc_val(B.X) - this->pb.lc_val(A.X)).inverse();
-    this->pb.val(lambda) =
-        (this->pb.lc_val(B.Y) - this->pb.lc_val(A.Y)) * this->pb.val(inv);
-    this->pb.lc_val(result.X) = this->pb.val(lambda).squared() -
-                                this->pb.lc_val(A.X) - this->pb.lc_val(B.X);
+    const libff::Fr<ppT> Ax = this->pb.lc_val(A.X);
+    const libff::Fr<ppT> Bx = this->pb.lc_val(B.X);
+    const libff::Fr<ppT> Ay = this->pb.lc_val(A.Y);
+    const libff::Fr<ppT> By = this->pb.lc_val(B.Y);
+
+    // Guard against the inverse operation failing.
+    if (Ax == Bx) {
+        throw std::runtime_error(
+            "A.X == B.X is not supported by G1_add_gadget");
+    }
+
+    this->pb.val(inv) = (Bx - Ax).inverse();
+    this->pb.val(lambda) = (By - Ay) * this->pb.val(inv);
+    this->pb.lc_val(result.X) = this->pb.val(lambda).squared() - Ax - Bx;
     this->pb.lc_val(result.Y) =
-        this->pb.val(lambda) *
-            (this->pb.lc_val(A.X) - this->pb.lc_val(result.X)) -
-        this->pb.lc_val(A.Y);
+        this->pb.val(lambda) * (Ax - this->pb.lc_val(result.X)) - Ay;
 }
 
 template<typename ppT>
