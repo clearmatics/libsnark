@@ -29,6 +29,7 @@ void test_r1cs_ppzksnark(size_t num_constraints, size_t input_size)
             num_constraints, input_size);
     const bool bit = run_r1cs_ppzksnark<ppT>(example, test_serialization);
     assert(bit);
+    libff::UNUSED(bit);
 
     libff::print_header("(leave) Test R1CS ppzkSNARK");
 }

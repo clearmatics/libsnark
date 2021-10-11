@@ -52,6 +52,8 @@ r1cs_ppzksnark_proof_variable<ppT>::r1cs_ppzksnark_proof_variable(
 
     assert(all_G1_vars.size() == num_G1);
     assert(all_G2_vars.size() == num_G2);
+    libff::UNUSED(num_G1);
+    libff::UNUSED(num_G2);
 }
 
 template<typename ppT>
@@ -121,6 +123,8 @@ r1cs_ppzksnark_verification_key_variable<ppT>::
 {
     const size_t num_G1 = 2 + (input_size + 1);
     const size_t num_G2 = 5;
+    libff::UNUSED(num_G1);
+    libff::UNUSED(num_G2);
 
     assert(
         all_bits.size() == (G1_variable<ppT>::size_in_bits() * num_G1 +

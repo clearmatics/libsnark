@@ -90,6 +90,7 @@ bool run_r1cs_se_ppzksnark(
     const bool ans2 = r1cs_se_ppzksnark_online_verifier_strong_IC<ppT>(
         pvk, example.primary_input, proof);
     assert(ans == ans2);
+    libff::UNUSED(ans2);
 
     libff::leave_block("Call to run_r1cs_se_ppzksnark");
 
