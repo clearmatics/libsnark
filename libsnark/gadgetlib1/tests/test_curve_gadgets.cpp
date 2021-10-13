@@ -107,37 +107,35 @@ void test_dbl_gadget(const GroupT &a_val, const GroupT &expect_val)
     ASSERT_EQ(expect_val, result_val);
 }
 
-TEST(TestCurveGadgets, G2Checker)
+template<typename ppT, typename GroupT, typename VarT, typename SelectorGadgetT>
+void test_selector_gadget(GroupT a_val, GroupT b_val)
 {
-    test_G2_checker_gadget<libff::mnt4_pp>("mnt4");
-    test_G2_checker_gadget<libff::mnt6_pp>("mnt6");
-}
+    a_val.to_affine_coordinates();
+    b_val.to_affine_coordinates();
 
-TEST(TestCurveGadgets, G1SelectorGadget)
-{
-    using Field = libff::Fr<wpp>;
+    using Field = libff::Fr<ppT>;
 
     protoboard<Field> pb;
 
-    G1_variable<wpp> zero_case(pb, "zero_case");
-    G1_variable<wpp> one_case(pb, "one_case");
+    VarT zero_case(pb, "zero_case");
+    VarT one_case(pb, "one_case");
 
     pb_variable<Field> selector_zero;
     selector_zero.allocate(pb, "selector_zero");
     pb_variable<Field> selector_one;
     selector_one.allocate(pb, "selector_one");
 
-    G1_variable<wpp> zero_result(pb, "zero_result");
-    G1_variable<wpp> one_result(pb, "one_result");
+    VarT zero_result(pb, "zero_result");
+    VarT one_result(pb, "one_result");
 
-    G1_variable_selector_gadget<wpp> selector_gadget_zero(
+    SelectorGadgetT selector_gadget_zero(
         pb,
         selector_zero,
         zero_case,
         one_case,
         zero_result,
         "selector_gadget_zero");
-    G1_variable_selector_gadget<wpp> selector_gadget_one(
+    SelectorGadgetT selector_gadget_one(
         pb,
         selector_one,
         zero_case,
@@ -149,80 +147,79 @@ TEST(TestCurveGadgets, G1SelectorGadget)
     selector_gadget_one.generate_r1cs_constraints();
 
     // Assignments: zero_case = [2]_1, one_case = [-1]_1
-    libff::G1<npp> zero_case_val =
-        libff::G1<npp>::one() + libff::G1<npp>::one();
-    zero_case_val.to_affine_coordinates();
-    libff::G1<npp> one_case_val = -libff::G1<npp>::one();
-    one_case_val.to_affine_coordinates();
 
-    zero_case.generate_r1cs_witness(zero_case_val);
-    one_case.generate_r1cs_witness(one_case_val);
+    zero_case.generate_r1cs_witness(a_val);
+    one_case.generate_r1cs_witness(b_val);
     pb.val(selector_zero) = Field::zero();
     pb.val(selector_one) = Field::one();
     selector_gadget_zero.generate_r1cs_witness();
     selector_gadget_one.generate_r1cs_witness();
 
-    ASSERT_EQ(zero_case_val, zero_result.get_element());
-    ASSERT_EQ(one_case_val, one_result.get_element());
+    ASSERT_EQ(a_val, zero_result.get_element());
+    ASSERT_EQ(b_val, one_result.get_element());
 
     // Verify in a proof
     generate_and_check_proof<wpp>(pb);
+}
+
+template<typename ppT, typename GroupT, typename VarT, typename SelectorGadgetT>
+void test_variable_or_identity_selector_gadget()
+{
+    auto test_selector =
+        test_selector_gadget<wpp, GroupT, VarT, SelectorGadgetT>;
+
+    const GroupT a_val = GroupT::one() + GroupT::one();
+    const GroupT b_val = -GroupT::one();
+
+    test_selector(a_val, b_val);
+    test_selector(GroupT::zero(), b_val);
+    test_selector(a_val, GroupT::zero());
+    test_selector(GroupT::zero(), GroupT::zero());
+}
+
+    selector_gadget_zero.generate_r1cs_constraints();
+    selector_gadget_one.generate_r1cs_constraints();
+
+TEST(TestCurveGadgets, G1SelectorGadget)
+{
+    using Group = libff::G1<npp>;
+    auto test_selector = test_selector_gadget<
+        wpp,
+        Group,
+        G1_variable<wpp>,
+        G1_variable_selector_gadget<wpp>>;
+
+    test_selector(Group::one() + Group::one(), -Group::one());
 }
 
 TEST(TestCurveGadgets, G2SelectorGadget)
 {
-    using Field = libff::Fr<wpp>;
+    using Group = libff::G2<npp>;
+    auto test_selector = test_selector_gadget<
+        wpp,
+        Group,
+        G2_variable<wpp>,
+        G2_variable_selector_gadget<wpp>>;
 
-    protoboard<Field> pb;
+    test_selector(Group::one() + Group::one(), -Group::one());
+}
 
-    G2_variable<wpp> zero_case(pb, "zero_case");
-    G2_variable<wpp> one_case(pb, "one_case");
+TEST(TestCurveGadgets, G1VarOrIdentitySelectorGadget)
+{
+    test_variable_or_identity_selector_gadget<
+        wpp,
+        libff::G1<npp>,
+        G1_variable_or_identity<wpp>,
+        G1_variable_or_identity_selector_gadget<wpp>>();
+}
 
-    pb_variable<Field> selector_zero;
-    selector_zero.allocate(pb, "selector_zero");
-    pb_variable<Field> selector_one;
-    selector_one.allocate(pb, "selector_one");
-
-    G2_variable<wpp> zero_result(pb, "zero_result");
-    G2_variable<wpp> one_result(pb, "one_result");
-
-    G2_variable_selector_gadget<wpp> selector_gadget_zero(
-        pb,
-        selector_zero,
-        zero_case,
-        one_case,
-        zero_result,
-        "selector_gadget_zero");
-    G2_variable_selector_gadget<wpp> selector_gadget_one(
-        pb,
-        selector_one,
-        zero_case,
-        one_case,
-        one_result,
-        "selector_gadget_one");
-
-    selector_gadget_zero.generate_r1cs_constraints();
-    selector_gadget_one.generate_r1cs_constraints();
-
-    // Assignments: zero_case = [2]_1, one_case = [-1]_1
-    libff::G2<npp> zero_case_val =
-        libff::G2<npp>::one() + libff::G2<npp>::one();
-    zero_case_val.to_affine_coordinates();
-    libff::G2<npp> one_case_val = -libff::G2<npp>::one();
-    one_case_val.to_affine_coordinates();
-
-    zero_case.generate_r1cs_witness(zero_case_val);
-    one_case.generate_r1cs_witness(one_case_val);
-    pb.val(selector_zero) = Field::zero();
-    pb.val(selector_one) = Field::one();
-    selector_gadget_zero.generate_r1cs_witness();
-    selector_gadget_one.generate_r1cs_witness();
-
-    ASSERT_EQ(zero_case_val, zero_result.get_element());
-    ASSERT_EQ(one_case_val, one_result.get_element());
-
-    // Verify in a proof
-    generate_and_check_proof<wpp>(pb);
+TEST(TestCurveGadgets, G2VarOrIdentitySelectorGadget)
+{
+    test_variable_or_identity_selector_gadget<
+        wpp,
+        libff::G2<npp>,
+        G2_variable_or_identity<wpp>,
+        G2_variable_or_identity_selector_gadget<wpp>>();
 }
 
 TEST(TestCurveGadgets, G1AddGadget)

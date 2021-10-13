@@ -65,6 +65,69 @@ groupT variable_or_identity<ppT, groupT, groupVariableT>::get_element() const
 template<
     typename ppT,
     typename groupT,
+    typename variableT,
+    typename variableSelectorT>
+variable_or_identity_selector<ppT, groupT, variableT, variableSelectorT>::
+    variable_or_identity_selector(
+        protoboard<FieldT> &pb,
+        const pb_linear_combination<FieldT> &selector,
+        const variableOrIdentity &zero_case,
+        const variableOrIdentity &one_case,
+        const variableOrIdentity &result,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , value_selector(
+          pb,
+          selector,
+          zero_case.value,
+          one_case.value,
+          result.value,
+          FMT(annotation_prefix, " value_selector"))
+    , zero_case_is_identity(zero_case.is_identity)
+    , one_case_is_identity(one_case.is_identity)
+    , result_is_identity(result.is_identity)
+{
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename variableT,
+    typename variableSelectorT>
+void variable_or_identity_selector<ppT, groupT, variableT, variableSelectorT>::
+    generate_r1cs_constraints()
+{
+    value_selector.generate_r1cs_constraints();
+    // result.is_identity - zero_case = selector * (one_case - zero_case)
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(
+            value_selector.selector,
+            one_case_is_identity - zero_case_is_identity,
+            result_is_identity - zero_case_is_identity),
+        FMT(this->annotation_prefix, " result_is_identity_constraint"));
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename variableT,
+    typename variableSelectorT>
+void variable_or_identity_selector<ppT, groupT, variableT, variableSelectorT>::
+    generate_r1cs_witness()
+{
+    value_selector.generate_r1cs_witness();
+    if (this->pb.lc_val(value_selector.selector) == FieldT::one()) {
+        this->pb.lc_val(result_is_identity) =
+            this->pb.lc_val(one_case_is_identity);
+    } else {
+        this->pb.lc_val(result_is_identity) =
+            this->pb.lc_val(zero_case_is_identity);
+    }
+}
+
+template<
+    typename ppT,
+    typename groupT,
     typename groupVariableT,
     typename variableSelectorT,
     typename addGadgetT>
