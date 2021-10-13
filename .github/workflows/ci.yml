@@ -31,7 +31,7 @@ jobs:
       env:
         CXX: ${{ matrix.compiler }}
         CXXFLAGS: "-Werror"
-      run: mkdir build && cd build && cmake ..
+      run: mkdir build && cd build && cmake -DDEBUG=1 ..
     - name: build
       run: cd build && make
     - name: test
