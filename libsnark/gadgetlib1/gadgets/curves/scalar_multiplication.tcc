@@ -128,6 +128,80 @@ void variable_or_identity_selector<ppT, groupT, variableT, variableSelectorT>::
 template<
     typename ppT,
     typename groupT,
+    typename variableT,
+    typename variableSelectorT>
+variable_and_variable_or_identity_selector<
+    ppT,
+    groupT,
+    variableT,
+    variableSelectorT>::
+    variable_and_variable_or_identity_selector(
+        protoboard<FieldT> &pb,
+        const pb_linear_combination<FieldT> &selector,
+        const variableOrIdentity &zero_case,
+        const variableT &one_case,
+        const variableOrIdentity &result,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , value_selector(
+          pb,
+          selector,
+          zero_case.value,
+          one_case,
+          result.value,
+          FMT(annotation_prefix, " value_selector"))
+    , zero_case_is_identity(zero_case.is_identity)
+    , result(result)
+{
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename variableT,
+    typename variableSelectorT>
+void variable_and_variable_or_identity_selector<
+    ppT,
+    groupT,
+    variableT,
+    variableSelectorT>::generate_r1cs_constraints()
+{
+    value_selector.generate_r1cs_constraints();
+    // result.is_identity = (1 - selector) * zero_case.is_identity
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(
+            FieldT::one() - value_selector.selector,
+            zero_case_is_identity,
+            result.is_identity),
+        FMT(this->annotation_prefix, " result_is_identity_constraint"));
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename variableT,
+    typename variableSelectorT>
+void variable_and_variable_or_identity_selector<
+    ppT,
+    groupT,
+    variableT,
+    variableSelectorT>::generate_r1cs_witness()
+{
+    value_selector.generate_r1cs_witness();
+    const bool selector_value =
+        this->pb.lc_val(value_selector.selector) == FieldT::one();
+    if (selector_value) {
+        result.generate_r1cs_witness(false);
+    } else {
+        const bool zero_case_is_identity_value =
+            this->pb.lc_val(zero_case_is_identity) == FieldT::one();
+        result.generate_r1cs_witness(zero_case_is_identity_value);
+    }
+}
+
+template<
+    typename ppT,
+    typename groupT,
     typename groupVariableT,
     typename variableSelectorT,
     typename addGadgetT>

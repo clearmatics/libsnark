@@ -107,7 +107,13 @@ void test_dbl_gadget(const GroupT &a_val, const GroupT &expect_val)
     ASSERT_EQ(expect_val, result_val);
 }
 
-template<typename ppT, typename GroupT, typename VarT, typename SelectorGadgetT>
+template<
+    typename ppT,
+    typename GroupT,
+    typename VarA,
+    typename VarB,
+    typename VarR,
+    typename SelectorGadgetT>
 void test_selector_gadget(GroupT a_val, GroupT b_val)
 {
     a_val.to_affine_coordinates();
@@ -117,16 +123,16 @@ void test_selector_gadget(GroupT a_val, GroupT b_val)
 
     protoboard<Field> pb;
 
-    VarT zero_case(pb, "zero_case");
-    VarT one_case(pb, "one_case");
+    VarA zero_case(pb, "zero_case");
+    VarB one_case(pb, "one_case");
 
     pb_variable<Field> selector_zero;
     selector_zero.allocate(pb, "selector_zero");
     pb_variable<Field> selector_one;
     selector_one.allocate(pb, "selector_one");
 
-    VarT zero_result(pb, "zero_result");
-    VarT one_result(pb, "one_result");
+    VarR zero_result(pb, "zero_result");
+    VarR one_result(pb, "one_result");
 
     SelectorGadgetT selector_gadget_zero(
         pb,
@@ -166,7 +172,7 @@ template<typename ppT, typename GroupT, typename VarT, typename SelectorGadgetT>
 void test_variable_or_identity_selector_gadget()
 {
     auto test_selector =
-        test_selector_gadget<wpp, GroupT, VarT, SelectorGadgetT>;
+        test_selector_gadget<wpp, GroupT, VarT, VarT, VarT, SelectorGadgetT>;
 
     const GroupT a_val = GroupT::one() + GroupT::one();
     const GroupT b_val = -GroupT::one();
@@ -177,8 +183,30 @@ void test_variable_or_identity_selector_gadget()
     test_selector(GroupT::zero(), GroupT::zero());
 }
 
-    selector_gadget_zero.generate_r1cs_constraints();
-    selector_gadget_one.generate_r1cs_constraints();
+template<
+    typename ppT,
+    typename GroupT,
+    typename VarA,
+    typename VarB,
+    typename VarR,
+    typename SelectorGadgetT>
+void test_variable_and_variable_or_identity_selector_gadget()
+{
+    auto test_selector =
+        test_selector_gadget<wpp, GroupT, VarA, VarB, VarR, SelectorGadgetT>;
+
+    const GroupT a_val = GroupT::one() + GroupT::one();
+    const GroupT b_val = -GroupT::one();
+
+    test_selector(a_val, b_val);
+    test_selector(GroupT::zero(), b_val);
+}
+
+TEST(TestCurveGadgets, G2Checker)
+{
+    test_G2_checker_gadget<libff::mnt4_pp>("mnt4");
+    test_G2_checker_gadget<libff::mnt6_pp>("mnt6");
+}
 
 TEST(TestCurveGadgets, G1SelectorGadget)
 {
@@ -186,6 +214,8 @@ TEST(TestCurveGadgets, G1SelectorGadget)
     auto test_selector = test_selector_gadget<
         wpp,
         Group,
+        G1_variable<wpp>,
+        G1_variable<wpp>,
         G1_variable<wpp>,
         G1_variable_selector_gadget<wpp>>;
 
@@ -198,6 +228,8 @@ TEST(TestCurveGadgets, G2SelectorGadget)
     auto test_selector = test_selector_gadget<
         wpp,
         Group,
+        G2_variable<wpp>,
+        G2_variable<wpp>,
         G2_variable<wpp>,
         G2_variable_selector_gadget<wpp>>;
 
@@ -220,6 +252,28 @@ TEST(TestCurveGadgets, G2VarOrIdentitySelectorGadget)
         libff::G2<npp>,
         G2_variable_or_identity<wpp>,
         G2_variable_or_identity_selector_gadget<wpp>>();
+}
+
+TEST(TestCurveGadgets, G1VarAndVarOrIdentitySelectorGadget)
+{
+    test_variable_and_variable_or_identity_selector_gadget<
+        wpp,
+        libff::G1<npp>,
+        G1_variable_or_identity<wpp>,
+        G1_variable<wpp>,
+        G1_variable_or_identity<wpp>,
+        G1_variable_and_variable_or_identity_selector_gadget<wpp>>();
+}
+
+TEST(TestCurveGadgets, G2VarAndVarOrIdentitySelectorGadget)
+{
+    test_variable_and_variable_or_identity_selector_gadget<
+        wpp,
+        libff::G2<npp>,
+        G2_variable_or_identity<wpp>,
+        G2_variable<wpp>,
+        G2_variable_or_identity<wpp>,
+        G2_variable_and_variable_or_identity_selector_gadget<wpp>>();
 }
 
 TEST(TestCurveGadgets, G1AddGadget)

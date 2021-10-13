@@ -81,12 +81,12 @@ public:
     using FieldT = libff::Fr<ppT>;
     using variableOrIdentity = variable_or_identity<ppT, groupT, variableT>;
 
-    //     result.value = variableSelectorT(
-    //         selector, zero_case.value, one_case.value)
+    // result.value = variableSelectorT(
+    //     selector, zero_case.value, one_case.value)
     variableSelectorT value_selector;
 
-    //     result.is_identity = (1 - selector) * zero_case + selector * one_case
-    //                        = selector * (one_case - zero_case) + zero_case
+    // result.is_identity = (1 - selector) * zero_case + selector * one_case
+    //                    = selector * (one_case - zero_case) + zero_case
     // <=> result.is_identity - zero_case = selector * (one_case - zero_case)
     pb_linear_combination<FieldT> zero_case_is_identity;
     pb_linear_combination<FieldT> one_case_is_identity;
@@ -97,6 +97,38 @@ public:
         const pb_linear_combination<FieldT> &selector,
         const variableOrIdentity &zero_case,
         const variableOrIdentity &one_case,
+        const variableOrIdentity &result,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
+/// Selector gadget for variable_or_identity
+template<
+    typename ppT,
+    typename groupT,
+    typename variableT,
+    typename variableSelectorT>
+class variable_and_variable_or_identity_selector : public gadget<libff::Fr<ppT>>
+{
+public:
+    using FieldT = libff::Fr<ppT>;
+    using variableOrIdentity = variable_or_identity<ppT, groupT, variableT>;
+
+    // result.value = select(selector, zero_case.value, one_case)
+    variableSelectorT value_selector;
+
+    // result.is_identity = (1 - selector) * zero_case
+    pb_linear_combination<FieldT> zero_case_is_identity;
+    pb_linear_combination<FieldT> one_case_is_identity;
+    variableOrIdentity result;
+
+    variable_and_variable_or_identity_selector(
+        protoboard<FieldT> &pb,
+        const pb_linear_combination<FieldT> &selector,
+        const variableOrIdentity &zero_case,
+        const variableT &one_case,
         const variableOrIdentity &result,
         const std::string &annotation_prefix);
 

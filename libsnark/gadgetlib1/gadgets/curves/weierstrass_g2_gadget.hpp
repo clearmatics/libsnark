@@ -252,6 +252,14 @@ using G2_variable_or_identity_selector_gadget = variable_or_identity_selector<
     G2_variable_selector_gadget<wppT>>;
 
 template<typename wppT>
+using G2_variable_and_variable_or_identity_selector_gadget =
+    variable_and_variable_or_identity_selector<
+        wppT,
+        libff::G2<other_curve<wppT>>,
+        G2_variable<wppT>,
+        G2_variable_selector_gadget<wppT>>;
+
+template<typename wppT>
 using G2_add_variable_or_identity_gadget = add_variable_or_identity<
     wppT,
     libff::G2<other_curve<wppT>>,
