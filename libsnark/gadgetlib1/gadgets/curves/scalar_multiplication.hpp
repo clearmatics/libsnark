@@ -104,7 +104,7 @@ public:
     void generate_r1cs_witness();
 };
 
-/// Selector gadget for variable_or_identity
+/// Selector gadget for a variable_or_identity, and a variable
 template<
     typename ppT,
     typename groupT,
@@ -203,6 +203,53 @@ public:
         const variableOrIdentity &A,
         const variableOrIdentity &B,
         const variableOrIdentity &result,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+
+    void generate_r1cs_witness();
+};
+
+/// Wrap an add gadget, extending it to support adding variable_or_identity
+/// elements. At most one element may be the identity, otherwise witness
+/// generation fails due to the implementation of the underlying add gadgets.
+template<
+    typename ppT,
+    typename groupT,
+    typename variableT,
+    typename variableSelectorT,
+    typename addGadgetT>
+class add_variable_and_variable_or_identity : public gadget<libff::Fr<ppT>>
+{
+public:
+    using FieldT = libff::Fr<ppT>;
+    using variableOrIdentity = variable_or_identity<ppT, groupT, variableT>;
+
+    // Recall the form of the variable selector gadget parameters:
+    //   variableSelectorT(<flag>, <zero_case>, <one_case>)
+    //
+    // The `is_identity` flag of A is known to be boolean by the constraints in
+    // variable_or_identity.
+    //
+    // The output from this gadget should therefore be be:
+    //
+    //   add_result = add(A.value, B)
+    //
+    //   result.value = variableSelectorT(
+    //       A.is_identity,
+    //       add_result,              -- A != 0
+    //       B)
+
+    variableT result;
+    variableT add_result;
+    addGadgetT add;
+    variableSelectorT selector_A;
+
+    add_variable_and_variable_or_identity(
+        protoboard<FieldT> &pb,
+        const variableOrIdentity &A,
+        const variableT &B,
+        const variableT &result,
         const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();

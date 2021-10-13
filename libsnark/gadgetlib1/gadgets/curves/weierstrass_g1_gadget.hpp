@@ -230,6 +230,15 @@ using G1_add_variable_or_identity_gadget = add_variable_or_identity<
     G1_add_gadget<wppT>>;
 
 template<typename wppT>
+using G1_add_variable_and_variable_or_identity_gadget =
+    add_variable_and_variable_or_identity<
+        wppT,
+        libff::G1<other_curve<wppT>>,
+        G1_variable<wppT>,
+        G1_variable_selector_gadget<wppT>,
+        G1_add_gadget<wppT>>;
+
+template<typename wppT>
 using G1_dbl_variable_or_identity_gadget = dbl_variable_or_identity<
     wppT,
     libff::G1<other_curve<wppT>>,

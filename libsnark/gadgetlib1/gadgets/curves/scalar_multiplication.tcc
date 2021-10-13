@@ -297,6 +297,72 @@ template<
     typename ppT,
     typename groupT,
     typename groupVariableT,
+    typename variableSelectorT,
+    typename addGadgetT>
+add_variable_and_variable_or_identity<
+    ppT,
+    groupT,
+    groupVariableT,
+    variableSelectorT,
+    addGadgetT>::
+    add_variable_and_variable_or_identity(
+        protoboard<FieldT> &pb,
+        const variableOrIdentity &A,
+        const groupVariableT &B,
+        const groupVariableT &result,
+        const std::string &annotation_prefix)
+    : gadget<FieldT>(pb, annotation_prefix)
+    , result(result)
+    , add_result(pb, FMT(annotation_prefix, " add_result"))
+    , add(pb, A.value, B, add_result, FMT(annotation_prefix, " add"))
+    , selector_A(
+          pb,
+          A.is_identity,
+          add_result,
+          B,
+          result,
+          FMT(annotation_prefix, " selector_A"))
+{
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVariableT,
+    typename variableSelectorT,
+    typename addGadgetT>
+void add_variable_and_variable_or_identity<
+    ppT,
+    groupT,
+    groupVariableT,
+    variableSelectorT,
+    addGadgetT>::generate_r1cs_constraints()
+{
+    add.generate_r1cs_constraints();
+    selector_A.generate_r1cs_constraints();
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVariableT,
+    typename variableSelectorT,
+    typename addGadgetT>
+void add_variable_and_variable_or_identity<
+    ppT,
+    groupT,
+    groupVariableT,
+    variableSelectorT,
+    addGadgetT>::generate_r1cs_witness()
+{
+    add.generate_r1cs_witness();
+    selector_A.generate_r1cs_witness();
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVariableT,
     typename dblGadgetT>
 dbl_variable_or_identity<ppT, groupT, groupVariableT, dblGadgetT>::
     dbl_variable_or_identity(
