@@ -31,6 +31,7 @@ public:
     integer_permutation(const size_t size = 0);
     integer_permutation(const size_t min_element, const size_t max_element);
 
+    integer_permutation(const integer_permutation &other) = default;
     integer_permutation &operator=(const integer_permutation &other) = default;
 
     size_t size() const;

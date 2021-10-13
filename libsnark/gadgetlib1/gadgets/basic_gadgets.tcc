@@ -585,6 +585,7 @@ template<typename FieldT> void test_inner_product_gadget(const size_t n)
 #endif
             assert(pb.val(result) == FieldT(correct));
             assert(pb.is_satisfied());
+            libff::UNUSED(correct);
 
 #ifdef DEBUG
             printf("negative test for (%zu, %zu)\n", i, j);
