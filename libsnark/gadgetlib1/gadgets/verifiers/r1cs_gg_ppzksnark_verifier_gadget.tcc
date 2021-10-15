@@ -98,9 +98,9 @@ template<typename ppT> size_t r1cs_gg_ppzksnark_proof_variable<ppT>::size()
 }
 
 template<typename ppT>
-r1cs_gg_ppzksnark_verification_key_scalar_variable<ppT>::
-    r1cs_gg_ppzksnark_verification_key_scalar_variable(
-        protoboard<FieldT> &pb,
+r1cs_gg_ppzksnark_verification_key_variable<ppT>::
+    r1cs_gg_ppzksnark_verification_key_variable(
+        protoboard<libff::Fr<ppT>> &pb,
         const size_t num_primary_inputs,
         const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
@@ -136,15 +136,8 @@ r1cs_gg_ppzksnark_verification_key_scalar_variable<ppT>::
 }
 
 template<typename ppT>
-void r1cs_gg_ppzksnark_verification_key_scalar_variable<
-    ppT>::generate_r1cs_constraints()
-{
-}
-
-template<typename ppT>
-void r1cs_gg_ppzksnark_verification_key_scalar_variable<ppT>::
-    generate_r1cs_witness(
-        const r1cs_gg_ppzksnark_verification_key<other_curve<ppT>> &vk)
+void r1cs_gg_ppzksnark_verification_key_variable<ppT>::generate_r1cs_witness(
+    const r1cs_gg_ppzksnark_verification_key<other_curve<ppT>> &vk)
 {
     assert(vk.ABC_g1.rest.size() == _num_primary_inputs);
     _alpha_g1.generate_r1cs_witness(vk.alpha_g1);
@@ -158,23 +151,21 @@ void r1cs_gg_ppzksnark_verification_key_scalar_variable<ppT>::
 }
 
 template<typename ppT>
-size_t r1cs_gg_ppzksnark_verification_key_scalar_variable<
-    ppT>::num_primary_inputs() const
+size_t r1cs_gg_ppzksnark_verification_key_variable<ppT>::num_primary_inputs()
+    const
 {
     return _num_primary_inputs;
 }
 
 template<typename ppT>
 const pb_linear_combination_array<libff::Fr<ppT>>
-    &r1cs_gg_ppzksnark_verification_key_scalar_variable<ppT>::get_all_vars()
-        const
+    &r1cs_gg_ppzksnark_verification_key_variable<ppT>::get_all_vars() const
 {
     return _all_vars;
 }
 
 template<typename ppT>
-std::vector<libff::Fr<ppT>> r1cs_gg_ppzksnark_verification_key_scalar_variable<
-    ppT>::
+std::vector<libff::Fr<ppT>> r1cs_gg_ppzksnark_verification_key_variable<ppT>::
     get_verification_key_scalars(
         const r1cs_gg_ppzksnark_verification_key<other_curve<ppT>> &r1cs_vk)
 {
@@ -187,7 +178,7 @@ std::vector<libff::Fr<ppT>> r1cs_gg_ppzksnark_verification_key_scalar_variable<
     const size_t num_primary_inputs = r1cs_vk.ABC_g1.rest.indices.size();
 
     protoboard<FieldT> pb;
-    r1cs_gg_ppzksnark_verification_key_scalar_variable<ppT> vk(
+    r1cs_gg_ppzksnark_verification_key_variable<ppT> vk(
         pb, num_primary_inputs, "vk");
     vk.generate_r1cs_witness(r1cs_vk);
     const pb_linear_combination_array<FieldT> &vk_vars = vk.get_all_vars();
@@ -199,131 +190,6 @@ std::vector<libff::Fr<ppT>> r1cs_gg_ppzksnark_verification_key_scalar_variable<
     }
 
     return scalar_values;
-}
-
-template<typename ppT>
-r1cs_gg_ppzksnark_verification_key_variable<ppT>::
-    r1cs_gg_ppzksnark_verification_key_variable(
-        protoboard<FieldT> &pb,
-        const pb_variable_array<FieldT> &all_bits,
-        const size_t num_primary_inputs,
-        const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix)
-    , _alpha_g1(new G1_variable<ppT>(pb, FMT(annotation_prefix, " alpha_g1")))
-    , _beta_g2(new G2_variable<ppT>(pb, FMT(annotation_prefix, " beta_g2")))
-    , _delta_g2(new G2_variable<ppT>(pb, FMT(annotation_prefix, " delta_g2")))
-    , _encoded_ABC_base(
-          new G1_variable<ppT>(pb, FMT(annotation_prefix, " encoded_ABC_base")))
-    , _all_bits(all_bits)
-    , _num_primary_inputs(num_primary_inputs)
-{
-    assert(_all_bits.size() == size_in_bits(num_primary_inputs));
-
-    // Populate _all_vars with alpha, beta, gamma and ABC_base variables.
-    _all_vars.insert(
-        _all_vars.end(),
-        _alpha_g1->all_vars.begin(),
-        _alpha_g1->all_vars.end());
-    _all_vars.insert(
-        _all_vars.end(), _beta_g2->all_vars.begin(), _beta_g2->all_vars.end());
-    _all_vars.insert(
-        _all_vars.end(),
-        _delta_g2->all_vars.begin(),
-        _delta_g2->all_vars.end());
-    _all_vars.insert(
-        _all_vars.end(),
-        _encoded_ABC_base->all_vars.begin(),
-        _encoded_ABC_base->all_vars.end());
-
-    // Allocate variables for ABC_g1 elements, and populate _all_vars with each
-    // variable.
-    _ABC_g1.reserve(_num_primary_inputs);
-    for (size_t i = 0; i < _num_primary_inputs; ++i) {
-        _ABC_g1.emplace_back(new G1_variable<ppT>(
-            pb, FMT(annotation_prefix, " ABC_g1[%zu]", i)));
-        const G1_variable<ppT> &ivar = *(_ABC_g1.back());
-        _all_vars.insert(
-            _all_vars.end(), ivar.all_vars.begin(), ivar.all_vars.end());
-    }
-    assert(
-        _all_vars.size() ==
-        size_in_bits(num_primary_inputs) / FieldT::size_in_bits());
-
-    _packer.reset(new multipacking_gadget<FieldT>(
-        pb,
-        _all_bits,
-        _all_vars,
-        FieldT::size_in_bits(),
-        FMT(annotation_prefix, " packer")));
-}
-
-template<typename ppT>
-void r1cs_gg_ppzksnark_verification_key_variable<
-    ppT>::generate_r1cs_constraints(const bool enforce_bitness)
-{
-    _packer->generate_r1cs_constraints(enforce_bitness);
-}
-
-template<typename ppT>
-void r1cs_gg_ppzksnark_verification_key_variable<ppT>::generate_r1cs_witness(
-    const r1cs_gg_ppzksnark_verification_key<other_curve<ppT>> &vk)
-{
-    assert(vk.ABC_g1.rest.size() == _num_primary_inputs);
-    _alpha_g1->generate_r1cs_witness(vk.alpha_g1);
-    _beta_g2->generate_r1cs_witness(vk.beta_g2);
-    _delta_g2->generate_r1cs_witness(vk.delta_g2);
-    _encoded_ABC_base->generate_r1cs_witness(vk.ABC_g1.first);
-    for (size_t i = 0; i < _num_primary_inputs; ++i) {
-        assert(vk.ABC_g1.rest.indices[i] == i);
-        _ABC_g1[i]->generate_r1cs_witness(vk.ABC_g1.rest.values[i]);
-    }
-
-    _packer->generate_r1cs_witness_from_packed();
-}
-
-template<typename ppT>
-void r1cs_gg_ppzksnark_verification_key_variable<ppT>::generate_r1cs_witness(
-    const libff::bit_vector &vk_bits)
-{
-    _all_bits.fill_with_bits(this->pb, vk_bits);
-    _packer->generate_r1cs_witness_from_bits();
-}
-
-template<typename ppT>
-libff::bit_vector r1cs_gg_ppzksnark_verification_key_variable<ppT>::get_bits()
-    const
-{
-    return _all_bits.get_bits(this->pb);
-}
-
-template<typename ppT>
-size_t r1cs_gg_ppzksnark_verification_key_variable<ppT>::size_in_bits(
-    const size_t input_size)
-{
-    const size_t num_G1 = 1 + (input_size + 1);
-    const size_t num_G2 = 2;
-    return G1_variable<ppT>::size_in_bits() * num_G1 +
-           G2_variable<ppT>::size_in_bits() * num_G2;
-}
-
-template<typename ppT>
-libff::bit_vector r1cs_gg_ppzksnark_verification_key_variable<ppT>::
-    get_verification_key_bits(
-        const r1cs_gg_ppzksnark_verification_key<other_curve<ppT>> &r1cs_vk)
-{
-    typedef libff::Fr<ppT> FieldT;
-
-    const size_t num_primary_inputs = r1cs_vk.ABC_g1.rest.indices.size();
-    const size_t vk_size_in_bits = size_in_bits(num_primary_inputs);
-
-    protoboard<FieldT> pb;
-    pb_variable_array<FieldT> vk_bits;
-    vk_bits.allocate(pb, vk_size_in_bits, " vk_size_in_bits");
-    r1cs_gg_ppzksnark_verification_key_variable<ppT> vk(
-        pb, vk_bits, num_primary_inputs, " translation_step_vk");
-    vk.generate_r1cs_witness(r1cs_vk);
-
-    return vk.get_bits();
 }
 
 template<typename ppT>
@@ -368,7 +234,7 @@ template<typename ppT>
 r1cs_gg_ppzksnark_verifier_process_vk_gadget<ppT>::
     r1cs_gg_ppzksnark_verifier_process_vk_gadget(
         protoboard<FieldT> &pb,
-        const r1cs_gg_ppzksnark_verification_key_scalar_variable<ppT> &vk,
+        const r1cs_gg_ppzksnark_verification_key_variable<ppT> &vk,
         r1cs_gg_ppzksnark_preprocessed_verification_key_variable<ppT> &pvk,
         const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix), _vk(vk), _pvk(pvk)
@@ -550,7 +416,7 @@ void r1cs_gg_ppzksnark_online_verifier_gadget<ppT>::generate_r1cs_witness()
 template<typename ppT>
 r1cs_gg_ppzksnark_verifier_gadget<ppT>::r1cs_gg_ppzksnark_verifier_gadget(
     protoboard<FieldT> &pb,
-    const r1cs_gg_ppzksnark_verification_key_scalar_variable<ppT> &vk,
+    const r1cs_gg_ppzksnark_verification_key_variable<ppT> &vk,
     const pb_variable_array<FieldT> &input,
     const size_t elt_size,
     const r1cs_gg_ppzksnark_proof_variable<ppT> &proof,

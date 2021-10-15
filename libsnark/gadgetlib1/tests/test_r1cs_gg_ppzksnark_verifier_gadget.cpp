@@ -58,7 +58,7 @@ void test_verifier(
         pb, primary_input_size_in_bits, "primary_input_bits");
 
     r1cs_gg_ppzksnark_proof_variable<ppT_B> proof(pb, "proof");
-    r1cs_gg_ppzksnark_verification_key_scalar_variable<ppT_B> vk(
+    r1cs_gg_ppzksnark_verification_key_variable<ppT_B> vk(
         pb, primary_input_size, "vk");
 
     pb_variable<FieldT_B> result;

@@ -114,21 +114,14 @@ template<typename ppT>
 r1cs_ppzksnark_verification_key_variable<ppT>::
     r1cs_ppzksnark_verification_key_variable(
         protoboard<FieldT> &pb,
-        const pb_variable_array<FieldT> &all_bits,
         const size_t input_size,
         const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix)
-    , all_bits(all_bits)
-    , input_size(input_size)
+    : gadget<FieldT>(pb, annotation_prefix), input_size(input_size)
 {
     const size_t num_G1 = 2 + (input_size + 1);
     const size_t num_G2 = 5;
     libff::UNUSED(num_G1);
     libff::UNUSED(num_G2);
-
-    assert(
-        all_bits.size() == (G1_variable<ppT>::size_in_bits() * num_G1 +
-                            G2_variable<ppT>::size_in_bits() * num_G2));
 
     this->alphaA_g2.reset(
         new G2_variable<ppT>(pb, FMT(annotation_prefix, " alphaA_g2")));
@@ -179,20 +172,6 @@ r1cs_ppzksnark_verification_key_variable<ppT>::
     assert(
         all_vars.size() == (num_G1 * G1_variable<ppT>::num_variables() +
                             num_G2 * G2_variable<ppT>::num_variables()));
-
-    packer.reset(new multipacking_gadget<FieldT>(
-        pb,
-        all_bits,
-        all_vars,
-        FieldT::size_in_bits(),
-        FMT(annotation_prefix, " packer")));
-}
-
-template<typename ppT>
-void r1cs_ppzksnark_verification_key_variable<ppT>::generate_r1cs_constraints(
-    const bool enforce_bitness)
-{
-    packer->generate_r1cs_constraints(enforce_bitness);
 }
 
 template<typename ppT>
@@ -223,68 +202,42 @@ void r1cs_ppzksnark_verification_key_variable<ppT>::generate_r1cs_witness(
     for (size_t i = 0; i < G2_elems.size(); ++i) {
         all_G2_vars[i]->generate_r1cs_witness(G2_elems[i]);
     }
-
-    packer->generate_r1cs_witness_from_packed();
 }
 
 template<typename ppT>
-void r1cs_ppzksnark_verification_key_variable<ppT>::generate_r1cs_witness(
-    const libff::bit_vector &vk_bits)
+size_t r1cs_ppzksnark_verification_key_variable<ppT>::num_primary_inputs() const
 {
-    all_bits.fill_with_bits(this->pb, vk_bits);
-    packer->generate_r1cs_witness_from_bits();
+    return input_size;
 }
 
 template<typename ppT>
-libff::bit_vector r1cs_ppzksnark_verification_key_variable<ppT>::get_bits()
-    const
+const pb_linear_combination_array<libff::Fr<ppT>>
+    &r1cs_ppzksnark_verification_key_variable<ppT>::get_all_vars() const
 {
-    return all_bits.get_bits(this->pb);
+    return all_vars;
 }
 
 template<typename ppT>
-size_t r1cs_ppzksnark_verification_key_variable<ppT>::size_in_bits(
-    const size_t input_size)
-{
-    const size_t num_G1 = 2 + (input_size + 1);
-    const size_t num_G2 = 5;
-    const size_t result = G1_variable<ppT>::size_in_bits() * num_G1 +
-                          G2_variable<ppT>::size_in_bits() * num_G2;
-    printf(
-        "G1_size_in_bits = %zu, G2_size_in_bits = %zu\n",
-        G1_variable<ppT>::size_in_bits(),
-        G2_variable<ppT>::size_in_bits());
-    printf(
-        "r1cs_ppzksnark_verification_key_variable<ppT>::size_in_bits(%zu) = "
-        "%zu\n",
-        input_size,
-        result);
-    return result;
-}
-
-template<typename ppT>
-libff::bit_vector r1cs_ppzksnark_verification_key_variable<ppT>::
-    get_verification_key_bits(
+std::vector<libff::Fr<ppT>> r1cs_ppzksnark_verification_key_variable<ppT>::
+    get_verification_key_scalars(
         const r1cs_ppzksnark_verification_key<other_curve<ppT>> &r1cs_vk)
 {
-    typedef libff::Fr<ppT> FieldT;
-
-    // this might be approximate for bound verification keys, however
-    // they are not supported by r1cs_ppzksnark_verification_key_variable
     const size_t input_size_in_elts =
         r1cs_vk.encoded_IC_query.rest.indices.size();
-    const size_t vk_size_in_bits =
-        r1cs_ppzksnark_verification_key_variable<ppT>::size_in_bits(
-            input_size_in_elts);
 
     protoboard<FieldT> pb;
-    pb_variable_array<FieldT> vk_bits;
-    vk_bits.allocate(pb, vk_size_in_bits, "vk_bits");
     r1cs_ppzksnark_verification_key_variable<ppT> vk(
-        pb, vk_bits, input_size_in_elts, "translation_step_vk");
+        pb, input_size_in_elts, "translation_step_vk");
     vk.generate_r1cs_witness(r1cs_vk);
 
-    return vk.get_bits();
+    const size_t num_scalars = vk.all_vars.size();
+    std::vector<FieldT> scalars;
+    scalars.reserve(num_scalars);
+    for (size_t i = 0; i < num_scalars; ++i) {
+        scalars.push_back(pb.lc_val(vk.all_vars[i]));
+    }
+
+    return scalars;
 }
 
 template<typename ppT>
