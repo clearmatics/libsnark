@@ -194,18 +194,19 @@ public:
   if X != 0 then R = 1 and I = X^{-1}
 */
 
+/// Output is 0 iff the sum of inputs is 0.  Output is 1 otherwise.
 template<typename FieldT> class disjunction_gadget : public gadget<FieldT>
 {
 private:
     pb_variable<FieldT> inv;
 
 public:
-    const pb_variable_array<FieldT> inputs;
+    const pb_linear_combination_array<FieldT> inputs;
     const pb_variable<FieldT> output;
 
     disjunction_gadget(
         protoboard<FieldT> &pb,
-        const pb_variable_array<FieldT> &inputs,
+        const pb_linear_combination_array<FieldT> &inputs,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "")
         : gadget<FieldT>(pb, annotation_prefix), inputs(inputs), output(output)
@@ -392,6 +393,7 @@ void create_linear_combination_witness(
     const VarT &target);
 
 } // namespace libsnark
+
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.tcc>
 
 #endif // BASIC_GADGETS_HPP_

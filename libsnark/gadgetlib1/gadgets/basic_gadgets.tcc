@@ -261,29 +261,16 @@ void dual_variable_gadget<FieldT>::generate_r1cs_witness_from_bits()
 template<typename FieldT>
 void disjunction_gadget<FieldT>::generate_r1cs_constraints()
 {
-    /* inv * sum = output */
-    linear_combination<FieldT> a1, b1, c1;
-    a1.add_term(inv);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-        b1.add_term(inputs[i]);
-    }
-    c1.add_term(output);
+    linear_combination<FieldT> sum = pb_sum(inputs);
 
+    // inv * sum = output
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(a1, b1, c1),
+        r1cs_constraint<FieldT>(inv, sum, output),
         FMT(this->annotation_prefix, " inv*sum=output"));
 
-    /* (1-output) * sum = 0 */
-    linear_combination<FieldT> a2, b2, c2;
-    a2.add_term(ONE);
-    a2.add_term(output, -1);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-        b2.add_term(inputs[i]);
-    }
-    c2.add_term(ONE, 0);
-
+    // (1-output) * sum = 0
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(a2, b2, c2),
+        r1cs_constraint<FieldT>(FieldT::one() - output, sum, FieldT::zero()),
         FMT(this->annotation_prefix, " (1-output)*sum=0"));
 }
 
@@ -293,7 +280,7 @@ void disjunction_gadget<FieldT>::generate_r1cs_witness()
     FieldT sum = FieldT::zero();
 
     for (size_t i = 0; i < inputs.size(); ++i) {
-        sum += this->pb.val(inputs[i]);
+        sum += this->pb.lc_val(inputs[i]);
     }
 
     if (sum.is_zero()) {
