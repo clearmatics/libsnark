@@ -218,8 +218,6 @@ public:
     void generate_r1cs_witness();
 };
 
-template<typename FieldT> void test_disjunction_gadget(const size_t n);
-
 template<typename FieldT> class conjunction_gadget : public gadget<FieldT>
 {
 private:
@@ -243,8 +241,6 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
-
-template<typename FieldT> void test_conjunction_gadget(const size_t n);
 
 template<typename FieldT> class comparison_gadget : public gadget<FieldT>
 {
@@ -303,8 +299,6 @@ public:
     void generate_r1cs_witness();
 };
 
-template<typename FieldT> void test_comparison_gadget(const size_t n);
-
 template<typename FieldT> class inner_product_gadget : public gadget<FieldT>
 {
 private:
@@ -333,8 +327,6 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
-
-template<typename FieldT> void test_inner_product_gadget(const size_t n);
 
 template<typename FieldT>
 class loose_multiplexing_gadget : public gadget<FieldT>
@@ -383,8 +375,6 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
-
-template<typename FieldT> void test_loose_multiplexing_gadget(const size_t n);
 
 template<typename FieldT, typename VarT>
 void create_linear_combination_constraints(

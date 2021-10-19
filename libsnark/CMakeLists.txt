@@ -183,6 +183,7 @@ if ("${IS_LIBSNARK_PARENT}")
     zk_proof_systems/ppzksnark/tbcs_ppzksnark/tests/test_tbcs_ppzksnark.cpp
     )
   libsnark_test(zk_proof_systems_uscs_ppzksnark_test zk_proof_systems/ppzksnark/uscs_ppzksnark/tests/test_uscs_ppzksnark.cpp)
+  libsnark_test(test_basic_gadgets gadgetlib1/tests/test_basic_gadgets.cpp)
   libsnark_test(test_knapsack_gadget gadgetlib1/gadgets/hashes/knapsack/tests/test_knapsack_gadget.cpp)
   libsnark_test(test_merkle_tree_gadgets gadgetlib1/gadgets/merkle_tree/tests/test_merkle_tree_gadgets.cpp)
   libsnark_test(test_set_commitment_gadget gadgetlib1/gadgets/set_commitment/tests/test_set_commitment_gadget.cpp)
