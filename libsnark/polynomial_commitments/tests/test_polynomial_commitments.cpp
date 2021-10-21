@@ -17,7 +17,8 @@ const size_t MAX_DEGREE = 254;
 namespace libsnark
 {
 
-template<typename ppT> std::vector<libff::Fr<ppT>> gen_polynomial(const size_t degree)
+template<typename ppT>
+std::vector<libff::Fr<ppT>> gen_polynomial(const size_t degree)
 {
     using Field = libff::Fr<ppT>;
 
@@ -27,19 +28,16 @@ template<typename ppT> std::vector<libff::Fr<ppT>> gen_polynomial(const size_t d
     coefficients.reserve(degree);
 
     // First num_random_values are random (ensuring there are no zeroes)
-    for (size_t i = 0; i < num_random_values; ++i)
-    {
+    for (size_t i = 0; i < num_random_values; ++i) {
         coefficients.push_back(Field::random_element());
-        if (coefficients[i] == Field::zero())
-        {
+        if (coefficients[i] == Field::zero()) {
             coefficients[i] = -Field::one();
         }
     }
 
     // Remaining values coefficients[i] =
     //   coefficients[i-1] * coefficients[i % num_random_values]
-    for (size_t i = num_random_values; i < degree; ++i)
-    {
+    for (size_t i = num_random_values; i < degree; ++i) {
         coefficients.push_back(
             coefficients[i - 1] * coefficients[i % num_random_values]);
     }
@@ -109,7 +107,7 @@ template<typename ppT> void test_kzg10_commitment_with_known_secret()
 
     const Field alpha = Field(10);
     const Field i = Field(2);
-    const polynomial<Field> phi = { -Field("1"), Field(1), Field(2), Field(3) };
+    const polynomial<Field> phi = {-Field("1"), Field(1), Field(2), Field(3)};
 
     // Check the srs
     const typename scheme::srs srs = scheme::setup_from_secret(16, alpha);

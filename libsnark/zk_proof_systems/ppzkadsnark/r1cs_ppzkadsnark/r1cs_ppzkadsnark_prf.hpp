@@ -14,14 +14,15 @@
 
 #include <libsnark/zk_proof_systems/ppzkadsnark/r1cs_ppzkadsnark/r1cs_ppzkadsnark_params.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-template <typename ppT>
-r1cs_ppzkadsnark_prfKeyT<ppT> prfGen();
+template<typename ppT> r1cs_ppzkadsnark_prfKeyT<ppT> prfGen();
 
 template<typename ppT>
-libff::Fr<snark_pp<ppT>> prfCompute(const r1cs_ppzkadsnark_prfKeyT<ppT> &key, const labelT &label);
+libff::Fr<snark_pp<ppT>> prfCompute(
+    const r1cs_ppzkadsnark_prfKeyT<ppT> &key, const labelT &label);
 
-} // libsnark
+} // namespace libsnark
 
 #endif // PRF_HPP_

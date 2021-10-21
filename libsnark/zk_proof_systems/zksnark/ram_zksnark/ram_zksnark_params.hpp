@@ -14,7 +14,8 @@
 
 #include <libsnark/relations/ram_computations/rams/ram_params.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * The interfaces of the RAM zkSNARK are templatized via the parameter
@@ -37,7 +38,8 @@ namespace libsnark {
  *       typedef my_machine_pp machine_pp;
  *       static void init_public_params()
  *       {
- *           PCD_pp::init_public_params(); // plus other necessary initialization
+ *           PCD_pp::init_public_params(); // plus other necessary
+ * initialization
  *       }
  *   };
  *
@@ -62,14 +64,17 @@ template<typename ram_zksnark_ppT>
 using ram_zksnark_machine_pp = typename ram_zksnark_ppT::machine_pp;
 
 template<typename ram_zksnark_ppT>
-using ram_zksnark_architecture_params = ram_architecture_params<ram_zksnark_machine_pp<ram_zksnark_ppT> >;
+using ram_zksnark_architecture_params =
+    ram_architecture_params<ram_zksnark_machine_pp<ram_zksnark_ppT>>;
 
 template<typename ram_zksnark_ppT>
-using ram_zksnark_primary_input = ram_boot_trace<ram_zksnark_machine_pp<ram_zksnark_ppT> >;
+using ram_zksnark_primary_input =
+    ram_boot_trace<ram_zksnark_machine_pp<ram_zksnark_ppT>>;
 
 template<typename ram_zksnark_ppT>
-using ram_zksnark_auxiliary_input = ram_input_tape<ram_zksnark_machine_pp<ram_zksnark_ppT> >;
+using ram_zksnark_auxiliary_input =
+    ram_input_tape<ram_zksnark_machine_pp<ram_zksnark_ppT>>;
 
-} // libsnark
+} // namespace libsnark
 
 #endif // RAM_ZKSNARK_PARAMS_HPP_

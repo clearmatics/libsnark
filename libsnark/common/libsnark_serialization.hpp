@@ -14,18 +14,19 @@
 
 #include <libff/common/serialization.hpp>
 
-namespace libsnark {
-    using libff::consume_newline;
-    using libff::consume_OUTPUT_NEWLINE;
-    using libff::consume_OUTPUT_SEPARATOR;
+namespace libsnark
+{
+using libff::consume_newline;
+using libff::consume_OUTPUT_NEWLINE;
+using libff::consume_OUTPUT_SEPARATOR;
 
-    using libff::output_bool;
-    using libff::input_bool;
+using libff::input_bool;
+using libff::output_bool;
 
-    using libff::input_bool_vector;
-    using libff::output_bool_vector;
-    using libff::operator<<;
-    using libff::operator>>;
-}
+using libff::input_bool_vector;
+using libff::output_bool_vector;
+using libff::operator<<;
+using libff::operator>>;
+} // namespace libsnark
 
 #endif // LIBSNARK_SERIALIZATION_HPP_

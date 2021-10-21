@@ -15,7 +15,8 @@
 
 #include <cstddef>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Runs the single-predicate ppzkPCD (generator, prover, and verifier) for the
@@ -25,12 +26,13 @@ namespace libsnark {
  * (This takes additional time.)
  */
 template<typename PCD_ppT>
-bool run_r1cs_sp_ppzkpcd_tally_example(const size_t wordsize,
-                                       const size_t arity,
-                                       const size_t depth,
-                                       const bool test_serialization);
+bool run_r1cs_sp_ppzkpcd_tally_example(
+    const size_t wordsize,
+    const size_t arity,
+    const size_t depth,
+    const bool test_serialization);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/zk_proof_systems/pcd/r1cs_pcd/r1cs_sp_ppzkpcd/examples/run_r1cs_sp_ppzkpcd.tcc>
 

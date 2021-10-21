@@ -11,7 +11,8 @@
 
 #include <libsnark/common/default_types/r1cs_ppzkpcd_pp.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 void default_r1cs_ppzkpcd_pp::init_public_params()
 {
@@ -19,4 +20,4 @@ void default_r1cs_ppzkpcd_pp::init_public_params()
     curve_B_pp::init_public_params();
 }
 
-} // libsnark
+} // namespace libsnark

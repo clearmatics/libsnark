@@ -14,10 +14,10 @@
 #define RUN_BACS_PPZKSNARK_HPP_
 
 #include <libff/algebra/curves/public_params.hpp>
-
 #include <libsnark/relations/circuit_satisfaction_problems/bacs/examples/bacs_examples.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Runs the ppzkSNARK (generator, prover, and verifier) for a given
@@ -27,10 +27,10 @@ namespace libsnark {
  * (This takes additional time.)
  */
 template<typename ppT>
-bool run_bacs_ppzksnark(const bacs_example<libff::Fr<ppT> > &example,
-                        const bool test_serialization);
+bool run_bacs_ppzksnark(
+    const bacs_example<libff::Fr<ppT>> &example, const bool test_serialization);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/zk_proof_systems/ppzksnark/bacs_ppzksnark/examples/run_bacs_ppzksnark.tcc>
 

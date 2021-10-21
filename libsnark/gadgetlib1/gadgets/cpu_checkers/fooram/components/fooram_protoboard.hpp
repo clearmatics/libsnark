@@ -15,25 +15,29 @@
 #include <libsnark/gadgetlib1/gadget.hpp>
 #include <libsnark/relations/ram_computations/rams/fooram/fooram_aux.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-template<typename FieldT>
-class fooram_protoboard : public protoboard<FieldT> {
+template<typename FieldT> class fooram_protoboard : public protoboard<FieldT>
+{
 public:
     const fooram_architecture_params ap;
 
     fooram_protoboard(const fooram_architecture_params &ap);
 };
 
-template<typename FieldT>
-class fooram_gadget : public gadget<FieldT> {
+template<typename FieldT> class fooram_gadget : public gadget<FieldT>
+{
 protected:
     fooram_protoboard<FieldT> &pb;
+
 public:
-    fooram_gadget(fooram_protoboard<FieldT> &pb, const std::string &annotation_prefix="");
+    fooram_gadget(
+        fooram_protoboard<FieldT> &pb,
+        const std::string &annotation_prefix = "");
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/cpu_checkers/fooram/components/fooram_protoboard.tcc>
 

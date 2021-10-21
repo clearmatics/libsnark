@@ -10,9 +10,7 @@
  *****************************************************************************/
 #include <cassert>
 #include <cstdio>
-
 #include <libff/common/profiling.hpp>
-
 #include <libsnark/common/default_types/bacs_ppzksnark_pp.hpp>
 #include <libsnark/relations/circuit_satisfaction_problems/bacs/examples/bacs_examples.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/bacs_ppzksnark/examples/run_bacs_ppzksnark.hpp>
@@ -20,15 +18,18 @@
 using namespace libsnark;
 
 template<typename ppT>
-void test_bacs_ppzksnark(const size_t primary_input_size,
-                         const size_t auxiliary_input_size,
-                         const size_t num_gates,
-                         const size_t num_outputs)
+void test_bacs_ppzksnark(
+    const size_t primary_input_size,
+    const size_t auxiliary_input_size,
+    const size_t num_gates,
+    const size_t num_outputs)
 {
     libff::print_header("(enter) Test BACS ppzkSNARK");
 
     const bool test_serialization = true;
-    const bacs_example<libff::Fr<ppT> > example = generate_bacs_example<libff::Fr<ppT> >(primary_input_size, auxiliary_input_size, num_gates, num_outputs);
+    const bacs_example<libff::Fr<ppT>> example =
+        generate_bacs_example<libff::Fr<ppT>>(
+            primary_input_size, auxiliary_input_size, num_gates, num_outputs);
 #ifdef DEBUG
     example.circuit.print();
 #endif

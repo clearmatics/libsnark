@@ -7,23 +7,22 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <sstream>
-#include <string>
-
 #include <libff/common/profiling.hpp>
-
 #include <libsnark/common/default_types/ram_ppzksnark_pp.hpp>
 #include <libsnark/relations/ram_computations/rams/examples/ram_examples.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/ram_ppzksnark/examples/run_ram_ppzksnark.hpp>
+#include <sstream>
+#include <string>
 
 using namespace libsnark;
 
 template<typename ppT>
-void test_ram_ppzksnark(const size_t w,
-                        const size_t k,
-                        const size_t program_size,
-                        const size_t input_size,
-                        const size_t time_bound)
+void test_ram_ppzksnark(
+    const size_t w,
+    const size_t k,
+    const size_t program_size,
+    const size_t input_size,
+    const size_t time_bound)
 {
     libff::print_header("(enter) Test RAM ppzkSNARK");
 
@@ -32,7 +31,9 @@ void test_ram_ppzksnark(const size_t w,
     const bool satisfiable = true;
 
     const ram_ppzksnark_architecture_params<ppT> ap(w, k);
-    const ram_example<machine_ppT> example = gen_ram_example_complex<machine_ppT>(ap, boot_trace_size_bound, time_bound, satisfiable);
+    const ram_example<machine_ppT> example =
+        gen_ram_example_complex<machine_ppT>(
+            ap, boot_trace_size_bound, time_bound, satisfiable);
 
     const bool test_serialization = true;
     const bool bit = run_ram_ppzksnark<ppT>(example, test_serialization);
@@ -51,8 +52,10 @@ int main()
     const size_t time_bound = 20;
 
     // 16-bit TinyRAM with 16 registers
-    test_ram_ppzksnark<default_ram_ppzksnark_pp>(16, 16, program_size, input_size, time_bound);
+    test_ram_ppzksnark<default_ram_ppzksnark_pp>(
+        16, 16, program_size, input_size, time_bound);
 
     // 32-bit TinyRAM with 16 registers
-    test_ram_ppzksnark<default_ram_ppzksnark_pp>(32, 16, program_size, input_size, time_bound);
+    test_ram_ppzksnark<default_ram_ppzksnark_pp>(
+        32, 16, program_size, input_size, time_bound);
 }

@@ -12,14 +12,13 @@
 #ifndef TRACE_LINES_HPP_
 #define TRACE_LINES_HPP_
 
-#include <memory>
-
 #include <libff/common/utils.hpp>
-
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
 #include <libsnark/relations/ram_computations/rams/ram_params.hpp>
+#include <memory>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * A memory line contains variables for the following:
@@ -31,24 +30,24 @@ namespace libsnark {
  * Memory lines are used by memory_checker_gadget.
  */
 template<typename ramT>
-class memory_line_variable_gadget : public ram_gadget_base<ramT> {
+class memory_line_variable_gadget : public ram_gadget_base<ramT>
+{
 public:
-
     typedef ram_base_field<ramT> FieldT;
 
-    std::shared_ptr<dual_variable_gadget<FieldT> > timestamp;
-    std::shared_ptr<dual_variable_gadget<FieldT> > address;
-    std::shared_ptr<dual_variable_gadget<FieldT> > contents_before;
-    std::shared_ptr<dual_variable_gadget<FieldT> > contents_after;
+    std::shared_ptr<dual_variable_gadget<FieldT>> timestamp;
+    std::shared_ptr<dual_variable_gadget<FieldT>> address;
+    std::shared_ptr<dual_variable_gadget<FieldT>> contents_before;
+    std::shared_ptr<dual_variable_gadget<FieldT>> contents_after;
 
 public:
+    memory_line_variable_gadget(
+        ram_protoboard<ramT> &pb,
+        const size_t timestamp_size,
+        const ram_architecture_params<ramT> &ap,
+        const std::string &annotation_prefix = "");
 
-    memory_line_variable_gadget(ram_protoboard<ramT> &pb,
-                                const size_t timestamp_size,
-                                const ram_architecture_params<ramT> &ap,
-                                const std::string &annotation_prefix="");
-
-    void generate_r1cs_constraints(const bool enforce_bitness=false);
+    void generate_r1cs_constraints(const bool enforce_bitness = false);
     void generate_r1cs_witness_from_bits();
     void generate_r1cs_witness_from_packed();
 
@@ -57,26 +56,28 @@ public:
 
 /**
  * An execution line inherits from a memory line and, in addition, contains
- * variables for a CPU state and for a flag denoting if the machine has accepted.
+ * variables for a CPU state and for a flag denoting if the machine has
+ * accepted.
  *
  * Execution lines are used by execution_checker_gadget.
  */
 template<typename ramT>
-class execution_line_variable_gadget : public memory_line_variable_gadget<ramT> {
+class execution_line_variable_gadget : public memory_line_variable_gadget<ramT>
+{
 public:
-
     typedef ram_base_field<ramT> FieldT;
 
     pb_variable_array<FieldT> cpu_state;
     pb_variable<FieldT> has_accepted;
 
-    execution_line_variable_gadget(ram_protoboard<ramT> &pb,
-                                   const size_t timestamp_size,
-                                   const ram_architecture_params<ramT> &ap,
-                                   const std::string &annotation_prefix="");
+    execution_line_variable_gadget(
+        ram_protoboard<ramT> &pb,
+        const size_t timestamp_size,
+        const ram_architecture_params<ramT> &ap,
+        const std::string &annotation_prefix = "");
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/reductions/ram_to_r1cs/gadgets/trace_lines.tcc>
 

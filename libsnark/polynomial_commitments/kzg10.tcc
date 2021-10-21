@@ -44,22 +44,22 @@ typename kzg10<ppT>::srs kzg10<ppT>::setup_from_secret(
     const size_t window_size = std::max(
         libff::wnaf_opt_window_size<libff::G1<ppT>>(alpha_bigint.num_bits()),
         1ul);
-    const std::vector<long> naf = libff::find_wnaf<Field::num_limbs>(
-        window_size, alpha_bigint);
+    const std::vector<long> naf =
+        libff::find_wnaf<Field::num_limbs>(window_size, alpha_bigint);
 
     // TODO: perform in concurrent batches?
     std::vector<libff::G1<ppT>> alpha_powers_g1;
     alpha_powers_g1.reserve(max_degree + 1);
     libff::G1<ppT> alpha_i_g1 = libff::G1<ppT>::one();
     alpha_powers_g1.push_back(alpha_i_g1);
-    for (size_t i = 1 ; i < max_degree + 1 ; ++i)
-    {
+    for (size_t i = 1; i < max_degree + 1; ++i) {
         alpha_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
             window_size, alpha_i_g1, naf);
         alpha_powers_g1.push_back(alpha_i_g1);
     }
 
-    // assert((libff::G1<ppT> * alpha.pow(max_degree)) == alpha_powers_g1[max_degree]);
+    // assert((libff::G1<ppT> * alpha.pow(max_degree)) ==
+    // alpha_powers_g1[max_degree]);
     return srs(std::move(alpha_powers_g1), alpha * libff::G2<ppT>::one());
 }
 
@@ -91,11 +91,11 @@ typename kzg10<ppT>::commitment kzg10<ppT>::commit(
         libff::G1<ppT>,
         libff::Fr<ppT>,
         libff::multi_exp_method_BDLO12_signed>(
-            srs.alpha_powers_g1.begin(),
-            srs.alpha_powers_g1.begin() + num_coefficients,
-            phi.begin(),
-            phi.end(),
-            chunks);
+        srs.alpha_powers_g1.begin(),
+        srs.alpha_powers_g1.begin() + num_coefficients,
+        phi.begin(),
+        phi.end(),
+        chunks);
 }
 
 template<typename ppT>
@@ -171,13 +171,14 @@ bool kzg10<ppT>::verify_eval(
     // details.
 
     const libff::G1_precomp<ppT> _A = ppT::precompute_G1(witness.w);
-    const libff::G2_precomp<ppT> _B = ppT::precompute_G2(
-        srs.alpha_g2 - witness.i * libff::G2<ppT>::one());
-    const libff::G1_precomp<ppT> _C = ppT::precompute_G1(
-        witness.phi_i * libff::G1<ppT>::one() - C);
+    const libff::G2_precomp<ppT> _B =
+        ppT::precompute_G2(srs.alpha_g2 - witness.i * libff::G2<ppT>::one());
+    const libff::G1_precomp<ppT> _C =
+        ppT::precompute_G1(witness.phi_i * libff::G1<ppT>::one() - C);
     const libff::G2_precomp<ppT> _D = ppT::precompute_G2(libff::G2<ppT>::one());
 
-    const libff::Fqk<ppT> miller_result = ppT::double_miller_loop(_A, _B, _C, _D);
+    const libff::Fqk<ppT> miller_result =
+        ppT::double_miller_loop(_A, _B, _C, _D);
     const libff::GT<ppT> result = ppT::final_exponentiation(miller_result);
     return result == libff::GT<ppT>::one();
 }

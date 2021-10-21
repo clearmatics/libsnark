@@ -14,13 +14,15 @@
 
 #include <libsnark/zk_proof_systems/ppzkadsnark/r1cs_ppzkadsnark/r1cs_ppzkadsnark_prf.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-class aesPrfKeyT {
+class aesPrfKeyT
+{
 public:
     unsigned char key_bytes[32];
 };
 
-} // libsnark
+} // namespace libsnark
 
 #endif // AESCTRPRF_HPP_

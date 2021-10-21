@@ -15,7 +15,8 @@
 #include <libsnark/gadgetlib1/gadgets/cpu_checkers/tinyram/components/tinyram_protoboard.hpp>
 #include <libsnark/gadgetlib1/gadgets/cpu_checkers/tinyram/components/word_variable_gadget.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * The memory masking gadget checks if a specified part of a double
@@ -54,7 +55,8 @@ namespace libsnark {
  * of access_is_word and access_is_byte is set to 1.
  */
 template<typename FieldT>
-class memory_masking_gadget : public tinyram_standard_gadget<FieldT> {
+class memory_masking_gadget : public tinyram_standard_gadget<FieldT>
+{
 private:
     pb_linear_combination<FieldT> shift;
     pb_variable<FieldT> is_word0;
@@ -66,10 +68,12 @@ private:
     pb_linear_combination<FieldT> masked_out_word1;
     pb_linear_combination_array<FieldT> masked_out_bytes;
 
-    std::shared_ptr<inner_product_gadget<FieldT> > get_masked_out_dw_contents_prev;
+    std::shared_ptr<inner_product_gadget<FieldT>>
+        get_masked_out_dw_contents_prev;
 
     pb_variable<FieldT> masked_out_dw_contents_prev;
     pb_variable<FieldT> expected_dw_contents_next;
+
 public:
     doubleword_variable_gadget<FieldT> dw_contents_prev;
     dual_variable_gadget<FieldT> subaddress;
@@ -78,19 +82,20 @@ public:
     pb_linear_combination<FieldT> access_is_byte;
     doubleword_variable_gadget<FieldT> dw_contents_next;
 
-    memory_masking_gadget(tinyram_protoboard<FieldT> &pb,
-                          const doubleword_variable_gadget<FieldT> &dw_contents_prev,
-                          const dual_variable_gadget<FieldT> &subaddress,
-                          const pb_linear_combination<FieldT> &subcontents,
-                          const pb_linear_combination<FieldT> &access_is_word,
-                          const pb_linear_combination<FieldT> &access_is_byte,
-                          const doubleword_variable_gadget<FieldT> &dw_contents_next,
-                          const std::string& annotation_prefix="");
+    memory_masking_gadget(
+        tinyram_protoboard<FieldT> &pb,
+        const doubleword_variable_gadget<FieldT> &dw_contents_prev,
+        const dual_variable_gadget<FieldT> &subaddress,
+        const pb_linear_combination<FieldT> &subcontents,
+        const pb_linear_combination<FieldT> &access_is_word,
+        const pb_linear_combination<FieldT> &access_is_byte,
+        const doubleword_variable_gadget<FieldT> &dw_contents_next,
+        const std::string &annotation_prefix = "");
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/cpu_checkers/tinyram/components/memory_masking_gadget.tcc>
 

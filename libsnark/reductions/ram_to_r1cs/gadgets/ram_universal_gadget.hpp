@@ -13,11 +13,13 @@
  abstract interfaces.
 
  Roughly, the gadget has three main components:
- - For each time step, a copy of a *execution checker* (which is the RAM CPU checker).
- - For each time step, a copy of a *memory checker* (which verifies memory consistency
-   between two 'memory lines' that are adjacent in a memory sort).
+ - For each time step, a copy of a *execution checker* (which is the RAM CPU
+ checker).
+ - For each time step, a copy of a *memory checker* (which verifies memory
+ consistency between two 'memory lines' that are adjacent in a memory sort).
  - A single *routing network* (specifically, an arbitrary-size Waksman network),
-   which is used check that memory accesses are permutated according to some permutation.
+   which is used check that memory accesses are permutated according to some
+ permutation.
 
  References:
 
@@ -47,7 +49,8 @@
 #include <libsnark/reductions/ram_to_r1cs/gadgets/trace_lines.hpp>
 #include <libsnark/relations/ram_computations/rams/ram_params.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /*
   Memory layout for our reduction is as follows:
@@ -82,56 +85,61 @@ namespace libsnark {
 */
 
 template<typename ramT>
-class ram_universal_gadget : public ram_gadget_base<ramT> {
+class ram_universal_gadget : public ram_gadget_base<ramT>
+{
 public:
     typedef ram_base_field<ramT> FieldT;
 
     size_t num_memory_lines;
 
-    std::vector<memory_line_variable_gadget<ramT> > boot_lines;
-    std::vector<pb_variable_array<FieldT> > boot_line_bits;
-    std::vector<multipacking_gadget<FieldT> > unpack_boot_lines;
+    std::vector<memory_line_variable_gadget<ramT>> boot_lines;
+    std::vector<pb_variable_array<FieldT>> boot_line_bits;
+    std::vector<multipacking_gadget<FieldT>> unpack_boot_lines;
 
-    std::vector<memory_line_variable_gadget<ramT> > load_instruction_lines;
-    std::vector<execution_line_variable_gadget<ramT> > execution_lines; /* including the initial execution line */
+    std::vector<memory_line_variable_gadget<ramT>> load_instruction_lines;
+    std::vector<execution_line_variable_gadget<ramT>>
+        execution_lines; /* including the initial execution line */
 
-    std::vector<memory_line_variable_gadget<ramT>* > unrouted_memory_lines;
-    std::vector<memory_line_variable_gadget<ramT> > routed_memory_lines;
+    std::vector<memory_line_variable_gadget<ramT> *> unrouted_memory_lines;
+    std::vector<memory_line_variable_gadget<ramT>> routed_memory_lines;
 
-    std::vector<ram_cpu_checker<ramT> > execution_checkers;
-    std::vector<memory_checker_gadget<ramT> > memory_checkers;
+    std::vector<ram_cpu_checker<ramT>> execution_checkers;
+    std::vector<memory_checker_gadget<ramT>> memory_checkers;
 
-    std::vector<pb_variable_array<FieldT> > routing_inputs;
-    std::vector<pb_variable_array<FieldT> > routing_outputs;
+    std::vector<pb_variable_array<FieldT>> routing_inputs;
+    std::vector<pb_variable_array<FieldT>> routing_outputs;
 
-    std::shared_ptr<as_waksman_routing_gadget<FieldT> > routing_network;
+    std::shared_ptr<as_waksman_routing_gadget<FieldT>> routing_network;
 
 public:
-
     size_t boot_trace_size_bound;
     size_t time_bound;
     pb_variable_array<FieldT> packed_input;
 
-    ram_universal_gadget(ram_protoboard<ramT> &pb,
-                         const size_t boot_trace_size_bound,
-                         const size_t time_bound,
-                         const pb_variable_array<FieldT> &packed_input,
-                         const std::string &annotation_prefix="");
+    ram_universal_gadget(
+        ram_protoboard<ramT> &pb,
+        const size_t boot_trace_size_bound,
+        const size_t time_bound,
+        const pb_variable_array<FieldT> &packed_input,
+        const std::string &annotation_prefix = "");
 
     void generate_r1cs_constraints();
-    void generate_r1cs_witness(const ram_boot_trace<ramT> &boot_trace,
-                               const ram_input_tape<ramT> &auxiliary_input);
+    void generate_r1cs_witness(
+        const ram_boot_trace<ramT> &boot_trace,
+        const ram_input_tape<ramT> &auxiliary_input);
 
     /* both methods assume that generate_r1cs_witness has been called */
     void print_execution_trace() const;
     void print_memory_trace() const;
 
-    static size_t packed_input_element_size(const ram_architecture_params<ramT> &ap);
-    static size_t packed_input_size(const ram_architecture_params<ramT> &ap,
-                                    const size_t boot_trace_size_bound);
+    static size_t packed_input_element_size(
+        const ram_architecture_params<ramT> &ap);
+    static size_t packed_input_size(
+        const ram_architecture_params<ramT> &ap,
+        const size_t boot_trace_size_bound);
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/reductions/ram_to_r1cs/gadgets/ram_universal_gadget.tcc>
 

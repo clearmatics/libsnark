@@ -2,7 +2,8 @@
  *****************************************************************************
 
  Declaration of interfaces for a USCS-to-SSP reduction, that is, constructing
- a SSP ("Square Span Program") from a USCS ("boolean circuit with 2-input gates").
+ a SSP ("Square Span Program") from a USCS ("boolean circuit with 2-input
+ gates").
 
  SSPs are defined in \[DFGK14], and constructed for USCS also in \[DFGK14].
 
@@ -35,20 +36,23 @@
 #include <libsnark/relations/arithmetic_programs/ssp/ssp.hpp>
 #include <libsnark/relations/constraint_satisfaction_problems/uscs/uscs.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * Instance map for the USCS-to-SSP reduction.
  */
 template<typename FieldT>
-ssp_instance<FieldT> uscs_to_ssp_instance_map(const uscs_constraint_system<FieldT> &cs);
+ssp_instance<FieldT> uscs_to_ssp_instance_map(
+    const uscs_constraint_system<FieldT> &cs);
 
 /**
- * Instance map for the USCS-to-SSP reduction followed by evaluation of the resulting SSP instance.
+ * Instance map for the USCS-to-SSP reduction followed by evaluation of the
+ * resulting SSP instance.
  */
 template<typename FieldT>
-ssp_instance_evaluation<FieldT> uscs_to_ssp_instance_map_with_evaluation(const uscs_constraint_system<FieldT> &cs,
-                                                                         const FieldT &t);
+ssp_instance_evaluation<FieldT> uscs_to_ssp_instance_map_with_evaluation(
+    const uscs_constraint_system<FieldT> &cs, const FieldT &t);
 
 /**
  * Witness map for the USCS-to-SSP reduction.
@@ -56,12 +60,13 @@ ssp_instance_evaluation<FieldT> uscs_to_ssp_instance_map_with_evaluation(const u
  * The witness map takes zero knowledge into account when d is random.
  */
 template<typename FieldT>
-ssp_witness<FieldT> uscs_to_ssp_witness_map(const uscs_constraint_system<FieldT> &cs,
-                                            const uscs_primary_input<FieldT> &primary_input,
-                                            const uscs_auxiliary_input<FieldT> &auxiliary_input,
-                                            const FieldT &d);
+ssp_witness<FieldT> uscs_to_ssp_witness_map(
+    const uscs_constraint_system<FieldT> &cs,
+    const uscs_primary_input<FieldT> &primary_input,
+    const uscs_auxiliary_input<FieldT> &auxiliary_input,
+    const FieldT &d);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/reductions/uscs_to_ssp/uscs_to_ssp.tcc>
 

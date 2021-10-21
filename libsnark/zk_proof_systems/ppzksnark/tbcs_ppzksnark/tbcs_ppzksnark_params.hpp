@@ -14,10 +14,12 @@
 
 #include <libsnark/relations/circuit_satisfaction_problems/tbcs/tbcs.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
- * Below are various typedefs aliases (used for uniformity with other proof systems).
+ * Below are various typedefs aliases (used for uniformity with other proof
+ * systems).
  */
 
 typedef tbcs_circuit tbcs_ppzksnark_circuit;
@@ -26,6 +28,6 @@ typedef tbcs_primary_input tbcs_ppzksnark_primary_input;
 
 typedef tbcs_auxiliary_input tbcs_ppzksnark_auxiliary_input;
 
-} // libsnark
+} // namespace libsnark
 
 #endif // TBCS_PPZKSNARK_PARAMS_HPP_

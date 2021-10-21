@@ -16,10 +16,11 @@
 #include <libsnark/relations/ram_computations/rams/ram_params.hpp>
 #include <libsnark/relations/ram_computations/rams/tinyram/tinyram_aux.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-template<typename FieldT>
-class ram_tinyram {
+template<typename FieldT> class ram_tinyram
+{
 public:
     static size_t timestamp_length;
 
@@ -30,9 +31,8 @@ public:
     typedef tinyram_architecture_params architecture_params_type;
 };
 
-template<typename FieldT>
-size_t ram_tinyram<FieldT>::timestamp_length = 300;
+template<typename FieldT> size_t ram_tinyram<FieldT>::timestamp_length = 300;
 
-} // libsnark
+} // namespace libsnark
 
 #endif // TINYRAM_PARAMS_HPP_

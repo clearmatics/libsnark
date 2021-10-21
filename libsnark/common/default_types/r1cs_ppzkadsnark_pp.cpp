@@ -11,11 +11,12 @@
 
 #include <libsnark/common/default_types/r1cs_ppzkadsnark_pp.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 void default_r1cs_ppzkadsnark_pp::init_public_params()
 {
     snark_pp::init_public_params();
 }
 
-} // libsnark
+} // namespace libsnark

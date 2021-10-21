@@ -14,7 +14,8 @@
 
 #include <libsnark/relations/ram_computations/memory/memory_interface.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * A pair consisting of an address and a value.
@@ -25,7 +26,8 @@ typedef std::pair<size_t, size_t> address_and_value;
 /**
  * A list in which each component consists of a timestamp and a memory store.
  */
-class memory_store_trace {
+class memory_store_trace
+{
 private:
     std::map<size_t, address_and_value> entries;
 
@@ -38,6 +40,6 @@ public:
     memory_contents as_memory_contents() const;
 };
 
-} // libsnark
+} // namespace libsnark
 
 #endif // MEMORY_STORE_TRACE_HPP_

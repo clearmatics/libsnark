@@ -12,12 +12,12 @@
 #ifndef MERKLE_TREE_HPP_
 #define MERKLE_TREE_HPP_
 
+#include <libff/common/utils.hpp>
 #include <map>
 #include <vector>
 
-#include <libff/common/utils.hpp>
-
-namespace libsnark {
+namespace libsnark
+{
 
 /**
  * A Merkle tree is maintained as two maps:
@@ -35,15 +35,14 @@ namespace libsnark {
 typedef libff::bit_vector merkle_authentication_node;
 typedef std::vector<merkle_authentication_node> merkle_authentication_path;
 
-template<typename HashT>
-class merkle_tree {
+template<typename HashT> class merkle_tree
+{
 private:
-
     typedef typename HashT::hash_value_type hash_value_type;
-    typedef typename HashT::merkle_authentication_path_type merkle_authentication_path_type;
+    typedef typename HashT::merkle_authentication_path_type
+        merkle_authentication_path_type;
 
 public:
-
     std::vector<hash_value_type> hash_defaults;
     std::map<size_t, libff::bit_vector> values;
     std::map<size_t, hash_value_type> hashes;
@@ -53,8 +52,14 @@ public:
     size_t digest_size;
 
     merkle_tree(const size_t depth, const size_t value_size);
-    merkle_tree(const size_t depth, const size_t value_size, const std::vector<libff::bit_vector> &contents_as_vector);
-    merkle_tree(const size_t depth, const size_t value_size, const std::map<size_t, libff::bit_vector> &contents);
+    merkle_tree(
+        const size_t depth,
+        const size_t value_size,
+        const std::vector<libff::bit_vector> &contents_as_vector);
+    merkle_tree(
+        const size_t depth,
+        const size_t value_size,
+        const std::map<size_t, libff::bit_vector> &contents);
 
     libff::bit_vector get_value(const size_t address) const;
     void set_value(const size_t address, const libff::bit_vector &value);
@@ -65,7 +70,7 @@ public:
     void dump() const;
 };
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/common/data_structures/merkle_tree.tcc>
 

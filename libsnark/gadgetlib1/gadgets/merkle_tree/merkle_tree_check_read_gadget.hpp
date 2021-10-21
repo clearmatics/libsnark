@@ -23,22 +23,22 @@
 #include <libsnark/gadgetlib1/gadgets/hashes/hash_io.hpp>
 #include <libsnark/gadgetlib1/gadgets/merkle_tree/merkle_authentication_path_variable.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 template<typename FieldT, typename HashT>
-class merkle_tree_check_read_gadget : public gadget<FieldT> {
+class merkle_tree_check_read_gadget : public gadget<FieldT>
+{
 private:
-
     std::vector<HashT> hashers;
-    std::vector<block_variable<FieldT> > hasher_inputs;
-    std::vector<digest_selector_gadget<FieldT> > propagators;
-    std::vector<digest_variable<FieldT> > internal_output;
+    std::vector<block_variable<FieldT>> hasher_inputs;
+    std::vector<digest_selector_gadget<FieldT>> propagators;
+    std::vector<digest_variable<FieldT>> internal_output;
 
-    std::shared_ptr<digest_variable<FieldT> > computed_root;
-    std::shared_ptr<bit_vector_copy_gadget<FieldT> > check_root;
+    std::shared_ptr<digest_variable<FieldT>> computed_root;
+    std::shared_ptr<bit_vector_copy_gadget<FieldT>> check_root;
 
 public:
-
     const size_t digest_size;
     const size_t tree_depth;
     pb_linear_combination_array<FieldT> address_bits;
@@ -47,14 +47,15 @@ public:
     merkle_authentication_path_variable<FieldT, HashT> path;
     pb_linear_combination<FieldT> read_successful;
 
-    merkle_tree_check_read_gadget(protoboard<FieldT> &pb,
-                                  const size_t tree_depth,
-                                  const pb_linear_combination_array<FieldT> &address_bits,
-                                  const digest_variable<FieldT> &leaf_digest,
-                                  const digest_variable<FieldT> &root_digest,
-                                  const merkle_authentication_path_variable<FieldT, HashT> &path,
-                                  const pb_linear_combination<FieldT> &read_successful,
-                                  const std::string &annotation_prefix);
+    merkle_tree_check_read_gadget(
+        protoboard<FieldT> &pb,
+        const size_t tree_depth,
+        const pb_linear_combination_array<FieldT> &address_bits,
+        const digest_variable<FieldT> &leaf_digest,
+        const digest_variable<FieldT> &root_digest,
+        const merkle_authentication_path_variable<FieldT, HashT> &path,
+        const pb_linear_combination<FieldT> &read_successful,
+        const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -67,7 +68,7 @@ public:
 template<typename FieldT, typename HashT>
 void test_merkle_tree_check_read_gadget();
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/merkle_tree/merkle_tree_check_read_gadget.tcc>
 

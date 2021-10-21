@@ -4,8 +4,9 @@
  Declaration of interfaces for the knapsack gadget.
 
  The gadget checks the correct execution of a knapsack (modular subset-sum) over
- the field specified in the template parameter. With suitable choices of parameters
- such knapsacks are collision-resistant hashes (CRHs). See \[Ajt96] and \[GGH96].
+ the field specified in the template parameter. With suitable choices of
+ parameters such knapsacks are collision-resistant hashes (CRHs). See \[Ajt96]
+ and \[GGH96].
 
  Given two positive integers m (the input length) and d (the dimension),
  and a matrix M over the field F and of dimension dxm, the hash H_M maps {0,1}^m
@@ -14,8 +15,9 @@
 
  Below, we give two different gadgets:
  - knapsack_CRH_with_field_out_gadget, which verifies H_M
- - knapsack_CRH_with_bit_out_gadget, which verifies H_M when its output is "expanded" to bits.
- In both cases, a method ("sample_randomness") allows to sample M.
+ - knapsack_CRH_with_bit_out_gadget, which verifies H_M when its output is
+ "expanded" to bits. In both cases, a method ("sample_randomness") allows to
+ sample M.
 
  The parameter d (the dimension) is fixed at compile time in the struct
  knapsack_dimension below. The parameter m (the input length) can be chosen
@@ -47,12 +49,12 @@
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/hash_io.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
 /************************** Choice of dimension ******************************/
 
-template<typename FieldT>
-struct knapsack_dimension {
+template<typename FieldT> struct knapsack_dimension {
     // the size of FieldT should be (approximately) at least 200 bits
     static const size_t dimension = 1;
 };
@@ -60,7 +62,8 @@ struct knapsack_dimension {
 /*********************** Knapsack with field output **************************/
 
 template<typename FieldT>
-class knapsack_CRH_with_field_out_gadget : public gadget<FieldT> {
+class knapsack_CRH_with_field_out_gadget : public gadget<FieldT>
+{
 private:
     static std::vector<FieldT> knapsack_coefficients;
     static size_t num_cached_coefficients;
@@ -72,27 +75,30 @@ public:
     block_variable<FieldT> input_block;
     pb_linear_combination_array<FieldT> output;
 
-    knapsack_CRH_with_field_out_gadget(protoboard<FieldT> &pb,
-                                       const size_t input_len,
-                                       const block_variable<FieldT> &input_block,
-                                       const pb_linear_combination_array<FieldT> &output,
-                                       const std::string &annotation_prefix);
+    knapsack_CRH_with_field_out_gadget(
+        protoboard<FieldT> &pb,
+        const size_t input_len,
+        const block_variable<FieldT> &input_block,
+        const pb_linear_combination_array<FieldT> &output,
+        const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 
     static size_t get_digest_len();
-    static size_t get_block_len(); /* return 0 as block length, as the hash function is variable-input */
+    // return 0 as block length, as the hash function is variable-input
+    static size_t get_block_len();
     static std::vector<FieldT> get_hash(const libff::bit_vector &input);
     static void sample_randomness(const size_t input_len);
 
-    /* for debugging */
+    // for debugging
     static size_t expected_constraints();
 };
 
 /********************** Knapsack with binary output **************************/
 
 template<typename FieldT>
-class knapsack_CRH_with_bit_out_gadget : public gadget<FieldT> {
+class knapsack_CRH_with_bit_out_gadget : public gadget<FieldT>
+{
 public:
     typedef libff::bit_vector hash_value_type;
     typedef merkle_authentication_path merkle_authentication_path_type;
@@ -102,32 +108,33 @@ public:
 
     pb_linear_combination_array<FieldT> output;
 
-    std::shared_ptr<knapsack_CRH_with_field_out_gadget<FieldT> > hasher;
+    std::shared_ptr<knapsack_CRH_with_field_out_gadget<FieldT>> hasher;
 
     block_variable<FieldT> input_block;
     digest_variable<FieldT> output_digest;
 
-    knapsack_CRH_with_bit_out_gadget(protoboard<FieldT> &pb,
-                                     const size_t input_len,
-                                     const block_variable<FieldT> &input_block,
-                                     const digest_variable<FieldT> &output_digest,
-                                     const std::string &annotation_prefix);
-    void generate_r1cs_constraints(const bool enforce_bitness=true);
+    knapsack_CRH_with_bit_out_gadget(
+        protoboard<FieldT> &pb,
+        const size_t input_len,
+        const block_variable<FieldT> &input_block,
+        const digest_variable<FieldT> &output_digest,
+        const std::string &annotation_prefix);
+    void generate_r1cs_constraints(const bool enforce_bitness = true);
     void generate_r1cs_witness();
 
     static size_t get_digest_len();
-    static size_t get_block_len(); /* return 0 as block length, as the hash function is variable-input */
+    // return 0 as block length, as the hash function is variable-input
+    static size_t get_block_len();
     static hash_value_type get_hash(const libff::bit_vector &input);
     static void sample_randomness(const size_t input_len);
 
-    /* for debugging */
-    static size_t expected_constraints(const bool enforce_bitness=true);
+    // for debugging
+    static size_t expected_constraints(const bool enforce_bitness = true);
 };
 
-template<typename FieldT>
-void test_knapsack_CRH_with_bit_out_gadget();
+template<typename FieldT> void test_knapsack_CRH_with_bit_out_gadget();
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/hashes/knapsack/knapsack_gadget.tcc>
 

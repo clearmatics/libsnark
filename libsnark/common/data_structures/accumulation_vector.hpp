@@ -13,27 +13,26 @@
 #define ACCUMULATION_VECTOR_HPP_
 
 #include <iostream>
-
 #include <libsnark/common/data_structures/sparse_vector.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
+
+template<typename T> class accumulation_vector;
 
 template<typename T>
-class accumulation_vector;
+std::ostream &operator<<(std::ostream &out, const accumulation_vector<T> &v);
 
 template<typename T>
-std::ostream& operator<<(std::ostream &out, const accumulation_vector<T> &v);
-
-template<typename T>
-std::istream& operator>>(std::istream &in, accumulation_vector<T> &v);
+std::istream &operator>>(std::istream &in, accumulation_vector<T> &v);
 
 /**
  * An accumulation vector comprises an accumulation value and a sparse vector.
  * The method "accumulate_chunk" allows one to accumlate portions of the sparse
  * vector into the accumualation value.
  */
-template<typename T>
-class accumulation_vector {
+template<typename T> class accumulation_vector
+{
 public:
     T first;
     sparse_vector<T> rest;
@@ -41,12 +40,22 @@ public:
     accumulation_vector() = default;
     accumulation_vector(const accumulation_vector<T> &other) = default;
     accumulation_vector(accumulation_vector<T> &&other) = default;
-    accumulation_vector(T &&first, sparse_vector<T> &&rest) : first(std::move(first)), rest(std::move(rest)) {};
-    accumulation_vector(T &&first, std::vector<T> &&v) : first(std::move(first)), rest(std::move(v)) {}
-    accumulation_vector(std::vector<T> &&v) : first(T::zero()), rest(std::move(v)) {};
+    accumulation_vector(T &&first, sparse_vector<T> &&rest)
+        : first(std::move(first)), rest(std::move(rest))
+    {
+    }
+    accumulation_vector(T &&first, std::vector<T> &&v)
+        : first(std::move(first)), rest(std::move(v))
+    {
+    }
+    accumulation_vector(std::vector<T> &&v)
+        : first(T::zero()), rest(std::move(v))
+    {
+    }
 
-    accumulation_vector<T>& operator=(const accumulation_vector<T> &other) = default;
-    accumulation_vector<T>& operator=(accumulation_vector<T> &&other) = default;
+    accumulation_vector<T> &operator=(const accumulation_vector<T> &other) =
+        default;
+    accumulation_vector<T> &operator=(accumulation_vector<T> &&other) = default;
 
     bool operator==(const accumulation_vector<T> &other) const;
 
@@ -57,19 +66,19 @@ public:
     size_t size_in_bits() const;
 
     template<typename FieldT>
-    accumulation_vector<T> accumulate_chunk(const typename std::vector<FieldT>::const_iterator &it_begin,
-                                            const typename std::vector<FieldT>::const_iterator &it_end,
-                                            const size_t offset) const;
-
+    accumulation_vector<T> accumulate_chunk(
+        const typename std::vector<FieldT>::const_iterator &it_begin,
+        const typename std::vector<FieldT>::const_iterator &it_end,
+        const size_t offset) const;
 };
 
 template<typename T>
-std::ostream& operator<<(std::ostream &out, const accumulation_vector<T> &v);
+std::ostream &operator<<(std::ostream &out, const accumulation_vector<T> &v);
 
 template<typename T>
-std::istream& operator>>(std::istream &in, accumulation_vector<T> &v);
+std::istream &operator>>(std::istream &in, accumulation_vector<T> &v);
 
-} // libsnark
+} // namespace libsnark
 
 #include <libsnark/common/data_structures/accumulation_vector.tcc>
 

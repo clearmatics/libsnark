@@ -10,10 +10,8 @@
  *****************************************************************************/
 #include <cassert>
 #include <cstdio>
-
 #include <libff/common/profiling.hpp>
 #include <libff/common/utils.hpp>
-
 #include <libsnark/common/default_types/uscs_ppzksnark_pp.hpp>
 #include <libsnark/relations/constraint_satisfaction_problems/uscs/examples/uscs_examples.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/uscs_ppzksnark/examples/run_uscs_ppzksnark.hpp>
@@ -21,13 +19,14 @@
 using namespace libsnark;
 
 template<typename ppT>
-void test_uscs_ppzksnark(size_t num_constraints,
-                         size_t input_size)
+void test_uscs_ppzksnark(size_t num_constraints, size_t input_size)
 {
     libff::print_header("(enter) Test USCS ppzkSNARK");
 
     const bool test_serialization = true;
-    uscs_example<libff::Fr<ppT> > example = generate_uscs_example_with_binary_input<libff::Fr<ppT> >(num_constraints, input_size);
+    uscs_example<libff::Fr<ppT>> example =
+        generate_uscs_example_with_binary_input<libff::Fr<ppT>>(
+            num_constraints, input_size);
     const bool bit = run_uscs_ppzksnark<ppT>(example, test_serialization);
     assert(bit);
 

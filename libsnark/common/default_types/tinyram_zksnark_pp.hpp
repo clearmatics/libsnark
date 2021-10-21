@@ -15,9 +15,11 @@
 #include <libsnark/common/default_types/r1cs_ppzkpcd_pp.hpp>
 #include <libsnark/relations/ram_computations/rams/tinyram/tinyram_params.hpp>
 
-namespace libsnark {
+namespace libsnark
+{
 
-class default_tinyram_zksnark_pp {
+class default_tinyram_zksnark_pp
+{
 public:
     typedef default_r1cs_ppzkpcd_pp PCD_pp;
     typedef typename PCD_pp::scalar_field_A FieldT;
@@ -26,6 +28,6 @@ public:
     static void init_public_params();
 };
 
-} // libsnark
+} // namespace libsnark
 
 #endif // TINYRAM_PPZKSNARK_PP_HPP_

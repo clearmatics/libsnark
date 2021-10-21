@@ -8,15 +8,16 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
-
 #include <libsnark/gadgetlib2/pp.hpp>
 #include <libsnark/gadgetlib2/protoboard.hpp>
 
 using namespace gadgetlib2;
 
-namespace {
+namespace
+{
 
-TEST(gadgetLib2,R1P_enforceBooleanity) {
+TEST(gadgetLib2, R1P_enforceBooleanity)
+{
     initPublicParamsFromDefaultPp();
     auto pb = Protoboard::create(R1P);
     Variable x;
@@ -29,7 +30,8 @@ TEST(gadgetLib2,R1P_enforceBooleanity) {
     EXPECT_FALSE(pb->isSatisfied());
 }
 
-TEST(gadgetLib2, Protoboard_unpackedWordAssignmentEqualsValue_R1P) {
+TEST(gadgetLib2, Protoboard_unpackedWordAssignmentEqualsValue_R1P)
+{
     initPublicParamsFromDefaultPp();
     auto pb = Protoboard::create(R1P);
     const UnpackedWord unpacked(8, "unpacked");
@@ -39,7 +41,8 @@ TEST(gadgetLib2, Protoboard_unpackedWordAssignmentEqualsValue_R1P) {
     ASSERT_FALSE(pb->unpackedWordAssignmentEqualsValue(unpacked, 1024 + 42));
 }
 
-TEST(gadgetLib2, Protoboard_multipackedWordAssignmentEqualsValue_R1P) {
+TEST(gadgetLib2, Protoboard_multipackedWordAssignmentEqualsValue_R1P)
+{
     initPublicParamsFromDefaultPp();
     auto pb = Protoboard::create(R1P);
     const MultiPackedWord multipacked(8, R1P, "multipacked");
@@ -47,11 +50,13 @@ TEST(gadgetLib2, Protoboard_multipackedWordAssignmentEqualsValue_R1P) {
     ASSERT_TRUE(pb->multipackedWordAssignmentEqualsValue(multipacked, 42));
     ASSERT_FALSE(pb->multipackedWordAssignmentEqualsValue(multipacked, 43));
     const MultiPackedWord multipackedAgnostic(AGNOSTIC);
-    ASSERT_THROW(pb->multipackedWordAssignmentEqualsValue(multipackedAgnostic, 43),
-                 ::std::runtime_error);
+    ASSERT_THROW(
+        pb->multipackedWordAssignmentEqualsValue(multipackedAgnostic, 43),
+        ::std::runtime_error);
 }
 
-TEST(gadgetLib2, Protoboard_dualWordAssignmentEqualsValue_R1P) {
+TEST(gadgetLib2, Protoboard_dualWordAssignmentEqualsValue_R1P)
+{
     initPublicParamsFromDefaultPp();
     auto pb = Protoboard::create(R1P);
     const DualWord dualword(8, R1P, "dualword");
