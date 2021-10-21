@@ -31,8 +31,8 @@ bool tbcs_gate::evaluate(const tbcs_variable_assignment &input) const
     const bool X = (left_wire == 0 ? true : input[left_wire - 1]);
     const bool Y = (right_wire == 0 ? true : input[right_wire - 1]);
 
-    const size_t pos =
-        3 - ((X ? 2 : 0) + (Y ? 1 : 0)); /* 3 - ... inverts position */
+    // 3 - ... inverts position
+    const size_t pos = 3 - ((X ? 2 : 0) + (Y ? 1 : 0));
 
     return (((int)type) & (1u << pos));
 }

@@ -114,26 +114,29 @@ std::vector<tinyram_instruction> generate_tinyram_prelude(
     std::vector<tinyram_instruction> result;
     const size_t increment = libff::log2(ap.w) / 8;
     const size_t mem_start = 1ul << (ap.w - 1);
-    result.emplace_back(tinyram_instruction(
-        tinyram_opcode_STOREW, true, 0, 0, 0)); // 0: store.w 0, r0
-    result.emplace_back(tinyram_instruction(
-        tinyram_opcode_MOV, true, 0, 0, mem_start)); // 1: mov r0, 2^{W-1}
-    result.emplace_back(tinyram_instruction(
-        tinyram_opcode_READ, true, 1, 0, 0)); // 2: read r1, 0
+    // 0: store.w 0, r0
     result.emplace_back(
-        tinyram_instruction(tinyram_opcode_CJMP, true, 0, 0, 7)); // 3: cjmp 7
-    result.emplace_back(tinyram_instruction(
-        tinyram_opcode_ADD, true, 0, 0, increment)); // 4: add r0, r0, INCREMENT
-    result.emplace_back(tinyram_instruction(
-        tinyram_opcode_STOREW, false, 1, 0, 0)); // 5: store.w r0, r1
+        tinyram_instruction(tinyram_opcode_STOREW, true, 0, 0, 0));
+    // 1: mov r0, 2^{W-1}
     result.emplace_back(
-        tinyram_instruction(tinyram_opcode_JMP, true, 0, 0, 2)); // 6: jmp 2
-    result.emplace_back(tinyram_instruction(
-        tinyram_opcode_STOREW,
-        true,
-        0,
-        0,
-        mem_start)); // 7: store.w 2^{W-1}, r0
+        tinyram_instruction(tinyram_opcode_MOV, true, 0, 0, mem_start));
+    // 2: read r1, 0
+    result.emplace_back(
+        tinyram_instruction(tinyram_opcode_READ, true, 1, 0, 0));
+    // 3: cjmp 7
+    result.emplace_back(
+        tinyram_instruction(tinyram_opcode_CJMP, true, 0, 0, 7));
+    // 4: add r0, r0, INCREMENT
+    result.emplace_back(
+        tinyram_instruction(tinyram_opcode_ADD, true, 0, 0, increment));
+    // 5: store.w r0, r1
+    result.emplace_back(
+        tinyram_instruction(tinyram_opcode_STOREW, false, 1, 0, 0));
+    // 6: jmp 2
+    result.emplace_back(tinyram_instruction(tinyram_opcode_JMP, true, 0, 0, 2));
+    // 7: store.w 2^{W-1}, r0
+    result.emplace_back(
+        tinyram_instruction(tinyram_opcode_STOREW, true, 0, 0, mem_start));
     return result;
 }
 
@@ -146,12 +149,13 @@ size_t tinyram_architecture_params::value_size() const { return 2 * w; }
 
 size_t tinyram_architecture_params::cpu_state_size() const
 {
-    return k * w + 2; /* + flag + tape1_exhausted */
+    // + flag + tape1_exhausted
+    return k * w + 2;
 }
 
 size_t tinyram_architecture_params::initial_pc_addr() const
 {
-    /* the initial PC address is memory units for the RAM reduction */
+    // the initial PC address is memory units for the RAM reduction
     const size_t initial_pc_addr = generate_tinyram_prelude(*this).size();
     return initial_pc_addr;
 }
@@ -174,12 +178,10 @@ memory_contents tinyram_architecture_params::initial_memory_contents(
     }
 
     const size_t input_addr = 1ul << (dwaddr_len() - 1);
-    size_t latest_double_word =
-        (1ull << (w - 1)) +
-        primary_input
-            .size(); // the first word will contain 2^{w-1} + input_size (the
-                     // location where the last input word was stored)
+    // the first word will contain 2^{w-1} + input_size (the
+    // location where the last input word was stored)
 
+    size_t latest_double_word = (1ull << (w - 1)) + primary_input.size();
     for (size_t i = 0; i < primary_input.size() / 2 + 1; ++i) {
         if (2 * i < primary_input.size()) {
             latest_double_word += (primary_input[2 * i] << w);
@@ -197,8 +199,8 @@ memory_contents tinyram_architecture_params::initial_memory_contents(
 
 size_t tinyram_architecture_params::opcode_width() const
 {
-    return libff::log2(static_cast<size_t>(
-        tinyram_opcode_ANSWER)); /* assumption: answer is the last */
+    // assumption: answer is the last
+    return libff::log2(static_cast<size_t>(tinyram_opcode_ANSWER));
 }
 
 size_t tinyram_architecture_params::reg_arg_width() const
