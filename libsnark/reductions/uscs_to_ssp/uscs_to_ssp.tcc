@@ -97,7 +97,8 @@ ssp_instance_evaluation<FieldT> uscs_to_ssp_instance_map_with_evaluation(
         }
     }
     for (size_t i = cs.num_constraints(); i < domain->m; ++i) {
-        Vt[0] += u[i]; /* dummy constraint: 1^2 = 1 */
+        /* dummy constraint: 1^2 = 1 */
+        Vt[0] += u[i];
     }
     FieldT ti = FieldT::one();
     for (size_t i = 0; i < domain->m + 1; ++i) {

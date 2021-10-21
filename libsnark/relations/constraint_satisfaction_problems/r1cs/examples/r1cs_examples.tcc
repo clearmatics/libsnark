@@ -31,8 +31,8 @@ r1cs_example<FieldT> generate_r1cs_example_with_field_input(
 
     r1cs_constraint_system<FieldT> cs;
     cs.primary_input_size = num_inputs;
-    cs.auxiliary_input_size =
-        2 + num_constraints - num_inputs; // TODO: explain this
+    // TODO: explain this
+    cs.auxiliary_input_size = 2 + num_constraints - num_inputs;
 
     r1cs_variable_assignment<FieldT> full_variable_assignment;
     FieldT a = FieldT::random_element();
@@ -109,8 +109,8 @@ r1cs_example<FieldT> generate_r1cs_example_with_binary_input(
 
     r1cs_constraint_system<FieldT> cs;
     cs.primary_input_size = num_inputs;
-    cs.auxiliary_input_size =
-        num_constraints; /* we will add one auxiliary variable per constraint */
+    // we will add one auxiliary variable per constraint
+    cs.auxiliary_input_size = num_constraints;
 
     r1cs_variable_assignment<FieldT> full_variable_assignment;
     for (size_t i = 0; i < num_inputs; ++i) {
