@@ -27,11 +27,12 @@ template<typename FieldT> class r1cs_constraint_system;
 template<typename FieldT> class protoboard
 {
 private:
-    FieldT constant_term; /* only here, because pb.val() needs to be able to
-                             return reference to the constant 1 term */
-    r1cs_variable_assignment<FieldT>
-        values; /* values[0] will hold the value of the first allocated variable
-                   of the protoboard, *NOT* constant 1 */
+    // only here, because pb.val() needs to be able to return
+    // reference to the constant 1 term
+    FieldT constant_term;
+    // values[0] will hold the value of the first allocated variable
+    // of the protoboard, *NOT* constant 1
+    r1cs_variable_assignment<FieldT> values;
     var_index_t next_free_var;
     lc_index_t next_free_lc;
     std::vector<FieldT> lc_values;

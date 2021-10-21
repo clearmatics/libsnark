@@ -155,8 +155,9 @@ public:
     std::shared_ptr<precompute_G2_gadget<ppT>> compute_vk_rC_Z_g2_precomp;
 
     r1cs_ppzksnark_verification_key_variable<ppT> vk;
+    // important to have a reference here
     r1cs_ppzksnark_preprocessed_r1cs_ppzksnark_verification_key_variable<ppT>
-        &pvk; // important to have a reference here
+        &pvk;
 
     r1cs_ppzksnark_verifier_process_vk_gadget(
         protoboard<FieldT> &pb,

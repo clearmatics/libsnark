@@ -118,16 +118,15 @@ merkle_tree_check_update_gadget<FieldT, HashT>::merkle_tree_check_update_gadget(
 template<typename FieldT, typename HashT>
 void merkle_tree_check_update_gadget<FieldT, HashT>::generate_r1cs_constraints()
 {
-    /* ensure correct hash computations */
+    // ensure correct hash computations
     for (size_t i = 0; i < tree_depth; ++i) {
-        prev_hashers[i].generate_r1cs_constraints(
-            false); // we check root outside and prev_left/prev_right above
-        next_hashers[i].generate_r1cs_constraints(
-            true); // however we must check right side hashes
+        // we check root outside and prev_left/prev_right above
+        prev_hashers[i].generate_r1cs_constraints(false);
+        // however we must check right side hashes
+        next_hashers[i].generate_r1cs_constraints(true);
     }
 
-    /* ensure consistency of internal_left/internal_right with internal_output
-     */
+    // ensure consistency of internal_left/internal_right with internal_output
     for (size_t i = 0; i < tree_depth; ++i) {
         prev_propagators[i].generate_r1cs_constraints();
         next_propagators[i].generate_r1cs_constraints();

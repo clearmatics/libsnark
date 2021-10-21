@@ -41,13 +41,17 @@ public:
     accumulation_vector(const accumulation_vector<T> &other) = default;
     accumulation_vector(accumulation_vector<T> &&other) = default;
     accumulation_vector(T &&first, sparse_vector<T> &&rest)
-        : first(std::move(first)), rest(std::move(rest)){};
+        : first(std::move(first)), rest(std::move(rest))
+    {
+    }
     accumulation_vector(T &&first, std::vector<T> &&v)
         : first(std::move(first)), rest(std::move(v))
     {
     }
     accumulation_vector(std::vector<T> &&v)
-        : first(T::zero()), rest(std::move(v)){};
+        : first(T::zero()), rest(std::move(v))
+    {
+    }
 
     accumulation_vector<T> &operator=(const accumulation_vector<T> &other) =
         default;

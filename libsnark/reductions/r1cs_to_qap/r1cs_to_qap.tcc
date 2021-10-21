@@ -278,15 +278,16 @@ qap_witness<FieldT> r1cs_to_qap_witness_map(
     libff::leave_block("Compute evaluation of polynomial B on set T");
 
     libff::enter_block("Compute evaluation of polynomial H on set T");
-    std::vector<FieldT> &H_tmp =
-        aA; // can overwrite aA because it is not used later
+    // can overwrite aA because it is not used later
+    std::vector<FieldT> &H_tmp = aA;
 #ifdef MULTICORE
 #pragma omp parallel for
 #endif
     for (size_t i = 0; i < domain->m; ++i) {
         H_tmp[i] = aA[i] * aB[i];
     }
-    std::vector<FieldT>().swap(aB); // destroy aB
+    // destroy aB
+    std::vector<FieldT>().swap(aB);
 
     libff::enter_block("Compute evaluation of polynomial C on set S");
     std::vector<FieldT> aC(domain->m, FieldT::zero());

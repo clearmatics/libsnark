@@ -193,10 +193,11 @@ void route_benes_inner(
         /* nothing to route */
         return;
     }
-    libff::bit_vector lhs_routed(
-        subnetwork_size, false); /* adjusted by subnetwork_offset */
+    // adjusted by subnetwork_offset
+    libff::bit_vector lhs_routed(subnetwork_size, false);
 
-    size_t w = subnetwork_offset; /* left-hand-side vertex to be routed. */
+    // left-hand-side vertex to be routed.
+    size_t w = subnetwork_offset;
     size_t last_unrouted = subnetwork_offset;
 
     integer_permutation new_permutation(
@@ -271,7 +272,8 @@ void route_benes_inner(
             }
 
             if (last_unrouted == subnetwork_offset + subnetwork_size) {
-                break; /* all routed! */
+                // all routed!
+                break;
             } else {
                 w = last_unrouted;
             }

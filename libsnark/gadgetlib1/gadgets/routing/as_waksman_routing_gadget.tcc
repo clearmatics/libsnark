@@ -79,8 +79,8 @@ as_waksman_routing_gadget<FieldT>::as_waksman_routing_gadget(
                         " routed_packets_%zu_%zu",
                         column_idx + 1,
                         cross_edge));
-                ++row_idx; /* skip the next idx, as it to refers to the same
-                              packets */
+                // skip the next idx, as it to refers to the same packets
+                ++row_idx;
             }
         }
     }
@@ -121,8 +121,8 @@ as_waksman_routing_gadget<FieldT>::as_waksman_routing_gadget(
                             " asw_switch_bits_%zu_%zu",
                             column_idx,
                             row_idx));
-                    ++row_idx; /* next row_idx corresponds to the same switch,
-                                  so skip it */
+                    // next row_idx corresponds to the same switch, so skip it
+                    ++row_idx;
                 }
             }
         }
