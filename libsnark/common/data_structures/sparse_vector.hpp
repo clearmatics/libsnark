@@ -39,7 +39,7 @@ template<typename T> struct sparse_vector {
     sparse_vector() = default;
     sparse_vector(const sparse_vector<T> &other) = default;
     sparse_vector(sparse_vector<T> &&other) = default;
-    sparse_vector(std::vector<T> &&v); /* constructor from std::vector */
+    sparse_vector(std::vector<T> &&v);
 
     sparse_vector<T> &operator=(const sparse_vector<T> &other) = default;
     sparse_vector<T> &operator=(sparse_vector<T> &&other) = default;
@@ -52,14 +52,16 @@ template<typename T> struct sparse_vector {
     bool is_valid() const;
     bool empty() const;
 
-    size_t domain_size() const; // return domain_size_
-    size_t size() const; // return the number of indices (representing the
-                         // number of non-zero entries)
-    size_t size_in_bits()
-        const; // return the number bits needed to store the sparse vector
+    // return domain_size_
+    size_t domain_size() const;
+    // return the number of indices (representing the number of
+    // non-zero entries)
+    size_t size() const;
+    // return the number bits needed to store the sparse vector
+    size_t size_in_bits() const;
 
-    /* return a pair consisting of the accumulated value and the sparse vector
-     * of non-accumulated values */
+    // return a pair consisting of the accumulated value and the
+    // sparse vector of non-accumulated values
     template<typename FieldT>
     std::pair<T, sparse_vector<T>> accumulate(
         const typename std::vector<FieldT>::const_iterator &it_begin,

@@ -158,9 +158,9 @@ std::pair<T, sparse_vector<T>> sparse_vector<T>::accumulate(
     const size_t offset) const
 {
 #ifdef MULTICORE
-    const size_t chunks =
-        omp_get_max_threads(); // to override, set OMP_NUM_THREADS env var or
-                               // call omp_set_num_threads()
+    // to override, set OMP_NUM_THREADS env var or call
+    // omp_set_num_threads()
+    const size_t chunks = omp_get_max_threads();
 #else
     const size_t chunks = 1;
 #endif
@@ -171,10 +171,11 @@ std::pair<T, sparse_vector<T>> sparse_vector<T>::accumulate(
 
     const size_t range_len = it_end - it_begin;
     bool in_block = false;
-    size_t first_pos = -1,
-           last_pos = -1; // g++ -flto emits unitialized warning, even though
-                          // in_block guards for such cases.
 
+    // g++ -flto emits unitialized warning, even though in_block
+    // guards for such cases.
+    size_t first_pos = -1;
+    size_t last_pos = -1;
     for (size_t i = 0; i < indices.size(); ++i) {
         const bool matching_pos =
             (offset <= indices[i] && indices[i] < offset + range_len);

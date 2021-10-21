@@ -39,7 +39,8 @@ int main(void)
 {
     libff::start_profiling();
 
-#ifdef CURVE_BN128 // BN128 has fancy dependencies so it may be disabled
+    // BN128 has fancy dependencies so it may be disabled
+#ifdef CURVE_BN128
     libff::bn128_pp::init_public_params();
     test_all_merkle_tree_gadgets<libff::bn128_pp>();
 #endif

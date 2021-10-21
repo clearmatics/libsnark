@@ -265,11 +265,10 @@ libff::bit_vector r1cs_ppzksnark_verification_key_variable<ppT>::
 {
     typedef libff::Fr<ppT> FieldT;
 
+    // this might be approximate for bound verification keys, however
+    // they are not supported by r1cs_ppzksnark_verification_key_variable
     const size_t input_size_in_elts =
-        r1cs_vk.encoded_IC_query.rest.indices
-            .size(); // this might be approximate for bound verification keys,
-                     // however they are not supported by
-                     // r1cs_ppzksnark_verification_key_variable
+        r1cs_vk.encoded_IC_query.rest.indices.size();
     const size_t vk_size_in_bits =
         r1cs_ppzksnark_verification_key_variable<ppT>::size_in_bits(
             input_size_in_elts);

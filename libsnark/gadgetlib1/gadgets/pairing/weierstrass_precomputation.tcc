@@ -48,8 +48,8 @@ void precompute_G1_gadget<ppT>::generate_r1cs_constraints()
 
 template<typename ppT> void precompute_G1_gadget<ppT>::generate_r1cs_witness()
 {
-    precomp.PY_twist_squared
-        ->evaluate(); /* the same for both ppT = mnt4 and ppT = mnt6 */
+    // the same for both ppT = mnt4 and ppT = mnt6
+    precomp.PY_twist_squared->evaluate();
 }
 
 template<typename ppT>
@@ -98,9 +98,8 @@ G2_precomputation<ppT>::G2_precomputation(
     const libff::affine_ate_G2_precomp<other_curve<ppT>> native_precomp =
         other_curve<ppT>::affine_ate_precompute_G2(Q_val);
 
-    coeffs.resize(
-        native_precomp.coeffs.size() +
-        1); // the last precomp remains for convenient programming
+    // the last precomp remains for convenient programming
+    coeffs.resize(native_precomp.coeffs.size() + 1);
     for (size_t i = 0; i < native_precomp.coeffs.size(); ++i) {
         coeffs[i].reset(new precompute_G2_gadget_coeffs<ppT>());
         coeffs[i]->RX.reset(new Fqe_variable<ppT>(
@@ -380,8 +379,9 @@ precompute_G2_gadget<ppT>::precompute_G2_gadget(
     precomp.Q.reset(new G2_variable<ppT>(Q));
 
     const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
-    size_t coeff_count = 1; // the last RX/RY are unused in Miller loop, but
-                            // will need to get allocated somehow
+    // the last RX/RY are unused in Miller loop, but will need to get
+    // allocated somehow
+    size_t coeff_count = 1;
     this->add_count = 0;
     this->dbl_count = 0;
 
@@ -389,7 +389,7 @@ precompute_G2_gadget<ppT>::precompute_G2_gadget(
     std::vector<long> NAF = find_wnaf(1, loop_count);
     for (long i = NAF.size() - 1; i >= 0; --i) {
         if (!found_nonzero) {
-            /* this skips the MSB itself */
+            // this skips the MSB itself
             found_nonzero |= (NAF[i] != 0);
             continue;
         }
@@ -421,7 +421,7 @@ precompute_G2_gadget<ppT>::precompute_G2_gadget(
     found_nonzero = false;
     for (long i = NAF.size() - 1; i >= 0; --i) {
         if (!found_nonzero) {
-            /* this skips the MSB itself */
+            // this skips the MSB itself
             found_nonzero |= (NAF[i] != 0);
             continue;
         }
@@ -476,7 +476,7 @@ template<typename ppT> void precompute_G2_gadget<ppT>::generate_r1cs_witness()
     std::vector<long> NAF = find_wnaf(1, loop_count);
     for (long i = NAF.size() - 1; i >= 0; --i) {
         if (!found_nonzero) {
-            /* this skips the MSB itself */
+            // this skips the MSB itself
             found_nonzero |= (NAF[i] != 0);
             continue;
         }
@@ -511,10 +511,8 @@ void test_G2_variable_precomp(const std::string &annotation)
     libff::affine_ate_G2_precomp<other_curve<ppT>> native_precomp =
         other_curve<ppT>::affine_ate_precompute_G2(g_val);
 
-    assert(
-        precomp.coeffs.size() - 1 ==
-        native_precomp.coeffs.size()); // the last precomp is unused, but
-                                       // remains for convenient programming
+    // the last precomp is unused, but remains for convenient programming
+    assert(precomp.coeffs.size() - 1 == native_precomp.coeffs.size());
     for (size_t i = 0; i < native_precomp.coeffs.size(); ++i) {
         assert(
             precomp.coeffs[i]->RX->get_element() ==

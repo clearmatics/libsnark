@@ -79,8 +79,8 @@ merkle_tree<HashT>::merkle_tree(
 
     for (int layer = depth; layer > 0; --layer) {
         for (size_t idx = idx_begin; idx < idx_end; idx += 2) {
-            hash_value_type l = hashes[idx]; // this is sound, because idx_begin
-                                             // is always a left child
+            // this is sound, because idx_begin is always a left child
+            hash_value_type l = hashes[idx];
             hash_value_type r =
                 (idx + 1 < idx_end ? hashes[idx + 1] : hash_defaults[layer]);
 

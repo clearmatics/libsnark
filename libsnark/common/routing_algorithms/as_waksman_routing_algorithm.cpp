@@ -12,8 +12,9 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#include "libsnark/common/routing_algorithms/as_waksman_routing_algorithm.hpp"
+
 #include <cassert>
-#include <libsnark/common/routing_algorithms/as_waksman_routing_algorithm.hpp>
 
 namespace libsnark
 {
@@ -357,10 +358,9 @@ void as_waksman_route_inner(
          */
         integer_permutation new_permutation(lo, hi);
         integer_permutation new_permutation_inv(lo, hi);
-        std::vector<bool> lhs_routed(
-            subnetwork_size,
-            false); /* offset by lo, i.e. lhs_routed[packet_idx-lo] is set if
-                       packet packet_idx is routed */
+        // offset by lo, i.e. lhs_routed[packet_idx-lo] is set if
+        // packet packet_idx is routed
+        std::vector<bool> lhs_routed(subnetwork_size, false);
 
         size_t to_route;
         size_t max_unrouted;
@@ -422,8 +422,7 @@ void as_waksman_route_inner(
              * resp., RHS (if route_left = false) can be routed.
              */
             if (route_left) {
-                /* If switch value has not been assigned, assign it arbitrarily.
-                 */
+                // If switch value has not been assigned, assign it arbitrarily.
                 const size_t lhs_switch =
                     as_waksman_get_canonical_row_idx(lo, to_route);
                 if (routing[left].find(lhs_switch) == routing[left].end()) {
@@ -521,12 +520,9 @@ void as_waksman_route_inner(
                 --max_unrouted;
             }
 
-            if (max_unrouted < lo ||
-                (max_unrouted == lo &&
-                 lhs_routed[0])) /* lhs_routed[0] = corresponds to lo shifted by
-                                    lo */
-            {
-                /* All routed! */
+            // lhs_routed[0] = corresponds to lo shifted by lo
+            if (max_unrouted < lo || (max_unrouted == lo && lhs_routed[0])) {
+                // All routed!
                 break;
             } else {
                 to_route = max_unrouted;

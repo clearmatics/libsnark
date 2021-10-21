@@ -85,12 +85,12 @@ public:
     void generate_r1cs_witness();
 
     static size_t get_digest_len();
-    static size_t get_block_len(); /* return 0 as block length, as the hash
-                                      function is variable-input */
+    // return 0 as block length, as the hash function is variable-input
+    static size_t get_block_len();
     static std::vector<FieldT> get_hash(const libff::bit_vector &input);
     static void sample_randomness(const size_t input_len);
 
-    /* for debugging */
+    // for debugging
     static size_t expected_constraints();
 };
 
@@ -123,12 +123,12 @@ public:
     void generate_r1cs_witness();
 
     static size_t get_digest_len();
-    static size_t get_block_len(); /* return 0 as block length, as the hash
-                                      function is variable-input */
+    // return 0 as block length, as the hash function is variable-input
+    static size_t get_block_len();
     static hash_value_type get_hash(const libff::bit_vector &input);
     static void sample_randomness(const size_t input_len);
 
-    /* for debugging */
+    // for debugging
     static size_t expected_constraints(const bool enforce_bitness = true);
 };
 

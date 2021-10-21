@@ -128,7 +128,7 @@ template<typename FieldT, typename HashT> void test_set_commitment_gadget()
         "sc");
     sc.generate_r1cs_constraints();
 
-    /* test all elements from set */
+    // test all elements from set
     for (size_t i = 0; i < max_set_size; ++i) {
         element_bits.fill_with_bits(pb, set_elems[i]);
         pb.val(check_succesful) = FieldT::one();
@@ -145,21 +145,22 @@ template<typename FieldT, typename HashT> void test_set_commitment_gadget()
         pb.val(element_bits[i]) = FieldT(std::rand() % 2);
     }
 
-    pb.val(check_succesful) =
-        FieldT::zero(); /* do not require the check result to be successful */
-    proof.generate_r1cs_witness(accumulator.get_membership_proof(
-        set_elems[0])); /* try it with invalid proof */
+    // do not require the check result to be successful
+    pb.val(check_succesful) = FieldT::zero();
+    // try it with invalid proof
+    proof.generate_r1cs_witness(accumulator.get_membership_proof(set_elems[0]));
     sc.generate_r1cs_witness();
     root_digest.generate_r1cs_witness(accumulator.get_commitment());
     assert(pb.is_satisfied());
 
-    pb.val(check_succesful) =
-        FieldT::one(); /* now require the check result to be succesful */
-    proof.generate_r1cs_witness(accumulator.get_membership_proof(
-        set_elems[0])); /* try it with invalid proof */
+    // now require the check result to be succesful
+    pb.val(check_succesful) = FieldT::one();
+    // try it with invalid proof
+    proof.generate_r1cs_witness(accumulator.get_membership_proof(set_elems[0]));
     sc.generate_r1cs_witness();
     root_digest.generate_r1cs_witness(accumulator.get_commitment());
-    assert(!pb.is_satisfied()); /* the protoboard should be unsatisfied */
+    // the protoboard should be unsatisfied
+    assert(!pb.is_satisfied());
     printf("non-membership test OK\n");
 }
 
