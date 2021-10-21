@@ -189,6 +189,7 @@ if ("${IS_LIBSNARK_PARENT}")
   libsnark_test(test_merkle_tree_gadgets gadgetlib1/gadgets/merkle_tree/tests/test_merkle_tree_gadgets.cpp)
   libsnark_test(test_set_commitment_gadget gadgetlib1/gadgets/set_commitment/tests/test_set_commitment_gadget.cpp)
   libsnark_test(test_sha256_gadget gadgetlib1/gadgets/hashes/sha256/tests/test_sha256_gadget.cpp)
+  libsnark_test(test_polynomial_commitments polynomial_commitments/tests/test_polynomial_commitments.cpp)
 
   # TODO (howardwu): Resolve runtime on targets:
   # libsnark_test(gadgetlib1_fooram_test gadgetlib1/gadgets/cpu_checkers/foora# m/examples/test_fooram.cpp)
