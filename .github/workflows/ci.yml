@@ -33,6 +33,6 @@ jobs:
         CXXFLAGS: "-Werror"
       run: mkdir build && cd build && cmake -DDEBUG=1 ..
     - name: build
-      run: cd build && make
+      run: cd build && make -j $(($(nproc)+1))
     - name: test
-      run: cd build && make check
+      run: cd build && make check -j $(($(nproc)+1))
