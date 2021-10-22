@@ -11,8 +11,10 @@
 
 #include "libsnark/gadgetlib1/gadgets/fields/fp12_2over3over2_gadgets.hpp"
 #include "libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bls12_377_final_exponentiation.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bls12_377_membership_check_gadgets.hpp"
-#include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bls12_377_pairing.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bls12_377_miller_loop.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bls12_377_precomputation.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
 
 #include <libff/algebra/curves/bls12_377/bls12_377_pp.hpp>

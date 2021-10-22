@@ -13,7 +13,7 @@
 #include "libsnark/gadgetlib1/gadgets/curves/weierstrass_g2_gadget.hpp"
 #include "libsnark/gadgetlib1/gadgets/fields/fp12_2over3over2_gadgets.hpp"
 
-#include <libff/algebra/curves/bls12_377/bls12_377_init.hpp>
+#include <libff/algebra/curves/bls12_377/bls12_377_pp.hpp>
 
 namespace libsnark
 {
