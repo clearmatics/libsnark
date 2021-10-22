@@ -111,7 +111,7 @@ public:
     typedef libff::Fr<ppT> FieldT;
     typedef libff::Fqe<other_curve<ppT>> FqeT;
     typedef libff::Fqk<other_curve<ppT>> FqkT;
-    typedef typename pairing_selector<ppT>::Fqk_special_mul_gadget_type
+    typedef typename mnt_pairing_params<ppT>::Fqk_special_mul_gadget_type
         Fqk_special_mul_gadget;
 
     std::vector<std::shared_ptr<Fqk_variable<ppT>>> g_RR_at_Ps;
@@ -153,7 +153,7 @@ public:
     typedef libff::Fr<ppT> FieldT;
     typedef libff::Fqe<other_curve<ppT>> FqeT;
     typedef libff::Fqk<other_curve<ppT>> FqkT;
-    typedef typename pairing_selector<ppT>::Fqk_special_mul_gadget_type
+    typedef typename mnt_pairing_params<ppT>::Fqk_special_mul_gadget_type
         Fqk_special_mul_gadget;
 
     std::vector<std::shared_ptr<Fqk_variable<ppT>>> g_RR_at_P1s;
@@ -207,7 +207,7 @@ public:
     typedef libff::Fr<ppT> FieldT;
     typedef libff::Fqe<other_curve<ppT>> FqeT;
     typedef libff::Fqk<other_curve<ppT>> FqkT;
-    typedef typename pairing_selector<ppT>::Fqk_special_mul_gadget_type
+    typedef typename mnt_pairing_params<ppT>::Fqk_special_mul_gadget_type
         Fqk_special_mul_gadget;
 
     std::vector<std::shared_ptr<Fqk_variable<ppT>>> g_RR_at_P1s;
@@ -278,7 +278,7 @@ public:
     typedef libff::Fr<ppT> FieldT;
     typedef libff::Fqe<other_curve<ppT>> FqeT;
     typedef libff::Fqk<other_curve<ppT>> FqkT;
-    typedef typename pairing_selector<ppT>::Fqk_special_mul_gadget_type
+    typedef typename mnt_pairing_params<ppT>::Fqk_special_mul_gadget_type
         Fqk_special_mul_gadget;
 
     std::vector<std::shared_ptr<Fqk_variable<ppT>>> g_RR_at_P1s;

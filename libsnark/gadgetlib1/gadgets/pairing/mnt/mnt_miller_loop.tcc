@@ -212,7 +212,7 @@ mnt_miller_loop_gadget<ppT>::mnt_miller_loop_gadget(
     , prec_Q(prec_Q)
     , result(result)
 {
-    const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
+    const auto &loop_count = mnt_pairing_params<ppT>::pairing_loop_count;
 
     f_count = add_count = dbl_count = 0;
 
@@ -330,7 +330,7 @@ template<typename ppT> void mnt_miller_loop_gadget<ppT>::generate_r1cs_witness()
     size_t add_id = 0;
     size_t dbl_id = 0;
 
-    const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
+    const auto &loop_count = mnt_pairing_params<ppT>::pairing_loop_count;
 
     bool found_nonzero = false;
     std::vector<long> NAF = find_wnaf(1, loop_count);
@@ -370,7 +370,7 @@ mnt_e_over_e_miller_loop_gadget<ppT>::mnt_e_over_e_miller_loop_gadget(
     , prec_Q2(prec_Q2)
     , result(result)
 {
-    const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
+    const auto &loop_count = mnt_pairing_params<ppT>::pairing_loop_count;
 
     f_count = add_count = dbl_count = 0;
 
@@ -531,7 +531,7 @@ void mnt_e_over_e_miller_loop_gadget<ppT>::generate_r1cs_witness()
     size_t dbl_id = 0;
     size_t f_id = 0;
 
-    const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
+    const auto &loop_count = mnt_pairing_params<ppT>::pairing_loop_count;
 
     bool found_nonzero = false;
     std::vector<long> NAF = find_wnaf(1, loop_count);
@@ -593,7 +593,7 @@ mnt_e_times_e_over_e_miller_loop_gadget<ppT>::
     , prec_Q3(prec_Q3)
     , result(result)
 {
-    const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
+    const auto &loop_count = mnt_pairing_params<ppT>::pairing_loop_count;
 
     f_count = add_count = dbl_count = 0;
 
@@ -793,7 +793,7 @@ void mnt_e_times_e_over_e_miller_loop_gadget<ppT>::generate_r1cs_witness()
     size_t dbl_id = 0;
     size_t f_id = 0;
 
-    const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
+    const auto &loop_count = mnt_pairing_params<ppT>::pairing_loop_count;
 
     bool found_nonzero = false;
     std::vector<long> NAF = find_wnaf(1, loop_count);
@@ -865,7 +865,7 @@ mnt_e_times_e_times_e_over_e_miller_loop_gadget<ppT>::
     , prec_Q4(prec_Q4)
     , result(result)
 {
-    const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
+    const auto &loop_count = mnt_pairing_params<ppT>::pairing_loop_count;
 
     f_count = add_count = dbl_count = 0;
 
@@ -1106,7 +1106,7 @@ void mnt_e_times_e_times_e_over_e_miller_loop_gadget<
     size_t dbl_id = 0;
     size_t f_id = 0;
 
-    const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
+    const auto &loop_count = mnt_pairing_params<ppT>::pairing_loop_count;
 
     bool found_nonzero = false;
     std::vector<long> NAF = find_wnaf(1, loop_count);

@@ -26,6 +26,9 @@
 namespace libsnark
 {
 
+// Forward declare some mnt-specific parameters
+template<typename ppT> class mnt_pairing_params;
+
 /**************************** G1 Precomputation ******************************/
 
 /**

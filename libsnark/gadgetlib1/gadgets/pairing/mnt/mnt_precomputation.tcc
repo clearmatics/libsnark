@@ -348,7 +348,7 @@ mnt_precompute_G2_gadget<ppT>::mnt_precompute_G2_gadget(
 {
     precomp.Q.reset(new G2_variable<ppT>(Q));
 
-    const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
+    const auto &loop_count = mnt_pairing_params<ppT>::pairing_loop_count;
     // the last RX/RY are unused in Miller loop, but will need to get
     // allocated somehow
     size_t coeff_count = 1;
@@ -438,7 +438,7 @@ void mnt_precompute_G2_gadget<ppT>::generate_r1cs_witness()
     precomp.coeffs[0]->RX->generate_r1cs_witness(precomp.Q->X->get_element());
     precomp.coeffs[0]->RY->generate_r1cs_witness(precomp.Q->Y->get_element());
 
-    const auto &loop_count = pairing_selector<ppT>::pairing_loop_count;
+    const auto &loop_count = mnt_pairing_params<ppT>::pairing_loop_count;
 
     size_t add_id = 0;
     size_t dbl_id = 0;
