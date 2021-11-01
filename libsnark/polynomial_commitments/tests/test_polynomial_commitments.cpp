@@ -11,39 +11,12 @@
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/algebra/curves/bls12_377/bls12_377_pp.hpp>
 #include <libsnark/polynomial_commitments/kzg10.hpp>
+#include <libsnark/polynomial_commitments/tests/polynomial_commitment_test_utils.hpp>
 
 const size_t MAX_DEGREE = 254;
 
 namespace libsnark
 {
-
-template<typename ppT>
-std::vector<libff::Fr<ppT>> gen_polynomial(const size_t degree)
-{
-    using Field = libff::Fr<ppT>;
-
-    const size_t num_random_values = std::min(4ul, degree);
-
-    std::vector<Field> coefficients;
-    coefficients.reserve(degree);
-
-    // First num_random_values are random (ensuring there are no zeroes)
-    for (size_t i = 0; i < num_random_values; ++i) {
-        coefficients.push_back(Field::random_element());
-        if (coefficients[i] == Field::zero()) {
-            coefficients[i] = -Field::one();
-        }
-    }
-
-    // Remaining values coefficients[i] =
-    //   coefficients[i-1] * coefficients[i % num_random_values]
-    for (size_t i = num_random_values; i < degree; ++i) {
-        coefficients.push_back(
-            coefficients[i - 1] * coefficients[i % num_random_values]);
-    }
-
-    return coefficients;
-}
 
 template<typename ppT, typename scheme> void test_basic_commitment()
 {
