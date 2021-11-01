@@ -175,6 +175,11 @@ r1cs_ppzksnark_verification_key_variable<ppT>::
 }
 
 template<typename ppT>
+void r1cs_ppzksnark_verification_key_variable<ppT>::generate_r1cs_constraints()
+{
+}
+
+template<typename ppT>
 void r1cs_ppzksnark_verification_key_variable<ppT>::generate_r1cs_witness(
     const r1cs_ppzksnark_verification_key<other_curve<ppT>> &vk)
 {

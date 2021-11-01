@@ -69,6 +69,7 @@ public:
         protoboard<FieldT> &pb,
         const size_t num_primary_inputs,
         const std::string &annotation_prefix);
+    void generate_r1cs_constraints();
     void generate_r1cs_witness(
         const r1cs_gg_ppzksnark_verification_key<other_curve<ppT>> &vk);
 
