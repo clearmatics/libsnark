@@ -157,7 +157,7 @@ public:
 };
 
 /// Double a G2 point.
-template<typename wppT> class G2_dbl_gadget : gadget<libff::Fr<wppT>>
+template<typename wppT> class G2_dbl_gadget : public gadget<libff::Fr<wppT>>
 {
 public:
     using nppT = other_curve<wppT>;
@@ -199,7 +199,8 @@ public:
 };
 
 /// Check equality of 2 G2 points.
-template<typename wppT> class G2_equality_gadget : gadget<libff::Fr<wppT>>
+template<typename wppT>
+class G2_equality_gadget : public gadget<libff::Fr<wppT>>
 {
 public:
     using nppT = other_curve<wppT>;

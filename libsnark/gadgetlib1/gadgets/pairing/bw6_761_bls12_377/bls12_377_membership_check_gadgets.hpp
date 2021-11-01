@@ -21,7 +21,7 @@ namespace libsnark
 /// Curve equation (via the generic G1_checker_gadget) and subgroup membership
 /// check for BLS12-377 G1 variables.
 template<typename wppT>
-class bls12_377_G1_membership_check_gadget : gadget<libff::Fr<wppT>>
+class bls12_377_G1_membership_check_gadget : public gadget<libff::Fr<wppT>>
 {
 public:
     using nppT = other_curve<wppT>;
@@ -58,7 +58,7 @@ G2_variable<wppT> bls12_377_g2_untwist_frobenius_twist(
 /// Curve equation (via generic G2_checker_gadget) and subgroup membership
 /// check for BLS12-377 G2 variables.
 template<typename wppT>
-class bls12_377_G2_membership_check_gadget : gadget<libff::Fr<wppT>>
+class bls12_377_G2_membership_check_gadget : public gadget<libff::Fr<wppT>>
 {
 public:
     // Follows libff implementation of bls12_377_G2::is_in_safe_subgroup().
