@@ -78,14 +78,11 @@ public:
     std::shared_ptr<G1_variable<ppT>> encoded_IC_base;
     std::vector<std::shared_ptr<G1_variable<ppT>>> encoded_IC_query;
 
-    pb_variable_array<FieldT> all_bits;
     pb_linear_combination_array<FieldT> all_vars;
     size_t input_size;
 
     std::vector<std::shared_ptr<G1_variable<ppT>>> all_G1_vars;
     std::vector<std::shared_ptr<G2_variable<ppT>>> all_G2_vars;
-
-    std::shared_ptr<multipacking_gadget<FieldT>> packer;
 
     // Unfortunately, g++ 4.9 and g++ 5.0 have a bug related to
     // incorrect inlining of small functions:
@@ -99,17 +96,15 @@ public:
 
     __attribute__((noinline)) r1cs_ppzksnark_verification_key_variable(
         protoboard<FieldT> &pb,
-        const pb_variable_array<FieldT> &all_bits,
         const size_t input_size,
         const std::string &annotation_prefix);
-    void generate_r1cs_constraints(const bool enforce_bitness);
+    void generate_r1cs_constraints();
     void generate_r1cs_witness(
         const r1cs_ppzksnark_verification_key<other_curve<ppT>> &vk);
-    void generate_r1cs_witness(const libff::bit_vector &vk_bits);
-    libff::bit_vector get_bits() const;
-    static size_t __attribute__((noinline))
-    size_in_bits(const size_t input_size);
-    static libff::bit_vector get_verification_key_bits(
+
+    size_t num_primary_inputs() const;
+    const pb_linear_combination_array<FieldT> &get_all_vars() const;
+    static std::vector<FieldT> get_verification_key_scalars(
         const r1cs_ppzksnark_verification_key<other_curve<ppT>> &r1cs_vk);
 };
 

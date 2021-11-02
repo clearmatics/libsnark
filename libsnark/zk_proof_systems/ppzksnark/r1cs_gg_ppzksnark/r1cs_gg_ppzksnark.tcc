@@ -454,7 +454,7 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(
 
     libff::leave_block("Call to r1cs_gg_ppzksnark_generator");
 
-    return std::move(key_pair);
+    return key_pair;
 }
 
 template<

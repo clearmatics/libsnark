@@ -88,6 +88,7 @@ bool run_uscs_ppzksnark(
     bool ans2 = uscs_ppzksnark_online_verifier_strong_IC<ppT>(
         pvk, example.primary_input, proof);
     assert(ans == ans2);
+    libff::UNUSED(ans2);
 
     libff::leave_block("Call to run_uscs_ppzksnark");
 

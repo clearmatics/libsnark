@@ -12,25 +12,29 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef WEIERSTRASS_PRECOMPUTATION_HPP_
-#define WEIERSTRASS_PRECOMPUTATION_HPP_
+#ifndef LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_PRECOMPUTATION_HPP_
+#define LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_PRECOMPUTATION_HPP_
+
+#include "libsnark/gadgetlib1/gadgets/curves/weierstrass_g1_gadget.hpp"
+#include "libsnark/gadgetlib1/gadgets/curves/weierstrass_g2_gadget.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
 
 #include <libff/algebra/curves/mnt/mnt4/mnt4_init.hpp>
 #include <libff/algebra/curves/mnt/mnt6/mnt6_init.hpp>
-#include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g1_gadget.hpp>
-#include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g2_gadget.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
 #include <memory>
 
 namespace libsnark
 {
+
+// Forward declare some mnt-specific parameters
+template<typename ppT> class mnt_pairing_params;
 
 /**************************** G1 Precomputation ******************************/
 
 /**
  * Not a gadget. It only holds values.
  */
-template<typename ppT> class G1_precomputation
+template<typename ppT> class mnt_G1_precomputation
 {
 public:
     typedef libff::Fr<ppT> FieldT;
@@ -40,8 +44,8 @@ public:
     std::shared_ptr<G1_variable<ppT>> P;
     std::shared_ptr<Fqe_variable<ppT>> PY_twist_squared;
 
-    G1_precomputation();
-    G1_precomputation(
+    mnt_G1_precomputation();
+    mnt_G1_precomputation(
         protoboard<FieldT> &pb,
         const libff::G1<other_curve<ppT>> &P,
         const std::string &annotation_prefix);
@@ -51,20 +55,20 @@ public:
  * Gadget that verifies correct precomputation of the G1 variable.
  */
 template<typename ppT>
-class precompute_G1_gadget : public gadget<libff::Fr<ppT>>
+class mnt_precompute_G1_gadget : public gadget<libff::Fr<ppT>>
 {
 public:
     typedef libff::Fqe<other_curve<ppT>> FqeT;
     typedef libff::Fqk<other_curve<ppT>> FqkT;
 
-    G1_precomputation<ppT> &precomp; // must be a reference.
+    mnt_G1_precomputation<ppT> &precomp; // must be a reference.
 
     /* two possible pre-computations one for mnt4 and one for mnt6 */
     template<typename FieldT>
-    precompute_G1_gadget(
+    mnt_precompute_G1_gadget(
         protoboard<FieldT> &pb,
         const G1_variable<ppT> &P,
-        G1_precomputation<ppT> &precomp, // will allocate this inside
+        mnt_G1_precomputation<ppT> &precomp, // will allocate this inside
         const std::string &annotation_prefix,
         const typename std::enable_if<
             libff::Fqk<other_curve<ppT>>::extension_degree() == 4,
@@ -81,10 +85,10 @@ public:
     }
 
     template<typename FieldT>
-    precompute_G1_gadget(
+    mnt_precompute_G1_gadget(
         protoboard<FieldT> &pb,
         const G1_variable<ppT> &P,
-        G1_precomputation<ppT> &precomp, // will allocate this inside
+        mnt_G1_precomputation<ppT> &precomp, // will allocate this inside
         const std::string &annotation_prefix,
         const typename std::enable_if<
             libff::Fqk<other_curve<ppT>>::extension_degree() == 6,
@@ -105,15 +109,12 @@ public:
     void generate_r1cs_witness();
 };
 
-template<typename ppT>
-void test_G1_variable_precomp(const std::string &annotation);
-
 /**************************** G2 Precomputation ******************************/
 
 /**
  * Not a gadget. It only holds values.
  */
-template<typename ppT> class precompute_G2_gadget_coeffs
+template<typename ppT> class mnt_precompute_G2_gadget_coeffs
 {
 public:
     typedef libff::Fr<ppT> FieldT;
@@ -125,10 +126,10 @@ public:
     std::shared_ptr<Fqe_variable<ppT>> gamma;
     std::shared_ptr<Fqe_variable<ppT>> gamma_X;
 
-    precompute_G2_gadget_coeffs();
-    precompute_G2_gadget_coeffs(
+    mnt_precompute_G2_gadget_coeffs();
+    mnt_precompute_G2_gadget_coeffs(
         protoboard<FieldT> &pb, const std::string &annotation_prefix);
-    precompute_G2_gadget_coeffs(
+    mnt_precompute_G2_gadget_coeffs(
         protoboard<FieldT> &pb,
         const G2_variable<ppT> &Q,
         const std::string &annotation_prefix);
@@ -137,7 +138,7 @@ public:
 /**
  * Not a gadget. It only holds values.
  */
-template<typename ppT> class G2_precomputation
+template<typename ppT> class mnt_G2_precomputation
 {
 public:
     typedef libff::Fr<ppT> FieldT;
@@ -146,10 +147,10 @@ public:
 
     std::shared_ptr<G2_variable<ppT>> Q;
 
-    std::vector<std::shared_ptr<precompute_G2_gadget_coeffs<ppT>>> coeffs;
+    std::vector<std::shared_ptr<mnt_precompute_G2_gadget_coeffs<ppT>>> coeffs;
 
-    G2_precomputation();
-    G2_precomputation(
+    mnt_G2_precomputation();
+    mnt_G2_precomputation(
         protoboard<FieldT> &pb,
         const libff::G2<other_curve<ppT>> &Q_val,
         const std::string &annotation_prefix);
@@ -175,15 +176,15 @@ public:
  * RY = prev_gamma * (prev_RX - RX) - prev_RY
  */
 template<typename ppT>
-class precompute_G2_gadget_doubling_step : public gadget<libff::Fr<ppT>>
+class mnt_precompute_G2_gadget_doubling_step : public gadget<libff::Fr<ppT>>
 {
 public:
     typedef libff::Fr<ppT> FieldT;
     typedef libff::Fqe<other_curve<ppT>> FqeT;
     typedef libff::Fqk<other_curve<ppT>> FqkT;
 
-    precompute_G2_gadget_coeffs<ppT> cur;
-    precompute_G2_gadget_coeffs<ppT> next;
+    mnt_precompute_G2_gadget_coeffs<ppT> cur;
+    mnt_precompute_G2_gadget_coeffs<ppT> next;
 
     std::shared_ptr<Fqe_variable<ppT>> RXsquared;
     std::shared_ptr<Fqe_sqr_gadget<ppT>> compute_RXsquared;
@@ -199,10 +200,10 @@ public:
     std::shared_ptr<Fqe_variable<ppT>> RY_plus_next_RY;
     std::shared_ptr<Fqe_mul_gadget<ppT>> compute_next_RY;
 
-    precompute_G2_gadget_doubling_step(
+    mnt_precompute_G2_gadget_doubling_step(
         protoboard<FieldT> &pb,
-        const precompute_G2_gadget_coeffs<ppT> &cur,
-        const precompute_G2_gadget_coeffs<ppT> &next,
+        const mnt_precompute_G2_gadget_coeffs<ppT> &cur,
+        const mnt_precompute_G2_gadget_coeffs<ppT> &next,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -226,7 +227,7 @@ public:
  * If invert_Q is set to true: use -QY in place of QY everywhere above.
  */
 template<typename ppT>
-class precompute_G2_gadget_addition_step : public gadget<libff::Fr<ppT>>
+class mnt_precompute_G2_gadget_addition_step : public gadget<libff::Fr<ppT>>
 {
 public:
     typedef libff::Fr<ppT> FieldT;
@@ -234,8 +235,8 @@ public:
     typedef libff::Fqk<other_curve<ppT>> FqkT;
 
     bool invert_Q;
-    precompute_G2_gadget_coeffs<ppT> cur;
-    precompute_G2_gadget_coeffs<ppT> next;
+    mnt_precompute_G2_gadget_coeffs<ppT> cur;
+    mnt_precompute_G2_gadget_coeffs<ppT> next;
     G2_variable<ppT> Q;
 
     std::shared_ptr<Fqe_variable<ppT>> RY_minus_QY;
@@ -250,11 +251,11 @@ public:
     std::shared_ptr<Fqe_variable<ppT>> RY_plus_next_RY;
     std::shared_ptr<Fqe_mul_gadget<ppT>> compute_next_RY;
 
-    precompute_G2_gadget_addition_step(
+    mnt_precompute_G2_gadget_addition_step(
         protoboard<FieldT> &pb,
         const bool invert_Q,
-        const precompute_G2_gadget_coeffs<ppT> &cur,
-        const precompute_G2_gadget_coeffs<ppT> &next,
+        const mnt_precompute_G2_gadget_coeffs<ppT> &cur,
+        const mnt_precompute_G2_gadget_coeffs<ppT> &next,
         const G2_variable<ppT> &Q,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
@@ -265,37 +266,34 @@ public:
  * Gadget that verifies correct precomputation of the G2 variable.
  */
 template<typename ppT>
-class precompute_G2_gadget : public gadget<libff::Fr<ppT>>
+class mnt_precompute_G2_gadget : public gadget<libff::Fr<ppT>>
 {
 public:
     typedef libff::Fr<ppT> FieldT;
     typedef libff::Fqe<other_curve<ppT>> FqeT;
     typedef libff::Fqk<other_curve<ppT>> FqkT;
 
-    std::vector<std::shared_ptr<precompute_G2_gadget_addition_step<ppT>>>
+    std::vector<std::shared_ptr<mnt_precompute_G2_gadget_addition_step<ppT>>>
         addition_steps;
-    std::vector<std::shared_ptr<precompute_G2_gadget_doubling_step<ppT>>>
+    std::vector<std::shared_ptr<mnt_precompute_G2_gadget_doubling_step<ppT>>>
         doubling_steps;
 
     size_t add_count;
     size_t dbl_count;
 
-    G2_precomputation<ppT> &precomp; // important to have a reference here
+    mnt_G2_precomputation<ppT> &precomp; // important to have a reference here
 
-    precompute_G2_gadget(
+    mnt_precompute_G2_gadget(
         protoboard<FieldT> &pb,
         const G2_variable<ppT> &Q,
-        G2_precomputation<ppT> &precomp, // will allocate this inside
+        mnt_G2_precomputation<ppT> &precomp, // will allocate this inside
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
 
-template<typename ppT>
-void test_G2_variable_precomp(const std::string &annotation);
-
 } // namespace libsnark
 
-#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.tcc>
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_precomputation.tcc"
 
-#endif // WEIERSTRASS_PRECOMPUTATION_HPP_
+#endif // LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_PRECOMPUTATION_HPP_

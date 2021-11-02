@@ -245,9 +245,8 @@ void test_exponentiation_gadget(
         const FpkT x_val = FpkT::random_element();
         x.generate_r1cs_witness(x_val);
         exp_gadget.generate_r1cs_witness();
-        const FpkT res = x_to_power.get_element();
         assert(pb.is_satisfied());
-        assert(res == (x_val ^ power));
+        assert(x_to_power.get_element() == (x_val ^ power));
     }
     printf(
         "number of constraints for %s_exp = %zu\n",

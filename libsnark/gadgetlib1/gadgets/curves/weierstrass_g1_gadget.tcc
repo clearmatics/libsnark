@@ -63,12 +63,89 @@ void G1_variable<ppT>::generate_r1cs_witness(
     this->pb.lc_val(Y) = el_normalized.Y;
 }
 
+template<typename ppT>
+libff::G1<other_curve<ppT>> G1_variable<ppT>::get_element() const
+{
+    using nppT = other_curve<ppT>;
+    return libff::G1<nppT>(
+        this->pb.lc_val(this->X),
+        this->pb.lc_val(this->Y),
+        libff::Fq<nppT>::one());
+}
+
 template<typename ppT> size_t G1_variable<ppT>::size_in_bits()
 {
     return 2 * FieldT::size_in_bits();
 }
 
 template<typename ppT> size_t G1_variable<ppT>::num_variables() { return 2; }
+
+template<typename ppT>
+G1_variable_selector_gadget<ppT>::G1_variable_selector_gadget(
+    protoboard<Field> &pb,
+    const pb_linear_combination<Field> &selector,
+    const G1_variable<ppT> &zero_case,
+    const G1_variable<ppT> &one_case,
+    const G1_variable<ppT> &result,
+    const std::string &annotation_prefix)
+    : gadget<Field>(pb, annotation_prefix)
+    , selector(selector)
+    , zero_case(zero_case)
+    , one_case(one_case)
+    , result(result)
+{
+}
+
+template<typename ppT>
+void G1_variable_selector_gadget<ppT>::generate_r1cs_constraints()
+{
+    // For selector \in {0, 1}, and zero_case and one_case \in G_1, we
+    // require result \in G_1 to satisfy:
+    //
+    //      result = one_case if selector = 1, and
+    //      result = zero_case if selector = 0.
+    // or:
+    //      result.X = selector * one_case.X + (1 - selector) * zero_case.X
+    //      result.Y = selector * one_case.X + (1 - selector) * zero_case.Y
+    //
+    // This can be re-arranged in terms of a single constraint as
+    // follows:
+    //
+    //      result.X = selector * one_case.X + (1 - selector) * zero_case.X
+    //               = selector * (one_case.X - zero_case.X) + zero_case.X
+    //  <=> result.X - zero_case.X = selector * (one_case.X - zero_case.X)
+    //
+    // (and similarly for result.Y)
+
+    // selector * (one_case.X - zero_case.X) = result.X - zero_case.X
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<Field>(
+            selector, one_case.X - zero_case.X, result.X - zero_case.X),
+        FMT(this->annotation_prefix, " select X"));
+    // selector * (one_case.Y - zero_case.Y) = result.Y - zero_case.Y
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<Field>(
+            selector, one_case.Y - zero_case.Y, result.Y - zero_case.Y),
+        FMT(this->annotation_prefix, " select Y"));
+}
+
+template<typename ppT>
+void G1_variable_selector_gadget<ppT>::generate_r1cs_witness()
+{
+    protoboard<Field> &pb = this->pb;
+    selector.evaluate(pb);
+
+    zero_case.X.evaluate(pb);
+    zero_case.Y.evaluate(pb);
+    one_case.X.evaluate(pb);
+    one_case.Y.evaluate(pb);
+
+    if (pb.lc_val(selector) == Field::one()) {
+        result.generate_r1cs_witness(one_case.get_element());
+    } else {
+        result.generate_r1cs_witness(zero_case.get_element());
+    }
+}
 
 template<typename ppT>
 G1_checker_gadget<ppT>::G1_checker_gadget(
@@ -108,9 +185,9 @@ G1_add_gadget<ppT>::G1_add_gadget(
     protoboard<FieldT> &pb,
     const G1_variable<ppT> &A,
     const G1_variable<ppT> &B,
-    const G1_variable<ppT> &C,
+    const G1_variable<ppT> &result,
     const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix), A(A), B(B), C(C)
+    : gadget<FieldT>(pb, annotation_prefix), A(A), B(B), result(result)
 {
     /*
       lambda = (B.y - A.y)/(B.x - A.x)
@@ -140,11 +217,12 @@ template<typename ppT> void G1_add_gadget<ppT>::generate_r1cs_constraints()
         FMT(this->annotation_prefix, " calc_lambda"));
 
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>({lambda}, {lambda}, {C.X, A.X, B.X}),
+        r1cs_constraint<FieldT>({lambda}, {lambda}, {result.X, A.X, B.X}),
         FMT(this->annotation_prefix, " calc_X"));
 
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>({lambda}, {A.X, C.X * (-1)}, {C.Y, A.Y}),
+        r1cs_constraint<FieldT>(
+            {lambda}, {A.X, result.X * (-1)}, {result.Y, A.Y}),
         FMT(this->annotation_prefix, " calc_Y"));
 
     this->pb.add_r1cs_constraint(
@@ -154,23 +232,31 @@ template<typename ppT> void G1_add_gadget<ppT>::generate_r1cs_constraints()
 
 template<typename ppT> void G1_add_gadget<ppT>::generate_r1cs_witness()
 {
-    this->pb.val(inv) = (this->pb.lc_val(B.X) - this->pb.lc_val(A.X)).inverse();
-    this->pb.val(lambda) =
-        (this->pb.lc_val(B.Y) - this->pb.lc_val(A.Y)) * this->pb.val(inv);
-    this->pb.lc_val(C.X) = this->pb.val(lambda).squared() -
-                           this->pb.lc_val(A.X) - this->pb.lc_val(B.X);
-    this->pb.lc_val(C.Y) =
-        this->pb.val(lambda) * (this->pb.lc_val(A.X) - this->pb.lc_val(C.X)) -
-        this->pb.lc_val(A.Y);
+    const libff::Fr<ppT> Ax = this->pb.lc_val(A.X);
+    const libff::Fr<ppT> Bx = this->pb.lc_val(B.X);
+    const libff::Fr<ppT> Ay = this->pb.lc_val(A.Y);
+    const libff::Fr<ppT> By = this->pb.lc_val(B.Y);
+
+    // Guard against the inverse operation failing.
+    if (Ax == Bx) {
+        throw std::runtime_error(
+            "A.X == B.X is not supported by G1_add_gadget");
+    }
+
+    this->pb.val(inv) = (Bx - Ax).inverse();
+    this->pb.val(lambda) = (By - Ay) * this->pb.val(inv);
+    this->pb.lc_val(result.X) = this->pb.val(lambda).squared() - Ax - Bx;
+    this->pb.lc_val(result.Y) =
+        this->pb.val(lambda) * (Ax - this->pb.lc_val(result.X)) - Ay;
 }
 
 template<typename ppT>
 G1_dbl_gadget<ppT>::G1_dbl_gadget(
     protoboard<FieldT> &pb,
     const G1_variable<ppT> &A,
-    const G1_variable<ppT> &B,
+    const G1_variable<ppT> &result,
     const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix), A(A), B(B)
+    : gadget<FieldT>(pb, annotation_prefix), A(A), result(result)
 {
     Xsquared.allocate(pb, FMT(annotation_prefix, " X_squared"));
     lambda.allocate(pb, FMT(annotation_prefix, " lambda"));
@@ -190,11 +276,12 @@ template<typename ppT> void G1_dbl_gadget<ppT>::generate_r1cs_constraints()
         FMT(this->annotation_prefix, " calc_lambda"));
 
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>({lambda}, {lambda}, {B.X, A.X * 2}),
+        r1cs_constraint<FieldT>({lambda}, {lambda}, {result.X, A.X * 2}),
         FMT(this->annotation_prefix, " calc_X"));
 
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>({lambda}, {A.X, B.X * (-1)}, {B.Y, A.Y}),
+        r1cs_constraint<FieldT>(
+            {lambda}, {A.X, result.X * (-1)}, {result.Y, A.Y}),
         FMT(this->annotation_prefix, " calc_Y"));
 }
 
@@ -204,10 +291,11 @@ template<typename ppT> void G1_dbl_gadget<ppT>::generate_r1cs_witness()
     this->pb.val(lambda) = (FieldT(3) * this->pb.val(Xsquared) +
                             libff::G1<other_curve<ppT>>::coeff_a) *
                            (FieldT(2) * this->pb.lc_val(A.Y)).inverse();
-    this->pb.lc_val(B.X) =
+    this->pb.lc_val(result.X) =
         this->pb.val(lambda).squared() - FieldT(2) * this->pb.lc_val(A.X);
-    this->pb.lc_val(B.Y) =
-        this->pb.val(lambda) * (this->pb.lc_val(A.X) - this->pb.lc_val(B.X)) -
+    this->pb.lc_val(result.Y) =
+        this->pb.val(lambda) *
+            (this->pb.lc_val(A.X) - this->pb.lc_val(result.X)) -
         this->pb.lc_val(A.Y);
 }
 
@@ -305,6 +393,8 @@ void G1_multiscalar_mul_gadget<ppT>::generate_r1cs_constraints()
     assert(
         num_constraints_after - num_constraints_before ==
         4 * (scalar_size - num_points) + (4 + 2) * scalar_size);
+    libff::UNUSED(num_constraints_before);
+    libff::UNUSED(num_constraints_after);
 }
 
 template<typename ppT>

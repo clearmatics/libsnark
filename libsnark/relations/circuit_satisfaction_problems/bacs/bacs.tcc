@@ -224,6 +224,7 @@ template<typename FieldT>
 void bacs_circuit<FieldT>::add_gate(
     const bacs_gate<FieldT> &g, const std::string &annotation)
 {
+    libff::UNUSED(annotation);
     assert(g.output.index == num_wires() + 1);
     gates.emplace_back(g);
 #ifdef DEBUG

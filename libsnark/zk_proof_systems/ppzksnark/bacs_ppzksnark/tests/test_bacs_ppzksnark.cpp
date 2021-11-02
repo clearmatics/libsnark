@@ -35,6 +35,7 @@ void test_bacs_ppzksnark(
 #endif
     const bool bit = run_bacs_ppzksnark<ppT>(example, test_serialization);
     assert(bit);
+    libff::UNUSED(bit);
 
     libff::print_header("(leave) Test BACS ppzkSNARK");
 }

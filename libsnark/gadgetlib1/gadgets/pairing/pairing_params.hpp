@@ -31,14 +31,18 @@ namespace libsnark
  * - Fqe_sqr_gadget_type
  * - Fqk_variable_type
  * - Fqk_mul_gadget_type
- * - Fqk_special_mul_gadget_type
  * - Fqk_sqr_gadget_type
  * - other_curve_type
+ * - G1_checker_type;
+ * - G2_checker_type;
+ * - G1_precompute_variable_type;
+ * - precompute_G1_gadget_type;
+ * - G2_precompute_variable_type;
+ * - precompute_G2_gadget_type;
  * - e_over_e_miller_loop_gadget_type
  * - e_times_e_over_e_miller_loop_gadget_type
+ * - e_times_e_times_e_over_e_miller_loop_gadget_type
  * - final_exp_gadget_type
- * and also containing a static constant
- * - const constexpr libff::bigint<m> pairing_loop_count
  *
  * For example, if you want to use the types my_Field, my_Fqe, etc,
  * then you would do as follows. First declare a new type:
@@ -59,15 +63,15 @@ namespace libsnark
  *       typedef my_Fqe_sqr_gadget_type Fqe_sqr_gadget_type;
  *       typedef my_Fqk_variable_type Fqk_variable_type;
  *       typedef my_Fqk_mul_gadget_type Fqk_mul_gadget_type;
- *       typedef my_Fqk_special_mul_gadget_type Fqk_special_mul_gadget_type;
  *       typedef my_Fqk_sqr_gadget_type Fqk_sqr_gadget_type;
  *       typedef my_other_curve_type other_curve_type;
  *       typedef my_e_over_e_miller_loop_gadget_type
- * e_over_e_miller_loop_gadget_type; typedef
- * my_e_times_e_over_e_miller_loop_gadget_type
- * e_times_e_over_e_miller_loop_gadget_type; typedef my_final_exp_gadget_type
- * final_exp_gadget_type; static const constexpr libff::bigint<...>
- * &pairing_loop_count = ...;
+ *       typedef my_e_times_e_e_miller_loop_gadget_type;
+ *       typedef my_e_times_e_over_e_miller_loop_gadget_type
+ *           e_times_e_over_e_miller_loop_gadget_type;
+ *       typedef my_e_times_e_times_e_over_e_miller_loop_gadget_type
+ *           e_times_e_times_e_over_e_miller_loop_gadget_type;
+ *       typedef my_final_exp_gadget_type final_exp_gadget_type;
  *   };
  *
  * Having done the above, my_ec_pp can be used as a template parameter.
@@ -88,21 +92,23 @@ using FqkT =
 
 template<typename ppT>
 using Fqe_variable = typename pairing_selector<ppT>::Fqe_variable_type;
+
 template<typename ppT>
 using Fqe_mul_gadget = typename pairing_selector<ppT>::Fqe_mul_gadget_type;
+
 template<typename ppT>
 using Fqe_mul_by_lc_gadget =
     typename pairing_selector<ppT>::Fqe_mul_by_lc_gadget_type;
+
 template<typename ppT>
 using Fqe_sqr_gadget = typename pairing_selector<ppT>::Fqe_sqr_gadget_type;
 
 template<typename ppT>
 using Fqk_variable = typename pairing_selector<ppT>::Fqk_variable_type;
+
 template<typename ppT>
 using Fqk_mul_gadget = typename pairing_selector<ppT>::Fqk_mul_gadget_type;
-template<typename ppT>
-using Fqk_special_mul_gadget =
-    typename pairing_selector<ppT>::Fqk_special_mul_gadget_type;
+
 template<typename ppT>
 using Fqk_sqr_gadget = typename pairing_selector<ppT>::Fqk_sqr_gadget_type;
 
@@ -110,11 +116,39 @@ template<typename ppT>
 using other_curve = typename pairing_selector<ppT>::other_curve_type;
 
 template<typename ppT>
+using G1_checker = typename pairing_selector<ppT>::G1_checker_type;
+
+template<typename ppT>
+using G2_checker = typename pairing_selector<ppT>::G2_checker_type;
+
+template<typename ppT>
+using G1_precomputation =
+    typename pairing_selector<ppT>::G1_precomputation_type;
+
+template<typename ppT>
+using G2_precomputation =
+    typename pairing_selector<ppT>::G2_precomputation_type;
+
+template<typename ppT>
+using precompute_G1_gadget =
+    typename pairing_selector<ppT>::precompute_G1_gadget_type;
+
+template<typename ppT>
+using precompute_G2_gadget =
+    typename pairing_selector<ppT>::precompute_G2_gadget_type;
+
+template<typename ppT>
 using e_over_e_miller_loop_gadget =
     typename pairing_selector<ppT>::e_over_e_miller_loop_gadget_type;
+
 template<typename ppT>
 using e_times_e_over_e_miller_loop_gadget =
     typename pairing_selector<ppT>::e_times_e_over_e_miller_loop_gadget_type;
+
+template<typename ppT>
+using e_times_e_times_e_over_e_miller_loop_gadget = typename pairing_selector<
+    ppT>::e_times_e_times_e_over_e_miller_loop_gadget_type;
+
 template<typename ppT>
 using final_exp_gadget = typename pairing_selector<ppT>::final_exp_gadget_type;
 

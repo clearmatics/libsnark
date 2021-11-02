@@ -34,6 +34,8 @@ typename std::enable_if<ppT::has_affine_pairing, void>::type test_affine_verifie
     const bool answer = r1cs_gg_ppzksnark_affine_verifier_weak_IC<ppT>(
         vk, primary_input, proof);
     assert(answer == expected_answer);
+    libff::UNUSED(answer);
+    libff::UNUSED(expected_answer);
 }
 
 template<typename ppT>
@@ -115,6 +117,7 @@ bool run_r1cs_gg_ppzksnark(
     const bool ans2 = r1cs_gg_ppzksnark_online_verifier_strong_IC<ppT>(
         pvk, example.primary_input, proof);
     assert(ans == ans2);
+    libff::UNUSED(ans2);
 
     test_affine_verifier<ppT>(keypair.vk, example.primary_input, proof, ans);
 

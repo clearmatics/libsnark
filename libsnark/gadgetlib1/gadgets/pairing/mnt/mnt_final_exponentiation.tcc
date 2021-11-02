@@ -11,11 +11,11 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef WEIERSTRASS_FINAL_EXPONENTIATION_TCC_
-#define WEIERSTRASS_FINAL_EXPONENTIATION_TCC_
+#ifndef LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_FINAL_EXPONENTIATION_TCC_
+#define LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_FINAL_EXPONENTIATION_TCC_
 
-#include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/mnt_pairing_params.hpp>
+#include "libsnark/gadgetlib1/gadgets/basic_gadgets.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
 
 namespace libsnark
 {
@@ -80,9 +80,9 @@ mnt4_final_exp_gadget<ppT>::mnt4_final_exp_gadget(
 
     compute_w1.reset(new exponentiation_gadget<
                      FqkT<ppT>,
-                     Fp6_variable,
-                     Fp6_mul_gadget,
-                     Fp6_cyclotomic_sqr_gadget,
+                     Fp6_2over3_variable,
+                     Fp6_2over3_mul_gadget,
+                     Fp6_2over3_cyclotomic_sqr_gadget,
                      libff::mnt6_q_limbs>(
         pb,
         *beta_q,
@@ -92,9 +92,9 @@ mnt4_final_exp_gadget<ppT>::mnt4_final_exp_gadget(
 
     compute_w0.reset(new exponentiation_gadget<
                      FqkT<ppT>,
-                     Fp6_variable,
-                     Fp6_mul_gadget,
-                     Fp6_cyclotomic_sqr_gadget,
+                     Fp6_2over3_variable,
+                     Fp6_2over3_mul_gadget,
+                     Fp6_2over3_cyclotomic_sqr_gadget,
                      libff::mnt6_q_limbs>(
         pb,
         (libff::mnt6_final_exponent_last_chunk_is_w0_neg ? *inv_beta : *beta),
@@ -292,4 +292,4 @@ template<typename ppT> void mnt6_final_exp_gadget<ppT>::generate_r1cs_witness()
 
 } // namespace libsnark
 
-#endif // WEIERSTRASS_FINAL_EXPONENTIATION_TCC_
+#endif // LIBSNARK_GADGETLIB1_GADGETS_PAIRING_MNT_MNT_FINAL_EXPONENTIATION_TCC_

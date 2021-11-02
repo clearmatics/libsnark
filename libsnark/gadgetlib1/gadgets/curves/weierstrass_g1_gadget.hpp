@@ -15,9 +15,11 @@
 #ifndef WEIERSTRASS_G1_GADGET_HPP_
 #define WEIERSTRASS_G1_GADGET_HPP_
 
+#include "libsnark/gadgetlib1/gadget.hpp"
+#include "libsnark/gadgetlib1/gadgets/curves/scalar_multiplication.hpp"
+#include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
+
 #include <libff/algebra/curves/public_params.hpp>
-#include <libsnark/gadgetlib1/gadget.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
 
 namespace libsnark
 {
@@ -43,10 +45,38 @@ public:
 
     void generate_r1cs_witness(const libff::G1<other_curve<ppT>> &elt);
 
+    libff::G1<other_curve<ppT>> get_element() const;
+
     // (See a comment in r1cs_ppzksnark_verifier_gadget.hpp about why
     // we mark this function noinline.) TODO: remove later
     static size_t __attribute__((noinline)) size_in_bits();
     static size_t num_variables();
+};
+
+/// Depending on the value of a selector variable (which must be 0 or
+/// 1), choose between two G1_variable objects (zero_case and
+/// one_case),
+template<typename ppT>
+class G1_variable_selector_gadget : public gadget<libff::Fr<ppT>>
+{
+public:
+    using Field = libff::Fr<ppT>;
+
+    const pb_linear_combination<Field> selector;
+    const G1_variable<ppT> zero_case;
+    const G1_variable<ppT> one_case;
+    G1_variable<ppT> result;
+
+    G1_variable_selector_gadget(
+        protoboard<Field> &pb,
+        const pb_linear_combination<Field> &selector,
+        const G1_variable<ppT> &zero_case,
+        const G1_variable<ppT> &one_case,
+        const G1_variable<ppT> &result,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
 };
 
 /**
@@ -82,13 +112,13 @@ public:
 
     G1_variable<ppT> A;
     G1_variable<ppT> B;
-    G1_variable<ppT> C;
+    G1_variable<ppT> result;
 
     G1_add_gadget(
         protoboard<FieldT> &pb,
         const G1_variable<ppT> &A,
         const G1_variable<ppT> &B,
-        const G1_variable<ppT> &C,
+        const G1_variable<ppT> &result,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -106,12 +136,12 @@ public:
     pb_variable<FieldT> lambda;
 
     G1_variable<ppT> A;
-    G1_variable<ppT> B;
+    G1_variable<ppT> result;
 
     G1_dbl_gadget(
         protoboard<FieldT> &pb,
         const G1_variable<ppT> &A,
-        const G1_variable<ppT> &B,
+        const G1_variable<ppT> &result,
         const std::string &annotation_prefix);
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -152,6 +182,16 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
+
+/// Multiplication by constant scalar (leverages
+/// point_mul_by_const_scalar_gadget - scalar_multiplication.hpp).
+template<typename wppT, mp_size_t scalarLimbs>
+using G1_mul_by_const_scalar_gadget = point_mul_by_const_scalar_gadget<
+    libff::G1<other_curve<wppT>>,
+    G1_variable<wppT>,
+    G1_add_gadget<wppT>,
+    G1_dbl_gadget<wppT>,
+    libff::bigint<scalarLimbs>>;
 
 } // namespace libsnark
 

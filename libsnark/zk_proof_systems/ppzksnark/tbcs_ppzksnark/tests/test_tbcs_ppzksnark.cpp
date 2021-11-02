@@ -34,6 +34,7 @@ void test_tbcs_ppzksnark(
 #endif
     const bool bit = run_tbcs_ppzksnark<ppT>(example, test_serialization);
     assert(bit);
+    libff::UNUSED(bit);
 
     libff::print_header("(leave) Test TBCS ppzkSNARK");
 }
