@@ -736,6 +736,11 @@ TEST(Pairing, MNT6_e_over_e_Miller_Loop)
     test_mnt_e_over_e_miller_loop<libff::mnt6_pp>("mnt6");
 }
 
+TEST(Pairing, BLS12_377_e_over_e_Miller_Loop)
+{
+    test_bls_e_over_e_miller_loop<libff::bw6_761_pp>("bls12_377");
+}
+
 TEST(Pairing, MNT4_e_times_e_times_e_over_e_Miller_Loop)
 {
     test_mnt_e_times_e_times_e_over_e_miller_loop<libff::mnt4_pp>("mnt4");

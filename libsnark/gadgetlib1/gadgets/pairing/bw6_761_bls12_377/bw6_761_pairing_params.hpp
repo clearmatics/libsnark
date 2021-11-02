@@ -76,9 +76,10 @@ public:
     typedef bls12_377_miller_loop_gadget<libff::bw6_761_pp>
         miller_loop_gadget_type;
 
+    typedef bls12_377_e_over_e_miller_loop_gadget<libff::bw6_761_pp>
+        e_over_e_miller_loop_gadget_type;
+
     // Not implemented:
-    // typedef bls12_377_e_over_e_miller_loop_gadget
-    //     bls12_377_over_e_miller_loop_gadget_type;
     // typedef bls12_377_e_times_e_over_e_miller_loop_gadget
     //     e_times_e_over_e_miller_loop_gadget_type;
 
