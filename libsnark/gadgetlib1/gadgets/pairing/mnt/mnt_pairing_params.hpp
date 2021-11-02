@@ -60,6 +60,7 @@ public:
     typedef mnt_precompute_G1_gadget<libff::mnt4_pp> precompute_G1_gadget_type;
     typedef mnt_precompute_G2_gadget<libff::mnt4_pp> precompute_G2_gadget_type;
 
+    typedef mnt_miller_loop_gadget<libff::mnt4_pp> miller_loop_gadget_type;
     typedef mnt_e_over_e_miller_loop_gadget<libff::mnt4_pp>
         e_over_e_miller_loop_gadget_type;
     typedef mnt_e_times_e_over_e_miller_loop_gadget<libff::mnt4_pp>
@@ -99,6 +100,7 @@ public:
     typedef mnt_precompute_G1_gadget<libff::mnt6_pp> precompute_G1_gadget_type;
     typedef mnt_precompute_G2_gadget<libff::mnt6_pp> precompute_G2_gadget_type;
 
+    typedef mnt_miller_loop_gadget<libff::mnt6_pp> miller_loop_gadget_type;
     typedef mnt_e_over_e_miller_loop_gadget<libff::mnt6_pp>
         e_over_e_miller_loop_gadget_type;
     typedef mnt_e_times_e_over_e_miller_loop_gadget<libff::mnt6_pp>

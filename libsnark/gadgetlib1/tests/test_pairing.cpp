@@ -97,27 +97,26 @@ void test_G2_variable_precomp(const std::string &annotation)
         pb.num_constraints());
 }
 
-template<typename ppT> void test_mnt_miller_loop(const std::string &annotation)
+template<typename ppT>
+void test_miller_loop(
+    const libff::G1<other_curve<ppT>> &P_val,
+    const libff::G2<other_curve<ppT>> &Q_val,
+    const libff::Fqk<other_curve<ppT>> &expect_result,
+    const std::string &annotation)
 {
     protoboard<libff::Fr<ppT>> pb;
-    libff::G1<other_curve<ppT>> P_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G1<other_curve<ppT>>::one();
-    libff::G2<other_curve<ppT>> Q_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G2<other_curve<ppT>>::one();
 
     G1_variable<ppT> P(pb, "P");
     G2_variable<ppT> Q(pb, "Q");
 
-    mnt_G1_precomputation<ppT> prec_P;
-    mnt_G2_precomputation<ppT> prec_Q;
+    G1_precomputation<ppT> prec_P;
+    G2_precomputation<ppT> prec_Q;
 
-    mnt_precompute_G1_gadget<ppT> compute_prec_P(pb, P, prec_P, "prec_P");
-    mnt_precompute_G2_gadget<ppT> compute_prec_Q(pb, Q, prec_Q, "prec_Q");
+    precompute_G1_gadget<ppT> compute_prec_P(pb, P, prec_P, "prec_P");
+    precompute_G2_gadget<ppT> compute_prec_Q(pb, Q, prec_Q, "prec_Q");
 
     Fqk_variable<ppT> result(pb, "result");
-    mnt_miller_loop_gadget<ppT> miller(pb, prec_P, prec_Q, result, "miller");
+    miller_loop_gadget<ppT> miller(pb, prec_P, prec_Q, result, "miller");
 
     PROFILE_CONSTRAINTS(pb, "precompute P")
     {
@@ -140,6 +139,22 @@ template<typename ppT> void test_mnt_miller_loop(const std::string &annotation)
     miller.generate_r1cs_witness();
     ASSERT_TRUE(pb.is_satisfied());
 
+    ASSERT_EQ(expect_result, result.get_element());
+    printf(
+        "number of constraints for Miller loop (Fr is %s)  = %zu\n",
+        annotation.c_str(),
+        pb.num_constraints());
+}
+
+template<typename ppT> void test_mnt_miller_loop(const std::string &annotation)
+{
+    libff::G1<other_curve<ppT>> P_val =
+        libff::Fr<other_curve<ppT>>::random_element() *
+        libff::G1<other_curve<ppT>>::one();
+    libff::G2<other_curve<ppT>> Q_val =
+        libff::Fr<other_curve<ppT>>::random_element() *
+        libff::G2<other_curve<ppT>>::one();
+
     libff::affine_ate_G1_precomp<other_curve<ppT>> native_prec_P =
         other_curve<ppT>::affine_ate_precompute_G1(P_val);
     libff::affine_ate_G2_precomp<other_curve<ppT>> native_prec_Q =
@@ -147,51 +162,60 @@ template<typename ppT> void test_mnt_miller_loop(const std::string &annotation)
     libff::Fqk<other_curve<ppT>> native_result =
         other_curve<ppT>::affine_ate_miller_loop(native_prec_P, native_prec_Q);
 
-    ASSERT_EQ(native_result, result.get_element());
-    printf(
-        "number of constraints for Miller loop (Fr is %s)  = %zu\n",
-        annotation.c_str(),
-        pb.num_constraints());
+    test_miller_loop<ppT>(P_val, Q_val, native_result, annotation);
+}
+
+template<typename ppT> void test_bls_miller_loop(const std::string &annotation)
+{
+    libff::G1<other_curve<ppT>> P_val =
+        libff::Fr<other_curve<ppT>>::random_element() *
+        libff::G1<other_curve<ppT>>::one();
+    libff::G2<other_curve<ppT>> Q_val =
+        libff::Fr<other_curve<ppT>>::random_element() *
+        libff::G2<other_curve<ppT>>::one();
+
+    libff::G1_precomp<other_curve<ppT>> native_prec_P =
+        other_curve<ppT>::precompute_G1(P_val);
+    libff::G2_precomp<other_curve<ppT>> native_prec_Q =
+        other_curve<ppT>::precompute_G2(Q_val);
+    libff::Fqk<other_curve<ppT>> native_result =
+        other_curve<ppT>::miller_loop(native_prec_P, native_prec_Q);
+
+    test_miller_loop<ppT>(P_val, Q_val, native_result, annotation);
 }
 
 template<typename ppT>
-void test_mnt_e_over_e_miller_loop(const std::string &annotation)
+void test_e_over_e_miller_loop(
+    const libff::G1<other_curve<ppT>> &P1_val,
+    const libff::G2<other_curve<ppT>> &Q1_val,
+    const libff::G1<other_curve<ppT>> &P2_val,
+    const libff::G2<other_curve<ppT>> &Q2_val,
+    const FqkT<ppT> &expect_result,
+    const std::string &annotation)
 {
     protoboard<libff::Fr<ppT>> pb;
-    libff::G1<other_curve<ppT>> P1_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G1<other_curve<ppT>>::one();
-    libff::G2<other_curve<ppT>> Q1_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G2<other_curve<ppT>>::one();
-
-    libff::G1<other_curve<ppT>> P2_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G1<other_curve<ppT>>::one();
-    libff::G2<other_curve<ppT>> Q2_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G2<other_curve<ppT>>::one();
 
     G1_variable<ppT> P1(pb, "P1");
     G2_variable<ppT> Q1(pb, "Q1");
     G1_variable<ppT> P2(pb, "P2");
     G2_variable<ppT> Q2(pb, "Q2");
 
-    mnt_G1_precomputation<ppT> prec_P1;
-    mnt_precompute_G1_gadget<ppT> compute_prec_P1(
+    G1_precomputation<ppT> prec_P1;
+    precompute_G1_gadget<ppT> compute_prec_P1(
         pb, P1, prec_P1, "compute_prec_P1");
-    mnt_G1_precomputation<ppT> prec_P2;
-    mnt_precompute_G1_gadget<ppT> compute_prec_P2(
+    G1_precomputation<ppT> prec_P2;
+    precompute_G1_gadget<ppT> compute_prec_P2(
         pb, P2, prec_P2, "compute_prec_P2");
-    mnt_G2_precomputation<ppT> prec_Q1;
-    mnt_precompute_G2_gadget<ppT> compute_prec_Q1(
+    G2_precomputation<ppT> prec_Q1;
+    precompute_G2_gadget<ppT> compute_prec_Q1(
         pb, Q1, prec_Q1, "compute_prec_Q1");
-    mnt_G2_precomputation<ppT> prec_Q2;
-    mnt_precompute_G2_gadget<ppT> compute_prec_Q2(
+    G2_precomputation<ppT> prec_Q2;
+    precompute_G2_gadget<ppT> compute_prec_Q2(
         pb, Q2, prec_Q2, "compute_prec_Q2");
 
     Fqk_variable<ppT> result(pb, "result");
-    mnt_e_over_e_miller_loop_gadget<ppT> miller(
+
+    e_over_e_miller_loop_gadget<ppT> miller(
         pb, prec_P1, prec_Q1, prec_P2, prec_Q2, result, "miller");
 
     PROFILE_CONSTRAINTS(pb, "precompute P")
@@ -219,28 +243,85 @@ void test_mnt_e_over_e_miller_loop(const std::string &annotation)
     Q2.generate_r1cs_witness(Q2_val);
     compute_prec_Q2.generate_r1cs_witness();
     miller.generate_r1cs_witness();
+
     ASSERT_TRUE(pb.is_satisfied());
 
-    libff::affine_ate_G1_precomp<other_curve<ppT>> native_prec_P1 =
-        other_curve<ppT>::affine_ate_precompute_G1(P1_val);
-    libff::affine_ate_G2_precomp<other_curve<ppT>> native_prec_Q1 =
-        other_curve<ppT>::affine_ate_precompute_G2(Q1_val);
-    libff::affine_ate_G1_precomp<other_curve<ppT>> native_prec_P2 =
-        other_curve<ppT>::affine_ate_precompute_G1(P2_val);
-    libff::affine_ate_G2_precomp<other_curve<ppT>> native_prec_Q2 =
-        other_curve<ppT>::affine_ate_precompute_G2(Q2_val);
-    libff::Fqk<other_curve<ppT>> native_result =
-        (other_curve<ppT>::affine_ate_miller_loop(
-             native_prec_P1, native_prec_Q1) *
-         other_curve<ppT>::affine_ate_miller_loop(
-             native_prec_P2, native_prec_Q2)
-             .inverse());
-
-    ASSERT_EQ(native_result, result.get_element());
     printf(
         "number of constraints for e over e Miller loop (Fr is %s)  = %zu\n",
         annotation.c_str(),
         pb.num_constraints());
+
+    ASSERT_EQ(expect_result, result.get_element());
+}
+
+template<typename ppT>
+void test_mnt_e_over_e_miller_loop(const std::string &annotation)
+{
+    using npp = other_curve<ppT>;
+
+    libff::G1<npp> P1_val =
+        libff::Fr<npp>::random_element() * libff::G1<npp>::one();
+    libff::G2<npp> Q1_val =
+        libff::Fr<npp>::random_element() * libff::G2<npp>::one();
+
+    libff::G1<npp> P2_val =
+        libff::Fr<npp>::random_element() * libff::G1<npp>::one();
+    libff::G2<npp> Q2_val =
+        libff::Fr<npp>::random_element() * libff::G2<npp>::one();
+
+    libff::affine_ate_G1_precomp<npp> native_prec_P1 =
+        npp::affine_ate_precompute_G1(P1_val);
+    libff::affine_ate_G2_precomp<npp> native_prec_Q1 =
+        npp::affine_ate_precompute_G2(Q1_val);
+    libff::affine_ate_G1_precomp<npp> native_prec_P2 =
+        npp::affine_ate_precompute_G1(P2_val);
+    libff::affine_ate_G2_precomp<npp> native_prec_Q2 =
+        npp::affine_ate_precompute_G2(Q2_val);
+    libff::Fqk<npp> native_result =
+        (npp::affine_ate_miller_loop(native_prec_P1, native_prec_Q1) *
+         npp::affine_ate_miller_loop(native_prec_P2, native_prec_Q2).inverse());
+
+    test_e_over_e_miller_loop<ppT>(
+        P1_val, Q1_val, P2_val, Q2_val, native_result, annotation);
+}
+
+template<typename ppT>
+void test_bls_e_over_e_miller_loop(const std::string &annotation)
+{
+    using npp = other_curve<ppT>;
+
+    libff::G1<npp> P1_val =
+        libff::Fr<npp>::random_element() * libff::G1<npp>::one();
+    libff::G2<npp> Q1_val =
+        libff::Fr<npp>::random_element() * libff::G2<npp>::one();
+
+    libff::G1<npp> P2_val =
+        libff::Fr<npp>::random_element() * libff::G1<npp>::one();
+    libff::G2<npp> Q2_val =
+        libff::Fr<npp>::random_element() * libff::G2<npp>::one();
+
+    libff::G1_precomp<npp> native_prec_P1 = npp::precompute_G1(P1_val);
+    libff::G2_precomp<npp> native_prec_Q1 = npp::precompute_G2(Q1_val);
+    libff::G1_precomp<npp> native_prec_minus_P2 = npp::precompute_G1(-P2_val);
+    libff::G2_precomp<npp> native_prec_Q2 = npp::precompute_G2(Q2_val);
+
+    libff::Fqk<npp> miller_P1_Q1 =
+        npp::miller_loop(native_prec_P1, native_prec_Q1);
+    libff::Fqk<npp> miller_P2_Q2_inv =
+        npp::miller_loop(native_prec_minus_P2, native_prec_Q2);
+    libff::Fqk<npp> native_result = miller_P1_Q1 * miller_P2_Q2_inv;
+
+    // Ensure that miller_P2_Q2_inv is indeed equivalent to
+    // miller_P2_Q4.inverse()
+    libff::G1_precomp<npp> native_prec_P2 = npp::precompute_G1(P2_val);
+    libff::Fqk<npp> miller_P2_Q2 =
+        npp::miller_loop(native_prec_P2, native_prec_Q2);
+    ASSERT_EQ(
+        npp::final_exponentiation(miller_P2_Q2.inverse()),
+        npp::final_exponentiation(miller_P2_Q2_inv));
+
+    test_e_over_e_miller_loop<ppT>(
+        P1_val, Q1_val, P2_val, Q2_val, native_result, annotation);
 }
 
 template<typename ppT>
@@ -369,165 +450,6 @@ void test_mnt_e_times_e_over_e_miller_loop(const std::string &annotation)
 }
 
 template<typename ppT>
-void test_mnt_e_times_e_times_e_over_e_miller_loop(
-    const std::string &annotation)
-{
-    protoboard<libff::Fr<ppT>> pb;
-    libff::G1<other_curve<ppT>> P1_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G1<other_curve<ppT>>::one();
-    libff::G2<other_curve<ppT>> Q1_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G2<other_curve<ppT>>::one();
-
-    libff::G1<other_curve<ppT>> P2_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G1<other_curve<ppT>>::one();
-    libff::G2<other_curve<ppT>> Q2_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G2<other_curve<ppT>>::one();
-
-    libff::G1<other_curve<ppT>> P3_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G1<other_curve<ppT>>::one();
-    libff::G2<other_curve<ppT>> Q3_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G2<other_curve<ppT>>::one();
-
-    libff::G1<other_curve<ppT>> P4_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G1<other_curve<ppT>>::one();
-    libff::G2<other_curve<ppT>> Q4_val =
-        libff::Fr<other_curve<ppT>>::random_element() *
-        libff::G2<other_curve<ppT>>::one();
-
-    G1_variable<ppT> P1(pb, "P1");
-    G2_variable<ppT> Q1(pb, "Q1");
-    G1_variable<ppT> P2(pb, "P2");
-    G2_variable<ppT> Q2(pb, "Q2");
-    G1_variable<ppT> P3(pb, "P3");
-    G2_variable<ppT> Q3(pb, "Q3");
-    G1_variable<ppT> P4(pb, "P4");
-    G2_variable<ppT> Q4(pb, "Q4");
-
-    G1_precomputation<ppT> prec_P1;
-    precompute_G1_gadget<ppT> compute_prec_P1(
-        pb, P1, prec_P1, "compute_prec_P1");
-    G1_precomputation<ppT> prec_P2;
-    precompute_G1_gadget<ppT> compute_prec_P2(
-        pb, P2, prec_P2, "compute_prec_P2");
-    G1_precomputation<ppT> prec_P3;
-    precompute_G1_gadget<ppT> compute_prec_P3(
-        pb, P3, prec_P3, "compute_prec_P3");
-    G1_precomputation<ppT> prec_P4;
-    precompute_G1_gadget<ppT> compute_prec_P4(
-        pb, P4, prec_P4, "compute_prec_P4");
-    G2_precomputation<ppT> prec_Q1;
-    precompute_G2_gadget<ppT> compute_prec_Q1(
-        pb, Q1, prec_Q1, "compute_prec_Q1");
-    G2_precomputation<ppT> prec_Q2;
-    precompute_G2_gadget<ppT> compute_prec_Q2(
-        pb, Q2, prec_Q2, "compute_prec_Q2");
-    G2_precomputation<ppT> prec_Q3;
-    precompute_G2_gadget<ppT> compute_prec_Q3(
-        pb, Q3, prec_Q3, "compute_prec_Q3");
-    G2_precomputation<ppT> prec_Q4;
-    precompute_G2_gadget<ppT> compute_prec_Q4(
-        pb, Q4, prec_Q4, "compute_prec_Q4");
-
-    Fqk_variable<ppT> result(pb, "result");
-
-    mnt_e_times_e_times_e_over_e_miller_loop_gadget<ppT> miller(
-        pb,
-        prec_P1,
-        prec_Q1,
-        prec_P2,
-        prec_Q2,
-        prec_P3,
-        prec_Q3,
-        prec_P4,
-        prec_Q4,
-        result,
-        "miller");
-
-    PROFILE_CONSTRAINTS(pb, "precompute P")
-    {
-        compute_prec_P1.generate_r1cs_constraints();
-        compute_prec_P2.generate_r1cs_constraints();
-        compute_prec_P3.generate_r1cs_constraints();
-        compute_prec_P4.generate_r1cs_constraints();
-    }
-    PROFILE_CONSTRAINTS(pb, "precompute Q")
-    {
-        compute_prec_Q1.generate_r1cs_constraints();
-        compute_prec_Q2.generate_r1cs_constraints();
-        compute_prec_Q3.generate_r1cs_constraints();
-        compute_prec_Q4.generate_r1cs_constraints();
-    }
-    PROFILE_CONSTRAINTS(pb, "Miller loop")
-    {
-        miller.generate_r1cs_constraints();
-    }
-    PRINT_CONSTRAINT_PROFILING();
-
-    P1.generate_r1cs_witness(P1_val);
-    compute_prec_P1.generate_r1cs_witness();
-    Q1.generate_r1cs_witness(Q1_val);
-    compute_prec_Q1.generate_r1cs_witness();
-    P2.generate_r1cs_witness(P2_val);
-    compute_prec_P2.generate_r1cs_witness();
-    Q2.generate_r1cs_witness(Q2_val);
-    compute_prec_Q2.generate_r1cs_witness();
-    P3.generate_r1cs_witness(P3_val);
-    compute_prec_P3.generate_r1cs_witness();
-    Q3.generate_r1cs_witness(Q3_val);
-    compute_prec_Q3.generate_r1cs_witness();
-    P4.generate_r1cs_witness(P4_val);
-    compute_prec_P4.generate_r1cs_witness();
-    Q4.generate_r1cs_witness(Q4_val);
-    compute_prec_Q4.generate_r1cs_witness();
-    miller.generate_r1cs_witness();
-
-    ASSERT_TRUE(pb.is_satisfied());
-
-    libff::affine_ate_G1_precomp<other_curve<ppT>> native_prec_P1 =
-        other_curve<ppT>::affine_ate_precompute_G1(P1_val);
-    libff::affine_ate_G2_precomp<other_curve<ppT>> native_prec_Q1 =
-        other_curve<ppT>::affine_ate_precompute_G2(Q1_val);
-    libff::affine_ate_G1_precomp<other_curve<ppT>> native_prec_P2 =
-        other_curve<ppT>::affine_ate_precompute_G1(P2_val);
-    libff::affine_ate_G2_precomp<other_curve<ppT>> native_prec_Q2 =
-        other_curve<ppT>::affine_ate_precompute_G2(Q2_val);
-    libff::affine_ate_G1_precomp<other_curve<ppT>> native_prec_P3 =
-        other_curve<ppT>::affine_ate_precompute_G1(P3_val);
-    libff::affine_ate_G2_precomp<other_curve<ppT>> native_prec_Q3 =
-        other_curve<ppT>::affine_ate_precompute_G2(Q3_val);
-    libff::affine_ate_G1_precomp<other_curve<ppT>> native_prec_P4 =
-        other_curve<ppT>::affine_ate_precompute_G1(P4_val);
-    libff::affine_ate_G2_precomp<other_curve<ppT>> native_prec_Q4 =
-        other_curve<ppT>::affine_ate_precompute_G2(Q4_val);
-    libff::Fqk<other_curve<ppT>> native_result =
-        (other_curve<ppT>::affine_ate_miller_loop(
-             native_prec_P1, native_prec_Q1) *
-         other_curve<ppT>::affine_ate_miller_loop(
-             native_prec_P2, native_prec_Q2) *
-         other_curve<ppT>::affine_ate_miller_loop(
-             native_prec_P3, native_prec_Q3) *
-         other_curve<ppT>::affine_ate_miller_loop(
-             native_prec_P4, native_prec_Q4)
-             .inverse());
-
-    printf(
-        "number of constraints for e times e times e over e Miller loop (Fr is "
-        "%s)  = %zu\n",
-        annotation.c_str(),
-        pb.num_constraints());
-
-    ASSERT_EQ(native_result, result.get_element());
-}
-
-/// Generic test code to check the miller loop against an expected result.
-template<typename ppT>
 void test_e_times_e_times_e_over_e_miller_loop(
     const libff::G1<other_curve<ppT>> &P1_val,
     const libff::G2<other_curve<ppT>> &Q1_val,
@@ -640,60 +562,72 @@ void test_e_times_e_times_e_over_e_miller_loop(
     ASSERT_EQ(expect_result, result.get_element());
 }
 
-TEST(Pairing, MNT4_G1_Precompute)
+template<typename ppT>
+void test_mnt_e_times_e_times_e_over_e_miller_loop(
+    const std::string &annotation)
 {
-    test_G1_variable_precomp<libff::mnt4_pp>("mnt4");
+    using npp = other_curve<ppT>;
+
+    libff::G1<npp> P1_val =
+        libff::Fr<npp>::random_element() * libff::G1<npp>::one();
+    libff::G2<npp> Q1_val =
+        libff::Fr<npp>::random_element() * libff::G2<npp>::one();
+
+    libff::G1<npp> P2_val =
+        libff::Fr<npp>::random_element() * libff::G1<npp>::one();
+    libff::G2<npp> Q2_val =
+        libff::Fr<npp>::random_element() * libff::G2<npp>::one();
+
+    libff::G1<npp> P3_val =
+        libff::Fr<npp>::random_element() * libff::G1<npp>::one();
+    libff::G2<npp> Q3_val =
+        libff::Fr<npp>::random_element() * libff::G2<npp>::one();
+
+    libff::G1<npp> P4_val =
+        libff::Fr<npp>::random_element() * libff::G1<npp>::one();
+    libff::G2<npp> Q4_val =
+        libff::Fr<npp>::random_element() * libff::G2<npp>::one();
+
+    libff::affine_ate_G1_precomp<npp> native_prec_P1 =
+        npp::affine_ate_precompute_G1(P1_val);
+    libff::affine_ate_G2_precomp<npp> native_prec_Q1 =
+        npp::affine_ate_precompute_G2(Q1_val);
+    libff::affine_ate_G1_precomp<npp> native_prec_P2 =
+        npp::affine_ate_precompute_G1(P2_val);
+    libff::affine_ate_G2_precomp<npp> native_prec_Q2 =
+        npp::affine_ate_precompute_G2(Q2_val);
+    libff::affine_ate_G1_precomp<npp> native_prec_P3 =
+        npp::affine_ate_precompute_G1(P3_val);
+    libff::affine_ate_G2_precomp<npp> native_prec_Q3 =
+        npp::affine_ate_precompute_G2(Q3_val);
+    libff::affine_ate_G1_precomp<npp> native_prec_P4 =
+        npp::affine_ate_precompute_G1(P4_val);
+    libff::affine_ate_G2_precomp<npp> native_prec_Q4 =
+        npp::affine_ate_precompute_G2(Q4_val);
+    libff::Fqk<npp> native_result =
+        (npp::affine_ate_miller_loop(native_prec_P1, native_prec_Q1) *
+         npp::affine_ate_miller_loop(native_prec_P2, native_prec_Q2) *
+         npp::affine_ate_miller_loop(native_prec_P3, native_prec_Q3) *
+         npp::affine_ate_miller_loop(native_prec_P4, native_prec_Q4).inverse());
+
+    test_e_times_e_times_e_over_e_miller_loop<ppT>(
+        P1_val,
+        Q1_val,
+        P2_val,
+        Q2_val,
+        P3_val,
+        Q3_val,
+        P4_val,
+        Q4_val,
+        native_result,
+        annotation);
 }
 
-TEST(Pairing, MNT6_G1_Precompute)
+template<typename ppT>
+void test_bls_e_times_e_times_e_over_e_miller_loop(
+    const std::string &annotation)
 {
-    test_G1_variable_precomp<libff::mnt6_pp>("mnt6");
-}
-
-TEST(Pairing, MNT4_G2_Precompute)
-{
-    test_G2_variable_precomp<libff::mnt4_pp>("mnt4");
-}
-
-TEST(Pairing, MNT6_G2_Precompute)
-{
-    test_G2_variable_precomp<libff::mnt6_pp>("mnt6");
-}
-
-TEST(Pairing, MNT4_Miller_Loop)
-{
-    test_mnt_miller_loop<libff::mnt4_pp>("mnt4");
-}
-
-TEST(Pairing, MNT6_Miller_Loop)
-{
-    test_mnt_miller_loop<libff::mnt6_pp>("mnt6");
-}
-
-TEST(Pairing, MNT4_e_over_e_Miller_Loop)
-{
-    test_mnt_e_over_e_miller_loop<libff::mnt4_pp>("mnt4");
-}
-
-TEST(Pairing, MNT6_e_over_e_Miller_Loop)
-{
-    test_mnt_e_over_e_miller_loop<libff::mnt6_pp>("mnt6");
-}
-
-TEST(Pairing, MNT4_e_times_e_times_e_over_e_Miller_Loop)
-{
-    test_mnt_e_times_e_times_e_over_e_miller_loop<libff::mnt4_pp>("mnt4");
-}
-
-TEST(Pairing, MNT6_e_times_e_times_e_over_e_Miller_Loop)
-{
-    test_mnt_e_times_e_times_e_over_e_miller_loop<libff::mnt6_pp>("mnt6");
-}
-
-TEST(MillerLoopGadgets, TestBlsEEEoverEmillerLoop)
-{
-    using wpp = libff::bw6_761_pp;
-    using npp = libff::bls12_377_pp;
+    using npp = other_curve<ppT>;
 
     libff::G1<npp> P1_val =
         libff::Fr<npp>::random_element() * libff::G1<npp>::one();
@@ -744,7 +678,7 @@ TEST(MillerLoopGadgets, TestBlsEEEoverEmillerLoop)
         npp::final_exponentiation(miller_P4_Q4.inverse()),
         npp::final_exponentiation(miller_P4_Q4_inv));
 
-    test_e_times_e_times_e_over_e_miller_loop<wpp>(
+    test_e_times_e_times_e_over_e_miller_loop<ppT>(
         P1_val,
         Q1_val,
         P2_val,
@@ -754,7 +688,68 @@ TEST(MillerLoopGadgets, TestBlsEEEoverEmillerLoop)
         P4_val,
         Q4_val,
         native_result,
-        " test_eee_over_e_miller_loop_bls12_377");
+        annotation);
+}
+
+TEST(Pairing, MNT4_G1_Precompute)
+{
+    test_G1_variable_precomp<libff::mnt4_pp>("mnt4");
+}
+
+TEST(Pairing, MNT6_G1_Precompute)
+{
+    test_G1_variable_precomp<libff::mnt6_pp>("mnt6");
+}
+
+TEST(Pairing, MNT4_G2_Precompute)
+{
+    test_G2_variable_precomp<libff::mnt4_pp>("mnt4");
+}
+
+TEST(Pairing, MNT6_G2_Precompute)
+{
+    test_G2_variable_precomp<libff::mnt6_pp>("mnt6");
+}
+
+TEST(Pairing, MNT4_Miller_Loop)
+{
+    test_mnt_miller_loop<libff::mnt4_pp>("mnt4");
+}
+
+TEST(Pairing, MNT6_Miller_Loop)
+{
+    test_mnt_miller_loop<libff::mnt6_pp>("mnt6");
+}
+
+TEST(Pairing, BLS12_377_Miller_Loop)
+{
+    test_bls_miller_loop<libff::bw6_761_pp>("bls12_377");
+}
+
+TEST(Pairing, MNT4_e_over_e_Miller_Loop)
+{
+    test_mnt_e_over_e_miller_loop<libff::mnt4_pp>("mnt4");
+}
+
+TEST(Pairing, MNT6_e_over_e_Miller_Loop)
+{
+    test_mnt_e_over_e_miller_loop<libff::mnt6_pp>("mnt6");
+}
+
+TEST(Pairing, MNT4_e_times_e_times_e_over_e_Miller_Loop)
+{
+    test_mnt_e_times_e_times_e_over_e_miller_loop<libff::mnt4_pp>("mnt4");
+}
+
+TEST(Pairing, MNT6_e_times_e_times_e_over_e_Miller_Loop)
+{
+    test_mnt_e_times_e_times_e_over_e_miller_loop<libff::mnt6_pp>("mnt6");
+}
+
+TEST(Pairing, BLS12_377_e_times_e_times_e_over_e_Miller_Loop)
+{
+    test_bls_e_times_e_times_e_over_e_miller_loop<libff::bw6_761_pp>(
+        "bls12_377");
 }
 
 } // namespace libsnark

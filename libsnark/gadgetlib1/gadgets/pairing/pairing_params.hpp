@@ -65,8 +65,9 @@ namespace libsnark
  *       typedef my_Fqk_mul_gadget_type Fqk_mul_gadget_type;
  *       typedef my_Fqk_sqr_gadget_type Fqk_sqr_gadget_type;
  *       typedef my_other_curve_type other_curve_type;
+ *       typedef my_miller_loop_gadget_type miller_loop_gadget_type;
  *       typedef my_e_over_e_miller_loop_gadget_type
- *       typedef my_e_times_e_e_miller_loop_gadget_type;
+ *           e_over_e_miller_loop_gadget_type;
  *       typedef my_e_times_e_over_e_miller_loop_gadget_type
  *           e_times_e_over_e_miller_loop_gadget_type;
  *       typedef my_e_times_e_times_e_over_e_miller_loop_gadget_type
@@ -136,6 +137,10 @@ using precompute_G1_gadget =
 template<typename ppT>
 using precompute_G2_gadget =
     typename pairing_selector<ppT>::precompute_G2_gadget_type;
+
+template<typename ppT>
+using miller_loop_gadget =
+    typename pairing_selector<ppT>::miller_loop_gadget_type;
 
 template<typename ppT>
 using e_over_e_miller_loop_gadget =

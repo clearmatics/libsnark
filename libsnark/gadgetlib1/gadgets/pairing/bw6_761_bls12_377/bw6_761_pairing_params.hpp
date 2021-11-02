@@ -27,6 +27,7 @@ template<typename ppT> class bls12_377_G1_precomputation;
 template<typename ppT> class bls12_377_G1_precompute_gadget;
 template<typename ppT> class bls12_377_G2_precomputation;
 template<typename ppT> class bls12_377_G2_precompute_gadget;
+template<typename ppT> class bls12_377_miller_loop_gadget;
 template<typename ppT>
 class bls12_377_e_times_e_times_e_over_e_miller_loop_gadget;
 template<typename ppT> class bls12_377_final_exp_gadget;
@@ -71,6 +72,9 @@ public:
         G2_precomputation_type;
     typedef bls12_377_G2_precompute_gadget<libff::bw6_761_pp>
         precompute_G2_gadget_type;
+
+    typedef bls12_377_miller_loop_gadget<libff::bw6_761_pp>
+        miller_loop_gadget_type;
 
     // Not implemented:
     // typedef bls12_377_e_over_e_miller_loop_gadget
