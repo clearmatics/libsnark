@@ -83,6 +83,17 @@ public:
     FieldT get_field_element_from_bits(const protoboard<FieldT> &pb) const;
 };
 
+/// A utility function which creates and allocates a variable in a single step
+/// (and can therefore be used in initalizer lists, which greatly simplifies
+/// many constructors).
+///
+/// TODO: Why does pb_variable not have an allocating constructor of this form,
+/// even further simplifying a lot of code. Move this to an appropriate
+/// constructor if there are no issues.
+template<typename FieldT>
+pb_variable<FieldT> pb_variable_allocate(
+    protoboard<FieldT> &pb, const std::string &annotation);
+
 /* index 0 corresponds to the constant term (used in legacy code) */
 #define ONE pb_variable<FieldT>(0)
 

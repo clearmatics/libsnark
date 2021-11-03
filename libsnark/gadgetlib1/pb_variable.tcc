@@ -272,6 +272,15 @@ FieldT pb_linear_combination_array<FieldT>::get_field_element_from_bits(
 }
 
 template<typename FieldT>
+pb_variable<FieldT> pb_variable_allocate(
+    protoboard<FieldT> &pb, const std::string &annotation)
+{
+    pb_variable<FieldT> var;
+    var.allocate(pb, annotation);
+    return var;
+}
+
+template<typename FieldT>
 linear_combination<FieldT> pb_sum(const pb_linear_combination_array<FieldT> &v)
 {
     linear_combination<FieldT> result;
