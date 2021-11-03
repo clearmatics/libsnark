@@ -141,7 +141,7 @@ bls12_377_G2_membership_check_gadget<wppT>::
           pb,
           bls12_377_g2_untwist_frobenius_twist(
               pb, P, 1, FMT(annotation_prefix, " psi(P)")),
-          g2_variable_negate(pb, P, FMT(annotation_prefix, " -P")),
+          -P,
           G2_variable<wppT>(pb, FMT(annotation_prefix, "psi(P)-P")),
           FMT(annotation_prefix, " _psi_P_minus_P"))
     // [t](\psi(P) - P)
@@ -183,7 +183,7 @@ void bls12_377_G2_membership_check_gadget<wppT>::generate_r1cs_witness()
 {
     _P_checker.generate_r1cs_witness();
 
-    // Evaluate result of untwist_frobenius_twist and g2_variable_negate
+    // Evaluate result of untwist_frobenius_twist and -P
     _psi_P_minus_P.A.X->evaluate();
     _psi_P_minus_P.A.Y->evaluate();
     _psi_P_minus_P.B.X->evaluate();

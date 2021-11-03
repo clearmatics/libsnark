@@ -52,6 +52,8 @@ public:
         const Fqe_variable<ppT> &Y,
         const std::string &annotation_prefix);
 
+    G2_variable operator-() const;
+
     void generate_r1cs_witness(const libff::G2<other_curve<ppT>> &Q);
 
     libff::G2<other_curve<ppT>> get_element() const;
@@ -227,15 +229,6 @@ private:
     void generate_fpe_equality_constraints(
         const Fp2_variable<FqeT> &a, const Fp2_variable<FqeT> &b);
 };
-
-/// Negate a G2 variable and return the result. (Note that evaluate should be
-/// called on the result, or its components, before using it in witness
-/// generation).
-template<typename wppT>
-G2_variable<wppT> g2_variable_negate(
-    protoboard<libff::Fr<wppT>> &pb,
-    const G2_variable<wppT> &g2,
-    const std::string &annotation_prefix);
 
 /// Multiplication by constant scalar (leverages
 /// point_mul_by_const_scalar_gadget - scalar_multiplication.hpp).

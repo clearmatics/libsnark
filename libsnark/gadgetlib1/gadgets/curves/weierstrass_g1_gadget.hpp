@@ -24,9 +24,7 @@
 namespace libsnark
 {
 
-/**
- * Gadget that represents a G1 variable.
- */
+/// Gadget that represents a G1 variable.
 template<typename ppT> class G1_variable : public gadget<libff::Fr<ppT>>
 {
 public:
@@ -42,6 +40,17 @@ public:
         protoboard<FieldT> &pb,
         const libff::G1<other_curve<ppT>> &P,
         const std::string &annotation_prefix);
+
+    // NOTE: pb and annotation_prefix are redundant here, but required because
+    // of the inheritance from gadget (and in order to construct a new
+    // pb_linear_combination in operator-()).
+    G1_variable(
+        protoboard<FieldT> &pb,
+        const pb_linear_combination<FieldT> &X,
+        const pb_linear_combination<FieldT> &Y,
+        const std::string &annotation_prefix);
+
+    G1_variable operator-() const;
 
     void generate_r1cs_witness(const libff::G1<other_curve<ppT>> &elt);
 

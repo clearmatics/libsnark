@@ -53,6 +53,26 @@ G1_variable<ppT>::G1_variable(
 }
 
 template<typename ppT>
+G1_variable<ppT>::G1_variable(
+    protoboard<FieldT> &pb,
+    const pb_linear_combination<FieldT> &X,
+    const pb_linear_combination<FieldT> &Y,
+    const std::string &annotation_prefix)
+    : gadget<FieldT>(pb, annotation_prefix), X(X), Y(Y)
+{
+    all_vars.emplace_back(X);
+    all_vars.emplace_back(Y);
+}
+
+template<typename ppT> G1_variable<ppT> G1_variable<ppT>::operator-() const
+{
+    pb_linear_combination<FieldT> minus_Y;
+    minus_Y.assign(this->pb, -Y);
+    return G1_variable<ppT>(
+        this->pb, X, minus_Y, FMT(this->annotation_prefix, " negative"));
+}
+
+template<typename ppT>
 void G1_variable<ppT>::generate_r1cs_witness(
     const libff::G1<other_curve<ppT>> &el)
 {
