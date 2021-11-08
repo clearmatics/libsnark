@@ -99,9 +99,9 @@ public:
     precompute_G2_gadget<ppT> compute_B_precomp;
     G1_precomputation<ppT> C_precomp;
     precompute_G1_gadget<ppT> compute_C_precomp;
-    // TODO: Should be able to initialize _D_precomp as constants
+    // D_precomp is computed from (constant) G2::one(), and baked into the
+    // circuit, saving a few constraints.
     G2_precomputation<ppT> D_precomp;
-    precompute_G2_gadget<ppT> compute_D_precomp;
 
     pb_variable<libff::Fr<ppT>> check_result;
     check_e_equals_e_gadget<ppT> check_pairing_equality;

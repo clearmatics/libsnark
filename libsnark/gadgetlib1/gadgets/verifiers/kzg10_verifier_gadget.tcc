@@ -100,15 +100,10 @@ kzg10_verifier_gadget<ppT>::kzg10_verifier_gadget(
     , C_precomp()
     , compute_C_precomp(
           pb, C, C_precomp, FMT(annotation_prefix, " compute_C_precomp"))
-    , D_precomp()
-    , compute_D_precomp(
+    , D_precomp(
           pb,
-          G2_variable<ppT>(
-              pb,
-              libff::G2<other_curve<ppT>>::one(),
-              FMT(annotation_prefix, " one_G2")),
-          D_precomp,
-          FMT(annotation_prefix, " compute_D_precomp"))
+          libff::G2<other_curve<ppT>>::one(),
+          FMT(annotation_prefix, " D_precomp"))
 
     , check_result(pb_variable_allocate<FieldT>(
           pb, FMT(annotation_prefix, " check_result")))
@@ -137,7 +132,6 @@ void kzg10_verifier_gadget<ppT>::generate_r1cs_constraints()
     compute_A_precomp.generate_r1cs_constraints();
     compute_B_precomp.generate_r1cs_constraints();
     compute_C_precomp.generate_r1cs_constraints();
-    compute_D_precomp.generate_r1cs_constraints();
     check_pairing_equality.generate_r1cs_constraints();
 
     // group_elements_non_zero =
@@ -168,7 +162,6 @@ template<typename ppT> void kzg10_verifier_gadget<ppT>::generate_r1cs_witness()
     compute_A_precomp.generate_r1cs_witness();
     compute_B_precomp.generate_r1cs_witness();
     compute_C_precomp.generate_r1cs_witness();
-    compute_D_precomp.generate_r1cs_witness();
     check_pairing_equality.generate_r1cs_witness();
 
     const FieldT group_elements_non_zero_val =
