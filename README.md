@@ -240,7 +240,7 @@ sudo yum install \
 Fetch dependencies from their GitHub repos:
 
 ```console
-git submodule init && git submodule update
+git submodule update --init --recursive
 ```
 
 Create the Makefile:
