@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         compiler: [g++]
+        build_type: [Debug, Release]
 
     steps:
     - uses: actions/checkout@v2
@@ -31,8 +32,8 @@ jobs:
       env:
         CXX: ${{ matrix.compiler }}
         CXXFLAGS: "-Werror"
-      run: mkdir build && cd build && cmake ..
+      run: mkdir build && cd build && cmake -DDEBUG=1 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
     - name: build
-      run: cd build && make
+      run: cd build && make -j $(($(nproc)+1))
     - name: test
-      run: cd build && make check
+      run: cd build && make check -j $(($(nproc)+1))

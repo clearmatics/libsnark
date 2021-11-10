@@ -40,7 +40,7 @@ const static size_t MAX_FMT = 256;
 #endif
     va_end(args);
     GADGETLIB_ASSERT(
-        strChk >= 0 && strChk < MAX_FMT,
+        strChk >= 0 && (size_t)strChk < MAX_FMT,
         "String length larger than buffer. Shorten"
         " string or increase buffer size defined in \"MAX_FMT\".");
     return ::std::string(buf);
