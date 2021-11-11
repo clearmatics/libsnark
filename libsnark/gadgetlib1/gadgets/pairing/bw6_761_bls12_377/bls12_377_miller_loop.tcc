@@ -407,7 +407,7 @@ bls12_377_e_times_e_times_e_over_e_miller_loop_gadget<ppT>::
             FMT(annotation_prefix, " _f_ell_P[%zu]", _f_ell_P.size())));
         f = &_f_ell_P.back()->result();
 
-        // f <- f^2 * ell_Q1(P1)
+        // f <- f^2 * ell_Q4(P4)
         _f_ell_P.emplace_back(new bls12_377_ate_compute_f_ell_P<ppT>(
             pb,
             *P4_prec._Px,
