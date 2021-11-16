@@ -194,18 +194,19 @@ public:
   if X != 0 then R = 1 and I = X^{-1}
 */
 
+/// Output is 0 iff the sum of inputs is 0.  Output is 1 otherwise.
 template<typename FieldT> class disjunction_gadget : public gadget<FieldT>
 {
 private:
     pb_variable<FieldT> inv;
 
 public:
-    const pb_variable_array<FieldT> inputs;
+    const pb_linear_combination_array<FieldT> inputs;
     const pb_variable<FieldT> output;
 
     disjunction_gadget(
         protoboard<FieldT> &pb,
-        const pb_variable_array<FieldT> &inputs,
+        const pb_linear_combination_array<FieldT> &inputs,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "")
         : gadget<FieldT>(pb, annotation_prefix), inputs(inputs), output(output)
@@ -217,8 +218,6 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
-
-template<typename FieldT> void test_disjunction_gadget(const size_t n);
 
 template<typename FieldT> class conjunction_gadget : public gadget<FieldT>
 {
@@ -243,8 +242,6 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
-
-template<typename FieldT> void test_conjunction_gadget(const size_t n);
 
 template<typename FieldT> class comparison_gadget : public gadget<FieldT>
 {
@@ -303,8 +300,6 @@ public:
     void generate_r1cs_witness();
 };
 
-template<typename FieldT> void test_comparison_gadget(const size_t n);
-
 template<typename FieldT> class inner_product_gadget : public gadget<FieldT>
 {
 private:
@@ -333,8 +328,6 @@ public:
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
-
-template<typename FieldT> void test_inner_product_gadget(const size_t n);
 
 template<typename FieldT>
 class loose_multiplexing_gadget : public gadget<FieldT>
@@ -384,8 +377,6 @@ public:
     void generate_r1cs_witness();
 };
 
-template<typename FieldT> void test_loose_multiplexing_gadget(const size_t n);
-
 template<typename FieldT, typename VarT>
 void create_linear_combination_constraints(
     protoboard<FieldT> &pb,
@@ -402,6 +393,7 @@ void create_linear_combination_witness(
     const VarT &target);
 
 } // namespace libsnark
+
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.tcc>
 
 #endif // BASIC_GADGETS_HPP_
