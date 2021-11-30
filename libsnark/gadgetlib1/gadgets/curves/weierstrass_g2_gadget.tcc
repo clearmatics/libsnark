@@ -62,6 +62,12 @@ G2_variable<ppT>::G2_variable(
     all_vars.insert(all_vars.end(), Y->all_vars.begin(), Y->all_vars.end());
 }
 
+template<typename ppT> G2_variable<ppT> G2_variable<ppT>::operator-() const
+{
+    return G2_variable<ppT>(
+        this->pb, *X, -(*Y), FMT(this->annotation_prefix, " negative"));
+}
+
 template<typename ppT>
 void G2_variable<ppT>::generate_r1cs_witness(
     const libff::G2<other_curve<ppT>> &Q)
@@ -401,15 +407,6 @@ void G2_equality_gadget<wppT>::generate_fpe_equality_constraints(
     this->pb.add_r1cs_constraint(
         r1cs_constraint<libff::Fr<wppT>>(a.c1, 1, b.c1),
         FMT(this->annotation_prefix, " c1"));
-}
-
-template<typename wppT>
-G2_variable<wppT> g2_variable_negate(
-    protoboard<libff::Fr<wppT>> &pb,
-    const G2_variable<wppT> &g2,
-    const std::string &annotation_prefix)
-{
-    return G2_variable<wppT>(pb, *g2.X, -*g2.Y, annotation_prefix);
 }
 
 } // namespace libsnark

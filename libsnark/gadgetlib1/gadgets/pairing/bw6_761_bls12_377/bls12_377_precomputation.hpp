@@ -20,6 +20,9 @@ public:
     std::shared_ptr<pb_linear_combination<FieldT>> _Px;
     std::shared_ptr<pb_linear_combination<FieldT>> _Py;
 
+    // Pointers _Px and _Py are assigned in the constructor of the
+    // precompute_G1_gadget. Until that is called, no reference should be made
+    // to these members.
     bls12_377_G1_precomputation();
 
     // Construct a populated G1_precomputation from a value. All terms are
