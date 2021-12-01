@@ -60,7 +60,7 @@ public:
     /// otherwise it sets `value` to `elt` and `is_identity` to false.
     void generate_r1cs_witness(const groupT &elt);
 
-    /// For the case where value has been set by other gadgets, and we simply
+    /// For the case where `value` has been set by other gadgets, and we simply
     /// wish to set whether this variable should be considered the identity.
     void generate_r1cs_witness(bool is_identity);
 
@@ -160,31 +160,31 @@ public:
     // The `is_identity` flags of A, B and result are known to be boolean by
     // the constraints in variable_or_identity.
     //
-    // The output from this gadget should therefore be be:
+    // The output from this gadget should therefore be:
     //
     //   result.is_identity = A.is_identity * B.is_identity
     //
-    //   result.value = variableSelectorT(  -- selector_A
+    //   result.value = variableSelectorT(  // selector_A
     //       A.is_identity,
-    //       variableSelectorT(             -- selector_A_not_identity
+    //       variableSelectorT(             // selector_A_not_identity
     //           B.is_identity,
-    //           add_result,                   -- A != 0 && B != 0
-    //           A.value),                     -- A != 0 && B == 0
-    //       variableSelectorT(             -- selector_A_is_identity
+    //           add_result,                   // A != 0 && B != 0
+    //           A.value),                     // A != 0 && B == 0
+    //       variableSelectorT(             // selector_A_is_identity
     //           B.is_identity,
-    //           B.value,                      -- A == 0 && B != 0
-    //           groupT::one())                -- B == 0 && B == 0
+    //           B.value,                      // A == 0 && B != 0
+    //           groupT::one())                // A == 0 && B == 0
     //
     // Note, this can be reduced to:
     //
     //   result.is_identity = A.is_identity * B.is_identity
     //
-    //   result.value = variableSelectorT(  -- selector_A
+    //   result.value = variableSelectorT(  // selector_A
     //       A.is_identity,
-    //       variableSelectorT(             -- selector_A_not_identity
+    //       variableSelectorT(             // selector_A_not_identity
     //           B.is_identity,
-    //           add_result,                   -- A != 0 && B != 0
-    //           A.value),                     -- A != 0 && B == 0
+    //           add_result,                   // A != 0 && B != 0
+    //           A.value),                     // A != 0 && B == 0
     //       B.value)
 
     variableT add_result;
@@ -233,14 +233,14 @@ public:
     // The `is_identity` flag of A is known to be boolean by the constraints in
     // variable_or_identity.
     //
-    // The output from this gadget should therefore be be:
+    // The output from this gadget should therefore be:
     //
     //   add_result = add(A.value, B)
     //
     //   result.value = variableSelectorT(
     //       A.is_identity,
-    //       B,                       -- A == 0 case
-    //       add_result)              -- A != 0 case
+    //       B,                       // A == 0 case
+    //       add_result)              // A != 0 case
 
     variableT result;
     variableT add_result;
@@ -379,8 +379,8 @@ public:
     // values (if the 0-th bit is 1), or some hard-coded values which are known
     // to work with addGadgetT (if 0-th bit is 0). This situation should not
     // arise in other cases, since all intermediate multiple of P are
-    // necessarily multiples strictly small than the (prime) order of the group
-    // - 1.
+    // necessarily multiples strictly smaller than the (prime) order of the
+    // group - 1.
 
     std::shared_ptr<selectVarOrVarIdentityGadget> final_add_input_left;
     std::shared_ptr<selectorGadgetT> final_add_input_right;

@@ -648,7 +648,7 @@ point_mul_by_scalar_gadget<
         groupVarOrIdentity(pb, FMT(annotation_prefix, " dbl_result[0]")),
         FMT(annotation_prefix, " dbl_gadgets[0]"));
 
-    // In psuedo-code:
+    // In pseudo-code:
     //
     //   if bits[0]:
     //     left_input = dbl_gadgets.back().result

@@ -19,12 +19,15 @@
 /// - [KZG10]:
 ///   Title: "Constant-Size Commitments to Polynomials and Their Applications"
 ///   eprint: https://www.iacr.org/archive/asiacrypt2010/6477178/6477178.pdf
+///
+/// The native implementation can be found in:
+///   libsnark/polynomial_commitments/kzg10.{hpp,tcc}
 
 namespace libsnark
 {
 
 /// The SRS for the KZG10 scheme, as protoboard variables. Names match those
-/// used in kzg10.hpp.
+/// used in the native implementation.
 template<typename ppT> class kzg10_srs_variable
 {
 public:
@@ -42,16 +45,15 @@ public:
 };
 
 /// The polynomial for the KZG10 scheme, as protoboard variables. This is just
-/// a G1_variable (see kzg10.hpp).
+/// a G1_variable (see the native implementation).
 template<typename ppT> using kzg10_commitment_variable = G1_variable<ppT>;
 
 /// The witness for the evaluation of a polynomial, as protoboard variables.
-/// This is also a single G1_variable (see kzg10.hpp).
+/// This is also a single G1_variable (see the native implementation).
 template<typename ppT> using kzg10_witness_variable = G1_variable<ppT>;
 
 /// Uses a nested pairing (via a pairing selector) to implement the
-/// verification step of [KZG10]. See kzg10.hpp for details of the native
-/// implementation.
+/// verification step of [KZG10]. See the native implementation for details.
 ///
 /// TODO: this gadget does not currently support either the evaluation point i
 /// or the result of polynomial evaluation being zero. This could potentially
@@ -86,7 +88,7 @@ public:
     G2_variable<ppT> B;
     G2_add_gadget<ppT> compute_B;
 
-    // _C = commit - poly_eval * G1::one()
+    // C = commit - poly_eval * G1::one()
     G1_variable_or_identity<ppT> poly_eval_in_G1;
     G1_mul_by_scalar_gadget<ppT> compute_poly_eval_in_G1;
     G1_variable<ppT> C;

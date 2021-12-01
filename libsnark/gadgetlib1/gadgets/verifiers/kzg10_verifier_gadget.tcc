@@ -25,7 +25,7 @@ kzg10_srs_variable<ppT>::kzg10_srs_variable(
     alpha_powers_g1.reserve(max_degree + 1);
     for (size_t i = 0; i < max_degree + 1; ++i) {
         alpha_powers_g1.emplace_back(
-            pb, FMT(annotation_prefix, " alpha_powers_g1[%zi]", i));
+            pb, FMT(annotation_prefix, " alpha_powers_g1[%zu]", i));
     }
 }
 

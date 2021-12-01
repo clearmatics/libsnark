@@ -138,7 +138,7 @@ template<typename wppT> void test_kzg10_verifier_gadget()
     test_polynomial_commitment_verifier_gadget<wppT, scheme>(
         srs, C + C, eval_witness, false);
 
-    // Invalid evaluation point / polyomial evaluation.
+    // Invalid evaluation point / polynomial evaluation.
     {
         evaluation_and_witness<npp, scheme> eval_witness_invalid = eval_witness;
         eval_witness_invalid.i += libff::Fr<npp>::one();

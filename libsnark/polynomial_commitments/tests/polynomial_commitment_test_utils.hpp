@@ -6,6 +6,9 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#ifndef LIBSNARK_POLYNOMIAL_COMMITMENTS_TESTS_POLYNOMIAL_COMMITMENT_TEST_UTILS_HPP_
+#define LIBSNARK_POLYNOMIAL_COMMITMENTS_TESTS_POLYNOMIAL_COMMITMENT_TEST_UTILS_HPP_
+
 namespace libsnark
 {
 
@@ -22,8 +25,8 @@ std::vector<libff::Fr<ppT>> gen_polynomial(const size_t degree)
     // First num_random_values are random (ensuring there are no zeroes)
     for (size_t i = 0; i < num_random_values; ++i) {
         coefficients.push_back(Field::random_element());
-        if (coefficients[i] == Field::zero()) {
-            coefficients[i] = -Field::one();
+        if (coefficients.back() == Field::zero()) {
+            coefficients.back() = -Field::one();
         }
     }
 
@@ -38,3 +41,5 @@ std::vector<libff::Fr<ppT>> gen_polynomial(const size_t degree)
 }
 
 } // namespace libsnark
+
+#endif // LIBSNARK_POLYNOMIAL_COMMITMENTS_TESTS_POLYNOMIAL_COMMITMENT_TEST_UTILS_HPP_
