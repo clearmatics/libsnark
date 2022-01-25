@@ -11,6 +11,7 @@
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/algebra/curves/bls12_377/bls12_377_pp.hpp>
 #include <libsnark/polynomial_commitments/kzg10.hpp>
+#include <libsnark/polynomial_commitments/kzg10_batched.hpp>
 #include <libsnark/polynomial_commitments/tests/polynomial_commitment_test_utils.hpp>
 
 const size_t MAX_DEGREE = 254;
@@ -99,6 +100,101 @@ template<typename ppT> void test_kzg10_commitment_with_known_secret()
     ASSERT_EQ(Field(397) * libff::G1<ppT>::one(), eval_witness);
 }
 
+template<typename ppT> void test_kzg10_batched_2_point()
+{
+    using Field = libff::Fr<ppT>;
+    using scheme = kzg10<ppT>;
+    using batch_scheme = kzg10_batched_2_point<ppT>;
+
+    static const size_t MAX_DEGREE_MULTI = 8;
+    const Field secret = Field(7);
+
+    // Generate 2 sets of polynomials
+    const std::vector<polynomial<Field>> fs{{
+        {{1, 2, 3, 4, 5, 6, 7, 8}},
+        {{11, 12, 13, 14, 15, 16, 17, 18}},
+        {{21, 22, 23, 24, 25, 26, 27, 28}},
+        {{31, 32, 33, 34, 35, 36, 37, 38}},
+    }};
+
+    const std::vector<polynomial<Field>> gs{{
+        {{71, 72, 73, 74, 75, 76, 77, 78}},
+        {{81, 82, 83, 84, 85, 86, 87, 88}},
+        {{91, 92, 93, 94, 95, 96, 97, 98}},
+    }};
+
+    // Evaluation points
+    const Field z_1("123");
+    const Field z_2("456");
+
+    // Verifiers random challenges
+    const Field gamma_1(54321);
+    const Field gamma_2(98760);
+
+    const typename batch_scheme::multi_point_evaluation_challenge challange(
+        z_1, z_2, gamma_1, gamma_2);
+
+    // srs
+    const typename scheme::srs srs =
+        scheme::setup_from_secret(MAX_DEGREE_MULTI, secret);
+
+    // commitments
+    std::vector<typename scheme::commitment> cm_1s;
+    cm_1s.reserve(fs.size());
+    for (const polynomial<Field> &f : fs) {
+        cm_1s.push_back(scheme::commit(srs, f));
+    }
+    ASSERT_EQ(fs.size(), cm_1s.size());
+
+    std::vector<typename scheme::commitment> cm_2s;
+    cm_2s.reserve(gs.size());
+    for (const polynomial<Field> &g : gs) {
+        cm_2s.push_back(scheme::commit(srs, g));
+    }
+    ASSERT_EQ(gs.size(), gs.size());
+
+    // Evaluation and witness
+    const typename batch_scheme::multi_point_evaluation_witness witness =
+        batch_scheme::create_witness(srs, challange, fs, gs);
+
+    // Check number of evaluations.
+    ASSERT_EQ(fs.size(), witness.s_1s.size());
+    ASSERT_EQ(gs.size(), witness.s_2s.size());
+
+    // Check evaluations are correct.
+    {
+        // Naively evaluate the h_1(X) and h_2(X) polynomials at the secret x.
+        // W_1 and W_2 should be these values encoded in G1.
+
+        Field h_1_x = Field::zero();
+        for (size_t i = 0; i < fs.size(); ++i) {
+            const polynomial<Field> &f_i = fs[i];
+            const Field f_x_minus_f_z_1 =
+                libfqfft::evaluate_polynomial(f_i.size(), f_i, secret) -
+                libfqfft::evaluate_polynomial(f_i.size(), f_i, z_1);
+            const Field gamma_power = gamma_1 ^ i;
+            h_1_x += gamma_power * f_x_minus_f_z_1 * ((secret - z_1).inverse());
+        }
+        ASSERT_EQ(h_1_x * libff::G1<ppT>::one(), witness.W_1);
+
+        Field h_2_x = Field::zero();
+        for (size_t i = 0; i < gs.size(); ++i) {
+            const polynomial<Field> &g_i = gs[i];
+            const Field g_x_minus_g_z_2 =
+                libfqfft::evaluate_polynomial(g_i.size(), g_i, secret) -
+                libfqfft::evaluate_polynomial(g_i.size(), g_i, z_2);
+            const Field gamma_power = challange.gamma_2 ^ i;
+            h_2_x += gamma_power * g_x_minus_g_z_2 * ((secret - z_2).inverse());
+        }
+        ASSERT_EQ(h_2_x * libff::G1<ppT>::one(), witness.W_2);
+    }
+
+    // Verify the witnesses
+    const Field r = Field(23546);
+    ASSERT_TRUE(
+        batch_scheme::verify_eval(srs, challange, cm_1s, cm_2s, witness, r));
+}
+
 template<typename ppT> void test_for_curve()
 {
     // Execute all tests for the given curve.
@@ -109,6 +205,7 @@ template<typename ppT> void test_for_curve()
     test_basic_commitment<ppT, kzg10<ppT>>();
     test_eval_commitment<ppT, kzg10<ppT>>();
     test_kzg10_commitment_with_known_secret<ppT>();
+    test_kzg10_batched_2_point<ppT>();
 }
 
 TEST(TestPolynomialCommitments, ALT_BN128)
