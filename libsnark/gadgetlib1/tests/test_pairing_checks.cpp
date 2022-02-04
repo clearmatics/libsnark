@@ -19,6 +19,91 @@
 namespace libsnark
 {
 
+/// Carry out a pairing check between elements of G1 and G2 defined over
+/// other_curve<ppT>, in a circuit defined over Fr<ppT>.
+template<typename ppT>
+bool test_check_e_equals_e_gadget(
+    libff::G1<other_curve<ppT>> l_P,
+    libff::G2<other_curve<ppT>> l_Q,
+    libff::G1<other_curve<ppT>> r_P,
+    libff::G2<other_curve<ppT>> r_Q,
+    libff::Fr<ppT> expected_result,
+    const std::string &annotation_prefix)
+{
+    protoboard<libff::Fr<ppT>> pb;
+    G1_variable<ppT> lhs_P(pb, FMT(annotation_prefix, " lhs_P"));
+    G2_variable<ppT> lhs_Q(pb, FMT(annotation_prefix, " lhs_Q"));
+    G1_variable<ppT> rhs_P(pb, FMT(annotation_prefix, " rhs_P"));
+    G2_variable<ppT> rhs_Q(pb, FMT(annotation_prefix, " rhs_Q"));
+
+    G1_precomputation<ppT> lhs_prec_P;
+    precompute_G1_gadget<ppT> compute_lhs_prec_P(
+        pb, lhs_P, lhs_prec_P, FMT(annotation_prefix, "compute_lhs_prec_P"));
+    G2_precomputation<ppT> lhs_prec_Q;
+    precompute_G2_gadget<ppT> compute_lhs_prec_Q(
+        pb, lhs_Q, lhs_prec_Q, FMT(annotation_prefix, "compute_lhs_prec_Q"));
+
+    G1_precomputation<ppT> rhs_prec_P;
+    precompute_G1_gadget<ppT> compute_rhs_prec_P(
+        pb, rhs_P, rhs_prec_P, FMT(annotation_prefix, " compute_rhs_prec1_P"));
+    G2_precomputation<ppT> rhs_prec_Q;
+    precompute_G2_gadget<ppT> compute_rhs_prec_Q(
+        pb, rhs_Q, rhs_prec_Q, FMT(annotation_prefix, " compute_rhs_prec1_Q"));
+
+    pb_variable<libff::Fr<ppT>> result;
+    result.allocate(pb, FMT(annotation_prefix, " result"));
+
+    check_e_equals_e_gadget<ppT> pairing_check(
+        pb,
+        lhs_prec_P,
+        lhs_prec_Q,
+        rhs_prec_P,
+        rhs_prec_Q,
+        result,
+        FMT(annotation_prefix, " pairing_check"));
+
+    PROFILE_CONSTRAINTS(pb, "precompute P")
+    {
+        compute_lhs_prec_P.generate_r1cs_constraints();
+        compute_rhs_prec_P.generate_r1cs_constraints();
+    }
+    PROFILE_CONSTRAINTS(pb, "precompute Q")
+    {
+        compute_lhs_prec_Q.generate_r1cs_constraints();
+        compute_rhs_prec_Q.generate_r1cs_constraints();
+    }
+    PROFILE_CONSTRAINTS(pb, "Pairing check")
+    {
+        pairing_check.generate_r1cs_constraints();
+    }
+    PRINT_CONSTRAINT_PROFILING();
+
+    generate_r1cs_equals_const_constraint<libff::Fr<ppT>>(
+        pb, result, expected_result, FMT(annotation_prefix, " result"));
+
+    lhs_P.generate_r1cs_witness(l_P);
+    compute_lhs_prec_P.generate_r1cs_witness();
+    lhs_Q.generate_r1cs_witness(l_Q);
+    compute_lhs_prec_Q.generate_r1cs_witness();
+
+    rhs_P.generate_r1cs_witness(r_P);
+    compute_rhs_prec_P.generate_r1cs_witness();
+    rhs_Q.generate_r1cs_witness(r_Q);
+    compute_rhs_prec_Q.generate_r1cs_witness();
+
+    pairing_check.generate_r1cs_witness();
+
+    assert(pb.is_satisfied());
+    printf(
+        "number of constraints for check_e_equals_e_gadget (Fr is "
+        "%s)  = %zu\n",
+        annotation_prefix.c_str(),
+        pb.num_constraints());
+
+    bool test_success = (pb.val(result) == expected_result);
+    return test_success;
+}
+
 /// In this test we carry out - via a circuit defined over Fr<ppT> - a pairing
 /// check between elements of G1 and G2 defined over other_curve<ppT>
 template<typename ppT>
@@ -169,12 +254,65 @@ bool test_check_e_equals_eee_gadget(
     assert(pb.is_satisfied());
     printf(
         "number of constraints for check_e_equals_eee_gadget (Fr is "
-        "%s)  = %zu\n",
+        "%s) = %zu\n",
         annotation_prefix.c_str(),
         pb.num_constraints());
 
     bool test_success = (pb.val(result) == expected_result);
     return test_success;
+}
+
+template<typename ppT>
+void test_valid_pairing_check_e_equals_e_gadget(const std::string &pairing_name)
+{
+    const libff::G1<other_curve<ppT>> G1_base =
+        libff::G1<other_curve<ppT>>::one();
+    const libff::G2<other_curve<ppT>> G2_base =
+        libff::G2<other_curve<ppT>>::one();
+
+    const libff::Fr<other_curve<ppT>> rhs_scalar1 =
+        libff::Fr<other_curve<ppT>>::random_element();
+    const libff::Fr<other_curve<ppT>> rhs_scalar2 =
+        libff::Fr<other_curve<ppT>>::random_element();
+
+    const libff::G1<other_curve<ppT>> rhs_pairing_P = rhs_scalar1 * G1_base;
+    const libff::G2<other_curve<ppT>> rhs_pairing_Q = rhs_scalar2 * G2_base;
+
+    // Set the LHS group elements such that the pairing check passes
+    const libff::G1<other_curve<ppT>> lhs_pairing_P =
+        (rhs_scalar1 * rhs_scalar2) * G1_base;
+    const libff::G2<other_curve<ppT>> lhs_pairing_Q = G2_base;
+
+    // Compute pairings "outside the circuit" to check the value of the LHS
+    // against the value of the RHS, and see if the pairing check
+    // is succesfull
+    libff::GT<other_curve<ppT>> expected_pairing_lhs =
+        other_curve<ppT>::final_exponentiation(other_curve<ppT>::miller_loop(
+            other_curve<ppT>::precompute_G1(lhs_pairing_P),
+            other_curve<ppT>::precompute_G2(lhs_pairing_Q)));
+
+    libff::GT<other_curve<ppT>> expected_pairing_rhs =
+        other_curve<ppT>::final_exponentiation(other_curve<ppT>::miller_loop(
+            other_curve<ppT>::precompute_G1(rhs_pairing_P),
+            other_curve<ppT>::precompute_G2(rhs_pairing_Q)));
+
+    // Make sure that the pairing check succeeds and the gadget is tested
+    // with the right expected value
+    const bool check_result = (expected_pairing_lhs == expected_pairing_rhs);
+    ASSERT_TRUE(check_result);
+
+    // Set the value of the expected value of the "output wire"
+    // of the pairing check gadget.
+    const libff::Fr<ppT> expected_result =
+        check_result ? libff::Fr<ppT>::one() : libff::Fr<ppT>::zero();
+    bool res = test_check_e_equals_e_gadget<ppT>(
+        lhs_pairing_P,
+        lhs_pairing_Q,
+        rhs_pairing_P,
+        rhs_pairing_Q,
+        expected_result,
+        "test_check_e_equals_e_gadget_" + pairing_name);
+    ASSERT_TRUE(res);
 }
 
 /// Create VALID test case by instantiating points from G1 and G2
@@ -184,7 +322,9 @@ bool test_check_e_equals_eee_gadget(
 /// As such, `ppT` represents the curve we use to encode the arithmetic
 /// circuit wire. In other words, the pairing check gadget called here
 /// will be instantiated from `libff::Fr<ppT>`.
-template<typename ppT> void test_valid_pairing_check_e_equals_eee_gadget()
+template<typename ppT>
+void test_valid_pairing_check_e_equals_eee_gadget(
+    const std::string &pairing_name)
 {
     const libff::G1<other_curve<ppT>> G1_base =
         libff::G1<other_curve<ppT>>::one();
@@ -265,7 +405,7 @@ template<typename ppT> void test_valid_pairing_check_e_equals_eee_gadget()
         rhs_pairing3_P,
         rhs_pairing3_Q,
         expected_result,
-        " test_check_e_equals_eee_gadget");
+        "test_check_e_equals_eee_gadget_" + pairing_name);
 
     // Check that the pairing check circuit returns the same result as
     // the one carried out "outside" the circuit (see above)
@@ -279,7 +419,9 @@ template<typename ppT> void test_valid_pairing_check_e_equals_eee_gadget()
 /// As such, `ppT` represents the curve we use to encode the arithmetic
 /// circuit wire. In other words, the pairing check gadget called here
 /// will be instantiated from `libff::Fr<ppT>`.
-template<typename ppT> void test_invalid_pairing_check_e_equals_eee_gadget()
+template<typename ppT>
+void test_invalid_pairing_check_e_equals_eee_gadget(
+    const std::string &pairing_name)
 {
     const libff::G1<other_curve<ppT>> G1_base =
         libff::G1<other_curve<ppT>>::one();
@@ -358,33 +500,45 @@ template<typename ppT> void test_invalid_pairing_check_e_equals_eee_gadget()
         rhs_pairing3_P,
         rhs_pairing3_Q,
         expected_result,
-        " test_check_e_equals_eee_gadget");
+        "test_check_e_equals_eee_gadget_" + pairing_name);
 
     // Check that the pairing check circuit returns the same result as
     // the one carried out "outside" the circuit (see above)
     ASSERT_TRUE(res);
 }
 
+TEST(MainTests, TestMntValidCheckEequalsEgadget)
+{
+    test_valid_pairing_check_e_equals_e_gadget<libff::mnt4_pp>("mnt4");
+    test_valid_pairing_check_e_equals_e_gadget<libff::mnt6_pp>("mnt6");
+}
+
+TEST(MainTests, TestBlsValidCheckEequalsEgadget)
+{
+    test_valid_pairing_check_e_equals_e_gadget<libff::bw6_761_pp>("bw6_761");
+}
+
 TEST(MainTests, TestMntValidCheckEequalsEEEgadget)
 {
-    test_valid_pairing_check_e_equals_eee_gadget<libff::mnt4_pp>();
-    test_valid_pairing_check_e_equals_eee_gadget<libff::mnt6_pp>();
+    test_valid_pairing_check_e_equals_eee_gadget<libff::mnt4_pp>("mnt4");
+    test_valid_pairing_check_e_equals_eee_gadget<libff::mnt6_pp>("mnt6");
 }
 
 TEST(MainTests, TestMntInvalidCheckEequalsEEEgadget)
 {
-    test_invalid_pairing_check_e_equals_eee_gadget<libff::mnt4_pp>();
-    test_invalid_pairing_check_e_equals_eee_gadget<libff::mnt6_pp>();
+    test_invalid_pairing_check_e_equals_eee_gadget<libff::mnt4_pp>("mnt4");
+    test_invalid_pairing_check_e_equals_eee_gadget<libff::mnt6_pp>("mnt6");
 }
 
 TEST(MainTests, TestBlsValidCheckEequalsEEEgadget)
 {
-    test_valid_pairing_check_e_equals_eee_gadget<libff::bw6_761_pp>();
+    test_valid_pairing_check_e_equals_eee_gadget<libff::bw6_761_pp>("bw6_761");
 }
 
 TEST(MainTests, TestBlsInvalidCheckEequalsEEEgadget)
 {
-    test_invalid_pairing_check_e_equals_eee_gadget<libff::bw6_761_pp>();
+    test_invalid_pairing_check_e_equals_eee_gadget<libff::bw6_761_pp>(
+        "bw6_761");
 }
 
 } // namespace libsnark
@@ -395,6 +549,8 @@ int main(int argc, char **argv)
     libff::mnt6_pp::init_public_params();
     libff::bw6_761_pp::init_public_params();
     libff::bls12_377_pp::init_public_params();
+    libff::inhibit_profiling_info = true;
+    libff::inhibit_profiling_counters = true;
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
