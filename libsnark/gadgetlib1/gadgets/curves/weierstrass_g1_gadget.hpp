@@ -202,6 +202,58 @@ using G1_mul_by_const_scalar_gadget = point_mul_by_const_scalar_gadget<
     G1_dbl_gadget<wppT>,
     libff::bigint<scalarLimbs>>;
 
+template<typename wppT>
+using G1_variable_or_identity =
+    variable_or_identity<wppT, libff::G1<other_curve<wppT>>, G1_variable<wppT>>;
+
+template<typename wppT>
+using G1_variable_or_identity_selector_gadget = variable_or_identity_selector<
+    wppT,
+    libff::G1<other_curve<wppT>>,
+    G1_variable<wppT>,
+    G1_variable_selector_gadget<wppT>>;
+
+template<typename wppT>
+using G1_variable_and_variable_or_identity_selector_gadget =
+    variable_and_variable_or_identity_selector<
+        wppT,
+        libff::G1<other_curve<wppT>>,
+        G1_variable<wppT>,
+        G1_variable_selector_gadget<wppT>>;
+
+template<typename wppT>
+using G1_add_variable_or_identity_gadget = add_variable_or_identity<
+    wppT,
+    libff::G1<other_curve<wppT>>,
+    G1_variable<wppT>,
+    G1_variable_selector_gadget<wppT>,
+    G1_add_gadget<wppT>>;
+
+template<typename wppT>
+using G1_add_variable_and_variable_or_identity_gadget =
+    add_variable_and_variable_or_identity<
+        wppT,
+        libff::G1<other_curve<wppT>>,
+        G1_variable<wppT>,
+        G1_variable_selector_gadget<wppT>,
+        G1_add_gadget<wppT>>;
+
+template<typename wppT>
+using G1_dbl_variable_or_identity_gadget = dbl_variable_or_identity<
+    wppT,
+    libff::G1<other_curve<wppT>>,
+    G1_variable<wppT>,
+    G1_dbl_gadget<wppT>>;
+
+template<typename wppT>
+using G1_mul_by_scalar_gadget = point_mul_by_scalar_gadget<
+    wppT,
+    libff::G1<other_curve<wppT>>,
+    G1_variable<wppT>,
+    G1_variable_selector_gadget<wppT>,
+    G1_add_gadget<wppT>,
+    G1_dbl_gadget<wppT>>;
+
 } // namespace libsnark
 
 #include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g1_gadget.tcc>
