@@ -39,72 +39,71 @@ public:
 
     using commitment = typename kzg10<ppT>::commitment;
 
-    using witness = typename kzg10<ppT>::witness;
-
-    /// The values chosen by the verifier in the interactive
-    /// protocol. Namely, the points at which to evaluate each set of
-    /// polynomials, and the randomness to use in witness generation.
-    class multi_point_evaluation_challenge
+    /// Claimed evaluations of 2 groups of polynomials, fs and gs, at 2 points
+    /// z_1 and z_2.  f_s are evaluated at z_1 and g_s are evaluated at z_2.
+    class evaluations
     {
     public:
-        const Field z_1;
-        const Field z_2;
-        const Field gamma_1;
-        const Field gamma_2;
+        std::vector<Field> s_1s;
+        std::vector<Field> s_2s;
 
-        multi_point_evaluation_challenge(
-            const Field &z_1,
-            const Field &z_2,
-            const Field &gamma_1,
-            const Field &gamma_2);
+        evaluations(std::vector<Field> &&fs, std::vector<Field> &&gs);
     };
 
     /// The evaluation witness created by the prover in the interactive
-    /// protocol. Given a multi_point_evaluation_challenge for 2 sets of
-    /// polynomials, return their evaluations (at z_1 for the first set, at z_2
-    /// for the second set), and a witness proving the correctness of these
-    /// evaluations to a verifier holding the commitments for the polynomials
-    /// in the 2 sets..
-    class multi_point_evaluation_witness
+    /// protocol. Given a challenge (gamma_1 and gamma_2) and the claimed
+    /// evaluation of 2 sets of polynomials, the prover returns this witness,
+    /// proving the correctness of the evaluations. A verifier holding the
+    /// commitments for all polynomials in the 2 sets can then verify this
+    /// witness.
+    class evaluation_witness
     {
     public:
-        // Evaluation of polynomials f_1s at z_1.
-        const std::vector<Field> s_1s;
-        // Evaluation of polynomials f_2s at z_2.
-        const std::vector<Field> s_2s;
         // Part of witness corresponding to evaluations of f_1s.
         const libff::G1<ppT> W_1;
         // Part of witness corresponding to evaluations of f_2s.
         const libff::G1<ppT> W_2;
 
-        multi_point_evaluation_witness(
-            const std::vector<Field> &&s_1s,
-            const std::vector<Field> &&s_2s,
-            const libff::G1<ppT> &W_1,
-            const libff::G1<ppT> &W_2);
+        evaluation_witness(
+            const libff::G1<ppT> &W_1, const libff::G1<ppT> &W_2);
     };
 
-    /// Evaluate the polynomials fs and gs at the points z_1 and z_2
-    /// respectively, and generate a witness to prove the correctness of these
-    /// evaluations. Returns a `multi_point_evaluation_witness` object holding
-    /// this data.
-    static multi_point_evaluation_witness create_witness(
-        const srs &srs,
-        const multi_point_evaluation_challenge &challenge,
+    /// Evaluate the polynomials and return an evaluation object. f_s are
+    /// evaluated at z_1 and g_s are evaluated at z_2.
+    static evaluations evaluate_polynomials(
         const std::vector<polynomial<Field>> &fs,
-        const std::vector<polynomial<Field>> &gs);
+        const std::vector<polynomial<Field>> &gs,
+        const Field &z_1,
+        const Field &z_2);
 
-    /// Given a `multi_point_evaluation_witness` generated for polynomials with
-    /// commitments `cm_1s` and `cm_2s`, in response to `challenge`, verify the
-    /// witnesses, and thereby that the given polynomials attain the claimed
-    /// values at the evaluation points.
-    static bool verify_eval(
+    /// Generate a witness to prove the correctness of these evaluations.
+    /// Returns a `multi_point_evaluation_witness` object holding this data.
+    static evaluation_witness create_evaluation_witness(
+        const std::vector<polynomial<Field>> &fs,
+        const std::vector<polynomial<Field>> &gs,
+        const Field &z_1,
+        const Field &z_2,
+        const evaluations &evaluations,
         const srs &srs,
-        const multi_point_evaluation_challenge &challenge,
+        const Field &gamma_1,
+        const Field &gamma_2);
+
+    /// Given an `evaluation` and `evaluation_witness` generated for
+    /// polynomials with commitments `cm_1s` and `cm_2s`, verify the witnesses
+    /// using randomness r. This convinces the verifier that the given
+    /// polynomials attain the claimed values at the evaluation points z_1 and
+    /// z_2.
+    static bool verify_evaluations(
+        const Field &z_1,
+        const Field &z_2,
+        const evaluations &evaluations,
+        const srs &srs,
+        const Field &gamma_1,
+        const Field &gamma_2,
+        const evaluation_witness &witness,
         const std::vector<commitment> &cm_1s,
         const std::vector<commitment> &cm_2s,
-        const multi_point_evaluation_witness &witness,
-        const libff::Fr<ppT> &r);
+        const Field &r);
 };
 
 } // namespace libsnark
