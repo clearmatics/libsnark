@@ -123,17 +123,6 @@ template<typename ppT> void test_kzg10_batched_2_point()
         {{91, 92, 93, 94, 95, 96, 97, 98}},
     }};
 
-    // Evaluation points
-    const Field z_1("123");
-    const Field z_2("456");
-
-    // Verifiers random challenges
-    const Field gamma_1(54321);
-    const Field gamma_2(98760);
-
-    const typename batch_scheme::multi_point_evaluation_challenge challange(
-        z_1, z_2, gamma_1, gamma_2);
-
     // srs
     const typename scheme::srs srs =
         scheme::setup_from_secret(MAX_DEGREE_MULTI, secret);
@@ -153,13 +142,24 @@ template<typename ppT> void test_kzg10_batched_2_point()
     }
     ASSERT_EQ(gs.size(), gs.size());
 
-    // Evaluation and witness
-    const typename batch_scheme::multi_point_evaluation_witness witness =
-        batch_scheme::create_witness(srs, challange, fs, gs);
+    // Evaluation points
+    const Field z_1("123");
+    const Field z_2("456");
 
-    // Check number of evaluations.
-    ASSERT_EQ(fs.size(), witness.s_1s.size());
-    ASSERT_EQ(gs.size(), witness.s_2s.size());
+    // Evaluations
+    const typename batch_scheme::evaluations evaluations =
+        batch_scheme::evaluate_polynomials(fs, gs, z_1, z_2);
+    ASSERT_EQ(fs.size(), evaluations.s_1s.size());
+    ASSERT_EQ(gs.size(), evaluations.s_2s.size());
+
+    // Verifier's random challenges
+    const Field gamma_1(54321);
+    const Field gamma_2(98760);
+
+    // Witness for evaluations
+    const typename batch_scheme::evaluation_witness witness =
+        batch_scheme::create_evaluation_witness(
+            fs, gs, z_1, z_2, evaluations, srs, gamma_1, gamma_2);
 
     // Check evaluations are correct.
     {
@@ -183,7 +183,7 @@ template<typename ppT> void test_kzg10_batched_2_point()
             const Field g_x_minus_g_z_2 =
                 libfqfft::evaluate_polynomial(g_i.size(), g_i, secret) -
                 libfqfft::evaluate_polynomial(g_i.size(), g_i, z_2);
-            const Field gamma_power = challange.gamma_2 ^ i;
+            const Field gamma_power = gamma_2 ^ i;
             h_2_x += gamma_power * g_x_minus_g_z_2 * ((secret - z_2).inverse());
         }
         ASSERT_EQ(h_2_x * libff::G1<ppT>::one(), witness.W_2);
@@ -191,8 +191,17 @@ template<typename ppT> void test_kzg10_batched_2_point()
 
     // Verify the witnesses
     const Field r = Field(23546);
-    ASSERT_TRUE(
-        batch_scheme::verify_eval(srs, challange, cm_1s, cm_2s, witness, r));
+    ASSERT_TRUE(batch_scheme::verify_evaluations(
+        z_1,
+        z_2,
+        evaluations,
+        srs,
+        gamma_1,
+        gamma_2,
+        witness,
+        cm_1s,
+        cm_2s,
+        r));
 }
 
 template<typename ppT> void test_for_curve()

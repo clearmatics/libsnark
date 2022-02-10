@@ -88,42 +88,66 @@ static polynomial<FieldT> polynomial_accumulate_with_power_factors(
 } // namespace internal
 
 template<typename ppT>
-kzg10_batched_2_point<ppT>::multi_point_evaluation_challenge::
-    multi_point_evaluation_challenge(
+kzg10_batched_2_point<ppT>::evaluations::evaluations(
+    std::vector<Field> &&s_1s, std::vector<Field> &&s_2s)
+    : s_1s(s_1s), s_2s(s_2s)
+{
+}
+
+template<typename ppT>
+kzg10_batched_2_point<ppT>::evaluation_witness::evaluation_witness(
+    const libff::G1<ppT> &W_1, const libff::G1<ppT> &W_2)
+    : W_1(W_1), W_2(W_2)
+{
+}
+
+template<typename ppT>
+typename kzg10_batched_2_point<ppT>::evaluations kzg10_batched_2_point<ppT>::
+    evaluate_polynomials(
+        const std::vector<polynomial<Field>> &fs,
+        const std::vector<polynomial<Field>> &gs,
         const Field &z_1,
-        const Field &z_2,
-        const Field &gamma_1,
-        const Field &gamma_2)
-    : z_1(z_1), z_2(z_2), gamma_1(gamma_1), gamma_2(gamma_2)
-{
-}
-
-template<typename ppT>
-kzg10_batched_2_point<ppT>::multi_point_evaluation_witness::
-    multi_point_evaluation_witness(
-        const std::vector<Field> &&s_1s,
-        const std::vector<Field> &&s_2s,
-        const libff::G1<ppT> &W_1,
-        const libff::G1<ppT> &W_2)
-    : s_1s(s_1s), s_2s(s_2s), W_1(W_1), W_2(W_2)
-{
-}
-
-template<typename ppT>
-typename kzg10_batched_2_point<ppT>::multi_point_evaluation_witness
-kzg10_batched_2_point<ppT>::create_witness(
-    const srs &srs,
-    const multi_point_evaluation_challenge &challenge,
-    const std::vector<polynomial<Field>> &fs,
-    const std::vector<polynomial<Field>> &gs)
+        const Field &z_2)
 {
     // Denote the numbers of polynomials as t1 and t2, consistent with [GWC19].
     const size_t t1 = fs.size();
     const size_t t2 = gs.size();
 
-    // For convenience of variable naming, let $f_i \in fs$ and $g_i in gs$ to
-    // be the two sets of polynomials. These are denoted $f_i$ and $f^\prime_i$
-    // in [GWC19]. Similarly, $h_1$ and $h_2$ are used in place of $h$ and
+    std::vector<Field> s_1s;
+    s_1s.reserve(t1);
+    for (const polynomial<Field> &f_i : fs) {
+        s_1s.push_back(libfqfft::evaluate_polynomial(f_i.size(), f_i, z_1));
+    }
+
+    std::vector<Field> s_2s;
+    s_2s.reserve(t2);
+    for (const polynomial<Field> &g_i : gs) {
+        s_2s.push_back(libfqfft::evaluate_polynomial(g_i.size(), g_i, z_2));
+    }
+
+    return evaluations(std::move(s_1s), std::move(s_2s));
+}
+
+template<typename ppT>
+typename kzg10_batched_2_point<ppT>::evaluation_witness kzg10_batched_2_point<
+    ppT>::
+    create_evaluation_witness(
+        const std::vector<polynomial<Field>> &fs,
+        const std::vector<polynomial<Field>> &gs,
+        const Field &z_1,
+        const Field &z_2,
+        const evaluations &evaluations,
+        const srs &srs,
+        const Field &gamma_1,
+        const Field &gamma_2)
+{
+    assert(fs.size() == evaluations.s_1s.size());
+    assert(gs.size() == evaluations.s_2s.size());
+    libff::UNUSED(evaluations);
+
+    // For convenience of variable naming, let $f_i \in fs$ and $g_i in gs$ be
+    // the two sets of polynomials. These are denoted $f_i$ and $f^\prime_i$ in
+    // [GWC19]. Similarly, $h_1$ and $h_2$ are used in place of $h$ and
     // $h^\prime$ in the paper, and $\gamma_1$ and $\gamma_2$ in place of
     // $\gamma$ and $\gamma^\prime$.
     //
@@ -137,71 +161,59 @@ kzg10_batched_2_point<ppT>::create_witness(
     //
     //   W_1 = [h_1(x)]_1
     //   W_2 = [h_2(x)]_2
-    //   sf_i = f_i(z_1)  for i = 1, ..., t1
-    //   sg_i = g_i(z_2)  for i = 1, ..., t2
 
     // Compute the sum of $\gamma_1^{i=1} f_i$ polynomials, and pass this
     // polynomial into the kzg10 create_witness function, to yield $W_1$ and
     // $sf_1$.
 
-    // Evaluations
-    std::vector<Field> s_1s;
-    s_1s.reserve(t1);
-    for (const polynomial<Field> &f_i : fs) {
-        s_1s.push_back(
-            libfqfft::evaluate_polynomial(f_i.size(), f_i, challenge.z_1));
-    }
-
-    std::vector<Field> s_2s;
-    s_2s.reserve(t2);
-    for (const polynomial<Field> &g_i : gs) {
-        s_2s.push_back(
-            libfqfft::evaluate_polynomial(g_i.size(), g_i, challenge.z_2));
-    }
+    // TODO: Use the evaluations object to compute f_accum_eval and
+    // g_accum_eval, instead of evaluating the accumulated polynomial.
 
     // Accumulate polynomials and get the witnesses
     const polynomial<Field> f_accum =
-        internal::polynomial_accumulate_with_power_factors(
-            fs, challenge.gamma_1);
-    const evaluation_and_witness<ppT, kzg10<ppT>> f_accum_witness =
-        kzg10<ppT>::create_witness(srs, f_accum, challenge.z_1);
+        internal::polynomial_accumulate_with_power_factors(fs, gamma_1);
+    const libff::Fr<ppT> f_accum_eval =
+        kzg10<ppT>::evaluate_polynomial(f_accum, z_1);
+    const libff::G1<ppT> f_accum_witness =
+        kzg10<ppT>::create_evaluation_witness(f_accum, z_1, f_accum_eval, srs);
 
     const polynomial<Field> g_accum =
-        internal::polynomial_accumulate_with_power_factors(
-            gs, challenge.gamma_2);
-    const evaluation_and_witness<ppT, kzg10<ppT>> g_accum_witness =
-        kzg10<ppT>::create_witness(srs, g_accum, challenge.z_2);
+        internal::polynomial_accumulate_with_power_factors(gs, gamma_2);
+    const libff::Fr<ppT> g_accum_eval =
+        kzg10<ppT>::evaluate_polynomial(g_accum, z_2);
+    const libff::G1<ppT> g_accum_witness =
+        kzg10<ppT>::create_evaluation_witness(g_accum, z_2, g_accum_eval, srs);
 
-    return multi_point_evaluation_witness(
-        std::move(s_1s), std::move(s_2s), f_accum_witness.w, g_accum_witness.w);
+    return evaluation_witness(f_accum_witness, g_accum_witness);
 }
 
 template<typename ppT>
-bool kzg10_batched_2_point<ppT>::verify_eval(
+bool kzg10_batched_2_point<ppT>::verify_evaluations(
+    const Field &z_1,
+    const Field &z_2,
+    const evaluations &evaluations,
     const srs &srs,
-    const multi_point_evaluation_challenge &challenge,
+    const Field &gamma_1,
+    const Field &gamma_2,
+    const evaluation_witness &witness,
     const std::vector<commitment> &cm_1s,
     const std::vector<commitment> &cm_2s,
-    const multi_point_evaluation_witness &witness,
-    const libff::Fr<ppT> &r)
+    const Field &r)
 {
     // See Section 3, p13 of [GWC19].
 
-    assert(cm_1s.size() == witness.s_1s.size());
-    assert(cm_2s.size() == witness.s_2s.size());
-
     const size_t t1 = cm_1s.size();
     const size_t t2 = cm_2s.size();
+    assert(t1 == evaluations.s_1s.size());
+    assert(t2 == evaluations.s_2s.size());
 
     // Compute:
     //
     //   F = \sum_{i=1}^{t1} \gamma_1^{i-1} (cm_1[i] - [s_1[i]]_1) +      (G)
     //       r \sum_{i=1}^{t2} \gamma_2^{i-1} (cm_2[i] - [s_2[i]]_1)      (H)
 
-    const std::vector<Field> &s_1s = witness.s_1s;
-    const std::vector<Field> &s_2s = witness.s_2s;
-    const Field gamma_1 = challenge.gamma_1;
-    const Field gamma_2 = challenge.gamma_2;
+    const std::vector<Field> &s_1s = evaluations.s_1s;
+    const std::vector<Field> &s_2s = evaluations.s_2s;
 
     // Compute:
     //
@@ -252,8 +264,6 @@ bool kzg10_batched_2_point<ppT>::verify_eval(
 
     const libff::G1<ppT> &W_1 = witness.W_1;
     const libff::G1<ppT> &W_2 = witness.W_2;
-    const Field &z_1 = challenge.z_1;
-    const Field &z_2 = challenge.z_2;
 
     const libff::G1<ppT> r_W_2 = r * W_2;
     const libff::G1<ppT> A = F + z_1 * W_1 + z_2 * r_W_2;
