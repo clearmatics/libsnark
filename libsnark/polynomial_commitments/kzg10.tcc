@@ -19,15 +19,6 @@
 namespace libsnark
 {
 
-template<typename ppT, typename scheme>
-evaluation_and_witness<ppT, scheme>::evaluation_and_witness(
-    const libff::Fr<ppT> &i,
-    const libff::Fr<ppT> &phi_i,
-    const typename scheme::witness &w)
-    : i(i), phi_i(phi_i), w(w)
-{
-}
-
 template<typename ppT>
 kzg10<ppT>::srs::srs(
     std::vector<libff::G1<ppT>> &&alpha_powers_g1,
@@ -108,18 +99,21 @@ bool kzg10<ppT>::verify_poly(
 }
 
 template<typename ppT>
-evaluation_and_witness<ppT, kzg10<ppT>> kzg10<ppT>::create_witness(
-    const typename kzg10<ppT>::srs &srs,
-    const polynomial<libff::Fr<ppT>> &phi,
-    const libff::Fr<ppT> i)
+libff::Fr<ppT> kzg10<ppT>::evaluate_polynomial(
+    const polynomial<libff::Fr<ppT>> &phi, const libff::Fr<ppT> i)
 {
     const size_t num_coefficients = phi.size();
     assert(num_coefficients > 1);
-    assert(num_coefficients <= srs.alpha_powers_g1.size());
+    return libfqfft::evaluate_polynomial(num_coefficients, phi, i);
+}
 
-    // Evaluate the polynomial
-    const Field phi_i = libfqfft::evaluate_polynomial(num_coefficients, phi, i);
-
+template<typename ppT>
+typename kzg10<ppT>::evaluation_witness kzg10<ppT>::create_evaluation_witness(
+    const polynomial<libff::Fr<ppT>> &phi,
+    const libff::Fr<ppT> &i,
+    const libff::Fr<ppT> &evaluation,
+    const typename kzg10<ppT>::srs &srs)
+{
     // The witness is:
     //   w_i = [ \psi_i(\alpha) ]_1
     // where:
@@ -132,19 +126,19 @@ evaluation_and_witness<ppT, kzg10<ppT>> kzg10<ppT>::create_witness(
     std::vector<Field> remainder;
 
     std::vector<Field> phi_minus_phi_i = phi;
-    phi_minus_phi_i[0] -= phi_i;
+    phi_minus_phi_i[0] -= evaluation;
     libfqfft::_polynomial_division(psi, remainder, phi_minus_phi_i, {-i, 1});
     assert(libfqfft::_is_zero(remainder));
-    libff::G1<ppT> w = commit(srs, psi);
-
-    return evaluation_and_witness<ppT, kzg10<ppT>>(i, phi_i, w);
+    return commit(srs, psi);
 }
 
 template<typename ppT>
-bool kzg10<ppT>::verify_eval(
+bool kzg10<ppT>::verify_evaluation(
+    const Field &i,
+    const Field &evaluation,
     const typename kzg10<ppT>::srs &srs,
-    typename kzg10<ppT>::commitment C,
-    const evaluation_and_witness<ppT, kzg10<ppT>> &witness)
+    const evaluation_witness &witness,
+    const typename kzg10<ppT>::commitment &C)
 {
     // Verify the equality:
     //
@@ -170,11 +164,11 @@ bool kzg10<ppT>::verify_eval(
     // See Section 3: https://eprint.iacr.org/2019/953.pdf for further
     // details.
 
-    const libff::G1_precomp<ppT> _A = ppT::precompute_G1(witness.w);
+    const libff::G1_precomp<ppT> _A = ppT::precompute_G1(witness);
     const libff::G2_precomp<ppT> _B =
-        ppT::precompute_G2(srs.alpha_g2 - witness.i * libff::G2<ppT>::one());
+        ppT::precompute_G2(srs.alpha_g2 - i * libff::G2<ppT>::one());
     const libff::G1_precomp<ppT> _C =
-        ppT::precompute_G1(witness.phi_i * libff::G1<ppT>::one() - C);
+        ppT::precompute_G1(evaluation * libff::G1<ppT>::one() - C);
     const libff::G2_precomp<ppT> _D = ppT::precompute_G2(libff::G2<ppT>::one());
 
     const libff::Fqk<ppT> miller_result =

@@ -26,82 +26,6 @@ namespace libsnark
 /// other schemes are implemented, this could be moved into a common file.)
 template<typename FieldT> using polynomial = std::vector<FieldT>;
 
-/// General evaluation_and_witness class for any polynomial commitment scheme
-/// (which is expected to define the type `witness`). (Once other schemes are
-/// implemented, this could be moved into a common file.)
-template<typename ppT, typename scheme> class evaluation_and_witness
-{
-public:
-    using Field = libff::Fr<ppT>;
-    using witness = typename scheme::witness;
-
-    evaluation_and_witness(
-        const Field &i, const Field &phi_i, const witness &w);
-
-    /// The point at which the polynomial is evaluated.
-    Field i;
-
-    /// The evaluation \phi(i) of the polynomial.
-    Field phi_i;
-
-    // The witness (denoted w_i in [KZG10]).
-    witness w;
-};
-
-/// Polynomial schemes must implement the following interface:
-///
-/// template <typename ppT>
-///   class poly_scheme
-///   {
-///   public:
-///
-///       /// The SRS type for this scheme
-///       typename srs;
-///
-///       /// The type of a commitment for a specific polynomial.
-///       typename commitment;
-///
-///       /// A witness for the evaluation of a polynomial at some point.
-///       typename witness;
-///
-///       /// Intended primarily for testing.
-///       static srs setup_from_secret(size_t max_degree, const libff::Fr<ppT>
-///       &alpha);
-///
-///       /// Generate an SRS
-///       static srs setup(size_t max_degree);
-///
-///       /// Generate a commitment for a specific polynomial
-///       static commitment commit(const srs &srs, const
-///       polynomial<libff::Fr<ppT>> &phi);
-///
-///       /// Verify that a commitment C (generated with some srs) is a valid
-///       /// commitment for some polynomial phi.
-///       static bool verify_poly(
-///           const srs &srs, commitment C, const polynomial<libff::Fr<ppT>>
-///           &phi);
-///
-///       /// Evaluate a polynomial at some point i and generate a witness for
-///       that
-///       /// evaluation.
-///       ///
-///       /// TODO: If multiple schemes are implemented, it may be more
-///       convenient
-///       /// to extract out the polynomial evaluation code, and pass the
-///       /// evaluation in here. For now, we follow the form given in [KZG10].
-///       static evaluation_and_witness<ppT, kzg10<ppT>> create_witness(
-///           const srs &srs, const polynomial<Field> &phi, Field i);
-///
-///       /// For an SRS, a commitment to a specific polynomial, a claimed
-///       /// evaluation of that polynomial, and a witness for that evaluation,
-///       /// check that the evaluation is indeed valid for the committed
-///       /// polynomial.
-///       static bool verify_eval(
-///         const srs &srs,
-///         commitment C,
-///         const evaluation_and_witness<ppT, kzg10<ppT>> &witness);
-/// };
-
 /// Implementation of the scheme described in [KZG10]. The interface and types
 /// diverge slightly from [KZG10] in some places (in order to use the generic
 /// interface defined above). These differences are noted explicitly in the
@@ -130,7 +54,7 @@ public:
     using commitment = libff::G1<ppT>;
 
     /// A witness for the evaluation of a polynomial at some point.
-    using witness = libff::G1<ppT>;
+    using evaluation_witness = libff::G1<ppT>;
 
     /// Intended only for testing.
     static srs setup_from_secret(size_t max_degree, const Field &alpha);
@@ -150,19 +74,26 @@ public:
     static bool verify_poly(
         const srs &srs, commitment C, const polynomial<Field> &phi);
 
-    /// CreateWitness from [KZG10] section 3.2. Create a witness for the
+    static Field evaluate_polynomial(const polynomial<Field> &phi, Field i);
+
+    /// createwitness from [KZG10] section 3.2. Create a witness for the
     /// evaluation of the polynomial phi at i.
-    static evaluation_and_witness<ppT, kzg10<ppT>> create_witness(
-        const srs &srs, const polynomial<Field> &phi, Field i);
+    static evaluation_witness create_evaluation_witness(
+        const polynomial<Field> &phi,
+        const Field &i,
+        const Field &evaluation,
+        const srs &srs);
 
     /// VerifyEval from [KZG10] section 3.2. Given an srs, a commitment to a
     /// polynomial, a claimed evaluation of the polynomial, and a witness for
     /// that evaluation, check that the evaluation is indeed valid for the
     /// committed polynomial.
-    static bool verify_eval(
+    static bool verify_evaluation(
+        const Field &i,
+        const Field &evaluation,
         const srs &srs,
-        commitment C,
-        const evaluation_and_witness<ppT, kzg10<ppT>> &witness);
+        const evaluation_witness &witness,
+        const commitment &C);
 };
 
 } // namespace libsnark

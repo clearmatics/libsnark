@@ -38,19 +38,15 @@ template<typename ppT, typename scheme> void test_eval_commitment()
     const typename scheme::srs srs = scheme::setup(MAX_DEGREE);
     const typename scheme::commitment C = scheme::commit(srs, phi);
     const Field i = Field::random_element();
-    const evaluation_and_witness<ppT, scheme> eval_witness =
-        scheme::create_witness(srs, phi, i);
+    const Field eval = scheme::evaluate_polynomial(phi, i);
+    const typename scheme::evaluation_witness eval_witness =
+        scheme::create_evaluation_witness(phi, i, eval, srs);
 
-    evaluation_and_witness<ppT, scheme> eval_witness_wrong_i =
-        scheme::create_witness(srs, phi, i + Field::one());
-    eval_witness_wrong_i.i = i;
-
-    const evaluation_and_witness<ppT, scheme> eval_witness_2 =
-        scheme::create_witness(srs, phi_2, i);
-
-    ASSERT_TRUE(scheme::verify_eval(srs, C, eval_witness));
-    ASSERT_FALSE(scheme::verify_eval(srs, C, eval_witness_wrong_i));
-    ASSERT_FALSE(scheme::verify_eval(srs, C, eval_witness_2));
+    ASSERT_TRUE(scheme::verify_evaluation(i, eval, srs, eval_witness, C));
+    ASSERT_FALSE(scheme::verify_evaluation(
+        i + Field::one(), eval, srs, eval_witness, C));
+    ASSERT_FALSE(scheme::verify_evaluation(
+        i, eval + Field::one(), srs, eval_witness, C));
 }
 
 template<typename ppT> void test_kzg10_commitment_with_known_secret()
@@ -95,12 +91,12 @@ template<typename ppT> void test_kzg10_commitment_with_known_secret()
     ASSERT_EQ(Field(3209) * libff::G1<ppT>::one(), C);
 
     // Check the evaluation with witness
-    const evaluation_and_witness<ppT, scheme> eval_witness =
-        scheme::create_witness(srs, phi, i);
+    const Field eval = scheme::evaluate_polynomial(phi, i);
+    const typename scheme::evaluation_witness eval_witness =
+        scheme::create_evaluation_witness(phi, i, eval, srs);
 
-    ASSERT_EQ(i, eval_witness.i);
-    ASSERT_EQ(Field(33), eval_witness.phi_i);
-    ASSERT_EQ(Field(397) * libff::G1<ppT>::one(), eval_witness.w);
+    ASSERT_EQ(Field(33), eval);
+    ASSERT_EQ(Field(397) * libff::G1<ppT>::one(), eval_witness);
 }
 
 template<typename ppT> void test_for_curve()
@@ -110,9 +106,9 @@ template<typename ppT> void test_for_curve()
     ppT::init_public_params();
 
     // KZG10
-    test_kzg10_commitment_with_known_secret<ppT>();
     test_basic_commitment<ppT, kzg10<ppT>>();
     test_eval_commitment<ppT, kzg10<ppT>>();
+    test_kzg10_commitment_with_known_secret<ppT>();
 }
 
 TEST(TestPolynomialCommitments, ALT_BN128)
