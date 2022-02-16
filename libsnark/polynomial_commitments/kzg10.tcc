@@ -128,7 +128,10 @@ typename kzg10<ppT>::evaluation_witness kzg10<ppT>::create_evaluation_witness(
     std::vector<Field> phi_minus_phi_i = phi;
     phi_minus_phi_i[0] -= evaluation;
     libfqfft::_polynomial_division(psi, remainder, phi_minus_phi_i, {-i, 1});
-    assert(libfqfft::_is_zero(remainder));
+    if (!libfqfft::_is_zero(remainder)) {
+        throw std::invalid_argument(
+            "invalid evaluation point (poly div faild)");
+    }
     return commit(srs, psi);
 }
 
