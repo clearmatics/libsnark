@@ -31,15 +31,14 @@ const unsigned long SHA256_K[64] = {
     0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
 
-const unsigned long SHA256_H[8] = {
-    0x6a09e667,
-    0xbb67ae85,
-    0x3c6ef372,
-    0xa54ff53a,
-    0x510e527f,
-    0x9b05688c,
-    0x1f83d9ab,
-    0x5be0cd19};
+const unsigned long SHA256_H[8] = {0x6a09e667,
+                                   0xbb67ae85,
+                                   0x3c6ef372,
+                                   0xa54ff53a,
+                                   0x510e527f,
+                                   0x9b05688c,
+                                   0x1f83d9ab,
+                                   0x5be0cd19};
 
 template<typename FieldT>
 pb_linear_combination_array<FieldT> SHA256_default_IV(protoboard<FieldT> &pb)
