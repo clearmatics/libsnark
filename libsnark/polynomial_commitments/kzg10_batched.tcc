@@ -146,10 +146,10 @@ typename kzg10_batched_2_point<ppT>::evaluation_witness kzg10_batched_2_point<
     libff::UNUSED(evaluations);
 
     // For convenience of variable naming, let $f_i \in fs$ and $g_i in gs$ be
-    // the two sets of polynomials. These are denoted $f_i$ and $f^\prime_i$ in
+    // the two sets of polynomials. These are denoted $f_i$ and $f'_i$ in
     // [GWC19]. Similarly, $h_1$ and $h_2$ are used in place of $h$ and
-    // $h^\prime$ in the paper, and $\gamma_1$ and $\gamma_2$ in place of
-    // $\gamma$ and $\gamma^\prime$.
+    // $h' in the paper, and $\gamma_1$ and $\gamma_2$ in place of
+    // $\gamma$ and $\gamma'$.
     //
     // Compute:
     //
@@ -223,10 +223,9 @@ bool kzg10_batched_2_point<ppT>::verify_evaluations(
 
     Field s_1_accum = s_1s[t1 - 1];
     libff::G1<ppT> cm_1_accum = cm_1s[t1 - 1];
+    // Note use of underflow to terminate after i = 0.
     for (size_t i = t1 - 2; i < t1; --i) {
-        cm_1_accum = gamma_1 * cm_1_accum;
-        cm_1_accum = cm_1_accum + cm_1s[i];
-
+        cm_1_accum = (gamma_1 * cm_1_accum) + cm_1s[i];
         s_1_accum = (s_1_accum * gamma_1) + s_1s[i];
     }
     const libff::G1<ppT> G = cm_1_accum - s_1_accum * libff::G1<ppT>::one();
@@ -240,9 +239,7 @@ bool kzg10_batched_2_point<ppT>::verify_evaluations(
     Field s_2_accum = s_2s[t2 - 1];
     libff::G1<ppT> cm_2_accum = cm_2s[t2 - 1];
     for (size_t i = t2 - 2; i < t2; --i) {
-        cm_2_accum = gamma_2 * cm_2_accum;
-        cm_2_accum = cm_2_accum + cm_2s[i];
-
+        cm_2_accum = gamma_2 * cm_2_accum + cm_2s[i];
         s_2_accum = (s_2_accum * gamma_2) + s_2s[i];
     }
     const libff::G1<ppT> H =
