@@ -143,7 +143,6 @@ typename kzg10_batched_2_point<ppT>::evaluation_witness kzg10_batched_2_point<
 {
     assert(fs.size() == evaluations.s_1s.size());
     assert(gs.size() == evaluations.s_2s.size());
-    libff::UNUSED(evaluations);
 
     // For convenience of variable naming, let $f_i \in fs$ and $g_i in gs$ be
     // the two sets of polynomials. These are denoted $f_i$ and $f'_i$ in
@@ -166,21 +165,27 @@ typename kzg10_batched_2_point<ppT>::evaluation_witness kzg10_batched_2_point<
     // polynomial into the kzg10 create_witness function, to yield $W_1$ and
     // $sf_1$.
 
-    // TODO: Use the evaluations object to compute f_accum_eval and
-    // g_accum_eval, instead of evaluating the accumulated polynomial.
+    // The evaluation of the accumulated polynomials is computed as:
+    //
+    //   s_1[0] + s_1[1] * gamma_1 + ... + s_i[t1 - 1] gamma_1^{t1 - 1}
+    //
+    // which can be views as a polynomial in gamma with coefficients s_1. Note
+    // that this approach assumes that the highest degree of the polynomials
+    // f_s and g_s is larger than the number of polynomials, and therefore it
+    // is more efficient to reuse the existing evaluations instead of
+    // evaluating the accumulated polynomials.
 
-    // Accumulate polynomials and get the witnesses
     const polynomial<Field> f_accum =
         internal::polynomial_accumulate_with_power_factors(fs, gamma_1);
     const libff::Fr<ppT> f_accum_eval =
-        kzg10<ppT>::evaluate_polynomial(f_accum, z_1);
+        kzg10<ppT>::evaluate_polynomial(evaluations.s_1s, gamma_1);
     const libff::G1<ppT> f_accum_witness =
         kzg10<ppT>::create_evaluation_witness(f_accum, z_1, f_accum_eval, srs);
 
     const polynomial<Field> g_accum =
         internal::polynomial_accumulate_with_power_factors(gs, gamma_2);
     const libff::Fr<ppT> g_accum_eval =
-        kzg10<ppT>::evaluate_polynomial(g_accum, z_2);
+        kzg10<ppT>::evaluate_polynomial(evaluations.s_2s, gamma_2);
     const libff::G1<ppT> g_accum_witness =
         kzg10<ppT>::create_evaluation_witness(g_accum, z_2, g_accum_eval, srs);
 
