@@ -143,13 +143,12 @@ typename kzg10_batched_2_point<ppT>::evaluation_witness kzg10_batched_2_point<
 {
     assert(fs.size() == evaluations.s_1s.size());
     assert(gs.size() == evaluations.s_2s.size());
-    libff::UNUSED(evaluations);
 
     // For convenience of variable naming, let $f_i \in fs$ and $g_i in gs$ be
-    // the two sets of polynomials. These are denoted $f_i$ and $f^\prime_i$ in
+    // the two sets of polynomials. These are denoted $f_i$ and $f'_i$ in
     // [GWC19]. Similarly, $h_1$ and $h_2$ are used in place of $h$ and
-    // $h^\prime$ in the paper, and $\gamma_1$ and $\gamma_2$ in place of
-    // $\gamma$ and $\gamma^\prime$.
+    // $h' in the paper, and $\gamma_1$ and $\gamma_2$ in place of
+    // $\gamma$ and $\gamma'$.
     //
     // Compute:
     //
@@ -165,22 +164,27 @@ typename kzg10_batched_2_point<ppT>::evaluation_witness kzg10_batched_2_point<
     // Compute the sum of $\gamma_1^{i=1} f_i$ polynomials, and pass this
     // polynomial into the kzg10 create_witness function, to yield $W_1$ and
     // $sf_1$.
+    // The evaluation of the accumulated polynomials is computed as:
+    //
+    //   s_1[0] + s_1[1] * gamma_1 + ... + s_i[t1 - 1] gamma_1^{t1 - 1}
+    //
+    // which can be views as a polynomial in gamma with coefficients s_1. Note
+    // that this approach assumes that the highest degree of the polynomials
+    // f_s and g_s is larger than the number of polynomials, and therefore it
+    // is more efficient to reuse the existing evaluations instead of
+    // evaluating the accumulated polynomials.
 
-    // TODO: Use the evaluations object to compute f_accum_eval and
-    // g_accum_eval, instead of evaluating the accumulated polynomial.
-
-    // Accumulate polynomials and get the witnesses
     const polynomial<Field> f_accum =
         internal::polynomial_accumulate_with_power_factors(fs, gamma_1);
     const libff::Fr<ppT> f_accum_eval =
-        kzg10<ppT>::evaluate_polynomial(f_accum, z_1);
+        kzg10<ppT>::evaluate_polynomial(evaluations.s_1s, gamma_1);
     const libff::G1<ppT> f_accum_witness =
         kzg10<ppT>::create_evaluation_witness(f_accum, z_1, f_accum_eval, srs);
 
     const polynomial<Field> g_accum =
         internal::polynomial_accumulate_with_power_factors(gs, gamma_2);
     const libff::Fr<ppT> g_accum_eval =
-        kzg10<ppT>::evaluate_polynomial(g_accum, z_2);
+        kzg10<ppT>::evaluate_polynomial(evaluations.s_2s, gamma_2);
     const libff::G1<ppT> g_accum_witness =
         kzg10<ppT>::create_evaluation_witness(g_accum, z_2, g_accum_eval, srs);
 
@@ -223,10 +227,9 @@ bool kzg10_batched_2_point<ppT>::verify_evaluations(
 
     Field s_1_accum = s_1s[t1 - 1];
     libff::G1<ppT> cm_1_accum = cm_1s[t1 - 1];
+    // Note use of underflow to terminate after i = 0.
     for (size_t i = t1 - 2; i < t1; --i) {
-        cm_1_accum = gamma_1 * cm_1_accum;
-        cm_1_accum = cm_1_accum + cm_1s[i];
-
+        cm_1_accum = (gamma_1 * cm_1_accum) + cm_1s[i];
         s_1_accum = (s_1_accum * gamma_1) + s_1s[i];
     }
     const libff::G1<ppT> G = cm_1_accum - s_1_accum * libff::G1<ppT>::one();
@@ -240,9 +243,7 @@ bool kzg10_batched_2_point<ppT>::verify_evaluations(
     Field s_2_accum = s_2s[t2 - 1];
     libff::G1<ppT> cm_2_accum = cm_2s[t2 - 1];
     for (size_t i = t2 - 2; i < t2; --i) {
-        cm_2_accum = gamma_2 * cm_2_accum;
-        cm_2_accum = cm_2_accum + cm_2s[i];
-
+        cm_2_accum = gamma_2 * cm_2_accum + cm_2s[i];
         s_2_accum = (s_2_accum * gamma_2) + s_2s[i];
     }
     const libff::G1<ppT> H =

@@ -103,7 +103,6 @@ libff::Fr<ppT> kzg10<ppT>::evaluate_polynomial(
     const polynomial<libff::Fr<ppT>> &phi, const libff::Fr<ppT> i)
 {
     const size_t num_coefficients = phi.size();
-    assert(num_coefficients > 1);
     return libfqfft::evaluate_polynomial(num_coefficients, phi, i);
 }
 
