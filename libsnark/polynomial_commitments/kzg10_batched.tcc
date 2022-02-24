@@ -147,32 +147,42 @@ typename kzg10_batched_2_point<ppT>::evaluation_witness kzg10_batched_2_point<
     // For convenience of variable naming, let $f_i \in fs$ and $g_i in gs$ be
     // the two sets of polynomials. These are denoted $f_i$ and $f'_i$ in
     // [GWC19]. Similarly, $h_1$ and $h_2$ are used in place of $h$ and
-    // $h' in the paper, and $\gamma_1$ and $\gamma_2$ in place of
+    // $h'$ in the paper, and $\gamma_1$ and $\gamma_2$ in place of
     // $\gamma$ and $\gamma'$.
     //
-    // Compute:
+    // To generate the witness we must compute:
     //
-    //   h_1(X) = \sum_{i=1}^{t_1} \gamma_1^{i-1} (f_i(X) - f_i(z_1)/(X - z_1)
+    //   h_1(X) = \sum_{i=1}^{t_1} \gamma_1^{i-1} (f_i(X) - f_i(z_1))/(X - z_1)
     //
-    //   h_2(X) = \sum_{i=1}^{t_2} \gamma_2^{i-1} (g_i(X) - g_i(z_1)/(X - z_1)
+    //   h_2(X) = \sum_{i=1}^{t_2} \gamma_2^{i-1} (g_i(X) - g_i(z_2))/(X - z_2)
     //
     // then evaluate:
     //
     //   W_1 = [h_1(x)]_1
     //   W_2 = [h_2(x)]_2
-
-    // Compute the sum of $\gamma_1^{i=1} f_i$ polynomials, and pass this
-    // polynomial into the kzg10 create_witness function, to yield $W_1$ and
-    // $sf_1$.
-    // The evaluation of the accumulated polynomials is computed as:
     //
-    //   s_1[0] + s_1[1] * gamma_1 + ... + s_i[t1 - 1] gamma_1^{t1 - 1}
+    // This is computed as follows:
     //
-    // which can be views as a polynomial in gamma with coefficients s_1. Note
-    // that this approach assumes that the highest degree of the polynomials
-    // f_s and g_s is larger than the number of polynomials, and therefore it
-    // is more efficient to reuse the existing evaluations instead of
-    // evaluating the accumulated polynomials.
+    //   f_accum(X) = \sum_{i=1}^{t_1} \gamma_1^{i-1} f_i(X)
+    //   f_accum_eval = f_accum(z_1)
+    //   W_1 = kzg10::create_evaluation_witness(f_accum, z_1, f_accum_eval)
+    //       = [ (f_accum(X) - f_accum(z_1)) / (X - z_1) ]_1
+    //       = [ h_1(X) ]_1
+    //
+    // Similarly for $\gamma_2$, $g_i$s and $z_2$.
+    //
+    // The evaluations `f_accum_eval` and `g_accum_eval` of the accumulated
+    // polynomials `f_accum` and `g_accum` are computed as:
+    //
+    //   s_1[0] + s_1[1] * gamma_1 + ... + s_1[t1 - 1] gamma_1^{t1 - 1}
+    //
+    // which can be viewed as the evaluation at `gamma_1` of the polynomial
+    // with coefficients `s_1`.
+    //
+    // Note that this approach assumes that the highest degree of the
+    // polynomials f_s and g_s is larger than the number of polynomials, and
+    // therefore it is more efficient to reuse the existing evaluations rather
+    // than evaluating the accumulated polynomials.
 
     const polynomial<Field> f_accum =
         internal::polynomial_accumulate_with_power_factors(fs, gamma_1);
