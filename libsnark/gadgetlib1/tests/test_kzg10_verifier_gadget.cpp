@@ -29,14 +29,18 @@ template<typename wppT, typename scheme>
 void test_polynomial_commitment_verifier_gadget(
     const typename scheme::srs &srs,
     const typename scheme::commitment &C,
-    const evaluation_and_witness<other_curve<wppT>, scheme> &eval_witness,
+    const libff::Fr<other_curve<wppT>> &i,
+    const libff::Fr<other_curve<wppT>> &evaluation,
+    const typename kzg10<other_curve<wppT>>::evaluation_witness &eval_witness,
     const bool expected_result)
 {
     using Field = libff::Fr<wppT>;
     using npp = other_curve<wppT>;
 
     // Ensure that the native implementation gives the expected result.
-    ASSERT_EQ(expected_result, scheme::verify_eval(srs, C, eval_witness));
+    ASSERT_EQ(
+        expected_result,
+        scheme::verify_evaluation(i, evaluation, srs, eval_witness, C));
 
     // Perform the equivalent check in an r1cs circuit
     protoboard<Field> pb;
@@ -67,25 +71,24 @@ void test_polynomial_commitment_verifier_gadget(
     // evaluation of the polynomial) must be converted from libff::Fr<npp> to
     // libff::Fr<wppT>.
     libff::Fr<wppT> wrapping_i;
-    libff::Fr<wppT> wrapping_poly_i;
-    libff::fp_from_fp(wrapping_i, eval_witness.i);
-    libff::fp_from_fp(wrapping_poly_i, eval_witness.phi_i);
+    libff::Fr<wppT> wrapping_evaluation;
+    libff::fp_from_fp(wrapping_i, i);
+    libff::fp_from_fp(wrapping_evaluation, evaluation);
 
     srs_var.generate_r1cs_witness(srs);
     C_var.generate_r1cs_witness(C);
     pb.val(i_var) = wrapping_i;
-    pb.val(poly_eval_var) = wrapping_poly_i;
-    witness_var.generate_r1cs_witness(eval_witness.w);
+    pb.val(poly_eval_var) = wrapping_evaluation;
+    witness_var.generate_r1cs_witness(eval_witness);
     verifier_gadget.generate_r1cs_witness();
 
     // Check some members of verifier_gadget
     {
-        const libff::G2<npp> i_in_G2_val =
-            eval_witness.i * libff::G2<npp>::one();
+        const libff::G2<npp> i_in_G2_val = i * libff::G2<npp>::one();
         const libff::G2<npp> B_val = srs.alpha_g2 - i_in_G2_val;
 
         const libff::G1<npp> poly_eval_in_G1_val =
-            eval_witness.phi_i * libff::G1<npp>::one();
+            evaluation * libff::G1<npp>::one();
         const libff::G1<npp> C_val = C - poly_eval_in_G1_val;
 
         ASSERT_EQ(i_in_G2_val, verifier_gadget.i_in_G2.get_element());
@@ -123,36 +126,32 @@ template<typename wppT> void test_kzg10_verifier_gadget()
 
     // Evaluation and witness
     const libff::Fr<npp> i = libff::Fr<npp>::random_element();
-    const evaluation_and_witness<npp, scheme> eval_witness =
-        scheme::create_witness(srs, poly, i);
+    const libff::Fr<npp> evaluation = scheme::evaluate_polynomial(poly, i);
+    const typename scheme::evaluation_witness eval_witness =
+        scheme::create_evaluation_witness(poly, i, evaluation, srs);
 
     // Check evaluation and proof natively
-    ASSERT_TRUE(scheme::verify_eval(srs, C, eval_witness));
+    ASSERT_TRUE(scheme::verify_evaluation(i, evaluation, srs, eval_witness, C));
 
     test_polynomial_commitment_verifier_gadget<wppT, scheme>(
-        srs, C, eval_witness, true);
+        srs, C, i, evaluation, eval_witness, true);
 
     // Test some failure cases:
 
-    // Invalid commitment
-    test_polynomial_commitment_verifier_gadget<wppT, scheme>(
-        srs, C + C, eval_witness, false);
-
-    // Invalid evaluation point / polynomial evaluation.
+    // Invalid cases
     {
-        evaluation_and_witness<npp, scheme> eval_witness_invalid = eval_witness;
-        eval_witness_invalid.i += libff::Fr<npp>::one();
+        // Invalid evaluation point
         test_polynomial_commitment_verifier_gadget<wppT, scheme>(
-            srs, C, eval_witness_invalid, false);
-    }
-
-    // Invalid evaluation witness
-    {
-        evaluation_and_witness<npp, scheme> eval_witness_invalid = eval_witness;
-        eval_witness_invalid.w =
-            eval_witness_invalid.w + scheme::witness::one();
+            srs, C, i + 1, evaluation, eval_witness, false);
+        // Invalid evaluation
         test_polynomial_commitment_verifier_gadget<wppT, scheme>(
-            srs, C, eval_witness_invalid, false);
+            srs, C, i, evaluation + 1, eval_witness, false);
+        // Invalid evaluation witness
+        test_polynomial_commitment_verifier_gadget<wppT, scheme>(
+            srs, C, i, evaluation, eval_witness + eval_witness, false);
+        // Invalid commitment
+        test_polynomial_commitment_verifier_gadget<wppT, scheme>(
+            srs, C + C, i, evaluation, eval_witness, false);
     }
 }
 
