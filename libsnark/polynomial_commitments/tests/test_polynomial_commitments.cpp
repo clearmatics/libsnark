@@ -204,17 +204,49 @@ template<typename ppT> void test_kzg10_batched_2_point()
         r));
 }
 
+template<typename ppT> void test_polynomial_inplace_operations()
+{
+    using Field = libff::Fr<ppT>;
+
+    const std::vector<polynomial<Field>> f_set{
+        {1, 2, 3, 4, 5, 6, 7, 8},
+        {11, 12, 0, 14, 15, 16, 17},
+    };
+
+    {
+        polynomial<Field> A{1, 2, 3, 4, 5, 6, 7, 8};
+        const polynomial<Field> B{11, 12, 0, 14, 15, 16, 17};
+        const polynomial<Field> expect{12, 14, 3, 18, 20, 22, 24, 8};
+        internal::polynomial_add_inplace(A, B);
+        ASSERT_EQ(expect, A);
+    }
+    {
+        const polynomial<Field> A{1, 2, 3, 4, 5, 6, 7, 8};
+        polynomial<Field> B{11, 12, 0, 14, 15, 16, 17};
+        const polynomial<Field> expect{12, 14, 3, 18, 20, 22, 24, 8};
+        internal::polynomial_add_inplace(B, A);
+        ASSERT_EQ(expect, B);
+    }
+
+    {
+        polynomial<Field> A{1, 2, 3, 4, 5, 6, 7, 8};
+        const polynomial<Field> expect{3, 6, 9, 12, 15, 18, 21, 24};
+        internal::polynomial_scalar_mul_inplace(A, Field(3));
+        ASSERT_EQ(expect, A);
+    }
+}
+
 template<typename ppT> void test_for_curve()
 {
     // Execute all tests for the given curve.
 
     ppT::init_public_params();
 
-    // KZG10
     test_basic_commitment<ppT, kzg10<ppT>>();
     test_eval_commitment<ppT, kzg10<ppT>>();
     test_kzg10_commitment_with_known_secret<ppT>();
     test_kzg10_batched_2_point<ppT>();
+    test_polynomial_inplace_operations<ppT>();
 }
 
 TEST(TestPolynomialCommitments, ALT_BN128)
