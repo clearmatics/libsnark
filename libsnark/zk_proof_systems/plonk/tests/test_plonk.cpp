@@ -181,9 +181,11 @@ namespace libsnark
     // Generate the n-th root of unity omega in Fq (n=8 in the
     // example) using omega_base. omega is a generator of the
     // multiplicative subgroup H.
-    Field temp = libff::power(omega_base, libff::bigint<1>(1));
-    assert(temp == omega_base);
+    Field temp = libff::power(omega_base, libff::bigint<1>(std::pow(2,32)));
+    assert(temp == 1);
+    //    Field temp = libff::power(omega_base, libff::bigint<1>(2));
     
+    temp.print();    
     
     //    assert(0);
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
