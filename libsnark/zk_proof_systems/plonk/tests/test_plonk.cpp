@@ -20,6 +20,7 @@
 //#include <libsnark/polynomial_Commitments/kzg10.hpp>
 //#include <libsnark/polynomial_Commitments/tests/polynomial_Commitment_test_utils.hpp>
 
+#define DEBUG 1
 const size_t MAX_DEGREE = 254;
 
 /*
@@ -70,7 +71,7 @@ con5 = [0, 1, 0, 0, 5]
 pi   = [0, 1, 0, 0, 0]
 dum  = [0, 0, 0, 0, 0]
 
-gate matrix
+gates matrix
 
 (q_L * a) + (q_R * b) + (q_O * c) + (q_M * a * b) + (q_C) = 0
 
@@ -104,30 +105,11 @@ output:
 - permutation polynomials S_sigma_1, S_sigma_2, S_sigma_3
 - permutation precomputation: id_doman, perm_domain
 
-
-
-permutation polynomials
-
-TBD
-
-  auto reference_string = SRS
-  proving_key key = 
-  program_witness witness = 
-
-  polynomial w_L;
-  polynomial w_R;
-  polynomial w_O;
-  polynomial q_L;
-  polynomial q_R;
-  polynomial q_O;
-  polynomial q_C;
-  polynomial q_M;
-
-
 */
   
 namespace libsnark
 {
+  
   template<typename FieldT> using polynomial = std::vector<FieldT>; // kzg10.hpp
 
   //  void compute_qpolynomials();
@@ -139,6 +121,17 @@ namespace libsnark
     ppT::init_public_params();
     
     using Field = libff::Fr<ppT>;
+
+    // number of gates / constraints. we have 6 gates for the example
+    // circuit + 2 dummy gates to make it a power of 2 (for the fft)
+    const size_t nconstraints = 8;
+#ifdef DEBUG
+    // ensure nconstraints is power of 2
+    bool b_is_power2 = ((nconstraints & (nconstraints - 1)) == 0);
+    assert(b_is_power2);
+    // ensure that nconstraints is not 0
+    assert(nconstraints);
+#endif // #ifdef DEBUG 
 
     // hard-coded gates matrix for the example circuit
     // P(x) = x**3 + x + 5 = 3
@@ -177,16 +170,42 @@ namespace libsnark
     // particular 2**32|(q-1) and so the 2**32-th root of unity
     // exists.
     Field omega_base = Field("5398635374615924329006194896463915232623626471712994625313653909674492148212");
-
-    // Generate the n-th root of unity omega in Fq (n=8 in the
-    // example) using omega_base. omega is a generator of the
-    // multiplicative subgroup H.
+#ifdef DEBUG
+    // assert that omega_base is a 2^32-th root of unity in Fq
     Field temp = libff::power(omega_base, libff::bigint<1>(std::pow(2,32)));
     assert(temp == 1);
-    //    Field temp = libff::power(omega_base, libff::bigint<1>(2));
-    
-    temp.print();    
-    
+#endif // #ifdef DEBUG
+
+    // Generate the n-th root of unity omega in Fq (n=8 is the number
+    // of constraints in the example) using omega_base. omega is a
+    // generator of the multiplicative subgroup H.
+    const libff::bigint<1> n = std::pow(2,32) / nconstraints;
+    n.print();
+    assert(n == 536870912); 
+    Field omega = libff::power(omega_base, n);
+    omega.print();
+    assert(omega == Field("8685283084174350996472453922654922162880456818468779543064782192722679779374"));
+
+    // output from compute_roots_of_unity
+    std::vector<Field> roots;    
+    for (size_t i = 0; i < nconstraints; ++i) {
+      Field omega_i = libff::power(omega, libff::bigint<1>(i));
+      roots.push_back(omega_i);
+    }
+
+#ifdef DEBUG
+    for (size_t i = 0; i < nconstraints; ++i) {
+      printf("w^%d: ", i);
+      roots[i].print();
+    }
+    // check that omega^8 = omega i.e. omega is a generator of the
+    // multiplicative subgroup H of Fq of order nconstraints
+    Field omega_temp = libff::power(omega, libff::bigint<1>(nconstraints));
+    printf("w^%d: ", nconstraints);
+    omega_temp.print();
+    assert(omega_temp == 1);
+#endif // #ifdef DEBUG
+      
     //    assert(0);
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
