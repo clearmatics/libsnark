@@ -109,7 +109,7 @@ output:
   
 namespace libsnark
 {
-  
+
   template<typename FieldT> using polynomial = std::vector<FieldT>; // kzg10.hpp
 
   //  void compute_qpolynomials();
@@ -198,14 +198,18 @@ namespace libsnark
       printf("w^%d: ", i);
       roots[i].print();
     }
-    // check that omega^8 = omega i.e. omega is a generator of the
-    // multiplicative subgroup H of Fq of order nconstraints
+    // check that omega^8 = 1 i.e. omega is a generator of the
+    // multiplicative subgroup H of Fq of order 'nconstraints'
     Field omega_temp = libff::power(omega, libff::bigint<1>(nconstraints));
     printf("w^%d: ", nconstraints);
     omega_temp.print();
     assert(omega_temp == 1);
 #endif // #ifdef DEBUG
-      
+
+    // We want to represent the constraints q_L, q_R, q_O, q_M, q_C and
+    // the witness w_L, w_R, w_O as polynomials in the roots of unity
+    // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
+
     //    assert(0);
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
