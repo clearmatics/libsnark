@@ -52,6 +52,41 @@ template<typename ppT> using kzg10_commitment_variable = G1_variable<ppT>;
 /// This is also a single G1_variable (see the native implementation).
 template<typename ppT> using kzg10_witness_variable = G1_variable<ppT>;
 
+/// A pairing check specific to the KZG10 scheme.
+/// Check:
+///
+///   e(A, B) = e(C, D)
+///
+/// where D is a fixed constant (and thereby some the precompute step for D is
+/// baked into the circuit).
+template<typename ppT> class kzg10_pairing_check_gadget : gadget<libff::Fr<ppT>>
+{
+public:
+    G1_precomputation<ppT> A_precomp;
+    precompute_G1_gadget<ppT> compute_A_precomp;
+    G2_precomputation<ppT> B_precomp;
+    precompute_G2_gadget<ppT> compute_B_precomp;
+    G1_precomputation<ppT> C_precomp;
+    precompute_G1_gadget<ppT> compute_C_precomp;
+    // D_precomp is statically computed from a constant, so does not need a
+    // precompute gadget.
+    G2_precomputation<ppT> D_precomp;
+
+    check_e_equals_e_gadget<ppT> check_pairing_equality;
+
+    kzg10_pairing_check_gadget(
+        protoboard<libff::Fr<ppT>> &pb,
+        const G1_variable<ppT> &A,
+        const G2_variable<ppT> &B,
+        const G1_variable<ppT> &C,
+        const libff::G2<other_curve<ppT>> &D,
+        pb_variable<libff::Fr<ppT>> &result,
+        const std::string annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
 /// Uses a nested pairing (via a pairing selector) to implement the
 /// verification step of [KZG10]. See the native implementation for details.
 ///
@@ -94,19 +129,9 @@ public:
     G1_variable<ppT> C;
     G1_add_gadget<ppT> compute_C;
 
-    // Pairing computation
-    G1_precomputation<ppT> A_precomp;
-    precompute_G1_gadget<ppT> compute_A_precomp;
-    G2_precomputation<ppT> B_precomp;
-    precompute_G2_gadget<ppT> compute_B_precomp;
-    G1_precomputation<ppT> C_precomp;
-    precompute_G1_gadget<ppT> compute_C_precomp;
-    // D_precomp is computed from (constant) G2::one(), and baked into the
-    // circuit, saving a few constraints.
-    G2_precomputation<ppT> D_precomp;
-
+    // Pairing check
     pb_variable<libff::Fr<ppT>> check_result;
-    check_e_equals_e_gadget<ppT> check_pairing_equality;
+    kzg10_pairing_check_gadget<ppT> pairing_check;
 
     // group_elements_non_zero =
     //   (1 - i_in_G2.is_zero) * (1 - poly_eval_in_G1.is_zero)
