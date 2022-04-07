@@ -21,9 +21,9 @@
 //#include <libsnark/polynomial_Commitments/tests/polynomial_Commitment_test_utils.hpp>
 
 #include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
+#include <libfqfft/evaluation_domain/domains/basic_radix2_domain.hpp>
 //#include <libfqfft/polynomial_arithmetic/basic_operations.hpp>
 //#include <libfqfft/evaluation_domain/domains/arithmetic_sequence_domain.hpp>
-#include <libfqfft/evaluation_domain/domains/basic_radix2_domain.hpp>
 //#include <libfqfft/evaluation_domain/domains/extended_radix2_domain.hpp>
 //#include <libfqfft/evaluation_domain/domains/geometric_sequence_domain.hpp>
 //#include <libfqfft/evaluation_domain/domains/step_radix2_domain.hpp>
@@ -125,7 +125,7 @@ namespace libsnark
   //  void compute_qpolynomials();
   //  void compute_wire_permutation();
 
-  template<typename FieldT>  void print_vector(std::vector<FieldT> v)
+  template<typename FieldT> void print_vector(std::vector<FieldT> v)
   {
     for (size_t i = 0; i < v.size(); ++i) {
       printf("v[%d]: ", (int)i);
@@ -133,76 +133,6 @@ namespace libsnark
     }
   }
 
-  template<typename Field> void multiply_polynomial_by_scalar(Field a, polynomial<Field> &v)
-  {
-    transform(v.begin(), v.end(), v.begin(), [a](Field &c){ return c*a; });
-  }
-  
-  template<typename Field> polynomial<Field> add_polynomials(const polynomial<Field> a, const polynomial<Field> b)
-  {
-    assert(a.size() == b.size());
-
-    std::vector<Field> result;
-    result.reserve(a.size());
-
-    std::transform(a.begin(), a.end(), b.begin(),
-		   std::back_inserter(result), std::plus<Field>());
-    return result;
-  }
-
-/*
-  Below we make use of pseudocode from [CLRS 2n Ed, pp. 864].
-  Also, note that it's the caller's responsibility to multiply by 1/N.
-*/
-  template<typename FieldT, typename GroupT>
-  void _basic_serial_radix2_FFT(std::vector<GroupT> &a, const FieldT &omega, bool b_inverse)
-  {
-    const size_t n = a.size(), logn = log2(n);
-    if (n != (1u << logn)) {
-      printf("[%s:%d] Must be power of 2. Terminating...\n", __FILE__, __LINE__);
-      assert(0);
-    }
-
-    /* swapping in place (from Storer's book) */
-    for (size_t k = 0; k < n; ++k)
-      {
-        const size_t rk = libff::bitreverse(k, logn);
-        if (k < rk)
-	  std::swap(a[k], a[rk]);
-      }
-
-    size_t m = 1; // invariant: m = 2^{s-1}
-    for (size_t s = 1; s <= logn; ++s)
-      {
-        // w_m is 2^s-th root of unity now
-        const FieldT w_m = omega^(n/(2*m));
-
-        asm volatile  ("/* pre-inner */");
-        for (size_t k = 0; k < n; k += 2*m)
-	  {
-            FieldT w = FieldT::one();
-            for (size_t j = 0; j < m; ++j)
-	      {
-                const GroupT t = w * a[k+j+m];
-                a[k+j+m] = a[k+j] - t;
-                a[k+j] = a[k+j] + t;
-                w *= w_m;
-	      }
-	  }
-        asm volatile ("/* post-inner */");
-        m *= 2;
-      }
-
-    if(b_inverse) {
-      const FieldT sconst = FieldT(a.size()).inverse();
-      for (size_t i = 0; i < a.size(); ++i)
-	{
-	  a[i] *= sconst;
-	}
-    }
-  }
-  
-  
   template<typename ppT> void test_plonk()
   {
     // Execute all tests for the given curve.
@@ -212,10 +142,10 @@ namespace libsnark
 
     // number of gates / constraints. we have 6 gates for the example
     // circuit + 2 dummy gates to make it a power of 2 (for the fft)
-    const size_t nconstraints = 8;
+    const int nconstraints = 8;
 
     // number of q-polynomials
-    const size_t nqpoly = 5;
+    const int nqpoly = 5;
 #ifdef DEBUG
     // ensure nconstraints is power of 2
     bool b_is_power2 = ((nconstraints & (nconstraints - 1)) == 0);
@@ -240,96 +170,89 @@ namespace libsnark
        {Field(0), Field(0),  Field(0),   Field(0),  Field(0)},   // dummy
       };
 
-    // Transposed gates matrix: each row is a q-vector
+    // Transposed gates matrix: each row is a q-vector WARN: rows 2
+    // q_O and 3 q_M are swapped ti match the Plonk_Py test vectors
+    // implementation (reason unclear)
     std::vector<std::vector<Field>>gates_matrix_transpose
       {
+       //  mul          mul          add          con5       PI           add        dum        dum
        {   Field(0),    Field(0),    Field(1),    Field(0),  Field(0),    Field(1),  Field(0),  Field(0)}, // q_L
        {   Field(0),    Field(0),    Field(1),    Field(1),  Field(1),    Field(1),  Field(0),  Field(0)}, // q_R
-       {-Field("1"), -Field("1"), -Field("1"),    Field(0),  Field(0), -Field("1"),  Field(0),  Field(0)}, // q_O
        {   Field(1),    Field(1),    Field(0),    Field(0),  Field(0),    Field(0),  Field(0),  Field(0)}, // q_M
+       {-Field("1"), -Field("1"), -Field("1"),    Field(0),  Field(0), -Field("1"),  Field(0),  Field(0)}, // q_O
        {   Field(0),    Field(0),    Field(0), -Field("5"),  Field(0),    Field(0),  Field(0),  Field(0)}, // q_C
       };
 
-    // output from compute_permutation()
+    // output from plonk_compute_permutation()
     std::vector<int> wire_permutation{9, 17, 18, 5, 4, 19, 7, 8, 10, 11, 1, 14, 21, 20, 15, 16, 2, 3, 6, 12, 22, 13, 23, 24};
 
+    // public input (PI)
     Field public_input = Field(35);
 
-    // index of the row in the gates_matrix
+    // index of the row of the PI in the non-transposed gates_matrix 
     int public_input_index = 4;
 
-    // output from compute_omega_base()
-    // Example (2**32)-th primitive root of unity in the base field Fq
-    // of bls12-381 i.e. such that omega_base**(2**32) = 1. The
-    // bls12-381 prime q is such that any power of 2 divides (q-1). In
-    // particular 2**32|(q-1) and so the 2**32-th root of unity
-    // exists.
-    Field omega_base = Field("5398635374615924329006194896463915232623626471712994625313653909674492148212");
+    // Get the n-th root of unity omega in Fq (n=8 is the number of
+    // constraints in the example). omega is a generator of the
+    // multiplicative subgroup H.  Example (2**32)-th primitive root
+    // of unity in the base field Fq of bls12-381 i.e. such that
+    // omega_base**(2**32) = 1. The bls12-381 prime q is such that any
+    // power of 2 divides (q-1). In particular 2**32|(q-1) and so the
+    // 2**32-th root of unity exists.
+    Field omega_base = libff::get_root_of_unity<Field>(nconstraints);
+    omega_base.print();
+    assert(omega_base == Field("23674694431658770659612952115660802947967373701506253797663184111817857449850"));
+    
 #ifdef DEBUG
     // assert that omega_base is a 2^32-th root of unity in Fq
     Field temp = libff::power(omega_base, libff::bigint<1>(std::pow(2,32)));
     assert(temp == 1);
 #endif // #ifdef DEBUG
 
-    // Generate the n-th root of unity omega in Fq (n=8 is the number
-    // of constraints in the example) using omega_base. omega is a
-    // generator of the multiplicative subgroup H.
-    const libff::bigint<1> n = std::pow(2,32) / nconstraints;
-    n.print();
-    assert(n == 536870912); 
-    Field omega = libff::power(omega_base, n);
-    omega.print();
-    assert(omega == Field("8685283084174350996472453922654922162880456818468779543064782192722679779374"));
-
-    // output from compute_roots_of_unity
-    std::vector<Field> roots;    
-    for (size_t i = 0; i < nconstraints; ++i) {
-      Field omega_i = libff::power(omega, libff::bigint<1>(i));
-      roots.push_back(omega_i);
+    // output from plonk_compute_roots_of_unity
+    std::vector<Field> omega;    
+    for (int i = 0; i < nconstraints; ++i) {
+      Field omega_i = libff::power(omega_base, libff::bigint<1>(i));
+      omega.push_back(omega_i);
     }
 
 #ifdef DEBUG
-    for (size_t i = 0; i < nconstraints; ++i) {
+    for (int i = 0; i < nconstraints; ++i) {
       printf("w^%d: ", i);
-      roots[i].print();
+      omega[i].print();
     }
     // check that omega^8 = 1 i.e. omega is a generator of the
     // multiplicative subgroup H of Fq of order 'nconstraints'
-    Field omega_temp = libff::power(omega, libff::bigint<1>(nconstraints));
+    Field omega_temp = libff::power(omega_base, libff::bigint<1>(nconstraints));
     printf("w^%d: ", nconstraints);
     omega_temp.print();
     assert(omega_temp == 1);
 #endif // #ifdef DEBUG
 
-    // We want to represent the constraints q_L, q_R, q_O, q_M, q_C and
-    // the witness w_L, w_R, w_O as polynomials in the roots of unity
+
+    // We represent the constraints q_L, q_R, q_O, q_M, q_C and the
+    // witness w_L, w_R, w_O as polynomials in the roots of unity
     // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
-    //    std::vector<Field> f = { 3, 4, 5, 9 };
-    //    std::vector<Field> f = {1, 0, 0, 0, 0, 0, 0, 0};
     polynomial<Field> f{   Field(1),    Field(0),    Field(0),    Field(0),  Field(0),    Field(0),  Field(0),  Field(0)};
-    const size_t m = nconstraints;
-    //    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain;
-    //    domain.reset(new libfqfft::basic_radix2_domain<Field>(m));
-    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(m);
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(nconstraints);
 
-    // ---
-
-    // compute Lagrange basis
+    // output from plonk_compute_lagrange_basis
     std::vector<polynomial<Field>> L(nconstraints);
-    for (size_t i = 0; i < nconstraints; ++i) {
+    for (int i = 0; i < nconstraints; ++i) {
       polynomial<Field> u(nconstraints, Field(0));
       u[i] = Field(1);
-      printf("[%s:%d] u[%d]\n", __FILE__, __LINE__, i);
-      print_vector(u);      
+      // compute i-th Lagrange basis vector via inverse FFT
       domain->iFFT(u);
-      //      _basic_serial_radix2_FFT(u, omega.inverse(), true);
-      // i-th Lagrange basis vector
       L[i] = u;
-      printf("[%s:%d] L[%d]\n", __FILE__, __LINE__, i);
-      print_vector(L[i]);      
     }
+
+#if 1 // DEBUG
+    // test Lagrange polynomials
+    //template<typename FieldT>
+    //FieldT evaluate_lagrange_polynomial(const size_t &m, const std::vector<FieldT> &domain, const FieldT &t, const size_t &idx);
+#endif // #if 1 // DEBUG
     
-    // output from compute_qpoly() compute the q-polynomials from the
+    // output from plonk_compute_qpolynomials() compute the q-polynomials from the
     // (transposed) gates matrix over the Lagrange basis q_poly =
     // \sum_i q[i] * L[i] where q[i] is a coefficient (a Field
     // element) and L[i] is a polynomial with Field coeffs
@@ -342,43 +265,27 @@ namespace libsnark
       // polynomial in the lagrange basis
       std::vector<polynomial<Field>> q_poly(nconstraints);
       for (size_t j = 0; j < nconstraints; ++j) {
-	// initialize the j-th slice of the i-th q-polynimial to the
-	// j-th vector in the Lagrange basis
-	q_poly[j] = L[j];
-	// q[j] * L[j]: q[j] - scalar, L[j] - polynomial
-	multiply_polynomial_by_scalar(q_vec[j], q_poly[j]);      
+	// represent the scalar q[j] as an all-zero vector with only
+	// the first element set to q[j]
+	std::vector<Field> q_vec_coeff_j(nconstraints, Field(0));
+	q_vec_coeff_j[0] = q_vec[j];
+	// q_poly[j] = q_vec[j] * L[j]
+	libfqfft::_polynomial_multiplication(q_poly[j], q_vec_coeff_j, L[j]);
       }
       std::fill(Q[i].begin(), Q[i].end(), Field(0));
+      // Q[i] = \sum_j (q[j] * L[j])
       for (size_t j = 0; j < nconstraints; ++j) {
-	// Q[i] += q_poly[j];
-	Q[i] = add_polynomials(Q[i], q_poly[j]);
+	// Q[i] = Q[i] + q_poly[j];
+	libfqfft::_polynomial_addition<Field>(Q[i], Q[i], q_poly[j]);
       }      
     }
 #endif    
 
-    for (size_t i = 0; i < nqpoly; ++i) {
+    for (int i = 0; i < nqpoly; ++i) {
       printf("\n[%s:%d] Q[%2d]\n", __FILE__, __LINE__, i);
       print_vector(Q[i]);
     }
 
-    Field omega_tmp = libff::get_root_of_unity<Field>(nconstraints);
-    printf("[%s:%d] Lifqfft omega_tmp ", __FILE__, __LINE__);
-    omega_tmp.print();
-    printf("[%s:%d] PlonkPy omega     ", __FILE__, __LINE__);
-    roots[1].print();
-    
-    for (size_t i = 0; i < nconstraints+1; ++i) {
-      Field omega_i_tmp = libff::power(omega_tmp, libff::bigint<1>(i));
-      printf("[%s:%d] omega_tmp[%d] ", __FILE__, __LINE__, i);
-      omega_i_tmp.print();
-    }
-    
-    for (size_t i = 0; i < nconstraints; ++i) {
-      printf("w^%d: ", i);
-      roots[i].print();
-    }
-    
-    //    assert(0);
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
 
