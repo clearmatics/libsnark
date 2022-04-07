@@ -128,7 +128,7 @@ namespace libsnark
   template<typename FieldT> void print_vector(std::vector<FieldT> v)
   {
     for (size_t i = 0; i < v.size(); ++i) {
-      printf("v[%d]: ", (int)i);
+      printf("[%2d]: ", (int)i);
       v[i].print();
     }
   }
@@ -256,7 +256,6 @@ namespace libsnark
     // (transposed) gates matrix over the Lagrange basis q_poly =
     // \sum_i q[i] * L[i] where q[i] is a coefficient (a Field
     // element) and L[i] is a polynomial with Field coeffs
-#if 1    
     std::vector<polynomial<Field>> Q(nqpoly, polynomial<Field>(nconstraints));
     for (size_t i = 0; i < nqpoly; ++i) {
       std::vector<Field> q_vec = gates_matrix_transpose[i];
@@ -279,13 +278,55 @@ namespace libsnark
 	libfqfft::_polynomial_addition<Field>(Q[i], Q[i], q_poly[j]);
       }      
     }
-#endif    
 
+#if 1 // DEBUG
     for (int i = 0; i < nqpoly; ++i) {
       printf("\n[%s:%d] Q[%2d]\n", __FILE__, __LINE__, i);
       print_vector(Q[i]);
     }
+#endif // #if 1 // DEBUG
+    
+    // Generate domains on which to evaluate the witness polynomials
+    // Set k to a random, but fixed value for debug
+    Field k = Field("7069874114745813936829552608791213902061117400356596714713673571023200548519");
+#if 1 // DEBUG
+    printf("[%s:%d] k ", __FILE__, __LINE__);
+    k.print();
+#endif // #if 1 // DEBUG
 
+    // k1 H is a coset of H with generator omega_k1 distinct from H
+    std::vector<Field> omega_k1;    
+    for (int i = 0; i < nconstraints; ++i) {
+      Field omega_k1_i = omega[i] * k;
+      omega_k1.push_back(omega_k1_i);
+    }
+    
+    // k2 H is a coset of H with generator omega_k2, distinct from H
+    // and k1 H
+    std::vector<Field> omega_k2;    
+    for (int i = 0; i < nconstraints; ++i) {
+      Field omega_k2_i = omega[i] * libff::power(k, libff::bigint<1>(2));
+      omega_k2.push_back(omega_k2_i);
+    }
+
+    // sigma contains the generators of H, k1 H and K2 H in one place
+    // ie. omega, omega_k1 and omega_2
+    std::vector<Field> sigma;
+    std::copy(omega.begin(), omega.end(), back_inserter(sigma));
+    std::copy(omega_k1.begin(), omega_k1.end(), back_inserter(sigma));
+    std::copy(omega_k2.begin(), omega_k2.end(), back_inserter(sigma));
+    printf("[%s:%d] sigma\n", __FILE__, __LINE__);
+    print_vector(sigma);
+
+    // permute sigma according to the wire permutation
+    std::vector<Field> sigma_star(3*nconstraints, Field(0));
+    for (int i = 0; i < 3*nconstraints; ++i) {
+      printf("[%s:%d] i %2d -> %2d, \n", __FILE__, __LINE__, i, wire_permutation[i]-1);
+      sigma_star[wire_permutation[i]-1] = sigma[i];
+    }
+    printf("[%s:%d] sigma_star\n", __FILE__, __LINE__);
+    print_vector(sigma_star);
+    
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
 
