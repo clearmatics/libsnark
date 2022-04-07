@@ -118,7 +118,7 @@ public:
     kzg10_verifier_gadget(
         protoboard<libff::Fr<ppT>> &pb,
         const kzg10_srs_variable<ppT> &srs,
-        const kzg10_commitment_variable<ppT> &commitmennt,
+        const kzg10_commitment_variable<ppT> &commitment,
         pb_linear_combination<libff::Fr<ppT>> i,
         pb_linear_combination<libff::Fr<ppT>> poly_eval,
         const kzg10_witness_variable<ppT> &witness,
