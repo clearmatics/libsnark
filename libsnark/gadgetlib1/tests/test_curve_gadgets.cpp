@@ -469,10 +469,10 @@ TEST(TestCurveGadgets, G1MulByConstScalar)
     // Circuit
     protoboard<libff::Fr<wpp>> pb;
     G1_variable<wpp> P(pb, "P");
-    G1_variable<wpp> result_a(pb, "result");
+    G1_variable<wpp> result_a(pb, "result_a");
     G1_mul_by_const_scalar_gadget<wpp, libff::Fr<npp>::num_limbs> mul_gadget_a(
         pb, scalar_val_a.as_bigint(), P, result_a, "mul_gadget_a");
-    G1_variable<wpp> result_b(pb, "result");
+    G1_variable<wpp> result_b(pb, "result_b");
     G1_mul_by_const_scalar_gadget<wpp, libff::Fr<npp>::num_limbs> mul_gadget_b(
         pb, scalar_val_b.as_bigint(), P, result_b, "mul_gadget_b");
 
@@ -700,7 +700,7 @@ void test_mul_by_scalar_gadget(
     generate_and_check_proof<wpp>(pb);
 }
 
-TEST(TestCurveGadgets, G1MulScalarVar)
+TEST(TestCurveGadgets, MulScalarVar)
 {
     auto test_g1_mul_by_scalar_gadget = test_mul_by_scalar_gadget<
         wpp,
@@ -723,6 +723,43 @@ TEST(TestCurveGadgets, G1MulScalarVar)
     test_g2_mul_by_scalar_gadget(libff::Fr<npp>(13), libff::Fr<npp>::zero());
     test_g2_mul_by_scalar_gadget(libff::Fr<npp>(13), libff::Fr<npp>(127));
     test_g2_mul_by_scalar_gadget(libff::Fr<npp>(13), -libff::Fr<npp>::one());
+}
+
+TEST(TestCurveGadgets, VarOrIdentityMulScalarVar)
+{
+    auto test_g1_var_or_identity_mul_by_scalar_gadget =
+        test_mul_by_scalar_gadget<
+            wpp,
+            libff::G1<npp>,
+            G1_variable_or_identity<wpp>,
+            G1_variable_or_identity<wpp>,
+            G1_variable_or_identity_mul_by_scalar_gadget<wpp>>;
+
+    auto test_g2_var_or_identity_mul_by_scalar_gadget =
+        test_mul_by_scalar_gadget<
+            wpp,
+            libff::G2<npp>,
+            G2_variable_or_identity<wpp>,
+            G2_variable_or_identity<wpp>,
+            G2_variable_or_identity_mul_by_scalar_gadget<wpp>>;
+
+    test_g1_var_or_identity_mul_by_scalar_gadget(
+        libff::Fr<npp>(13), libff::Fr<npp>::zero());
+    test_g1_var_or_identity_mul_by_scalar_gadget(
+        libff::Fr<npp>::zero(), libff::Fr<npp>(13));
+    test_g1_var_or_identity_mul_by_scalar_gadget(
+        libff::Fr<npp>(13), libff::Fr<npp>(127));
+    test_g1_var_or_identity_mul_by_scalar_gadget(
+        libff::Fr<npp>(13), -libff::Fr<npp>::one());
+
+    test_g2_var_or_identity_mul_by_scalar_gadget(
+        libff::Fr<npp>(13), libff::Fr<npp>::zero());
+    test_g2_var_or_identity_mul_by_scalar_gadget(
+        libff::Fr<npp>::zero(), libff::Fr<npp>(13));
+    test_g2_var_or_identity_mul_by_scalar_gadget(
+        libff::Fr<npp>(13), libff::Fr<npp>(127));
+    test_g2_var_or_identity_mul_by_scalar_gadget(
+        libff::Fr<npp>(13), -libff::Fr<npp>::one());
 }
 
 } // namespace

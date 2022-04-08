@@ -72,7 +72,8 @@ protected:
     pb_variable<FieldT> is_identity_var;
 };
 
-/// Selector gadget for variable_or_identity
+/// Selector gadget for variable_or_identity. Outputs one of two
+/// variable_or_identity objeects, depending on a scalar parameter.
 template<
     typename ppT,
     typename groupT,
@@ -399,6 +400,50 @@ public:
 protected:
     static pb_variable_array<Field> create_variable_array_for_bits(
         protoboard<Field> &pb, const std::string &annotation_prefix);
+};
+
+/// Generic gadget to perform scalar multiplication of variable_or_identity
+/// group points by scalar variables. Used by the individual group element
+/// implementations.
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+class point_variable_or_identity_mul_by_scalar_gadget
+    : public gadget<typename groupT::base_field>
+{
+public:
+    using Field = libff::Fr<ppT>;
+    using nFr = libff::Fr<other_curve<ppT>>;
+
+    using varMulByScalar = point_mul_by_scalar_gadget<
+        ppT,
+        groupT,
+        groupVarT,
+        selectorGadgetT,
+        addGadgetT,
+        dblGadgetT>;
+
+    using groupVarOrIdentity = variable_or_identity<ppT, groupT, groupVarT>;
+    using selectVarIdentityGadget =
+        variable_or_identity_selector<ppT, groupT, groupVarT, selectorGadgetT>;
+
+    groupVarOrIdentity scalar_mul_result;
+    varMulByScalar scalar_mul;
+    selectVarIdentityGadget select_result;
+
+    point_variable_or_identity_mul_by_scalar_gadget(
+        protoboard<Field> &pb,
+        const pb_linear_combination<Field> &scalar,
+        const groupVarOrIdentity &P,
+        const groupVarOrIdentity &result,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
 };
 
 } // namespace libsnark
