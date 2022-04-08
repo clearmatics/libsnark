@@ -343,21 +343,11 @@ namespace libsnark
     // We represent the constraints q_L, q_R, q_O, q_M, q_C and the
     // witness w_L, w_R, w_O as polynomials in the roots of unity
     // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
-    //    polynomial<Field> f{   Field(1),    Field(0),    Field(0),    Field(0),  Field(0),    Field(0),  Field(0),  Field(0)};
     
     // output from plonk_compute_lagrange_basis
     std::vector<polynomial<Field>> L(nconstraints, polynomial<Field>(nconstraints));
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(nconstraints);
     plonk_compute_lagrange_basis<Field>(nconstraints, L);
-#if 0    
-    for (int i = 0; i < nconstraints; ++i) {
-      polynomial<Field> u(nconstraints, Field(0));
-      u[i] = Field(1);
-      // compute i-th Lagrange basis vector via inverse FFT
-      domain->iFFT(u);
-      L[i] = u;
-    }
-#endif     
 
 #if 1 // DEBUG
     // test Lagrange polynomials
