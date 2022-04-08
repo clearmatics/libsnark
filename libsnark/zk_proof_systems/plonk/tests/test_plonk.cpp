@@ -133,6 +133,74 @@ namespace libsnark
     }
   }
 
+  //
+  // INPUT: 
+  //
+  // - f_points[0..n-1]: a set of points (0,y0), (1,y1),
+  //                     ... (n-1,y_{n-1}) s.t. y0=f_points[0],
+  //                     y1=f_points[1], ... which we want to interpolate
+  //                     as a polynomial
+  //  
+  // - L[0..n-1][0..n-1]: Lagrange basis over the n roots of unity
+  //                      omega_0, ..., omega_{n-1} i.e. L[omega_i] =
+  //                      [a0, a1, ..., a_{n-1}] is a vector
+  //                      representing the coefficients of the i-th
+  //                      Lagrange polynomial L_i(x) =
+  //                      a0+a1x+a2x^2+..+a_{n-1}x^{n-1}
+  //                      s.t. L_i(x=omega_i)=1 and
+  //                      L_i(x\neq{omega_i)})=0
+  //
+  // OUTPUT:
+  //
+  // - f_poly[0..n-1]: the coefficients [a0, a1, ..., a_{n-1}] of the
+  //                   polynomial f(x) interpolating the set of points
+  //                   f_points over the Lagrange basis. For example if
+  //                   f_poly[0..n-1] = [a0, a1, ..., a_{n-1}] then
+  //                   this represents the polynomial f(x) =
+  //                   \sum^{n-1}_{i=0} f_vec[i] * L[i] =
+  //                   a0+a1x+a1x^2+...+a_{n-1}x^{n-1} such that
+  //                   f(omega_i)=f_vec[i].
+  //
+  // Note: uses libfqfft iFFT for the interpolation
+  //
+  template<typename FieldT>
+  void plonk_interpolate_over_lagrange_basis(
+					     std::vector<polynomial<FieldT>> L,
+					     std::vector<FieldT> f_points,
+					     polynomial<FieldT> &f_poly								       
+					     )
+  {
+    assert(L.size() != 0);
+    assert(L.size() == L[0].size());
+    assert(L.size() == f_points.size());
+
+    size_t nconstraints = L.size();
+    
+    // the nconstraints components of f_poly. each components is
+    // a polynomial that is the multiplication of the i-th element of
+    // f_points to the i-th polynomial in the lagrange basis L[i]:
+    // f_poly_component[i] = f_points[i] * L[i]
+    std::vector<polynomial<FieldT>> f_poly_component(nconstraints);
+    for (size_t i = 0; i < nconstraints; ++i) {
+      // represent the scalar f_points[i] as an all-zero vector with
+      // only the first element set to f_points[i]. this is done in
+      // order to use libfqfft multiplication function as a function
+      // for multiply vector by scalar.
+      std::vector<FieldT> f_points_coeff_i(nconstraints, FieldT(0));
+      f_points_coeff_i[0] = f_points[i];
+      // f_poly_component[i] = f_points[i] * L[i]
+      libfqfft::_polynomial_multiplication(f_poly_component[i], f_points_coeff_i, L[i]);
+    }
+    std::fill(f_poly.begin(), f_poly.end(), FieldT(0));
+    // f_poly[i] = \sum_i (f_points[i] * L[i])
+    for (size_t i = 0; i < nconstraints; ++i) {
+      // f_poly[i] = f_poly[i] + f_poly_component[i];
+      libfqfft::_polynomial_addition<FieldT>(f_poly, f_poly, f_poly_component[i]);
+    }      
+
+  }
+
+
   template<typename ppT> void test_plonk()
   {
     // Execute all tests for the given curve.
@@ -252,20 +320,24 @@ namespace libsnark
     //FieldT evaluate_lagrange_polynomial(const size_t &m, const std::vector<FieldT> &domain, const FieldT &t, const size_t &idx);
 #endif // #if 1 // DEBUG
     
-    // output from plonk_compute_qpolynomials() compute the q-polynomials from the
+    // output from plonk_compute_constraints_polynomials() compute the q-polynomials from the
     // (transposed) gates matrix over the Lagrange basis q_poly =
     // \sum_i q[i] * L[i] where q[i] is a coefficient (a Field
     // element) and L[i] is a polynomial with Field coeffs
     std::vector<polynomial<Field>> Q(nqpoly, polynomial<Field>(nconstraints));
     for (size_t i = 0; i < nqpoly; ++i) {
       std::vector<Field> q_vec = gates_matrix_transpose[i];
-      // a set of ncontraints polynomials. each polynomial is the
+      plonk_interpolate_over_lagrange_basis<Field>(L, q_vec, Q[i]);
+#if 0
+      // a set of nconstraints polynomials. each polynomial is the
       // multiplication of the j-th element of q_vec to the j-th
-      // polynomial in the lagrange basis
+      // polynomial in the lagrange basis L[j]
       std::vector<polynomial<Field>> q_poly(nconstraints);
       for (size_t j = 0; j < nconstraints; ++j) {
-	// represent the scalar q[j] as an all-zero vector with only
-	// the first element set to q[j]
+	// represent the scalar q_vec[j] as an all-zero vector with
+	// only the first element set to q[j]. this is done in order
+	// to use libfqfft multiplication function as a function for
+	// multiply vector by scalar.
 	std::vector<Field> q_vec_coeff_j(nconstraints, Field(0));
 	q_vec_coeff_j[0] = q_vec[j];
 	// q_poly[j] = q_vec[j] * L[j]
@@ -276,7 +348,8 @@ namespace libsnark
       for (size_t j = 0; j < nconstraints; ++j) {
 	// Q[i] = Q[i] + q_poly[j];
 	libfqfft::_polynomial_addition<Field>(Q[i], Q[i], q_poly[j]);
-      }      
+      }
+#endif      
     }
 
 #if 1 // DEBUG
@@ -310,7 +383,7 @@ namespace libsnark
     }
 
     // sigma contains the generators of H, k1 H and K2 H in one place
-    // ie. omega, omega_k1 and omega_2
+    // ie. omega, omega_k1 and omega_k2
     std::vector<Field> sigma;
     std::copy(omega.begin(), omega.end(), back_inserter(sigma));
     std::copy(omega_k1.begin(), omega_k1.end(), back_inserter(sigma));
@@ -330,6 +403,9 @@ namespace libsnark
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
 
+  // output from plonk_compute_permutation_polynomials() compute the
+  // S_sigma polynomials
+  
   TEST(TestPlonk, BLS12_381)
   {
     test_plonk<libff::bls12_381_pp>();
