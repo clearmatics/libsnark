@@ -134,6 +134,50 @@ namespace libsnark
   }
 
   //
+  // Compute the Lagrange basis polynomails for interpolating sets of n points
+  //
+  // INPUT:
+  //
+  // - npoints - number of points
+  //
+  // OUTPUT:
+  //
+  // - L[0..n-1][0..n-1]: Lagrange basis over the n roots of unity
+  //                      omega_0, ..., omega_{n-1} i.e. L[omega_i] =
+  //                      [a0, a1, ..., a_{n-1}] is a vector
+  //                      representing the coefficients of the i-th
+  //                      Lagrange polynomial L_i(x) =
+  //                      a0+a1x+a2x^2+..+a_{n-1}x^{n-1}
+  //                      s.t. L_i(x=omega_i)=1 and
+  //                      L_i(x\neq{omega_i)})=0
+  //
+  // Note: uses libfqfft iFFT for the interpolation
+  //
+  template<typename FieldT>
+  void plonk_compute_lagrange_basis(
+				    size_t npoints,
+				    std::vector<polynomial<FieldT>>& L
+				    )
+  {
+    assert(L.size() != 0);
+    assert(L.size() == L[0].size());
+    assert(L.size() == npoints);
+    
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain =
+      libfqfft::get_evaluation_domain<FieldT>(npoints);
+    for (size_t i = 0; i < npoints; ++i) {
+      polynomial<FieldT> u(npoints, FieldT(0));
+      u[i] = FieldT(1);
+      // compute i-th Lagrange basis vector via inverse FFT
+      domain->iFFT(u);
+      L[i] = u;
+    }
+  }
+
+  
+  //
+  // Interpolate a set of points as a polynomial over Lagrange basis
+  //
   // INPUT: 
   //
   // - f_points[0..n-1]: a set of points (0,y0), (1,y1),
@@ -160,8 +204,6 @@ namespace libsnark
   //                   \sum^{n-1}_{i=0} f_vec[i] * L[i] =
   //                   a0+a1x+a1x^2+...+a_{n-1}x^{n-1} such that
   //                   f(omega_i)=f_vec[i].
-  //
-  // Note: uses libfqfft iFFT for the interpolation
   //
   template<typename FieldT>
   void plonk_interpolate_over_lagrange_basis(
@@ -301,11 +343,13 @@ namespace libsnark
     // We represent the constraints q_L, q_R, q_O, q_M, q_C and the
     // witness w_L, w_R, w_O as polynomials in the roots of unity
     // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
-    polynomial<Field> f{   Field(1),    Field(0),    Field(0),    Field(0),  Field(0),    Field(0),  Field(0),  Field(0)};
-    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(nconstraints);
-
+    //    polynomial<Field> f{   Field(1),    Field(0),    Field(0),    Field(0),  Field(0),    Field(0),  Field(0),  Field(0)};
+    
     // output from plonk_compute_lagrange_basis
-    std::vector<polynomial<Field>> L(nconstraints);
+    std::vector<polynomial<Field>> L(nconstraints, polynomial<Field>(nconstraints));
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(nconstraints);
+    plonk_compute_lagrange_basis<Field>(nconstraints, L);
+#if 0    
     for (int i = 0; i < nconstraints; ++i) {
       polynomial<Field> u(nconstraints, Field(0));
       u[i] = Field(1);
@@ -313,6 +357,7 @@ namespace libsnark
       domain->iFFT(u);
       L[i] = u;
     }
+#endif     
 
 #if 1 // DEBUG
     // test Lagrange polynomials
@@ -328,28 +373,6 @@ namespace libsnark
     for (size_t i = 0; i < nqpoly; ++i) {
       std::vector<Field> q_vec = gates_matrix_transpose[i];
       plonk_interpolate_over_lagrange_basis<Field>(L, q_vec, Q[i]);
-#if 0
-      // a set of nconstraints polynomials. each polynomial is the
-      // multiplication of the j-th element of q_vec to the j-th
-      // polynomial in the lagrange basis L[j]
-      std::vector<polynomial<Field>> q_poly(nconstraints);
-      for (size_t j = 0; j < nconstraints; ++j) {
-	// represent the scalar q_vec[j] as an all-zero vector with
-	// only the first element set to q[j]. this is done in order
-	// to use libfqfft multiplication function as a function for
-	// multiply vector by scalar.
-	std::vector<Field> q_vec_coeff_j(nconstraints, Field(0));
-	q_vec_coeff_j[0] = q_vec[j];
-	// q_poly[j] = q_vec[j] * L[j]
-	libfqfft::_polynomial_multiplication(q_poly[j], q_vec_coeff_j, L[j]);
-      }
-      std::fill(Q[i].begin(), Q[i].end(), Field(0));
-      // Q[i] = \sum_j (q[j] * L[j])
-      for (size_t j = 0; j < nconstraints; ++j) {
-	// Q[i] = Q[i] + q_poly[j];
-	libfqfft::_polynomial_addition<Field>(Q[i], Q[i], q_poly[j]);
-      }
-#endif      
     }
 
 #if 1 // DEBUG
