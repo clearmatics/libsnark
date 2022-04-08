@@ -372,8 +372,9 @@ namespace libsnark
     }
 #endif // #if 1 // DEBUG
     
-    // Generate domains on which to evaluate the witness polynomials
-    // Set k to a random, but fixed value for debug
+    // Generate domains on which to evaluate the witness polynomials k
+    // can be random, but we fix it for debug to match against the
+    // test vector values
     Field k = Field("7069874114745813936829552608791213902061117400356596714713673571023200548519");
 #if 1 // DEBUG
     printf("[%s:%d] k ", __FILE__, __LINE__);
@@ -404,14 +405,32 @@ namespace libsnark
     printf("[%s:%d] sigma\n", __FILE__, __LINE__);
     print_vector(sigma);
 
+    // number of sigma polynomials S_sigma
+    int nsigma = 3;
     // permute sigma according to the wire permutation
-    std::vector<Field> sigma_star(3*nconstraints, Field(0));
-    for (int i = 0; i < 3*nconstraints; ++i) {
+    std::vector<Field> sigma_star(nsigma*nconstraints, Field(0));
+    for (int i = 0; i < nsigma*nconstraints; ++i) {
       printf("[%s:%d] i %2d -> %2d, \n", __FILE__, __LINE__, i, wire_permutation[i]-1);
-      sigma_star[wire_permutation[i]-1] = sigma[i];
+      sigma_star[i] = sigma[wire_permutation[i]-1];
     }
     printf("[%s:%d] sigma_star\n", __FILE__, __LINE__);
     print_vector(sigma_star);
+
+    std::vector<polynomial<Field>> S_sigma_poly(nsigma, polynomial<Field>(nconstraints));
+    for (int i = 0; i < nsigma; ++i) {
+      typename std::vector<Field>::iterator begin = sigma_star.begin()+(i*nconstraints);
+      typename std::vector<Field>::iterator end = sigma_star.begin()+(i*nconstraints)+(nconstraints);
+      std::vector<Field> S_sigma_points(begin, end);
+      plonk_interpolate_over_lagrange_basis<Field>(L, S_sigma_points, S_sigma_poly[i]);
+    }
+
+#if 1 // DEBUG
+    for (int i = 0; i < nsigma; ++i) {
+      printf("[%s:%d] S_sigma_poly[%d]\n", __FILE__, __LINE__, i);
+      print_vector(S_sigma_poly[i]);
+    }
+#endif // #if 1 // DEBUG
+    
     
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
