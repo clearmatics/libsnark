@@ -821,6 +821,84 @@ pb_variable_array<libff::Fr<ppT>> point_mul_by_scalar_gadget<
     return bits;
 }
 
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+point_variable_or_identity_mul_by_scalar_gadget<
+    ppT,
+    groupT,
+    groupVarT,
+    selectorGadgetT,
+    addGadgetT,
+    dblGadgetT>::
+    point_variable_or_identity_mul_by_scalar_gadget(
+        protoboard<Field> &pb,
+        const pb_linear_combination<Field> &scalar,
+        const groupVarOrIdentity &P,
+        const groupVarOrIdentity &result,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , scalar_mul_result(pb, FMT(annotation_prefix, " scalar_mul_result"))
+    , scalar_mul(
+          pb,
+          scalar,
+          P.value,
+          scalar_mul_result,
+          FMT(annotation_prefix, " scalar_mul"))
+    // result = P.is_identity ? P : scalar_mul_result
+    //        = select(P.is_identity, scalar_mul_result, P)
+    , select_result(
+          pb,
+          P.is_identity,
+          scalar_mul_result,
+          P,
+          result,
+          FMT(annotation_prefix, " select_result"))
+{
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+void point_variable_or_identity_mul_by_scalar_gadget<
+    ppT,
+    groupT,
+    groupVarT,
+    selectorGadgetT,
+    addGadgetT,
+    dblGadgetT>::generate_r1cs_constraints()
+{
+    scalar_mul.generate_r1cs_constraints();
+    select_result.generate_r1cs_constraints();
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+void point_variable_or_identity_mul_by_scalar_gadget<
+    ppT,
+    groupT,
+    groupVarT,
+    selectorGadgetT,
+    addGadgetT,
+    dblGadgetT>::generate_r1cs_witness()
+{
+    scalar_mul.generate_r1cs_witness();
+    select_result.generate_r1cs_witness();
+}
+
 } // namespace libsnark
 
 #endif // LIBSNARK_GADGETLIB1_GADGETS_CURVE_SCALAR_MULTIPLICATION_TCC_
