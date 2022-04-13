@@ -249,6 +249,12 @@ namespace libsnark
     ppT::init_public_params();
     
     using Field = libff::Fr<ppT>;
+    libff::G1<ppT> G1 = libff::G1<ppT>::G1_one;
+    // libff::G2<ppT> G2 = libff::G2<ppT>::G2_one;
+    // Setting G2 equal to G1 (Type1 Bilinear group) for simplicity
+    // and in order to match the test vectors which are produced under
+    // this setting
+    libff::G1<ppT> G2 = libff::G1<ppT>::G1_one;
 
     // number of gates / constraints. we have 6 gates for the example
     // circuit + 2 dummy gates to make it a power of 2 (for the fft)
@@ -430,7 +436,50 @@ namespace libsnark
       print_vector(S_sigma_poly[i]);
     }
 #endif // #if 1 // DEBUG
+
+    // random hidden element alpha (toxic waste). we fix it to a
+    // constant in order to match against the test vectors
+    Field alpha = Field("13778279493383315901513166932749987230291710199728570152123261818328463629146");
+#if 1 // DEBUG
+    printf("[%s:%d] alpha ", __FILE__, __LINE__);
+    alpha.print();
+#endif // #if 1 // DEBUG
     
+    libff::G1<ppT> x = libff::G1<ppT>::G1_one;
+    x.print();
+
+    libff::G1<ppT> y = alpha * G1;
+
+    /*
+    std::vector<libff::G1<ppT>> alpha_powers_g1;
+    alpha_powers_g1.reserve(nconstraints + 3);
+    libff::G1<ppT> alpha_i_g1 = libff::G1<ppT>::one();
+    alpha_powers_g1.push_back(alpha_i_g1);
+    for (size_t i = 1; i < nconstraints + 3; ++i) {
+      Field omega_k2_i = omega[i] * libff::power(k, libff::bigint<1>(2));
+      
+        alpha_i_g1 =
+	  libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
+            window_size, alpha_i_g1, naf);
+        alpha_powers_g1.push_back(alpha_i_g1);
+    }
+    */
+    
+    std::vector<libff::G1<ppT>> alpha_powers_g1;
+    alpha_powers_g1.reserve(nconstraints + 3);
+    for (int i = 0; i < nconstraints + 3; ++i) {
+      Field alpha_i = libff::power(alpha, libff::bigint<1>(i));
+      libff::G1<ppT> alpha_powers_i = alpha_i * G1;
+      alpha_powers_g1.push_back(alpha_powers_i);
+    }
+
+#if 1 // DEBUG
+    for (int i = 0; i < nconstraints + 3; ++i) {
+      printf("alpha_power[%2d] ", i);
+      alpha_powers_g1[i].print();
+    }
+#endif // #if 1 // DEBUG
+
     
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
