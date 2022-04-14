@@ -91,6 +91,35 @@ static polynomial<FieldT> polynomial_accumulate_with_power_factors(
     return f_accum;
 }
 
+// Compute terms of the form:
+//
+//   \sum_i \gamma^{i-1} (cm_i - [eval_i]_1)
+template<typename ppT>
+static libff::G1<ppT> gamma_times_commit_minus_eval_sum(
+    const libff::Fr<ppT> &gamma,
+    const std::vector<libff::Fr<ppT>> &evals,
+    const std::vector<libff::G1<ppT>> &cms)
+{
+    // Compute:
+    //
+    //   eval_accum = \sum_i gamma^{i-1} evals_i
+    //   cm_accum = \sum_i gamma^{i-1} cm_i
+    //   result = cm_accum - (eval_accum * G1::one())
+
+    const size_t t = evals.size();
+    assert(cms.size() == t);
+
+    libff::Fr<ppT> eval_accum = evals[t - 1];
+    libff::G1<ppT> cm_accum = cms[t - 1];
+    // Note use of underflow to terminate after i = 0.
+    for (size_t i = t - 2; i < t; --i) {
+        cm_accum = (gamma * cm_accum) + cms[i];
+        eval_accum = (eval_accum * gamma) + evals[i];
+    }
+
+    return cm_accum - eval_accum * libff::G1<ppT>::one();
+}
+
 } // namespace internal
 
 template<typename ppT>
@@ -222,50 +251,25 @@ bool kzg10_batched_2_point<ppT>::verify_evaluations(
 {
     // See Section 3, p13 of [GWC19].
 
-    const size_t t1 = cm_1s.size();
-    const size_t t2 = cm_2s.size();
-    assert(t1 == evaluations.s_1s.size());
-    assert(t2 == evaluations.s_2s.size());
+    assert(cm_1s.size() == evaluations.s_1s.size());
+    assert(cm_2s.size() == evaluations.s_2s.size());
 
     // Compute:
     //
-    //   F = \sum_{i=1}^{t1} \gamma_1^{i-1} (cm_1[i] - [s_1[i]]_1) +      (G)
-    //       r \sum_{i=1}^{t2} \gamma_2^{i-1} (cm_2[i] - [s_2[i]]_1)      (H)
-
-    const std::vector<Field> &s_1s = evaluations.s_1s;
-    const std::vector<Field> &s_2s = evaluations.s_2s;
-
-    // Compute:
+    //   F = \sum_{i=1}^{t1} \gamma_1^{i-1} (cm_1[i] - [s_1[i]]_1) +
+    //       r \sum_{i=1}^{t2} \gamma_2^{i-1} (cm_2[i] - [s_2[i]]_1)
+    //     = G + r * H
     //
-    //   s_1_accum  = \sum_i \gamma_1^{i-1} s_1[i]    (in the scalar field)
-    //   cm_1_accum = \sum_i \gamma_1^{i-1} cm_1[i]   (in G1)
-    //   G          = cm_1_accum - s_1_accum * G1::one()
-
-    Field s_1_accum = s_1s[t1 - 1];
-    libff::G1<ppT> cm_1_accum = cm_1s[t1 - 1];
-    // Note use of underflow to terminate after i = 0.
-    for (size_t i = t1 - 2; i < t1; --i) {
-        cm_1_accum = (gamma_1 * cm_1_accum) + cm_1s[i];
-        s_1_accum = (s_1_accum * gamma_1) + s_1s[i];
-    }
-    const libff::G1<ppT> G = cm_1_accum - s_1_accum * libff::G1<ppT>::one();
-
-    // Similarly:
+    // where:
     //
-    //   s_2_accum  = \sum_i \gamma_2^{i-1} s_2[i]    (in the scalar field)
-    //   cm_2_accum = \sum_i \gamma_2^{i-1} cm_2[i]   (in G1)
-    //   H          = cm_2_accum - s_2_accum * G1::one()
+    //   G = \sum_{i=1}^{t1} \gamma_1^{i-1} (cm_1[i] - [s_1[i]]_1)
+    //   H = \sum_{i=1}^{t2} \gamma_2^{i-1} (cm_2[i] - [s_2[i]]_1)
 
-    Field s_2_accum = s_2s[t2 - 1];
-    libff::G1<ppT> cm_2_accum = cm_2s[t2 - 1];
-    for (size_t i = t2 - 2; i < t2; --i) {
-        cm_2_accum = gamma_2 * cm_2_accum + cm_2s[i];
-        s_2_accum = (s_2_accum * gamma_2) + s_2s[i];
-    }
-    const libff::G1<ppT> H =
-        r * (cm_2_accum - s_2_accum * libff::G1<ppT>::one());
-
-    const libff::G1<ppT> F = G + H;
+    const libff::G1<ppT> G = internal::gamma_times_commit_minus_eval_sum<ppT>(
+        gamma_1, evaluations.s_1s, cm_1s);
+    const libff::G1<ppT> H = internal::gamma_times_commit_minus_eval_sum<ppT>(
+        gamma_2, evaluations.s_2s, cm_2s);
+    const libff::G1<ppT> F = G + r * H;
 
     // The pairing check takes the form:
     //
