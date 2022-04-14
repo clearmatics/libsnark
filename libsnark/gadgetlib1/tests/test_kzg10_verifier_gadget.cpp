@@ -258,6 +258,369 @@ template<typename wppT> void test_kzg10_batched_commit_minus_eval_sum_gadget()
         gamma, evals, cms, r_4, true);
 }
 
+template<typename wppT, size_t num_polynomials_1, size_t num_polynomials_2>
+void do_test_kzg10_batched_verifier_gadget(
+    const libff::Fr<other_curve<wppT>> &z_1,
+    const libff::Fr<other_curve<wppT>> &z_2,
+    const typename kzg10_batched_2_point<other_curve<wppT>>::evaluations
+        &evaluations,
+    const typename kzg10<other_curve<wppT>>::srs &srs,
+    const libff::Fr<other_curve<wppT>> &gamma_1,
+    const libff::Fr<other_curve<wppT>> &gamma_2,
+    const typename kzg10_batched_2_point<other_curve<wppT>>::evaluation_witness
+        &eval_witness,
+    const std::vector<typename kzg10<other_curve<wppT>>::commitment> &cm_1s,
+    const std::vector<typename kzg10<other_curve<wppT>>::commitment> &cm_2s,
+    const libff::Fr<other_curve<wppT>> &r,
+    const bool expected_result)
+{
+    using Field = libff::Fr<wppT>;
+    using npp = other_curve<wppT>;
+    using nG1 = libff::G1<npp>;
+
+    protoboard<Field> pb;
+
+    // z_1 and z_2
+    pb_variable<Field> z_1_var;
+    z_1_var.allocate(pb, "z_1_var");
+    pb_variable<Field> z_2_var;
+    z_2_var.allocate(pb, "z_2_var");
+
+    // Evaluations
+    pb_variable_array<Field> poly_1_evals_var;
+    poly_1_evals_var.allocate(pb, evaluations.s_1s.size(), "poly_1_evals_var");
+
+    pb_variable_array<Field> poly_2_evals_var;
+    poly_2_evals_var.allocate(pb, evaluations.s_2s.size(), "poly_2_evals_var");
+
+    // srs
+    kzg10_srs_variable<wppT> srs_var(pb, POLYNOMIAL_MAX_DEGREE, "srs_var");
+
+    // Gammas
+    pb_variable<Field> gamma_1_var;
+    gamma_1_var.allocate(pb, "gamma_1_var");
+    pb_variable<Field> gamma_2_var;
+    gamma_2_var.allocate(pb, "gamma_2_var");
+
+    // Witness
+    kzg10_batched_witness_variable<wppT> eval_witness_var(
+        pb, "eval_witness_var");
+
+    // Commitments
+    std::vector<kzg10_commitment_variable<wppT>> cm_1s_var;
+    std::vector<kzg10_commitment_variable<wppT>> cm_2s_var;
+
+    for (size_t i = 0; i < cm_1s.size(); ++i) {
+        cm_1s_var.push_back(
+            kzg10_commitment_variable<wppT>(pb, FMT("", "cm_1s_var[%zu]", i)));
+    }
+
+    for (size_t i = 0; i < cm_2s.size(); ++i) {
+        cm_2s_var.push_back(
+            kzg10_commitment_variable<wppT>(pb, FMT("", "cm_2s_var[%zu]", i)));
+    }
+
+    // r
+    pb_variable<Field> r_var;
+    r_var.allocate(pb, "r_var");
+
+    // result
+    pb_variable<Field> result_var;
+    result_var.allocate(pb, "result_var");
+
+    // Verifier gadget
+    kzg10_batched_verifier_gadget<wppT, num_polynomials_1, num_polynomials_2>
+        verifier_gadget(
+            pb,
+            z_1_var,
+            z_2_var,
+            poly_1_evals_var,
+            poly_2_evals_var,
+            srs_var,
+            gamma_1_var,
+            gamma_2_var,
+            eval_witness_var,
+            cm_1s_var,
+            cm_2s_var,
+            r_var,
+            result_var,
+            "verifier_gadget");
+
+    verifier_gadget.generate_r1cs_constraints();
+
+    // Field containers of nField elements
+    Field wrapping_z_1;
+    libff::fp_from_fp(wrapping_z_1, z_1);
+    Field wrapping_z_2;
+    libff::fp_from_fp(wrapping_z_2, z_2);
+    std::vector<Field> wrapping_poly_1_evals(evaluations.s_1s.size());
+    for (size_t i = 0; i < evaluations.s_1s.size(); ++i) {
+        libff::fp_from_fp(wrapping_poly_1_evals[i], evaluations.s_1s[i]);
+    }
+    std::vector<Field> wrapping_poly_2_evals(evaluations.s_2s.size());
+    for (size_t i = 0; i < evaluations.s_2s.size(); ++i) {
+        libff::fp_from_fp(wrapping_poly_2_evals[i], evaluations.s_2s[i]);
+    }
+    Field wrapping_gamma_1;
+    libff::fp_from_fp(wrapping_gamma_1, gamma_1);
+    Field wrapping_gamma_2;
+    libff::fp_from_fp(wrapping_gamma_2, gamma_2);
+    Field wrapping_r;
+    libff::fp_from_fp(wrapping_r, r);
+
+    // Assign witnesses to all parameters
+    pb.val(z_1_var) = wrapping_z_1;
+    pb.val(z_2_var) = wrapping_z_2;
+    poly_1_evals_var.fill_with_field_elements(pb, wrapping_poly_1_evals);
+    poly_2_evals_var.fill_with_field_elements(pb, wrapping_poly_2_evals);
+    srs_var.generate_r1cs_witness(srs);
+    pb.val(gamma_1_var) = wrapping_gamma_1;
+    pb.val(gamma_2_var) = wrapping_gamma_2;
+    eval_witness_var.generate_r1cs_witness(eval_witness);
+    for (size_t i = 0; i < cm_1s.size(); ++i) {
+        cm_1s_var[i].generate_r1cs_witness(cm_1s[i]);
+    }
+    for (size_t i = 0; i < cm_2s.size(); ++i) {
+        cm_2s_var[i].generate_r1cs_witness(cm_2s[i]);
+    }
+    pb.val(r_var) = wrapping_r;
+
+    verifier_gadget.generate_r1cs_witness();
+
+    // Check intermediate values
+
+    if (expected_result) {
+        const nG1 G_expect = internal::gamma_times_commit_minus_eval_sum<npp>(
+            gamma_1, evaluations.s_1s, cm_1s);
+        const nG1 H_expect = internal::gamma_times_commit_minus_eval_sum<npp>(
+            gamma_2, evaluations.s_2s, cm_2s);
+        const nG1 F_expect = G_expect + r * H_expect;
+
+        const nG1 r_times_W_2_expect = r * eval_witness.W_2;
+        const nG1 A_expect = eval_witness.W_1 + r_times_W_2_expect;
+
+        const nG1 r_times_z_2_times_W_2_expect = z_2 * r_times_W_2_expect;
+        const nG1 z_1_times_W_1_expect = z_1 * eval_witness.W_1;
+        const nG1 F_plus_z_1_times_W_1_expect = F_expect + z_1_times_W_1_expect;
+        const nG1 B_expect =
+            F_plus_z_1_times_W_1_expect + r_times_z_2_times_W_2_expect;
+
+        ASSERT_EQ(G_expect, verifier_gadget.G.get_element());
+        ASSERT_EQ(H_expect, verifier_gadget.H.get_element());
+        ASSERT_EQ(F_expect, verifier_gadget.F.get_element());
+        ASSERT_EQ(
+            r_times_W_2_expect, verifier_gadget.r_times_W_2.get_element());
+        ASSERT_EQ(A_expect, verifier_gadget.A.get_element());
+        ASSERT_EQ(
+            r_times_z_2_times_W_2_expect,
+            verifier_gadget.r_times_z_2_times_W_2.get_element());
+        ASSERT_EQ(
+            z_1_times_W_1_expect, verifier_gadget.z_1_times_W_1.get_element());
+        ASSERT_EQ(
+            F_plus_z_1_times_W_1_expect,
+            verifier_gadget.F_plus_z_1_times_W_1.get_element());
+        ASSERT_EQ(B_expect, verifier_gadget.B.get_element());
+    }
+
+    // Check the result.
+
+    ASSERT_TRUE(pb.is_satisfied());
+    ASSERT_EQ(
+        expected_result ? Field::one() : Field::zero(), pb.val(result_var));
+
+    // Test proof gen
+
+    const r1cs_gg_ppzksnark_keypair<wppT> keypair =
+        r1cs_gg_ppzksnark_generator<wppT>(pb.get_constraint_system(), true);
+    const r1cs_gg_ppzksnark_proof<wppT> proof = r1cs_gg_ppzksnark_prover<wppT>(
+        keypair.pk, pb.primary_input(), pb.auxiliary_input(), true);
+    ASSERT_TRUE(r1cs_gg_ppzksnark_verifier_strong_IC<wppT>(
+        keypair.vk, pb.primary_input(), proof));
+}
+
+template<typename wppT> void test_kzg10_batched_verifier_gadget()
+{
+    using npp = other_curve<wppT>;
+    using scheme = kzg10<npp>;
+
+    using nField = libff::Fr<npp>;
+
+    // 2 polynomials to be evaluated at the first point, 3 at the second.
+    const size_t num_polynomials_1 = 2;
+    const size_t num_polynomials_2 = 3;
+
+    // SRS
+    const typename scheme::srs srs = scheme::setup(POLYNOMIAL_MAX_DEGREE);
+
+    // Generate polynomials and commitment
+    std::vector<polynomial<nField>> polynomials_1;
+    std::vector<polynomial<nField>> polynomials_2;
+    std::vector<typename kzg10<npp>::commitment> cm_1s;
+    std::vector<typename kzg10<npp>::commitment> cm_2s;
+
+    for (size_t i = 0; i < num_polynomials_1; ++i) {
+        polynomials_1.push_back(gen_polynomial<npp>(POLYNOMIAL_SIZE));
+        cm_1s.push_back(kzg10<npp>::commit(srs, polynomials_1.back()));
+    }
+
+    for (size_t i = 0; i < num_polynomials_2; ++i) {
+        polynomials_2.push_back(gen_polynomial<npp>(POLYNOMIAL_SIZE));
+        cm_2s.push_back(kzg10<npp>::commit(srs, polynomials_2.back()));
+    }
+
+    std::vector<typename kzg10<npp>::commitment> cm_1s_invalid{
+        cm_1s[0] + cm_1s[0], cm_1s[1]};
+    std::vector<typename kzg10<npp>::commitment> cm_2s_invalid{
+        cm_2s[0] + cm_2s[0], cm_2s[1], cm_2s[2]};
+
+    // Evaluations
+    const nField z_1 = nField("13");
+    const nField z_2 = nField("17");
+
+    const typename kzg10_batched_2_point<npp>::evaluations evals =
+        kzg10_batched_2_point<npp>::evaluate_polynomials(
+            polynomials_1, polynomials_2, z_1, z_2);
+
+    // Witness
+    const nField gamma_1 = nField("3");
+    const nField gamma_2 = nField("5");
+
+    const typename kzg10_batched_2_point<npp>::evaluation_witness eval_witness =
+        kzg10_batched_2_point<npp>::create_evaluation_witness(
+            polynomials_1,
+            polynomials_2,
+            z_1,
+            z_2,
+            evals,
+            srs,
+            gamma_1,
+            gamma_2);
+
+    // Check evaluations and witness natively
+    const nField r = nField("7");
+    ASSERT_TRUE(kzg10_batched_2_point<npp>::verify_evaluations(
+        z_1, z_2, evals, srs, gamma_1, gamma_2, eval_witness, cm_1s, cm_2s, r));
+
+    // Test gadget in the positive case
+    do_test_kzg10_batched_verifier_gadget<
+        wppT,
+        num_polynomials_1,
+        num_polynomials_2>(
+        z_1,
+        z_2,
+        evals,
+        srs,
+        gamma_1,
+        gamma_2,
+        eval_witness,
+        cm_1s,
+        cm_2s,
+        r,
+        true);
+
+    // Test some failure cases:
+
+    // Invalid cases
+    {
+        // Invalid evaluation point
+        do_test_kzg10_batched_verifier_gadget<
+            wppT,
+            num_polynomials_1,
+            num_polynomials_2>(
+            z_1 + z_1,
+            z_2,
+            evals,
+            srs,
+            gamma_1,
+            gamma_2,
+            eval_witness,
+            cm_1s,
+            cm_2s,
+            r,
+            false);
+
+        do_test_kzg10_batched_verifier_gadget<
+            wppT,
+            num_polynomials_1,
+            num_polynomials_2>(
+            z_1,
+            z_2 + z_2,
+            evals,
+            srs,
+            gamma_1,
+            gamma_2,
+            eval_witness,
+            cm_1s,
+            cm_2s,
+            r,
+            false);
+
+        do_test_kzg10_batched_verifier_gadget<
+            wppT,
+            num_polynomials_1,
+            num_polynomials_2>(
+            z_1,
+            z_2,
+            evals,
+            srs,
+            gamma_1 + gamma_1,
+            gamma_2,
+            eval_witness,
+            cm_1s,
+            cm_2s,
+            r,
+            false);
+
+        do_test_kzg10_batched_verifier_gadget<
+            wppT,
+            num_polynomials_1,
+            num_polynomials_2>(
+            z_1,
+            z_2,
+            evals,
+            srs,
+            gamma_1,
+            gamma_2 + gamma_2,
+            eval_witness,
+            cm_1s,
+            cm_2s,
+            r,
+            false);
+
+        do_test_kzg10_batched_verifier_gadget<
+            wppT,
+            num_polynomials_1,
+            num_polynomials_2>(
+            z_1,
+            z_2,
+            evals,
+            srs,
+            gamma_1,
+            gamma_2,
+            eval_witness,
+            cm_1s_invalid,
+            cm_2s,
+            r,
+            false);
+
+        do_test_kzg10_batched_verifier_gadget<
+            wppT,
+            num_polynomials_1,
+            num_polynomials_2>(
+            z_1,
+            z_2,
+            evals,
+            srs,
+            gamma_1,
+            gamma_2,
+            eval_witness,
+            cm_1s,
+            cm_2s_invalid,
+            r,
+            false);
+    }
+}
+
 TEST(TestKZG10VerifierGadget, ValidEvaluation)
 {
     test_kzg10_verifier_gadget<libff::bw6_761_pp>();
@@ -266,6 +629,11 @@ TEST(TestKZG10VerifierGadget, ValidEvaluation)
 TEST(TestKZG10VerifierGadget, BatchedCommitMinusEvalSum)
 {
     test_kzg10_batched_commit_minus_eval_sum_gadget<libff::bw6_761_pp>();
+}
+
+TEST(TestKZG10VerifierGadget, BatchedValidEvaluation)
+{
+    test_kzg10_batched_verifier_gadget<libff::bw6_761_pp>();
 }
 
 } // namespace
