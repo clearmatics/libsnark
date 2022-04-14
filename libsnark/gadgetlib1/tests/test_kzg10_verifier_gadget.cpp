@@ -7,8 +7,9 @@
  *****************************************************************************/
 
 #include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bw6_761_pairing_params.hpp"
+#include "libsnark/gadgetlib1/gadgets/verifiers/kzg10_batched_verifier_gadget.hpp"
 #include "libsnark/gadgetlib1/gadgets/verifiers/kzg10_verifier_gadget.hpp"
-#include "libsnark/polynomial_commitments/kzg10.hpp"
+#include "libsnark/polynomial_commitments/kzg10_batched.hpp"
 #include "libsnark/polynomial_commitments/tests/polynomial_commitment_test_utils.hpp"
 #include "libsnark/zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/r1cs_gg_ppzksnark.hpp"
 
@@ -155,9 +156,116 @@ template<typename wppT> void test_kzg10_verifier_gadget()
     }
 }
 
+template<typename wppT, size_t num_entries>
+void do_test_kzg10_batched_commit_minus_eval_sum(
+    const libff::Fr<other_curve<wppT>> &gamma,
+    const std::vector<libff::Fr<other_curve<wppT>>> &evals,
+    const std::vector<typename kzg10<other_curve<wppT>>::commitment> &cms,
+    const libff::G1<other_curve<wppT>> &r,
+    const bool expected_result)
+{
+    using Field = libff::Fr<wppT>;
+
+    ASSERT_EQ(num_entries, evals.size());
+    ASSERT_EQ(num_entries, cms.size());
+
+    // Protoboard and constraints
+
+    protoboard<Field> pb;
+
+    pb_variable<Field> gamma_var = pb_variable_allocate<Field>(pb, "gamma_var");
+    std::vector<G1_variable<wppT>> cms_var =
+        internal::allocate_variable_array<wppT, G1_variable<wppT>>(
+            pb, num_entries, "cms_var");
+    pb_variable_array<Field> evals_var;
+    evals_var.allocate(pb, num_entries, "evals_var");
+    G1_variable<wppT> result_var(pb, "result_var");
+
+    kzg10_batched_compute_commit_minus_eval_sum<wppT, num_entries> compute_sum(
+        pb, gamma_var, cms_var, evals_var, result_var, "compute_sum");
+
+    compute_sum.generate_r1cs_constraints();
+
+    // Witness
+
+    Field wrapping_gamma;
+    fp_from_fp(wrapping_gamma, gamma);
+    pb.val(gamma_var) = wrapping_gamma;
+
+    for (size_t i = 0; i < num_entries; ++i) {
+        cms_var[i].generate_r1cs_witness(cms[i]);
+
+        Field wrapping_eval;
+        fp_from_fp(wrapping_eval, evals[i]);
+        pb.val(evals_var[i]) = wrapping_eval;
+    }
+    compute_sum.generate_r1cs_witness();
+
+    // Check result value
+
+    if (expected_result) {
+        ASSERT_TRUE(pb.is_satisfied());
+        ASSERT_EQ(r, result_var.get_element());
+    } else {
+        ASSERT_NE(r, result_var.get_element());
+    }
+
+    // Test in proof
+
+    const r1cs_gg_ppzksnark_keypair<wppT> keypair =
+        r1cs_gg_ppzksnark_generator<wppT>(pb.get_constraint_system(), true);
+    const r1cs_gg_ppzksnark_proof<wppT> proof = r1cs_gg_ppzksnark_prover<wppT>(
+        keypair.pk, pb.primary_input(), pb.auxiliary_input(), true);
+    ASSERT_TRUE(r1cs_gg_ppzksnark_verifier_strong_IC<wppT>(
+        keypair.vk, pb.primary_input(), proof));
+}
+
+template<typename wppT> void test_kzg10_batched_commit_minus_eval_sum_gadget()
+{
+    using nField = libff::Fr<other_curve<wppT>>;
+    using nG1 = libff::G1<other_curve<wppT>>;
+
+    const nField gamma("51");
+    const std::vector<nField> evals{{"3"}, {"5"}, {"7"}, {"11"}};
+    const std::vector<nG1> cms{{
+        nField("13") * nG1::one(),
+        nField("17") * nG1::one(),
+        nField("19") * nG1::one(),
+        nField("23") * nG1::one(),
+    }};
+
+    // 2-entry case
+    const nG1 r_2 = nField((13 - 3) + 51 * (17 - 5)) * nG1::one();
+    do_test_kzg10_batched_commit_minus_eval_sum<wppT, 2>(
+        gamma, {evals[0], evals[1]}, {cms[0], cms[1]}, r_2, true);
+
+    // 3-entry case
+    const nG1 r_3 =
+        nField((13 - 3) + 51 * (17 - 5) + (51 * 51) * (19 - 7)) * nG1::one();
+    do_test_kzg10_batched_commit_minus_eval_sum<wppT, 3>(
+        gamma,
+        {evals[0], evals[1], evals[2]},
+        {cms[0], cms[1], cms[2]},
+        r_3,
+        true);
+
+    // 4-entry case
+    const nG1 r_4 = nField(
+                        (13 - 3) + 51 * (17 - 5) + (51 * 51) * (19 - 7) +
+                        (51 * 51 * 51) * (23 - 11)) *
+                    nG1::one();
+    do_test_kzg10_batched_commit_minus_eval_sum<wppT, 4>(
+        gamma, evals, cms, r_4, true);
+}
+
 TEST(TestKZG10VerifierGadget, ValidEvaluation)
 {
     test_kzg10_verifier_gadget<libff::bw6_761_pp>();
+}
+
+TEST(TestKZG10VerifierGadget, BatchedCommitMinusEvalSum)
+{
+    test_kzg10_batched_commit_minus_eval_sum_gadget<libff::bw6_761_pp>();
 }
 
 } // namespace
