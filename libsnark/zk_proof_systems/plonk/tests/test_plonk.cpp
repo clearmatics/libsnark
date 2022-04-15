@@ -19,16 +19,11 @@
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
 //#include <libsnark/polynomial_Commitments/kzg10.hpp>
 //#include <libsnark/polynomial_Commitments/tests/polynomial_Commitment_test_utils.hpp>
+#include <libff/algebra/scalar_multiplication/wnaf.hpp>
+#include <libff/algebra/curves/curve_serialization.hpp>
 
 #include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
 #include <libfqfft/evaluation_domain/domains/basic_radix2_domain.hpp>
-//#include <libfqfft/polynomial_arithmetic/basic_operations.hpp>
-//#include <libfqfft/evaluation_domain/domains/arithmetic_sequence_domain.hpp>
-//#include <libfqfft/evaluation_domain/domains/extended_radix2_domain.hpp>
-//#include <libfqfft/evaluation_domain/domains/geometric_sequence_domain.hpp>
-//#include <libfqfft/evaluation_domain/domains/step_radix2_domain.hpp>
-//#include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
-//#include <libfqfft/evaluation_domain/domains/basic_radix2_domain_aux.hpp>
 
 #define DEBUG 1
 const size_t MAX_DEGREE = 254;
@@ -249,6 +244,7 @@ namespace libsnark
     ppT::init_public_params();
     
     using Field = libff::Fr<ppT>;
+    using Group = libff::G1<ppT>;
     libff::G1<ppT> G1 = libff::G1<ppT>::G1_one;
     // libff::G2<ppT> G2 = libff::G2<ppT>::G2_one;
     // Setting G2 equal to G1 (Type1 Bilinear group) for simplicity
@@ -445,11 +441,55 @@ namespace libsnark
     alpha.print();
 #endif // #if 1 // DEBUG
     
-    libff::G1<ppT> x = libff::G1<ppT>::G1_one;
+    printf("[%s:%d] G1 \n", __FILE__, __LINE__);
+    G1.print();
+    G1.print_coordinates();
+    
+    //    printf("[%s:%d] G2 \n", __FILE__, __LINE__);
+    //    libff::G2<ppT>::G2_one.print();
+    //    libff::G2<ppT>::G2_one.print_coordinates();
+
+#if 1
+    //    libff::G1<ppT> x = Field("2") * G1;
+    libff::G1<ppT> x = alpha * G1;
+    printf("[%s:%d] x * G1\n", __FILE__, __LINE__);
     x.print();
+    x.print_coordinates();
+#endif    
 
-    libff::G1<ppT> y = alpha * G1;
-
+#if 0    
+    libff::G1<ppT> y = alpha * libff::G1<ppT>::one();
+    printf("[%s:%d]     alpha * G1 affine\n", __FILE__, __LINE__);
+    y.print(); // print affine coordinates
+    printf("[%s:%d]     alpha * G1 projec\n", __FILE__, __LINE__);
+    y.print_coordinates(); // print projective coordinates
+    //    std::ostringstream ss;
+    libff::group_write<libff::encoding_json, libff::form_plain, libff::compression_off>(y, std::cout);
+    //    printf("[%s:%d] %s\n", __FILE__, __LINE__, ss.str());
+    //    libff::G1<ppT> z = y.to_special();
+    // perform scalar multiplication: alpha * G1 where alpha \in Fr, G1=(x,y): x,y \in Fq
+#endif
+    
+    // compute powers of alpha: 1, alpha, alpha^2, ...
+    const libff::bigint<Field::num_limbs> alpha_bigint = alpha.as_bigint();
+    const size_t window_size = std::max(
+					libff::wnaf_opt_window_size<libff::G1<ppT>>(alpha_bigint.num_bits()),
+					1ul);
+    const std::vector<long> naf =
+      libff::find_wnaf<Field::num_limbs>(window_size, alpha_bigint);
+      
+    std::vector<libff::G1<ppT>> alpha_powers_g1;
+    alpha_powers_g1.reserve(nconstraints + 3);
+    libff::G1<ppT> alpha_i_g1 = libff::G1<ppT>::one();
+    alpha_powers_g1.push_back(alpha_i_g1);
+    for (size_t i = 1; i < (nconstraints + 3); ++i) {
+      // alpha^i * G1
+      alpha_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
+								window_size, alpha_i_g1, naf);
+      alpha_powers_g1.push_back(alpha_i_g1);
+    }
+    
+    //      alpha_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(window_size, alpha_i_g1, naf);
     /*
     std::vector<libff::G1<ppT>> alpha_powers_g1;
     alpha_powers_g1.reserve(nconstraints + 3);
@@ -464,7 +504,7 @@ namespace libsnark
         alpha_powers_g1.push_back(alpha_i_g1);
     }
     */
-    
+#if 0    
     std::vector<libff::G1<ppT>> alpha_powers_g1;
     alpha_powers_g1.reserve(nconstraints + 3);
     for (int i = 0; i < nconstraints + 3; ++i) {
@@ -472,7 +512,7 @@ namespace libsnark
       libff::G1<ppT> alpha_powers_i = alpha_i * G1;
       alpha_powers_g1.push_back(alpha_powers_i);
     }
-
+#endif
 #if 1 // DEBUG
     for (int i = 0; i < nconstraints + 3; ++i) {
       printf("alpha_power[%2d] ", i);
