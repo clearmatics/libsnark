@@ -128,7 +128,8 @@ namespace libsnark
   }
 
   //
-  // Compute the Lagrange basis polynomails for interpolating sets of n points
+  // Compute the Lagrange basis polynomails for interpolating sets of
+  // n points
   //
   // INPUT:
   //
@@ -236,6 +237,46 @@ namespace libsnark
 
   }
 
+  //
+  // Evaluate a polynomial F at the encrypted secret input
+  // \alpha^i*G_1 ie. compute f(\alpha)*G1 = [f(\alpha)]_i
+  //
+  // INPUT
+  //
+  // alpha_powers_g1: \alpha^i*G1: 0\le{i}<max_degree(Q[j]): 0\le{j}<n
+  // Q_polys[0..n-1]: a set of n polynomials
+  //
+  // OUTPUT
+  //
+  // [Q_polys[i](\alpha)]_1, 0\le 1<n : the "encrypted" evaluation of
+  // the polynomials Q_polys[i] in the secret parameter \alpha (the
+  // toxic waste) multiplied by the group generator G_1 i.e. compute
+  // Q_polys[i](\alpha)*G_1
+  //
+  template<typename ppT>
+  void plonk_evaluate_polys_at_secret_G1(
+					 std::vector<libff::G1<ppT>> alpha_powers_g1,
+					 std::vector<polynomial<libff::Fr<ppT>>> Q_polys,
+					 std::vector<libff::G1<ppT>>& Q_polys_at_secret_g1
+					 )
+  {
+    const size_t chunks = 1;
+    const size_t npolys = Q_polys.size();
+    for (size_t i = 0; i < npolys; ++i) {
+      const size_t num_coefficients = Q_polys[i].size();
+      libff::G1<ppT> q_i = 
+	libff::multi_exp<
+	  libff::G1<ppT>,
+	libff::Fr<ppT>,
+	libff::multi_exp_method_BDLO12_signed>(
+					       alpha_powers_g1.begin(),
+					       alpha_powers_g1.begin() + num_coefficients,
+					       Q_polys[i].begin(),
+					       Q_polys[i].end(),
+					       chunks);
+      Q_polys_at_secret_g1[i] = q_i;
+    }
+  }
 
   template<typename ppT> void test_plonk()
   {
@@ -360,16 +401,16 @@ namespace libsnark
     // (transposed) gates matrix over the Lagrange basis q_poly =
     // \sum_i q[i] * L[i] where q[i] is a coefficient (a Field
     // element) and L[i] is a polynomial with Field coeffs
-    std::vector<polynomial<Field>> Q(nqpoly, polynomial<Field>(nconstraints));
+    std::vector<polynomial<Field>> Q_polys(nqpoly, polynomial<Field>(nconstraints));
     for (size_t i = 0; i < nqpoly; ++i) {
       std::vector<Field> q_vec = gates_matrix_transpose[i];
-      plonk_interpolate_over_lagrange_basis<Field>(L, q_vec, Q[i]);
+      plonk_interpolate_over_lagrange_basis<Field>(L, q_vec, Q_polys[i]);
     }
 
 #if 1 // DEBUG
     for (int i = 0; i < nqpoly; ++i) {
-      printf("\n[%s:%d] Q[%2d]\n", __FILE__, __LINE__, i);
-      print_vector(Q[i]);
+      printf("\n[%s:%d] Q_polys[%2d]\n", __FILE__, __LINE__, i);
+      print_vector(Q_polys[i]);
     }
 #endif // #if 1 // DEBUG
     
@@ -417,18 +458,18 @@ namespace libsnark
     printf("[%s:%d] sigma_star\n", __FILE__, __LINE__);
     print_vector(sigma_star);
 
-    std::vector<polynomial<Field>> S_sigma_poly(nsigma, polynomial<Field>(nconstraints));
+    std::vector<polynomial<Field>> S_sigma_polys(nsigma, polynomial<Field>(nconstraints));
     for (int i = 0; i < nsigma; ++i) {
       typename std::vector<Field>::iterator begin = sigma_star.begin()+(i*nconstraints);
       typename std::vector<Field>::iterator end = sigma_star.begin()+(i*nconstraints)+(nconstraints);
       std::vector<Field> S_sigma_points(begin, end);
-      plonk_interpolate_over_lagrange_basis<Field>(L, S_sigma_points, S_sigma_poly[i]);
+      plonk_interpolate_over_lagrange_basis<Field>(L, S_sigma_points, S_sigma_polys[i]);
     }
 
 #if 1 // DEBUG
     for (int i = 0; i < nsigma; ++i) {
-      printf("[%s:%d] S_sigma_poly[%d]\n", __FILE__, __LINE__, i);
-      print_vector(S_sigma_poly[i]);
+      printf("[%s:%d] S_sigma_polys[%d]\n", __FILE__, __LINE__, i);
+      print_vector(S_sigma_polys[i]);
     }
 #endif // #if 1 // DEBUG
 
@@ -438,12 +479,6 @@ namespace libsnark
 #if 1 // DEBUG
     printf("[%s:%d] alpha ", __FILE__, __LINE__);
     alpha.print();
-#endif // #if 1 // DEBUG
-    
-#if 0 // DEBUG
-    printf("[%s:%d] G1 \n", __FILE__, __LINE__);
-    G1.print();
-    G1.print_coordinates();
 #endif // #if 1 // DEBUG
     
     // compute powers of alpha * G1: 1*G1, alpha*G1, alpha^2*G1, ...
@@ -471,32 +506,29 @@ namespace libsnark
     }
 #endif // #if 1 // DEBUG
 
-    //    std::vector<polynomial<Field>> Q(nqpoly, polynomial<Field>(nconstraints));
-    // Q[i] is polynomial<Field>
+    //    std::vector<polynomial<Field>> Q_polys(nqpoly, polynomial<Field>(nconstraints));
+    // Q_polys[i] is polynomial<Field>
 
     //    const size_t num_coefficients = phi.size();
     //    const libff::Fr<ppT> i
     //    const Field phi_i = libfqfft::evaluate_polynomial(num_coefficients, phi, i);
 
+    // Verifier precomputation:
+    std::vector<libff::G1<ppT>> Q_polys_at_secret_g1(Q_polys.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, Q_polys, Q_polys_at_secret_g1);
+    std::vector<libff::G1<ppT>> S_sigma_polys_at_secret_g1(S_sigma_polys.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, S_sigma_polys, S_sigma_polys_at_secret_g1);
     
-    const size_t num_coefficients = Q[0].size();
-    const size_t chunks = 1;
-
-    // The commitment is the encoding [ \phi(\alpha) ]_1. This is computed
-    // using the elements [ \alpha^t ]_1 for t=0, ..., max_degree from the srs.
-    libff::G1<ppT> q_exp = 
-    libff::multi_exp<
-      libff::G1<ppT>,
-      libff::Fr<ppT>,
-      libff::multi_exp_method_BDLO12_signed>(
-					     alpha_powers_g1.begin(),
-					     alpha_powers_g1.begin() + num_coefficients,
-					     Q[0].begin(),
-					     Q[0].end(),
-					     chunks);
-    
-    printf("[%s:%d] q_exp \n", __FILE__, __LINE__);
-    q_exp.print();
+#if 1 // DEBUG
+    for (int i = 0; i < Q_polys.size(); ++i) {
+      printf("Q_polys_at_secret_G1[%d] \n", i);
+      Q_polys_at_secret_g1[i].print();
+    }
+    for (int i = 0; i < S_sigma_polys.size(); ++i) {
+      printf("S_sigma_polys_at_secret_G1[%d] \n", i);
+      S_sigma_polys_at_secret_g1[i].print();
+    }
+#endif // #if 1 // DEBUG
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
