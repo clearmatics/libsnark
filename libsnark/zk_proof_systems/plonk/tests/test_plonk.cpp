@@ -17,8 +17,7 @@
 #include <libff/common/utils.hpp>
 #include <gtest/gtest.h>
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
-//#include <libsnark/polynomial_Commitments/kzg10.hpp>
-//#include <libsnark/polynomial_Commitments/tests/polynomial_Commitment_test_utils.hpp>
+#include <libff/algebra/scalar_multiplication/multiexp.hpp>
 #include <libff/algebra/scalar_multiplication/wnaf.hpp>
 #include <libff/algebra/curves/curve_serialization.hpp>
 
@@ -441,43 +440,19 @@ namespace libsnark
     alpha.print();
 #endif // #if 1 // DEBUG
     
+#if 0 // DEBUG
     printf("[%s:%d] G1 \n", __FILE__, __LINE__);
     G1.print();
     G1.print_coordinates();
+#endif // #if 1 // DEBUG
     
-    //    printf("[%s:%d] G2 \n", __FILE__, __LINE__);
-    //    libff::G2<ppT>::G2_one.print();
-    //    libff::G2<ppT>::G2_one.print_coordinates();
-
-#if 1
-    //    libff::G1<ppT> x = Field("2") * G1;
-    libff::G1<ppT> x = alpha * G1;
-    printf("[%s:%d] x * G1\n", __FILE__, __LINE__);
-    x.print();
-    x.print_coordinates();
-#endif    
-
-#if 0    
-    libff::G1<ppT> y = alpha * libff::G1<ppT>::one();
-    printf("[%s:%d]     alpha * G1 affine\n", __FILE__, __LINE__);
-    y.print(); // print affine coordinates
-    printf("[%s:%d]     alpha * G1 projec\n", __FILE__, __LINE__);
-    y.print_coordinates(); // print projective coordinates
-    //    std::ostringstream ss;
-    libff::group_write<libff::encoding_json, libff::form_plain, libff::compression_off>(y, std::cout);
-    //    printf("[%s:%d] %s\n", __FILE__, __LINE__, ss.str());
-    //    libff::G1<ppT> z = y.to_special();
-    // perform scalar multiplication: alpha * G1 where alpha \in Fr, G1=(x,y): x,y \in Fq
-#endif
-    
-    // compute powers of alpha: 1, alpha, alpha^2, ...
+    // compute powers of alpha * G1: 1*G1, alpha*G1, alpha^2*G1, ...
     const libff::bigint<Field::num_limbs> alpha_bigint = alpha.as_bigint();
     const size_t window_size = std::max(
 					libff::wnaf_opt_window_size<libff::G1<ppT>>(alpha_bigint.num_bits()),
 					1ul);
     const std::vector<long> naf =
-      libff::find_wnaf<Field::num_limbs>(window_size, alpha_bigint);
-      
+      libff::find_wnaf<Field::num_limbs>(window_size, alpha_bigint);    
     std::vector<libff::G1<ppT>> alpha_powers_g1;
     alpha_powers_g1.reserve(nconstraints + 3);
     libff::G1<ppT> alpha_i_g1 = libff::G1<ppT>::one();
@@ -487,32 +462,8 @@ namespace libsnark
       alpha_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
 								window_size, alpha_i_g1, naf);
       alpha_powers_g1.push_back(alpha_i_g1);
-    }
-    
-    //      alpha_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(window_size, alpha_i_g1, naf);
-    /*
-    std::vector<libff::G1<ppT>> alpha_powers_g1;
-    alpha_powers_g1.reserve(nconstraints + 3);
-    libff::G1<ppT> alpha_i_g1 = libff::G1<ppT>::one();
-    alpha_powers_g1.push_back(alpha_i_g1);
-    for (size_t i = 1; i < nconstraints + 3; ++i) {
-      Field omega_k2_i = omega[i] * libff::power(k, libff::bigint<1>(2));
-      
-        alpha_i_g1 =
-	  libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
-            window_size, alpha_i_g1, naf);
-        alpha_powers_g1.push_back(alpha_i_g1);
-    }
-    */
-#if 0    
-    std::vector<libff::G1<ppT>> alpha_powers_g1;
-    alpha_powers_g1.reserve(nconstraints + 3);
-    for (int i = 0; i < nconstraints + 3; ++i) {
-      Field alpha_i = libff::power(alpha, libff::bigint<1>(i));
-      libff::G1<ppT> alpha_powers_i = alpha_i * G1;
-      alpha_powers_g1.push_back(alpha_powers_i);
-    }
-#endif
+    }    
+
 #if 1 // DEBUG
     for (int i = 0; i < nconstraints + 3; ++i) {
       printf("alpha_power[%2d] ", i);
@@ -520,7 +471,33 @@ namespace libsnark
     }
 #endif // #if 1 // DEBUG
 
+    //    std::vector<polynomial<Field>> Q(nqpoly, polynomial<Field>(nconstraints));
+    // Q[i] is polynomial<Field>
+
+    //    const size_t num_coefficients = phi.size();
+    //    const libff::Fr<ppT> i
+    //    const Field phi_i = libfqfft::evaluate_polynomial(num_coefficients, phi, i);
+
     
+    const size_t num_coefficients = Q[0].size();
+    const size_t chunks = 1;
+
+    // The commitment is the encoding [ \phi(\alpha) ]_1. This is computed
+    // using the elements [ \alpha^t ]_1 for t=0, ..., max_degree from the srs.
+    libff::G1<ppT> q_exp = 
+    libff::multi_exp<
+      libff::G1<ppT>,
+      libff::Fr<ppT>,
+      libff::multi_exp_method_BDLO12_signed>(
+					     alpha_powers_g1.begin(),
+					     alpha_powers_g1.begin() + num_coefficients,
+					     Q[0].begin(),
+					     Q[0].end(),
+					     chunks);
+    
+    printf("[%s:%d] q_exp \n", __FILE__, __LINE__);
+    q_exp.print();
+
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
 
