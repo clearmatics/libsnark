@@ -226,7 +226,7 @@ namespace libsnark
       std::vector<FieldT> f_points_coeff_i(nconstraints, FieldT(0));
       f_points_coeff_i[0] = f_points[i];
       // f_poly_component[i] = f_points[i] * L[i]
-      libfqfft::_polynomial_multiplication(f_poly_component[i], f_points_coeff_i, L[i]);
+      libfqfft::_polynomial_multiplication<FieldT>(f_poly_component[i], f_points_coeff_i, L[i]);
     }
     std::fill(f_poly.begin(), f_poly.end(), FieldT(0));
     // f_poly[i] = \sum_i (f_points[i] * L[i])
@@ -573,7 +573,7 @@ namespace libsnark
       omega2.push_back(omega2_i);
     }
     
-#ifdef DEBUG
+#ifdef NDEBUG
     for (int i = 0; i < (2*nconstraints); ++i) {
       printf("w^%d: ", i);
       omega2[i].print();
@@ -596,7 +596,7 @@ namespace libsnark
       omega3.push_back(omega3_i);
     }
     
-#ifdef DEBUG
+#ifdef NDEBUG
     for (int i = 0; i < (8*nconstraints); ++i) {
       printf("w^%2d: ", i);
       omega3[i].print();
@@ -607,6 +607,67 @@ namespace libsnark
     printf("w^%d: ", 8*nconstraints);
     omega3_temp.print();
     assert(omega3_temp == 1);
+#endif // #ifdef DEBUG
+
+    Field t = Field(omega_base);
+    Field a;
+    a = domain->compute_vanishing_polynomial(t);
+    printf("[%s:%d] a ", __FILE__, __LINE__);
+    a.print();
+
+    // vanishing polynomial Zh(X) = x^n-1. vanishes on all n roots od
+    // unity omega
+    std::vector<Field> Zh(nconstraints+1, Field(0));
+    Zh[0] = Field(-1);
+    Zh[nconstraints] = Field(1);
+    printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
+    print_vector(Zh);
+
+    // blinding scalars b1, b2, ..., b9. random but fixed to match the
+    // python test vectors
+    //    size_t nscalars = 9;
+    std::vector<Field> rand_scalars
+      {
+       Field("8063396892870388055806370369789704857755116044327394765020751373651916505604"),
+       Field("6827026430120056597679453111370682306316948363643792417785314991392447377909"),
+       Field("20903799562102387073359556962112335230020378309596765284572286455779329747315"),
+       Field("27445824854335787523979734401573136947589999159092723101543900479804718923773"),
+       Field("5216447975508541021290757380485235885597475407449078898274648785082871817687"),
+       Field("48720156268681305476740160454555587712391923971264646500554531948708930944069"),
+       Field("2131891516651518828698089707163191982683101187444208330829153527689737950718"),
+       Field("47548532878000795436471885496554996210469829388180983864669623532585348412472"),
+       Field("2534599719872500160900817853393315885420633320379105447254598708515031311667")
+      };
+#ifdef DEBUG
+    printf("[%s:%d] rand_scalars\n", __FILE__, __LINE__);
+    print_vector(rand_scalars);
+#endif // #ifdef DEBUG
+
+    std::vector<std::vector<Field>> blind_polys
+      {
+       {rand_scalars[1], rand_scalars[0]}, // b1 + b0 X
+       {rand_scalars[3], rand_scalars[2]}, // b3 + b2 X
+       {rand_scalars[5], rand_scalars[4]}  // b5 + b4 X
+      };
+#ifdef DEBUG
+    printf("[%s:%d] a_blind_poly\n", __FILE__, __LINE__);
+    print_vector(blind_polys[0]);
+#endif // #ifdef DEBUG
+    
+    // a_poly = blind_polys[0] * Zh + witness_polys[0]
+    std::vector<std::vector<Field>> witness_polys_blinded(3);
+    libfqfft::_polynomial_multiplication<Field>(witness_polys_blinded[0], blind_polys[0], Zh);
+    libfqfft::_polynomial_addition<Field>(witness_polys_blinded[0], witness_polys_blinded[0], witness_polys[0]);
+#ifdef DEBUG
+    printf("[%s:%d] a_poly\n", __FILE__, __LINE__);
+    print_vector(witness_polys_blinded[0]);
+#endif // #ifdef DEBUG
+
+    std::vector<libff::G1<ppT>> witness_polys_blinded_at_secret_g1(witness_polys_blinded.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, witness_polys_blinded, witness_polys_blinded_at_secret_g1);
+#ifdef DEBUG
+    printf("[%s:%d] a_poly_at_secret_g1\n", __FILE__, __LINE__);
+    witness_polys_blinded_at_secret_g1[0].print();
 #endif // #ifdef DEBUG
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
