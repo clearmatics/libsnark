@@ -284,13 +284,15 @@ namespace libsnark
     ppT::init_public_params();
     
     using Field = libff::Fr<ppT>;
-    using Group = libff::G1<ppT>;
-    libff::G1<ppT> G1 = libff::G1<ppT>::G1_one;
+    //    using Group = libff::G1<ppT>;
+    //    libff::G1<ppT> G1 = libff::G1<ppT>::G1_one;
     // libff::G2<ppT> G2 = libff::G2<ppT>::G2_one;
     // Setting G2 equal to G1 (Type1 Bilinear group) for simplicity
     // and in order to match the test vectors which are produced under
     // this setting
-    libff::G1<ppT> G2 = libff::G1<ppT>::G1_one;
+    //    libff::G1<ppT> G2 = libff::G1<ppT>::G1_one;
+
+    // --- SETUP ---
 
     // number of gates / constraints. we have 6 gates for the example
     // circuit + 2 dummy gates to make it a power of 2 (for the fft)
@@ -335,6 +337,18 @@ namespace libsnark
        {   Field(0),    Field(0),    Field(0), -Field("5"),  Field(0),    Field(0),  Field(0),  Field(0)}, // q_C
       };
 
+    // witness values
+    // w_L = a = [ 3,  9, 27,  1,  1, 30,  0,  0]
+    // w_R = b = [ 3,  3,  3,  5, 35,  5,  0,  0]
+    // w_O = c = [ 9, 27, 30,  5, 35, 35,  0,  0]
+    // W = w_L + w_R + w_O
+    std::vector<Field> witness
+      {
+       3,  9, 27,  1,  1, 30,  0,  0, // w_L 
+       3,  3,  3,  5, 35,  5,  0,  0, // w_R
+       9, 27, 30,  5, 35, 35,  0,  0  // w_O
+      };
+    
     // output from plonk_compute_permutation()
     std::vector<int> wire_permutation{9, 17, 18, 5, 4, 19, 7, 8, 10, 11, 1, 14, 21, 20, 15, 16, 2, 3, 6, 12, 22, 13, 23, 24};
 
@@ -520,15 +534,80 @@ namespace libsnark
     plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, S_sigma_polys, S_sigma_polys_at_secret_g1);
     
 #if 1 // DEBUG
-    for (int i = 0; i < Q_polys.size(); ++i) {
+    for (int i = 0; i < (int)Q_polys.size(); ++i) {
       printf("Q_polys_at_secret_G1[%d] \n", i);
       Q_polys_at_secret_g1[i].print();
     }
-    for (int i = 0; i < S_sigma_polys.size(); ++i) {
+    for (int i = 0; i < (int)S_sigma_polys.size(); ++i) {
       printf("S_sigma_polys_at_secret_G1[%d] \n", i);
       S_sigma_polys_at_secret_g1[i].print();
     }
 #endif // #if 1 // DEBUG
+
+    // --- PROVER ---
+
+    int nwitness = 3;
+    std::vector<polynomial<Field>> witness_polys(nwitness, polynomial<Field>(nconstraints));
+    for (int i = 0; i < nwitness; ++i) {
+      typename std::vector<Field>::iterator begin = witness.begin()+(i*nconstraints);
+      typename std::vector<Field>::iterator end = witness.begin()+(i*nconstraints)+(nconstraints);
+      std::vector<Field> witness_points(begin, end);
+      plonk_interpolate_over_lagrange_basis<Field>(L, witness_points, witness_polys[i]);
+    }
+
+#if 1 // DEBUG
+    for (int i = 0; i < nwitness; ++i) {
+      printf("[%s:%d] witness_polys[%d]\n", __FILE__, __LINE__, i);
+      print_vector(witness_polys[i]);
+    }
+#endif // #if 1 // DEBUG
+
+
+    // Evaluate polynomials over 2*n points
+    Field omega2_base = libff::get_root_of_unity<Field>(2*nconstraints);
+    omega2_base.print();
+    
+    std::vector<Field> omega2;    
+    for (int i = 0; i < (2*nconstraints); ++i) {
+      Field omega2_i = libff::power(omega2_base, libff::bigint<1>(i));
+      omega2.push_back(omega2_i);
+    }
+    
+#ifdef DEBUG
+    for (int i = 0; i < (2*nconstraints); ++i) {
+      printf("w^%d: ", i);
+      omega2[i].print();
+    }
+    // check that omega2^8 = 1 i.e. omega2 is a generator of the
+    // multiplicative subgroup H of Fq of order 'nconstraints'
+    Field omega2_temp = libff::power(omega2_base, libff::bigint<1>(2*nconstraints));
+    printf("w^%2d: ", 2*nconstraints);
+    omega2_temp.print();
+    assert(omega2_temp == 1);
+#endif // #ifdef DEBUG
+
+    // Evaluate polynomials over 8*n points
+    Field omega3_base = libff::get_root_of_unity<Field>(8*nconstraints);
+    omega3_base.print();
+    
+    std::vector<Field> omega3;    
+    for (int i = 0; i < (8*nconstraints); ++i) {
+      Field omega3_i = libff::power(omega3_base, libff::bigint<1>(i));
+      omega3.push_back(omega3_i);
+    }
+    
+#ifdef DEBUG
+    for (int i = 0; i < (8*nconstraints); ++i) {
+      printf("w^%2d: ", i);
+      omega3[i].print();
+    }
+    // check that omega3^8 = 1 i.e. omega3 is a generator of the
+    // multiplicative subgroup H of Fq of order 'nconstraints'
+    Field omega3_temp = libff::power(omega3_base, libff::bigint<1>(8*nconstraints));
+    printf("w^%d: ", 8*nconstraints);
+    omega3_temp.print();
+    assert(omega3_temp == 1);
+#endif // #ifdef DEBUG
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
