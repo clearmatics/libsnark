@@ -28,6 +28,13 @@ void pb_variable_array<FieldT>::allocate(
     const size_t n,
     const std::string &annotation_prefix)
 {
+    // The DEBUG variable controls whether or not the FMT macro actually
+    // performs string concatenation or simply returns "". Therefore, even
+    // though gadget code may always set an annotation, it may appear as ""
+    // unless DEBUG is set.
+    //
+    // TODO: control annotations via a variable such as
+    // LIBSNARK_ENABLE_ANNOTATIONS.
 #ifdef DEBUG
     assert(annotation_prefix != "");
 #endif
