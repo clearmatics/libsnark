@@ -28,9 +28,7 @@ void pb_variable_array<FieldT>::allocate(
     const size_t n,
     const std::string &annotation_prefix)
 {
-#ifdef DEBUG
     assert(annotation_prefix != "");
-#endif
     (*this).resize(n);
 
     for (size_t i = 0; i < n; ++i) {
