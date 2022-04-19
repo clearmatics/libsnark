@@ -26,7 +26,7 @@ template<typename FieldT> class pb_variable : public variable<FieldT>
 public:
     pb_variable(const var_index_t index = 0) : variable<FieldT>(index){};
 
-    void allocate(protoboard<FieldT> &pb, const std::string &annotation = "");
+    void allocate(protoboard<FieldT> &pb, const std::string &annotation);
 };
 
 /// A utility function which creates and allocates a variable in a single step
@@ -77,7 +77,7 @@ public:
     void allocate(
         protoboard<FieldT> &pb,
         const size_t n,
-        const std::string &annotation_prefix = "");
+        const std::string &annotation_prefix);
 
     void fill_with_field_elements(
         protoboard<FieldT> &pb, const std::vector<FieldT> &vals) const;
