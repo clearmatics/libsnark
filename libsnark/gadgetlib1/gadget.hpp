@@ -20,7 +20,7 @@ protected:
     const std::string annotation_prefix;
 
 public:
-    gadget(protoboard<FieldT> &pb, const std::string &annotation_prefix = "");
+    gadget(protoboard<FieldT> &pb, const std::string &annotation_prefix);
 };
 
 } // namespace libsnark
