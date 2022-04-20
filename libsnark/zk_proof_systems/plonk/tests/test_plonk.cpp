@@ -254,30 +254,47 @@ namespace libsnark
   // Q_polys[i](\alpha)*G_1
   //
   template<typename ppT>
+  libff::G1<ppT> plonk_evaluate_poly_at_secret_G1(
+						  std::vector<libff::G1<ppT>> alpha_powers_g1,
+						  polynomial<libff::Fr<ppT>> f_poly
+						  )
+  {
+    const size_t chunks = 1;
+    const size_t num_coefficients = f_poly.size();
+    libff::G1<ppT> f_poly_at_secret_g1 = 
+      libff::multi_exp<
+	libff::G1<ppT>,
+      libff::Fr<ppT>,
+      libff::multi_exp_method_BDLO12_signed>(
+					     alpha_powers_g1.begin(),
+					     alpha_powers_g1.begin() + num_coefficients,
+					     f_poly.begin(),
+					     f_poly.end(),
+					     chunks);
+    return f_poly_at_secret_g1;
+  }
+
+  // Evaluate a list of polynomials in the encrypted secret input: see
+  // plonk_evaluate_poly_at_secret_G1
+  template<typename ppT>
   void plonk_evaluate_polys_at_secret_G1(
 					 std::vector<libff::G1<ppT>> alpha_powers_g1,
 					 std::vector<polynomial<libff::Fr<ppT>>> Q_polys,
 					 std::vector<libff::G1<ppT>>& Q_polys_at_secret_g1
 					 )
   {
-    const size_t chunks = 1;
+    assert(alpha_powers_g1.size());
+    assert(Q_polys.size());
     const size_t npolys = Q_polys.size();
     for (size_t i = 0; i < npolys; ++i) {
-      const size_t num_coefficients = Q_polys[i].size();
-      libff::G1<ppT> q_i = 
-	libff::multi_exp<
-	  libff::G1<ppT>,
-	libff::Fr<ppT>,
-	libff::multi_exp_method_BDLO12_signed>(
-					       alpha_powers_g1.begin(),
-					       alpha_powers_g1.begin() + num_coefficients,
-					       Q_polys[i].begin(),
-					       Q_polys[i].end(),
-					       chunks);
-      Q_polys_at_secret_g1[i] = q_i;
+      Q_polys_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(alpha_powers_g1, Q_polys[i]);
     }
   }
 
+  // Compute the factors in the product of the permutation polynomial
+  // z(X) in Prover Round 2. Note that accumulator A[0]=1 and A[i],
+  // i>0 is computed from values at i-1 for witness[i-1], H_gen[i-1],
+  // H_gen_permute[i-1]m etc.
   template<typename FieldT>
   FieldT plonk_compute_accumulator_factor(
 					  size_t i,
@@ -315,6 +332,26 @@ namespace libsnark
     return res;
   }
 
+  template<typename FieldT>
+  void plonk_compute_accumulator(
+				 size_t n, // nconstraints
+				 FieldT beta,
+				 FieldT gamma,
+				 std::vector<FieldT> witness,
+				 std::vector<FieldT> H_gen, // H, Hk1, Hk2
+				 std::vector<FieldT> H_gen_permute,
+				 std::vector<FieldT>& A // accumulatro vector
+				 )
+  {
+    assert(n);
+    assert(witness.size() == (3*n));
+    assert(H_gen.size() == (3*n));
+    assert(H_gen_permute.size() == (3*n));
+    assert(A.size() == n);    
+    for (size_t i = 0; i < n; ++i) {
+      A[i] = plonk_compute_accumulator_factor(i, n, beta, gamma, witness, H_gen, H_gen_permute, A);
+    }
+  }
   
   template<typename ppT> void test_plonk()
   {
@@ -732,31 +769,39 @@ namespace libsnark
 #ifdef DEBUG
     printf("[%s:%d] z1_blind_poly * Zh\n", __FILE__, __LINE__);
     print_vector(z1_blind_poly);
-    //    printf("[%s:%d] L[0]\n", __FILE__, __LINE__);
-    //    print_vector(L[0]);
 #endif // #ifdef DEBUG
-
-    int i = 1;
-    printf("witness[%d] ", i);
-    witness[i].print();
-    printf("H_gen[%d] ", i);
-    H_gen[i].print();
-    printf("H_gen_permute[%d] ", i);
-    H_gen_permute[i].print();
-
-    Field tmp = witness[i] + (beta * H_gen[i]) + gamma;
-    tmp = beta * gamma.inverse();
-    tmp.print();
 
     // A[0] = 1; ... A[i] = computed from (i-1)
     std::vector<Field> A_vector(nconstraints, Field(0));
-    // plonk_compute_accumulator
+    plonk_compute_accumulator(nconstraints, beta, gamma, witness, H_gen, H_gen_permute, A_vector);
+#ifdef DEBUG
     for (int i = 0; i < nconstraints; ++i) {
-      A_vector[i] = plonk_compute_accumulator_factor(i, nconstraints, beta, gamma, witness, H_gen, H_gen_permute, A_vector);
       printf("A[%d] ", i);
       A_vector[i].print();
     }
-          
+#endif // #ifdef DEBUG
+
+    polynomial<Field> A_poly(nconstraints);
+    plonk_interpolate_over_lagrange_basis<Field>(L, A_vector, A_poly);
+#ifdef DEBUG
+    printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
+    print_vector(A_poly);
+#endif // #ifdef DEBUG
+
+    // add blinding polynomial z_1 to the accumulatir polynomial A_poly
+    polynomial<Field> z_poly;
+    libfqfft::_polynomial_addition<Field>(z_poly, z1_blind_poly, A_poly);
+#ifdef DEBUG
+    printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
+    print_vector(z_poly);
+#endif // #ifdef DEBUG
+    
+    libff::G1<ppT> z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(alpha_powers_g1, z_poly);
+#ifdef DEBUG
+    printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
+    z_poly_at_secret_g1.print();
+#endif // #ifdef DEBUG
+    
     // end 
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
