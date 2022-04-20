@@ -106,7 +106,7 @@ output:
 - SRS
 - gate polynomials Q: q_L, q_R, q_O, q_M, q_C
 - public input (PI) polynomial
-- permutation polynomials S_sigma_1, S_sigma_2, S_sigma_3
+- permutation polynomials S_1, S_2, S_3
 - permutation precomputation: id_doman, perm_domain
 
 */
@@ -278,6 +278,44 @@ namespace libsnark
     }
   }
 
+  template<typename FieldT>
+  FieldT plonk_compute_accumulator_factor(
+					  size_t i,
+					  size_t n, // nconstraimts
+					  FieldT beta,
+					  FieldT gamma,
+					  std::vector<FieldT> witness,
+					  std::vector<FieldT> H_gen, // H, Hk1, Hk2
+					  std::vector<FieldT> H_gen_permute,
+					  std::vector<FieldT>& A // accumulatro vector
+					  )
+  {
+    assert(n);
+    assert((i >= 0) && (i < n));
+    assert(witness.size() == (3*n));
+    assert(H_gen.size() == (3*n));
+    assert(H_gen_permute.size() == (3*n));
+    assert(A.size() == n);    
+    FieldT res = FieldT(1);
+    if(i > 0) {
+      FieldT nom_1 = witness[i-1]         + (beta * H_gen[i-1])             + gamma;
+      FieldT den_1 = witness[i-1]         + (beta * H_gen_permute[i-1])     + gamma;
+
+      FieldT nom_2 = witness[n + i-1]     + (beta * H_gen[n+i-1])           + gamma;
+      FieldT den_2 = witness[n + i-1]     + (beta * H_gen_permute[n+i-1])   + gamma;
+
+      FieldT nom_3 = witness[2 * n + i-1] + (beta * H_gen[2*n+i-1])         + gamma;
+      FieldT den_3 = witness[2 * n + i-1] + (beta * H_gen_permute[2*n+i-1]) + gamma;
+
+      FieldT nom = nom_1 * nom_2 * nom_3;
+      FieldT den = den_1 * den_2 * den_3;
+
+      res = nom * den.inverse() * A[i-1];
+    }
+    return res;
+  }
+
+  
   template<typename ppT> void test_plonk()
   {
     // Execute all tests for the given curve.
@@ -294,6 +332,8 @@ namespace libsnark
 
     // --- SETUP ---
 
+    printf("[%s:%d] Start setup...\n", __FILE__, __LINE__);
+    
     // number of gates / constraints. we have 6 gates for the example
     // circuit + 2 dummy gates to make it a power of 2 (for the fft)
     const int nconstraints = 8;
@@ -452,38 +492,38 @@ namespace libsnark
       omega_k2.push_back(omega_k2_i);
     }
 
-    // sigma contains the generators of H, k1 H and K2 H in one place
+    // H_gen contains the generators of H, k1 H and K2 H in one place
     // ie. omega, omega_k1 and omega_k2
-    std::vector<Field> sigma;
-    std::copy(omega.begin(), omega.end(), back_inserter(sigma));
-    std::copy(omega_k1.begin(), omega_k1.end(), back_inserter(sigma));
-    std::copy(omega_k2.begin(), omega_k2.end(), back_inserter(sigma));
-    printf("[%s:%d] sigma\n", __FILE__, __LINE__);
-    print_vector(sigma);
+    std::vector<Field> H_gen;
+    std::copy(omega.begin(), omega.end(), back_inserter(H_gen));
+    std::copy(omega_k1.begin(), omega_k1.end(), back_inserter(H_gen));
+    std::copy(omega_k2.begin(), omega_k2.end(), back_inserter(H_gen));
+    printf("[%s:%d] H_gen\n", __FILE__, __LINE__);
+    print_vector(H_gen);
 
-    // number of sigma polynomials S_sigma
-    int nsigma = 3;
-    // permute sigma according to the wire permutation
-    std::vector<Field> sigma_star(nsigma*nconstraints, Field(0));
-    for (int i = 0; i < nsigma*nconstraints; ++i) {
+    // number of ngen polynomials S
+    int ngen = 3;
+    // permute H_gen according to the wire permutation
+    std::vector<Field> H_gen_permute(ngen*nconstraints, Field(0));
+    for (int i = 0; i < ngen*nconstraints; ++i) {
       printf("[%s:%d] i %2d -> %2d, \n", __FILE__, __LINE__, i, wire_permutation[i]-1);
-      sigma_star[i] = sigma[wire_permutation[i]-1];
+      H_gen_permute[i] = H_gen[wire_permutation[i]-1];
     }
-    printf("[%s:%d] sigma_star\n", __FILE__, __LINE__);
-    print_vector(sigma_star);
+    printf("[%s:%d] H_gen_permute\n", __FILE__, __LINE__);
+    print_vector(H_gen_permute);
 
-    std::vector<polynomial<Field>> S_sigma_polys(nsigma, polynomial<Field>(nconstraints));
-    for (int i = 0; i < nsigma; ++i) {
-      typename std::vector<Field>::iterator begin = sigma_star.begin()+(i*nconstraints);
-      typename std::vector<Field>::iterator end = sigma_star.begin()+(i*nconstraints)+(nconstraints);
-      std::vector<Field> S_sigma_points(begin, end);
-      plonk_interpolate_over_lagrange_basis<Field>(L, S_sigma_points, S_sigma_polys[i]);
+    std::vector<polynomial<Field>> S_polys(ngen, polynomial<Field>(nconstraints));
+    for (int i = 0; i < ngen; ++i) {
+      typename std::vector<Field>::iterator begin = H_gen_permute.begin()+(i*nconstraints);
+      typename std::vector<Field>::iterator end = H_gen_permute.begin()+(i*nconstraints)+(nconstraints);
+      std::vector<Field> S_points(begin, end);
+      plonk_interpolate_over_lagrange_basis<Field>(L, S_points, S_polys[i]);
     }
 
 #if 1 // DEBUG
-    for (int i = 0; i < nsigma; ++i) {
-      printf("[%s:%d] S_sigma_polys[%d]\n", __FILE__, __LINE__, i);
-      print_vector(S_sigma_polys[i]);
+    for (int i = 0; i < ngen; ++i) {
+      printf("[%s:%d] S_polys[%d]\n", __FILE__, __LINE__, i);
+      print_vector(S_polys[i]);
     }
 #endif // #if 1 // DEBUG
 
@@ -530,35 +570,37 @@ namespace libsnark
     // Verifier precomputation:
     std::vector<libff::G1<ppT>> Q_polys_at_secret_g1(Q_polys.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, Q_polys, Q_polys_at_secret_g1);
-    std::vector<libff::G1<ppT>> S_sigma_polys_at_secret_g1(S_sigma_polys.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, S_sigma_polys, S_sigma_polys_at_secret_g1);
+    std::vector<libff::G1<ppT>> S_polys_at_secret_g1(S_polys.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, S_polys, S_polys_at_secret_g1);
     
 #if 1 // DEBUG
     for (int i = 0; i < (int)Q_polys.size(); ++i) {
       printf("Q_polys_at_secret_G1[%d] \n", i);
       Q_polys_at_secret_g1[i].print();
     }
-    for (int i = 0; i < (int)S_sigma_polys.size(); ++i) {
-      printf("S_sigma_polys_at_secret_G1[%d] \n", i);
-      S_sigma_polys_at_secret_g1[i].print();
+    for (int i = 0; i < (int)S_polys.size(); ++i) {
+      printf("S_polys_at_secret_G1[%d] \n", i);
+      S_polys_at_secret_g1[i].print();
     }
 #endif // #if 1 // DEBUG
 
     // --- PROVER ---
 
+    printf("[%s:%d] Prover preparation...\n", __FILE__, __LINE__);
+    
     int nwitness = 3;
-    std::vector<polynomial<Field>> witness_polys(nwitness, polynomial<Field>(nconstraints));
+    std::vector<polynomial<Field>> W_polys(nwitness, polynomial<Field>(nconstraints));
     for (int i = 0; i < nwitness; ++i) {
       typename std::vector<Field>::iterator begin = witness.begin()+(i*nconstraints);
       typename std::vector<Field>::iterator end = witness.begin()+(i*nconstraints)+(nconstraints);
-      std::vector<Field> witness_points(begin, end);
-      plonk_interpolate_over_lagrange_basis<Field>(L, witness_points, witness_polys[i]);
+      std::vector<Field> W_points(begin, end);
+      plonk_interpolate_over_lagrange_basis<Field>(L, W_points, W_polys[i]);
     }
 
 #if 1 // DEBUG
     for (int i = 0; i < nwitness; ++i) {
-      printf("[%s:%d] witness_polys[%d]\n", __FILE__, __LINE__, i);
-      print_vector(witness_polys[i]);
+      printf("[%s:%d] W_polys[%d]\n", __FILE__, __LINE__, i);
+      print_vector(W_polys[i]);
     }
 #endif // #if 1 // DEBUG
 
@@ -615,7 +657,9 @@ namespace libsnark
     printf("[%s:%d] a ", __FILE__, __LINE__);
     a.print();
 
-    // vanishing polynomial Zh(X) = x^n-1. vanishes on all n roots od
+    printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
+
+    // vanishing polynomial Zh(X) = x^n-1. vanishes on all n roots of
     // unity omega
     std::vector<Field> Zh(nconstraints+1, Field(0));
     Zh[0] = Field(-1);
@@ -649,32 +693,77 @@ namespace libsnark
        {rand_scalars[3], rand_scalars[2]}, // b3 + b2 X
        {rand_scalars[5], rand_scalars[4]}  // b5 + b4 X
       };
-#ifdef DEBUG
-    printf("[%s:%d] a_blind_poly\n", __FILE__, __LINE__);
-    print_vector(blind_polys[0]);
-#endif // #ifdef DEBUG
     
-    // a_poly = blind_polys[0] * Zh + witness_polys[0]
-    std::vector<std::vector<Field>> witness_polys_blinded(3);
-    libfqfft::_polynomial_multiplication<Field>(witness_polys_blinded[0], blind_polys[0], Zh);
-    libfqfft::_polynomial_addition<Field>(witness_polys_blinded[0], witness_polys_blinded[0], witness_polys[0]);
+    // a_poly = blind_polys[0] * Zh + W_polys[0]
+    std::vector<std::vector<Field>> W_polys_blinded(nwitness);
+    for (int i = 0; i < nwitness; ++i) {
+      libfqfft::_polynomial_multiplication<Field>(W_polys_blinded[i], blind_polys[i], Zh);
+      libfqfft::_polynomial_addition<Field>(W_polys_blinded[i], W_polys_blinded[i], W_polys[i]);
+    }
 #ifdef DEBUG
-    printf("[%s:%d] a_poly\n", __FILE__, __LINE__);
-    print_vector(witness_polys_blinded[0]);
+    for (int i = 0; i < nwitness; ++i) {
+      printf("[%s:%d] W_polys[%d]\n", __FILE__, __LINE__, i);
+      print_vector(W_polys_blinded[i]);
+    }
 #endif // #ifdef DEBUG
 
-    std::vector<libff::G1<ppT>> witness_polys_blinded_at_secret_g1(witness_polys_blinded.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, witness_polys_blinded, witness_polys_blinded_at_secret_g1);
+    std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1(W_polys_blinded.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
 #ifdef DEBUG
-    printf("[%s:%d] a_poly_at_secret_g1\n", __FILE__, __LINE__);
-    witness_polys_blinded_at_secret_g1[0].print();
+    for (int i = 0; i < nwitness; ++i) {
+      printf("W_polys_at_secret_g1[%d]\n", i);
+      W_polys_blinded_at_secret_g1[i].print();
+    }
 #endif // #ifdef DEBUG
+
+    printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
+
+    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
+    // the test vectors
+    Field beta = Field("3710899868510394644410941212967766116886736137326022751891187938298987182388");
+    Field gamma = Field("11037930384083194587907709665332116843267274045828802249545114995763715746939");
+
+    // compute permutation polynomial
+
+    // blinding polynomial
+    std::vector<Field> z1_blind_poly{rand_scalars[8], rand_scalars[7], rand_scalars[6]}; // b8 + b7 X + b6 X^2
+    // multiply by the vanishing polynomial: z1 = z1 * Zh
+    libfqfft::_polynomial_multiplication<Field>(z1_blind_poly, z1_blind_poly, Zh);
+#ifdef DEBUG
+    printf("[%s:%d] z1_blind_poly * Zh\n", __FILE__, __LINE__);
+    print_vector(z1_blind_poly);
+    //    printf("[%s:%d] L[0]\n", __FILE__, __LINE__);
+    //    print_vector(L[0]);
+#endif // #ifdef DEBUG
+
+    int i = 1;
+    printf("witness[%d] ", i);
+    witness[i].print();
+    printf("H_gen[%d] ", i);
+    H_gen[i].print();
+    printf("H_gen_permute[%d] ", i);
+    H_gen_permute[i].print();
+
+    Field tmp = witness[i] + (beta * H_gen[i]) + gamma;
+    tmp = beta * gamma.inverse();
+    tmp.print();
+
+    // A[0] = 1; ... A[i] = computed from (i-1)
+    std::vector<Field> A_vector(nconstraints, Field(0));
+    // plonk_compute_accumulator
+    for (int i = 0; i < nconstraints; ++i) {
+      A_vector[i] = plonk_compute_accumulator_factor(i, nconstraints, beta, gamma, witness, H_gen, H_gen_permute, A_vector);
+      printf("A[%d] ", i);
+      A_vector[i].print();
+    }
+          
+    // end 
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
 
   // output from plonk_compute_permutation_polynomials() compute the
-  // S_sigma polynomials
+  // S polynomials
   
   TEST(TestPlonk, BLS12_381)
   {
