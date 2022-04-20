@@ -31,10 +31,97 @@ public:
             other_curve<ppT>>::evaluation_witness &eval_witness);
 };
 
+#if 0
+/// Use Horners method to evaluate a polynomial expression using an optimal
+/// number of conditions. This gadget is intended to be called with x and
+/// coeffs already allocated, and uses references rather than taking a copy.
+template<typename ppT, size_t num_entries>
+class evaluate_polynomial_horner : gadget<libff::Fr<ppT>>
+{
+public:
+    static_assert(num_entries > 2, "fewer than 3 entries not supported");
+
+    // TODO: switch to shared_pointer here for consistency.
+
+    // Compute \sum_{i=0}^{n-1} coeffs[i] x^i as:
+    //
+    //   x * ( ... (x * (x * coeffs[n-1] + coeff[n-2]) + coeffs[n-3]) ... )
+    //
+    // where intermediate sum_terms are:
+    //
+    //   sum_term[0] = x * coeffs[n-1] + coeffs[n-2]
+    //   sum_term[0 < i < n-2] = x * sum_term[i-1] + coeffs[n-(i+2)]
+    //   result = x * sum_term[n-3] + coeffs[0]
+    //
+    const pb_linear_combination<libff::Fr<ppT>> &x;
+    const pb_linear_combination_array<libff::Fr<ppT>> &coeffs;
+    pb_variable_array<libff::Fr<ppT>> sum_terms;
+    pb_variable<libff::Fr<ppT>> result;
+
+    evaluate_polynomial_horner(
+        protoboard<libff::Fr<ppT>> &pb,
+        const pb_linear_combination<libff::Fr<ppT>> &x,
+        const pb_linear_combination_array<libff::Fr<ppT>> &coeffs,
+        pb_variable<libff::Fr<ppT>> &result,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+#endif
+
+/// Given evals[0...n-1], a value gamma and gamma_powers[0...n-3] where
+///
+///   gamma_powers[i] = gamma^[i+2]
+///
+/// compute:
+///
+///   result = \sum_{i=0}^{n-1} gamma^i * evals[i]
+template<typename ppT, size_t n>
+class kzg10_batched_compute_gamma_eval_sum : gadget<libff::Fr<ppT>>
+{
+public:
+    static_assert(n > 2, "fewer than 3 entries not supported");
+
+    // TODO: We take a copy of the array (in case the array being passed in is
+    // actually a pb_variable_array, which then creates a transient
+    // pb_linear_combination_array via the conversion constructor).
+
+    // TODO: if we switch to references to fixed-size arrays, this may not be
+    // necesary.
+
+    const pb_linear_combination<libff::Fr<ppT>> gamma;
+    const pb_linear_combination_array<libff::Fr<ppT>> evals;
+
+    // gamma_powers[i] = gamma^(i+2)
+    pb_variable_array<libff::Fr<ppT>> gamma_powers;
+
+    // sum_terms[0] = gamma * evals[1] + evals[0]
+    // sum_terms[1] = gamma_powers[0] * evals[2] + sum_terms[0]
+    // ...
+    // sum_terms[i=2..n-3] = gamma_powers[i-1] * evals[i+1] + sum_terms[i-1]
+    pb_variable_array<libff::Fr<ppT>> sum_terms;
+
+    // result = gamma_powers[n-3] * evals[n-1] + sum_terms[n-3]
+    pb_variable<libff::Fr<ppT>> result;
+
+    kzg10_batched_compute_gamma_eval_sum(
+        protoboard<libff::Fr<ppT>> &pb,
+        const pb_linear_combination<libff::Fr<ppT>> &gamma,
+        const pb_variable_array<libff::Fr<ppT>> &gamma_powers,
+        const pb_linear_combination_array<libff::Fr<ppT>> &evals,
+        pb_variable<libff::Fr<ppT>> &result,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
 /// Given an array of commitments, and array of evaluations, and some field
 /// element gamma, compute terms of the form:
 ///
-///   \sum_{i=1}^{t_1} \gamma^{i-1} (cm_i - [s_i]_1)
+///   \sum_{i=1}^{t-1} \gamma^{i-1} (cm_i - [s_i]_1)
+///
 template<typename ppT, size_t num_entries>
 class kzg10_batched_compute_commit_minus_eval_sum : gadget<libff::Fr<ppT>>
 {
@@ -43,64 +130,50 @@ class kzg10_batched_compute_commit_minus_eval_sum : gadget<libff::Fr<ppT>>
 public:
     using Field = libff::Fr<ppT>;
 
-    // encoded_evals[i] = G1_mul(evals[i], G1::one());
-    std::vector<G1_variable_or_identity<ppT>> encoded_evals;
-    std::vector<G1_mul_by_scalar_gadget<ppT>> compute_encoded_evals;
-
-    // commit_minus_encoded_eval[i] = cm_i - [s_i]_1
-    std::vector<G1_variable<ppT>> commit_minus_encoded_eval;
-    std::vector<G1_add_variable_and_variable_or_identity_gadget<ppT>>
-        compute_commit_minus_encoded_eval;
+    pb_linear_combination_array<Field> evals;
 
     // Array does not contain 1 or gamma, so:
     //
     //   gamma_powers[i] = gamma * gamma_powers[i - 1]
     //                   = gamma^{i + 2}
     //
-    // so length = num_entries - 2
+    // for i = 0 ... num_entries - 3 (len = num_entries - 2)
     pb_linear_combination<Field> gamma;
     pb_variable_array<Field> gamma_powers;
 
-    // Scalar multiplications by gamma powers:
+    // gamma_power_times_commit[0] = gamma * commits[1]
+    // gamma_power_times_commit[i>0] = gamma^{i+1} * commits[i + 1]
     //
-    //   gamma_power_times_commit_minus_encoded_eval[0] =
-    //     G1_mul(gamma, commit_minus_encoded_eval[1])
-    //   gamma_power_times_commit_minus_encoded_eval[i>0] =
-    //     G1_mul(gamma_powers[i-1], commit_minus_encoded_eval[i+1])
-    //
-    // Therefore length = num_entries - 1
-    std::vector<G1_variable_or_identity<ppT>>
-        gamma_power_times_commit_minus_encoded_eval;
-    std::vector<G1_mul_by_scalar_gadget<ppT>>
-        compute_gamma_power_times_commit_minus_encoded_eval;
+    // for i = 0 ... num_entries - 2 (len = num_entries - 1)
+    std::vector<G1_variable_or_identity<ppT>> gamma_power_times_commit;
+    std::vector<G1_mul_by_scalar_gadget<ppT>> compute_gamma_power_times_commit;
 
-    // Intermediate sum of the terms:
+    // sum_gamma_power_times_commit[0] = cm_0 + gamma_power_times_commit[0]
+    // sum_gamma_power_times_commit[i>0] =
+    //   sum_gamma_power_times_commit[i] + gamma_power_times_commit[i]
     //
-    //   intermediate_sum[0] = G1_add(
-    //     commit_minus_encoded_eval[0],
-    //     gamma_power_times_commit_minus_encoded_eval[0])
-    //   intermediate_sum[i>0] = G1_add(
-    //     intermediate_sum[i-1],
-    //     gamma_power_times_commit_minus_encoded_eval[i])
-    //   result = G1_add(
-    //     intermediate_sum[num_entries-2],
-    //     gamma_power_times_commit_minus_encoded_eval[num_entries-1])
-    //
-    // whereby:
-    //
-    //   len(compute_intermediate_sum) = num_entries - 1
-    //
-    // however the final value is written to `result`, and so:
-    //
-    //   len(intermediate_sum) = num_entries - 2
-    std::vector<G1_variable<ppT>> intermediate_sum;
+    // for i = 0 ... num_entries - 2 (len = num_entries - 1)
+    std::vector<G1_variable<ppT>> sum_gamma_power_times_commit;
     std::vector<G1_add_variable_and_variable_or_identity_gadget<ppT>>
-        compute_intermediate_sum;
+        compute_sum_gamma_power_times_commit;
+
+    // Compute sum_gamma_power_times_commit = \sum_i \gamma^{i-1} s_i
+    pb_variable<libff::Fr<ppT>> sum_gamma_power_times_eval;
+    kzg10_batched_compute_gamma_eval_sum<ppT, num_entries>
+        compute_sum_gamma_power_times_eval;
+
+    // encoded_sum_gamma_power_times_eval = [ sum_gamma_power_times_eval ]_1
+    G1_variable_or_identity<ppT> encoded_sum_gamma_power_times_eval;
+    G1_mul_by_scalar_gadget<ppT> compute_encoded_sum_gamma_power_times_eval;
+
+    // result =
+    //   sum_gamma_power_times_commit - encoded_sum_gamma_power_times_eval;
+    G1_add_variable_and_variable_or_identity_gadget<ppT> compute_result;
 
     kzg10_batched_compute_commit_minus_eval_sum(
         protoboard<libff::Fr<ppT>> &pb,
         const pb_linear_combination<libff::Fr<ppT>> &gamma,
-        const std::vector<kzg10_commitment_variable<ppT>> &commitments,
+        const std::vector<kzg10_commitment_variable<ppT>> &commits,
         const pb_linear_combination_array<libff::Fr<ppT>> &evals,
         G1_variable<ppT> &result,
         const std::string &annotation_prefix);

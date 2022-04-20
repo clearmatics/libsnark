@@ -57,9 +57,323 @@ void kzg10_batched_witness_variable<ppT>::generate_r1cs_witness(
     W_2.generate_r1cs_witness(eval_witness.W_2);
 }
 
+#if 0
+//
+// evaluate_polynomial_horner
+//
+
+template<typename ppT, size_t num_entries>
+evaluate_polynomial_horner<ppT, num_entries>::evaluate_polynomial_horner(
+    protoboard<libff::Fr<ppT>> &pb,
+    const pb_linear_combination<libff::Fr<ppT>> &x,
+    const pb_linear_combination_array<libff::Fr<ppT>> &coeffs,
+    pb_variable<libff::Fr<ppT>> &result,
+    const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , x(x)
+    , coeffs(coeffs)
+    , result(result)
+{
+    assert(coeffs.size() == num_entries);
+
+    sum_terms.allocate(
+        pb, num_entries - 2, FMT(annotation_prefix, " sum_terms"));
+}
+
+template<typename ppT, size_t num_entries>
+void evaluate_polynomial_horner<ppT, num_entries>::generate_r1cs_constraints()
+{
+    // Conditions A * B = C are:
+    //
+    //   x * coeffs[n-1] = sum_terms[0] - coeffs[n-2]
+    //   x * sum_terms[i-1] = sum_terms[i] - coeffs[n-(i+2)]
+    //   x * sum_terms[n-3] = result - coeffs[0]
+    //
+    // for i = 0 ... n - 3
+
+    pb.add_r1cs_constraint(
+        {x, coeffs[num_entries - 1], sum_terms[0] - coeffs[num_entries - 2]},
+        FMT(annotation_prefix, " compute_sum_term[0]"));
+
+    for (size_t i = 1; i < num_entries - 2; ++i) {
+        pb.add_r1cs_constraint(
+            {x, sum_terms[i - 1], sum_terms[i] - coeffs[num_entries - (i + 2)]},
+            FMT(annotation_prefix, " compute_sum_term[%zu]", i));
+    }
+
+    pb.add_r1cs_constraint(
+        {x, sum_terms[num_entries - 3], result - coeffs[0]},
+        FMT(annotation_prefix, " compute_sum_term[%zu]", num_entries - 2));
+}
+
+template<typename ppT, size_t num_entries>
+void evaluate_polynomial_horner<ppT, num_entries>::generate_r1cs_witness()
+{
+    // sum_term[0] = x * coeffs[n-1] + coeffs[n-2]
+    // sum_term[0 < i < n-2] = x * sum_term[i-1] + coeffs[n-(i+2)]
+    // result = x * sum_term[n-3] + coeffs[0]
+
+    const Field x = pb.val(x);
+    pb.val(sum_term[0]) =
+        x * pb.val(coeffs[num_entries - 1]) + pb.val(coeffs[num_entries - 2]);
+    for (size_t i = 1; i < num_entries - 2; ++i) {
+        pb.val(sum_terms[i]) = x * pb.val(sum_terms[i - 1]) +
+                               pb.val(coeffs[num_entries - (i + 2)]);
+    }
+    pb.val(result) = x * pb.val(sum_terms[num_entries - 3]) + pb.val(coeffs[0]);
+}
+#endif
+
+//
+// kzg10_batched_compute_gamma_eval_sum
+//
+
+template<typename ppT, size_t n>
+kzg10_batched_compute_gamma_eval_sum<ppT, n>::
+    kzg10_batched_compute_gamma_eval_sum(
+        protoboard<libff::Fr<ppT>> &pb,
+        const pb_linear_combination<libff::Fr<ppT>> &gamma,
+        const pb_variable_array<libff::Fr<ppT>> &gamma_powers,
+        const pb_linear_combination_array<libff::Fr<ppT>> &evals,
+        pb_variable<libff::Fr<ppT>> &result,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , gamma(gamma)
+    , evals(evals)
+    , gamma_powers(gamma_powers)
+    , sum_terms(pb_variable_array_allocate<libff::Fr<ppT>>(
+          pb, n - 2, FMT(annotation_prefix, " sum_terms")))
+    , result(result)
+{
+    assert(evals.size() == n);
+    assert(gamma_powers.size() == n - 2);
+    assert(sum_terms.size() == n - 2);
+}
+
+template<typename ppT, size_t n>
+void kzg10_batched_compute_gamma_eval_sum<ppT, n>::generate_r1cs_constraints()
+{
+    protoboard<libff::Fr<ppT>> &pb = this->pb;
+    const std::string &annotation_prefix = this->annotation_prefix;
+
+    // Constraints A * B = C are:
+    //
+    //   gamma * eval[1] = sum_terms[0] - eval[0]
+    //   for i = 0 ... n-4:
+    //     gamma_powers[i] * eval[i + 2] = sum_terms[i+1] - sum_terms[i]
+    //
+    //   gamma_powers[n-3] * eval[n-1] = result - sum_terms[n-3]
+
+    pb.add_r1cs_constraint(
+        {gamma, evals[1], sum_terms[0] - evals[0]},
+        FMT(annotation_prefix, " compute_sum_terms[0]"));
+
+    for (size_t i = 0; i < n - 3; ++i) {
+        pb.add_r1cs_constraint(
+            {gamma_powers[i], evals[i + 2], sum_terms[i + 1] - sum_terms[i]},
+            FMT(annotation_prefix, " compute_sum_terms[%zu]", i + 1));
+    }
+
+    assert(gamma_powers.size() == n - 2);
+    assert(evals.size() == n);
+    assert(sum_terms.size() == n - 2);
+
+    pb.add_r1cs_constraint(
+        {gamma_powers[n - 3], evals[n - 1], result - sum_terms[n - 3]},
+        FMT(annotation_prefix, " compute_result"));
+}
+
+template<typename ppT, size_t n>
+void kzg10_batched_compute_gamma_eval_sum<ppT, n>::generate_r1cs_witness()
+{
+    protoboard<libff::Fr<ppT>> &pb = this->pb;
+
+    // sum_terms[0] = gamma * evals[1] + evals[0]
+    pb.val(sum_terms[0]) =
+        pb.lc_val(gamma) * pb.lc_val(evals[1]) + pb.lc_val(evals[0]);
+
+    // sum_terms[i=1..n-3] = gamma_powers[i-1] * evals[i+1] + sum_terms[i-1]
+    for (size_t i = 1; i < n - 2; ++i) {
+        pb.val(sum_terms[i]) =
+            pb.lc_val(gamma_powers[i - 1]) * pb.lc_val(evals[i + 1]) +
+            pb.val(sum_terms[i - 1]);
+    }
+
+    // result = gamma_powers[n-3] * evals[n-1] + sum_terms[n-3]
+    pb.val(result) = pb.lc_val(gamma_powers[n - 3]) * pb.lc_val(evals[n - 1]) +
+                     pb.val(sum_terms[n - 3]);
+}
+
 //
 // kzg10_batched_compute_commit_minus_eval_sum
 //
+
+// general case for >2 entries
+template<typename ppT, size_t num_entries>
+kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
+    kzg10_batched_compute_commit_minus_eval_sum(
+        protoboard<libff::Fr<ppT>> &pb,
+        const pb_linear_combination<libff::Fr<ppT>> &gamma,
+        const std::vector<kzg10_commitment_variable<ppT>> &commits,
+        const pb_linear_combination_array<libff::Fr<ppT>> &evals,
+        G1_variable<ppT> &result,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , evals(evals)
+    , gamma(gamma)
+    , gamma_powers(pb_variable_array_allocate<libff::Fr<ppT>>(
+          pb, num_entries - 2, FMT(annotation_prefix, " gamma_powers")))
+    , gamma_power_times_commit(
+          internal::allocate_variable_array<ppT, G1_variable_or_identity<ppT>>(
+              pb,
+              num_entries - 1,
+              FMT(annotation_prefix, " gamma_power_times_commit")))
+    , compute_gamma_power_times_commit()
+    , sum_gamma_power_times_commit(
+          internal::allocate_variable_array<ppT, G1_variable<ppT>>(
+              pb,
+              num_entries - 1,
+              FMT(annotation_prefix, " sum_gamma_power_times_commit")))
+    , compute_sum_gamma_power_times_commit()
+    , sum_gamma_power_times_eval(pb_variable_allocate<libff::Fr<ppT>>(
+          pb, FMT(annotation_prefix, " sum_gamma_power_times_eval")))
+    , compute_sum_gamma_power_times_eval(
+          pb,
+          gamma,
+          gamma_powers,
+          this->evals,
+          sum_gamma_power_times_eval,
+          FMT(annotation_prefix, " compute_sum_gamma_power_times_eval"))
+    , encoded_sum_gamma_power_times_eval(
+          pb, FMT(annotation_prefix, " encoded_sum_gamma_power_times_eval"))
+    , compute_encoded_sum_gamma_power_times_eval(
+          pb,
+          sum_gamma_power_times_eval,
+          G1_variable<ppT>(
+              pb,
+              -libff::G1<other_curve<ppT>>::one(),
+              FMT(annotation_prefix, " minus_1_g1")),
+          encoded_sum_gamma_power_times_eval,
+          FMT(annotation_prefix, " compute_encoded_sum_gamma_power_times_eval"))
+    , compute_result(
+          pb,
+          encoded_sum_gamma_power_times_eval,
+          sum_gamma_power_times_commit[num_entries - 2],
+          result,
+          FMT(annotation_prefix, " compute_result"))
+{
+    // Array does not contain 1 or gamma, so:
+    //
+    //   gamma_powers[i] = gamma * gamma_powers[i - 1]
+    //                   = gamma^{i + 2}
+    //
+    // for i = 0 ... num_entries - 3 (len = num_entries - 2)
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<Field>(this->gamma, this->gamma, gamma_powers[0]),
+        FMT(annotation_prefix, " compute_gamma_power[0](gamma^2)"));
+    for (size_t i = 1; i < num_entries - 2; ++i) {
+        this->pb.add_r1cs_constraint(
+            r1cs_constraint<Field>(
+                this->gamma, gamma_powers[i - 1], gamma_powers[i]),
+            FMT(annotation_prefix,
+                " compute_gamma_power[%zu](gamma^%zu)",
+                i,
+                i + 2));
+    }
+
+    // TODO: wrap these two steps in a single
+    // kzg10_batched_compute_gamma_powers_times_commit_sum gadget.
+
+    // gamma_power_times_commit[0] = gamma * commits[1]
+    // gamma_power_times_commit[i>0]
+    //   = gamma^{i+1} * commits[i+1]
+    //   = gamma_powers[i-1] * commits[i+1]
+    //
+    // for i = 0 ... num_entries - 2 (len = num_entries - 1)
+    compute_gamma_power_times_commit.reserve(num_entries - 1);
+    compute_gamma_power_times_commit.emplace_back(
+        pb,
+        gamma,
+        commits[1],
+        gamma_power_times_commit[0],
+        FMT(annotation_prefix, "compute_gamma_power_times_commit[0]"));
+    for (size_t i = 1; i < num_entries - 1; ++i) {
+        compute_gamma_power_times_commit.emplace_back(
+            pb,
+            gamma_powers[i - 1],
+            commits[i + 1],
+            gamma_power_times_commit[i],
+            FMT(annotation_prefix,
+                "compute_gamma_power_times_commit_minus_encoded_eval[0]"));
+    }
+
+    // sum_gamma_power_times_commit[0] = commits[0] +
+    // gamma_power_times_commit[0] sum_gamma_power_times_commit[i>0] =
+    //   sum_gamma_power_times_commit[i-1] + gamma_power_times_commit[i]
+    //
+    // for i = 0 ... num_entries - 2 (len = num_entries - 1)
+    compute_sum_gamma_power_times_commit.reserve(num_entries - 1);
+    compute_sum_gamma_power_times_commit.emplace_back(
+        pb,
+        gamma_power_times_commit[0],
+        commits[0],
+        sum_gamma_power_times_commit[0],
+        FMT(annotation_prefix, " compute_sum_gamma_power_times_commit[0]"));
+    for (size_t i = 1; i < num_entries - 1; ++i) {
+        compute_sum_gamma_power_times_commit.emplace_back(
+            pb,
+            gamma_power_times_commit[i],
+            sum_gamma_power_times_commit[i - 1],
+            sum_gamma_power_times_commit[i],
+            FMT(annotation_prefix,
+                " compute_sum_gamma_power_times_commit[%zu]",
+                i));
+    }
+}
+
+template<typename ppT, size_t num_entries>
+void kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
+    generate_r1cs_constraints()
+{
+    for (auto &gadget : compute_gamma_power_times_commit) {
+        gadget.generate_r1cs_constraints();
+    }
+
+    for (auto &gadget : compute_sum_gamma_power_times_commit) {
+        gadget.generate_r1cs_constraints();
+    }
+
+    compute_sum_gamma_power_times_eval.generate_r1cs_constraints();
+    compute_encoded_sum_gamma_power_times_eval.generate_r1cs_constraints();
+    compute_result.generate_r1cs_constraints();
+}
+
+template<typename ppT, size_t num_entries>
+void kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
+    generate_r1cs_witness()
+{
+    evals.evaluate(this->pb);
+
+    const Field gamma_val = this->pb.lc_val(gamma);
+    Field gamma_power_val = gamma_val;
+
+    for (auto &gamma_power : gamma_powers) {
+        gamma_power_val = gamma_power_val * gamma_val;
+        this->pb.val(gamma_power) = gamma_power_val;
+    }
+
+    for (auto &gadget : compute_gamma_power_times_commit) {
+        gadget.generate_r1cs_witness();
+    }
+
+    for (auto &gadget : compute_sum_gamma_power_times_commit) {
+        gadget.generate_r1cs_witness();
+    }
+
+    compute_sum_gamma_power_times_eval.generate_r1cs_witness();
+    compute_encoded_sum_gamma_power_times_eval.generate_r1cs_witness();
+    compute_result.generate_r1cs_witness();
+}
 
 // specialization for 2 entries
 template<typename ppT>
@@ -155,193 +469,6 @@ void kzg10_batched_compute_commit_minus_eval_sum<ppT, 2>::
     compute_commit_minus_encoded_eval[1].generate_r1cs_witness();
     compute_gamma_times_commit_1_minus_encoded_eval_1->generate_r1cs_witness();
     compute_result->generate_r1cs_witness();
-}
-
-// specialization for >2 entries
-template<typename ppT, size_t num_entries>
-kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
-    kzg10_batched_compute_commit_minus_eval_sum(
-        protoboard<libff::Fr<ppT>> &pb,
-        const pb_linear_combination<libff::Fr<ppT>> &gamma,
-        const std::vector<kzg10_commitment_variable<ppT>> &commitments,
-        const pb_linear_combination_array<libff::Fr<ppT>> &evals,
-        G1_variable<ppT> &result,
-        const std::string &annotation_prefix)
-    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
-    , encoded_evals(
-          internal::allocate_variable_array<ppT, G1_variable_or_identity<ppT>>(
-              pb, num_entries, FMT(annotation_prefix, " encoded_evals")))
-    , compute_encoded_evals()
-    , commit_minus_encoded_eval(
-          internal::allocate_variable_array<ppT, G1_variable<ppT>>(
-              pb,
-              num_entries,
-              FMT(annotation_prefix, " commit_minus_encoded_eval")))
-    , compute_commit_minus_encoded_eval()
-    , gamma(gamma)
-    , gamma_powers()
-    , gamma_power_times_commit_minus_encoded_eval(
-          internal::allocate_variable_array<ppT, G1_variable_or_identity<ppT>>(
-              pb,
-              num_entries - 1,
-              FMT(annotation_prefix,
-                  " gamma_power_times_commit_minus_encoded_eval")))
-    , compute_gamma_power_times_commit_minus_encoded_eval()
-    , intermediate_sum(internal::allocate_variable_array<ppT, G1_variable<ppT>>(
-          pb, num_entries - 2, FMT(annotation_prefix, " intermediate_sum")))
-    , compute_intermediate_sum()
-{
-    // encoded_eval[i] = G1_mul_by_scalar(evals[i], G1::one())
-    // len(encoded_eval) = num_entries
-    G1_variable<ppT> g1_minus_one(
-        pb,
-        -libff::G1<other_curve<ppT>>::one(),
-        FMT(annotation_prefix, " g1_one"));
-    compute_encoded_evals.reserve(num_entries);
-    for (size_t i = 0; i < num_entries; ++i) {
-        compute_encoded_evals.emplace_back(
-            pb,
-            evals[i],
-            g1_minus_one,
-            encoded_evals[i],
-            FMT(annotation_prefix, " compute_encoded_evals[%zu]", i));
-    }
-
-    // commit_minus_encoded_eval[i] = cm_i - [s_i]_1
-    compute_commit_minus_encoded_eval.reserve(num_entries);
-    for (size_t i = 0; i < num_entries; ++i) {
-        compute_commit_minus_encoded_eval.emplace_back(
-            pb,
-            encoded_evals[i],
-            commitments[i],
-            commit_minus_encoded_eval[i],
-            FMT(annotation_prefix, " compute_commit_minus_encoded_eval"));
-    }
-
-    // gamma_powers[0] = gamma * gamma
-    // gamma_powers[i>0] = gamma * gamma_powers[i-1]
-    gamma_powers.allocate(
-        pb, num_entries - 2, FMT(annotation_prefix, " gamma_powers"));
-    this->pb.add_r1cs_constraint(
-        r1cs_constraint<Field>(gamma, gamma, gamma_powers[0]),
-        FMT(annotation_prefix, " compute_gamma_power[0](gamma^2)"));
-    for (size_t i = 1; i < num_entries - 2; ++i) {
-        this->pb.add_r1cs_constraint(
-            r1cs_constraint<Field>(gamma, gamma_powers[i - 1], gamma_powers[i]),
-            FMT(annotation_prefix,
-                " compute_gamma_power[%zu](gamma^%zu)",
-                i,
-                i + 2));
-    }
-
-    // gamma_power_times_commit_minus_encoded_eval[0] =
-    //   G1_mul(gamma, compute_commit_minus_encoded_eval[1])
-    // gamma_power_times_commit_minus_encoded_eval[i>0] =
-    //   G1_mul(gamma_powers[i-1], commit_minus_encoded_eval[i+1]
-    compute_gamma_power_times_commit_minus_encoded_eval.reserve(
-        num_entries - 1);
-    compute_gamma_power_times_commit_minus_encoded_eval.emplace_back(
-        pb,
-        gamma,
-        commit_minus_encoded_eval[1],
-        gamma_power_times_commit_minus_encoded_eval[0],
-        FMT(annotation_prefix,
-            "compute_gamma_power_times_commit_minus_encoded_eval[0]"));
-    for (size_t i = 1; i < num_entries - 1; ++i) {
-        compute_gamma_power_times_commit_minus_encoded_eval.emplace_back(
-            pb,
-            gamma_powers[i - 1],
-            commit_minus_encoded_eval[i + 1],
-            gamma_power_times_commit_minus_encoded_eval[i],
-            FMT(annotation_prefix,
-                "compute_gamma_power_times_commit_minus_encoded_eval[0]"));
-    }
-
-    // intermediate_sum[0] = G1_add(
-    //   commit_minus_encoded_eval[0],
-    //   gamma_power_times_commit_minus_encoded_eval[0])
-    // intermediate_sum[0<i<num_entries - 2] = G1_add(
-    //   intermediate_sum[i-1],
-    //   gamma_power_times_commit_minus_encoded_eval[i])
-    // result = G1_add(
-    //   intermediate_sum[num_entries - 2],
-    //   gamma_power_times_commit_minus_encoded_eval[num_entries - 2])
-    compute_intermediate_sum.reserve(num_entries - 1);
-    compute_intermediate_sum.emplace_back(
-        pb,
-        gamma_power_times_commit_minus_encoded_eval[0],
-        commit_minus_encoded_eval[0],
-        intermediate_sum[0],
-        FMT(annotation_prefix, " compute_intermediate_sum[0]"));
-    for (size_t i = 1; i < num_entries - 2; ++i) {
-        compute_intermediate_sum.emplace_back(
-            pb,
-            gamma_power_times_commit_minus_encoded_eval[i],
-            intermediate_sum[i - 1],
-            intermediate_sum[i],
-            FMT(annotation_prefix, " compute_intermediate_sum[%zu]", i));
-    }
-
-    compute_intermediate_sum.emplace_back(
-        pb,
-        gamma_power_times_commit_minus_encoded_eval[num_entries - 2],
-        intermediate_sum[num_entries - 3],
-        result,
-        FMT(annotation_prefix,
-            " compute_intermediate_sum[%zu]",
-            num_entries - 2));
-    assert(intermediate_sum.size() == num_entries - 2);
-    assert(compute_intermediate_sum.size() == num_entries - 1);
-}
-
-template<typename ppT, size_t num_entries>
-void kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
-    generate_r1cs_constraints()
-{
-    for (auto &gadget : compute_encoded_evals) {
-        gadget.generate_r1cs_constraints();
-    }
-
-    for (auto &gadget : compute_commit_minus_encoded_eval) {
-        gadget.generate_r1cs_constraints();
-    }
-
-    for (auto &gadget : compute_gamma_power_times_commit_minus_encoded_eval) {
-        gadget.generate_r1cs_constraints();
-    }
-
-    for (auto &gadget : compute_intermediate_sum) {
-        gadget.generate_r1cs_constraints();
-    }
-}
-
-template<typename ppT, size_t num_entries>
-void kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
-    generate_r1cs_witness()
-{
-    for (auto &gadget : compute_encoded_evals) {
-        gadget.generate_r1cs_witness();
-    }
-
-    for (auto &gadget : compute_commit_minus_encoded_eval) {
-        gadget.generate_r1cs_witness();
-    }
-
-    const Field gamma_val = this->pb.lc_val(gamma);
-    Field gamma_power_val = gamma_val;
-
-    for (auto &gamma_power : gamma_powers) {
-        gamma_power_val = gamma_power_val * gamma_val;
-        this->pb.val(gamma_power) = gamma_power_val;
-    }
-
-    for (auto &gadget : compute_gamma_power_times_commit_minus_encoded_eval) {
-        gadget.generate_r1cs_witness();
-    }
-
-    for (auto &gadget : compute_intermediate_sum) {
-        gadget.generate_r1cs_witness();
-    }
 }
 
 //

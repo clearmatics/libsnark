@@ -94,6 +94,17 @@ public:
     FieldT get_field_element_from_bits(const protoboard<FieldT> &pb) const;
 };
 
+template<typename FieldT>
+pb_variable_array<FieldT> pb_variable_array_allocate(
+    protoboard<FieldT> &pb,
+    const size_t n,
+    const std::string &annotation_prefix)
+{
+    pb_variable_array<FieldT> var_array;
+    var_array.allocate(pb, n, annotation_prefix);
+    return var_array;
+}
+
 /* index 0 corresponds to the constant term (used in legacy code) */
 #define ONE pb_variable<FieldT>(0)
 

@@ -157,12 +157,98 @@ template<typename wppT> void test_kzg10_verifier_gadget()
 }
 
 template<typename wppT, size_t num_entries>
+void do_test_kzg10_batched_compute_gamma_eval_sum_gadget(
+    const libff::Fr<other_curve<wppT>> &gamma,
+    const std::vector<libff::Fr<other_curve<wppT>>> &evals,
+    const libff::Fr<other_curve<wppT>> &expected_result)
+{
+    using Field = libff::Fr<wppT>;
+
+    ASSERT_EQ(num_entries, evals.size());
+
+    // Protoboard and constraints
+
+    protoboard<Field> pb;
+
+    pb_variable<Field> gamma_var = pb_variable_allocate<Field>(pb, "gamma_var");
+    pb_variable_array<Field> gamma_powers_var;
+    gamma_powers_var.allocate(pb, num_entries - 2, "gamma_powers_var");
+    pb_variable_array<Field> evals_var;
+    evals_var.allocate(pb, num_entries, "evals_var");
+    pb_variable<Field> result_var;
+    result_var.allocate(pb, "result_var");
+
+    kzg10_batched_compute_gamma_eval_sum<wppT, num_entries>
+        compute_gamma_evals_sum(
+            pb,
+            gamma_var,
+            gamma_powers_var,
+            evals_var,
+            result_var,
+            "compute_gamma_evals_sum");
+
+    compute_gamma_evals_sum.generate_r1cs_constraints();
+
+    // Witness
+
+    Field wrapping_gamma;
+    fp_from_fp(wrapping_gamma, gamma);
+    pb.val(gamma_var) = wrapping_gamma;
+
+    for (size_t i = 0; i < num_entries - 2; ++i) {
+        Field wrapping_eval;
+        fp_from_fp(wrapping_eval, gamma ^ (i + 2));
+        pb.val(gamma_powers_var[i]) = wrapping_eval;
+    }
+
+    for (size_t i = 0; i < num_entries; ++i) {
+        Field wrapping_eval;
+        fp_from_fp(wrapping_eval, evals[i]);
+        pb.val(evals_var[i]) = wrapping_eval;
+    }
+    compute_gamma_evals_sum.generate_r1cs_witness();
+
+    // Check result value
+
+    Field wrapping_expected_result;
+    fp_from_fp(wrapping_expected_result, expected_result);
+
+    ASSERT_TRUE(pb.is_satisfied());
+    ASSERT_EQ(wrapping_expected_result, pb.val(result_var));
+
+    // Test in proof
+
+    const r1cs_gg_ppzksnark_keypair<wppT> keypair =
+        r1cs_gg_ppzksnark_generator<wppT>(pb.get_constraint_system(), true);
+    const r1cs_gg_ppzksnark_proof<wppT> proof = r1cs_gg_ppzksnark_prover<wppT>(
+        keypair.pk, pb.primary_input(), pb.auxiliary_input(), true);
+    ASSERT_TRUE(r1cs_gg_ppzksnark_verifier_strong_IC<wppT>(
+        keypair.vk, pb.primary_input(), proof));
+}
+
+template<typename wppT> void test_kzg10_compute_gamma_evals_sum_gadget()
+{
+    using nField = libff::Fr<other_curve<wppT>>;
+
+    const nField gamma("51");
+    const std::vector<nField> evals{{"3"}, {"5"}, {"7"}, {"11"}};
+
+    const nField r_3(3 + 51 * 5 + (51 * 51) * 7);
+    do_test_kzg10_batched_compute_gamma_eval_sum_gadget<wppT, 3>(
+        gamma, {evals[0], evals[1], evals[2]}, r_3);
+
+    // 4-entry case
+    const nField r_4(3 + 51 * 5 + (51 * 51) * 7 + (51 * 51 * 51) * 11);
+    do_test_kzg10_batched_compute_gamma_eval_sum_gadget<wppT, 4>(
+        gamma, evals, r_4);
+}
+
+template<typename wppT, size_t num_entries>
 void do_test_kzg10_batched_commit_minus_eval_sum(
     const libff::Fr<other_curve<wppT>> &gamma,
     const std::vector<libff::Fr<other_curve<wppT>>> &evals,
     const std::vector<typename kzg10<other_curve<wppT>>::commitment> &cms,
-    const libff::G1<other_curve<wppT>> &r,
-    const bool expected_result)
+    const libff::G1<other_curve<wppT>> &expect_result)
 {
     using Field = libff::Fr<wppT>;
 
@@ -203,12 +289,8 @@ void do_test_kzg10_batched_commit_minus_eval_sum(
 
     // Check result value
 
-    if (expected_result) {
-        ASSERT_TRUE(pb.is_satisfied());
-        ASSERT_EQ(r, result_var.get_element());
-    } else {
-        ASSERT_NE(r, result_var.get_element());
-    }
+    ASSERT_TRUE(pb.is_satisfied());
+    ASSERT_EQ(expect_result, result_var.get_element());
 
     // Test in proof
 
@@ -235,27 +317,26 @@ template<typename wppT> void test_kzg10_batched_commit_minus_eval_sum_gadget()
     }};
 
     // 2-entry case
-    const nG1 r_2 = nField((13 - 3) + 51 * (17 - 5)) * nG1::one();
+    const nG1 result_2 = nField((13 - 3) + 51 * (17 - 5)) * nG1::one();
     do_test_kzg10_batched_commit_minus_eval_sum<wppT, 2>(
-        gamma, {evals[0], evals[1]}, {cms[0], cms[1]}, r_2, true);
+        gamma, {evals[0], evals[1]}, {cms[0], cms[1]}, result_2);
 
     // 3-entry case
-    const nG1 r_3 =
+    const nG1 result_3 =
         nField((13 - 3) + 51 * (17 - 5) + (51 * 51) * (19 - 7)) * nG1::one();
     do_test_kzg10_batched_commit_minus_eval_sum<wppT, 3>(
         gamma,
         {evals[0], evals[1], evals[2]},
         {cms[0], cms[1], cms[2]},
-        r_3,
-        true);
+        result_3);
 
     // 4-entry case
-    const nG1 r_4 = nField(
-                        (13 - 3) + 51 * (17 - 5) + (51 * 51) * (19 - 7) +
-                        (51 * 51 * 51) * (23 - 11)) *
-                    nG1::one();
+    const nG1 result_4 = nField(
+                             (13 - 3) + 51 * (17 - 5) + (51 * 51) * (19 - 7) +
+                             (51 * 51 * 51) * (23 - 11)) *
+                         nG1::one();
     do_test_kzg10_batched_commit_minus_eval_sum<wppT, 4>(
-        gamma, evals, cms, r_4, true);
+        gamma, evals, cms, result_4);
 }
 
 template<typename wppT, size_t num_polynomials_1, size_t num_polynomials_2>
@@ -624,6 +705,11 @@ template<typename wppT> void test_kzg10_batched_verifier_gadget()
 TEST(TestKZG10VerifierGadget, ValidEvaluation)
 {
     test_kzg10_verifier_gadget<libff::bw6_761_pp>();
+}
+
+TEST(TestKZG10VerifierGadget, BatchedComputeGamma_EvalsSum)
+{
+    test_kzg10_compute_gamma_evals_sum_gadget<libff::bw6_761_pp>();
 }
 
 TEST(TestKZG10VerifierGadget, BatchedCommitMinusEvalSum)
