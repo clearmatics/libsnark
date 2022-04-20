@@ -133,10 +133,12 @@ if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Apple)?Clan
   endif()
   # Default optimizations flags (to override, use -DOPT_FLAGS=...)
   if("${OPT_FLAGS}" STREQUAL "")
-    set(
-      OPT_FLAGS
-      "-ggdb3 -O2 -march=native -mtune=native"
-    )
+    if (NOT ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"))
+      set(
+        OPT_FLAGS
+        "-ggdb3 -O2 -march=native -mtune=native"
+        )
+    endif()
   endif()
 endif()
 
