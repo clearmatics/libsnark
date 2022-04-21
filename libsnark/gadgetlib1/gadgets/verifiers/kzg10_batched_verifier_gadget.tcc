@@ -151,8 +151,8 @@ void kzg10_batched_compute_gamma_powers_times_points<ppT, n>::
 
 // specialization for 2 entries
 template<typename ppT>
-kzg10_batched_compute_commit_minus_eval_sum<ppT, 2>::
-    kzg10_batched_compute_commit_minus_eval_sum(
+kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::
+    kzg10_batched_compute_gamma_powers_commit_minus_eval_sum(
         protoboard<libff::Fr<ppT>> &pb,
         pb_linear_combination<libff::Fr<ppT>> gamma,
         const std::vector<kzg10_commitment_variable<ppT>> commits,
@@ -215,7 +215,7 @@ kzg10_batched_compute_commit_minus_eval_sum<ppT, 2>::
 }
 
 template<typename ppT>
-void kzg10_batched_compute_commit_minus_eval_sum<ppT, 2>::
+void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::
     generate_r1cs_constraints()
 {
     compute_encoded_evals[0].generate_r1cs_constraints();
@@ -227,7 +227,7 @@ void kzg10_batched_compute_commit_minus_eval_sum<ppT, 2>::
 }
 
 template<typename ppT>
-void kzg10_batched_compute_commit_minus_eval_sum<ppT, 2>::
+void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::
     generate_r1cs_witness()
 {
     compute_encoded_evals[0].generate_r1cs_witness();
@@ -240,15 +240,16 @@ void kzg10_batched_compute_commit_minus_eval_sum<ppT, 2>::
 
 template<typename ppT>
 const G1_variable<ppT>
-    &kzg10_batched_compute_commit_minus_eval_sum<ppT, 2>::result() const
+    &kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::result()
+        const
 {
     return compute_result->result;
 }
 
 // specialization for >2 entries
 template<typename ppT, size_t num_entries>
-kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
-    kzg10_batched_compute_commit_minus_eval_sum(
+kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, num_entries>::
+    kzg10_batched_compute_gamma_powers_commit_minus_eval_sum(
         protoboard<libff::Fr<ppT>> &pb,
         const pb_linear_combination<libff::Fr<ppT>> &gamma,
         const std::vector<kzg10_commitment_variable<ppT>> &commitments,
@@ -392,8 +393,9 @@ kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
 }
 
 template<typename ppT, size_t num_entries>
-void kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
-    generate_r1cs_constraints()
+void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<
+    ppT,
+    num_entries>::generate_r1cs_constraints()
 {
     for (auto &gadget : compute_encoded_evals) {
         gadget.generate_r1cs_constraints();
@@ -417,8 +419,9 @@ void kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
 }
 
 template<typename ppT, size_t num_entries>
-void kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
-    generate_r1cs_witness()
+void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<
+    ppT,
+    num_entries>::generate_r1cs_witness()
 {
     for (auto &gadget : compute_encoded_evals) {
         gadget.generate_r1cs_witness();

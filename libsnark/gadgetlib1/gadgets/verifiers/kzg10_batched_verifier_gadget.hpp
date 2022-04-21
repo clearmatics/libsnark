@@ -77,7 +77,8 @@ public:
 /// must be statically defined, although all internal structures are currently
 /// dynamic. This also allows specialization for the case of 2 entries.
 template<typename ppT, size_t num_entries>
-class kzg10_batched_compute_commit_minus_eval_sum : gadget<libff::Fr<ppT>>
+class kzg10_batched_compute_gamma_powers_commit_minus_eval_sum
+    : gadget<libff::Fr<ppT>>
 {
     static_assert(num_entries > 2, "num_entries must be greater that 2");
 
@@ -101,7 +102,7 @@ public:
     kzg10_batched_compute_gamma_powers_times_points<ppT, num_entries>
         compute_gamma_power_times_commit_minus_encoded_eval;
 
-    kzg10_batched_compute_commit_minus_eval_sum(
+    kzg10_batched_compute_gamma_powers_commit_minus_eval_sum(
         protoboard<libff::Fr<ppT>> &pb,
         const pb_linear_combination<libff::Fr<ppT>> &gamma,
         const std::vector<kzg10_commitment_variable<ppT>> &commitments,
@@ -119,7 +120,7 @@ public:
 // further powers of gamma). This simplifies the generic (num_entries >= 3)
 // version, since it does not need to account for special cases.
 template<typename ppT>
-class kzg10_batched_compute_commit_minus_eval_sum<ppT, 2>
+class kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>
     : gadget<libff::Fr<ppT>>
 {
 public:
@@ -136,7 +137,7 @@ public:
     std::shared_ptr<G1_add_variable_and_variable_or_identity_gadget<ppT>>
         compute_result;
 
-    kzg10_batched_compute_commit_minus_eval_sum(
+    kzg10_batched_compute_gamma_powers_commit_minus_eval_sum(
         protoboard<libff::Fr<ppT>> &pb,
         pb_linear_combination<libff::Fr<ppT>> gamma,
         const std::vector<kzg10_commitment_variable<ppT>> commitments,
@@ -179,10 +180,14 @@ public:
     //   G = \sum_{i=1}^{t1} \gamma_1^{i-1} (cm_1[i] - [s_1[i]]_1)
     //   H = \sum_{i=1}^{t2} \gamma_2^{i-1} (cm_2[i] - [s_2[i]]_1)
     G1_variable<ppT> G;
-    kzg10_batched_compute_commit_minus_eval_sum<ppT, num_polyomials_1>
+    kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<
+        ppT,
+        num_polyomials_1>
         compute_G;
     G1_variable<ppT> H;
-    kzg10_batched_compute_commit_minus_eval_sum<ppT, num_polyomials_2>
+    kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<
+        ppT,
+        num_polyomials_2>
         compute_H;
     G1_variable_or_identity<ppT> rH;
     G1_mul_by_scalar_gadget<ppT> compute_rH;
