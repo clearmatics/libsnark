@@ -352,6 +352,71 @@ namespace libsnark
       A[i] = plonk_compute_accumulator_factor(i, n, beta, gamma, witness, H_gen, H_gen_permute, A);
     }
   }
+
+  //
+  // P(x) plonk_evaluate_poly_at_point(P, x)
+  //
+  // evaluate a polynomial P given as list of coefficients (p0, p1,
+  // ..., p_{n-1}) at a given point t using the lagrange basis L_i:
+  // 0 <= i <= deg(P) ie. compute P(t) as:
+  //
+  // P(t) = p0 L0(t) + p1 L1(t) + ... + p_{n-1} L_{n-1}(t)
+  //
+  template<typename FieldT>
+  FieldT plonk_evaluate_poly_at_point(
+				      polynomial<FieldT> P,
+				      FieldT t,
+				      size_t n // nconstraints
+				      )
+  {
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain = libfqfft::get_evaluation_domain<FieldT>(n);
+    // evaluate all Lagrange polynomials at point x
+    std::vector<FieldT> Lt = domain->evaluate_all_lagrange_polynomials(t);
+    FieldT res = FieldT(0);    
+    // P(t) = p0 L0(t) + p1 L1(t) + ... + p_{n-1} L_{n-1}(t)
+    for (size_t i = 0; i < P.size(); ++i) {
+      res = res + (P[i] * Lt[i]);
+    }
+    return res;
+  }
+
+  //
+  // Evaluate a polynomial P(x) at all (shifted) roots of unity tw^0,
+  // tw^1, ..., tw^{n-1} where t is a shift equal to w^i: 1<i<={n-1}
+  //
+  // Example: Suppose t=w then the function computes the evaluations
+  // P(w), P(w^2), ..., P(w^{n-1}), P(w^n=w^0)
+  //
+  // This function is needed in Prover Round 3 for computing z(xw)
+  //
+  template<typename FieldT>
+  void plonk_evaluate_poly_at_roots_of_unity(
+					     polynomial<FieldT> P,
+					     std::vector<FieldT>& P_eval,
+					     std::vector<FieldT> roots,
+					     FieldT root_shift,
+					     size_t n // domain size
+					     )
+  {
+    assert(roots.size() == n);
+    assert(P.size() <= n);
+    assert(P_eval.size() == P.size());
+    // make sure the shift is an n-th root of unity
+    assert(libff::power(root_shift, libff::bigint<1>(n)) == FieldT(1));
+    FieldT root_base = libff::get_root_of_unity<FieldT>(n);
+    assert(roots[1] == root_base);
+    for (size_t i = 0; i < P.size(); ++i) {
+      FieldT tmp = libff::power(root_base, libff::bigint<1>(i));
+      printf("[%s:%d] i %2d\n", __FILE__, __LINE__, (int)i);
+      roots[i].print();
+      tmp.print();
+      assert(roots[i] == libff::power(root_base, libff::bigint<1>(i)));
+      // w_shift * w^i
+      FieldT t = root_shift * roots[i];
+      // compute P(w_shift * w^i)
+      P_eval[i] = plonk_evaluate_poly_at_point(P, t, n);
+    }
+  }
   
   template<typename ppT> void test_plonk()
   {
@@ -739,7 +804,7 @@ namespace libsnark
     }
 #ifdef DEBUG
     for (int i = 0; i < nwitness; ++i) {
-      printf("[%s:%d] W_polys[%d]\n", __FILE__, __LINE__, i);
+      printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
       print_vector(W_polys_blinded[i]);
     }
 #endif // #ifdef DEBUG
@@ -801,7 +866,29 @@ namespace libsnark
     printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
     z_poly_at_secret_g1.print();
 #endif // #ifdef DEBUG
-    
+
+    printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
+    // W_polys_blinded = [a_poly, b_poly, c_poly]
+
+    // plonk_poly_shifted    
+    // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
+    // w=omega is the base root of unity and z is z_poly. we do this
+    // as follows:
+    //
+    // - evaluate z(x) at points tw^0, tw^1, ... tw^{n-1} for shift
+    //   t=w using FFT to get y0, y1, ..., y_{n-1}
+    //
+    // - given the evaluations (y0, y1, ..., y_{n-1}) and the roots of
+    //   unity (w^0, w^1, ..., w^{n-1}), use iFFT to compute
+    //   coefficients a0, a1, ..., a_{n-1} for the polynomila z' such
+    //   that z'(x) = a0x^0 + a1x + ... + a_{n-1}x^{n-1} and z'(w^i) =
+    //   yi i.e. z' evlauated at the roots of unity w equals the
+    //   evaluation of z at the shifted roots of unity tw
+
+    // P(x) plonk_evaluate_poly_at_point(P, x)
+    std::vector<Field> z_poly_eval_shift(z_poly.size(), Field(0));
+    plonk_evaluate_poly_at_roots_of_unity(z_poly, z_poly_eval_shift, omega2, omega2[1], 2*nconstraints);
+
     // end 
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
