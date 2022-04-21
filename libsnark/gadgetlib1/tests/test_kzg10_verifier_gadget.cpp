@@ -157,7 +157,7 @@ template<typename wppT> void test_kzg10_verifier_gadget()
 }
 
 template<typename wppT, size_t num_entries>
-void do_test_kzg10_batched_commit_minus_eval_sum(
+void do_test_kzg10_batched_gamma_powers_commit_minus_eval_sum(
     const libff::Fr<other_curve<wppT>> &gamma,
     const std::vector<libff::Fr<other_curve<wppT>>> &evals,
     const std::vector<typename kzg10<other_curve<wppT>>::commitment> &cms,
@@ -181,8 +181,9 @@ void do_test_kzg10_batched_commit_minus_eval_sum(
     evals_var.allocate(pb, num_entries, "evals_var");
     G1_variable<wppT> result_var(pb, "result_var");
 
-    kzg10_batched_compute_commit_minus_eval_sum<wppT, num_entries> compute_sum(
-        pb, gamma_var, cms_var, evals_var, result_var, "compute_sum");
+    kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<wppT, num_entries>
+        compute_sum(
+            pb, gamma_var, cms_var, evals_var, result_var, "compute_sum");
 
     compute_sum.generate_r1cs_constraints();
 
@@ -220,7 +221,8 @@ void do_test_kzg10_batched_commit_minus_eval_sum(
         keypair.vk, pb.primary_input(), proof));
 }
 
-template<typename wppT> void test_kzg10_batched_commit_minus_eval_sum_gadget()
+template<typename wppT>
+void test_kzg10_batched_gamma_powers_commit_minus_eval_sum_gadget()
 {
     using nField = libff::Fr<other_curve<wppT>>;
     using nG1 = libff::G1<other_curve<wppT>>;
@@ -242,7 +244,7 @@ template<typename wppT> void test_kzg10_batched_commit_minus_eval_sum_gadget()
     // 3-entry case
     const nG1 r_3 =
         nField((13 - 3) - 51 * (17 - 5) + (51 * 51) * (19 - 7)) * nG1::one();
-    do_test_kzg10_batched_commit_minus_eval_sum<wppT, 3>(
+    do_test_kzg10_batched_gamma_powers_commit_minus_eval_sum<wppT, 3>(
         gamma,
         {evals[0], evals[1], evals[2]},
         {cms[0], cms[1], cms[2]},
@@ -254,7 +256,7 @@ template<typename wppT> void test_kzg10_batched_commit_minus_eval_sum_gadget()
                         (13 - 3) - 51 * (17 - 5) + (51 * 51) * (19 - 7) -
                         (51 * 51 * 51) * (23 - 11)) *
                     nG1::one();
-    do_test_kzg10_batched_commit_minus_eval_sum<wppT, 4>(
+    do_test_kzg10_batched_gamma_powers_commit_minus_eval_sum<wppT, 4>(
         gamma, evals, cms, r_4, true);
 }
 
@@ -626,9 +628,10 @@ TEST(TestKZG10VerifierGadget, ValidEvaluation)
     test_kzg10_verifier_gadget<libff::bw6_761_pp>();
 }
 
-TEST(TestKZG10VerifierGadget, BatchedCommitMinusEvalSum)
+TEST(TestKZG10VerifierGadget, BatchedGammaPowersCommitMinusEvalSum)
 {
-    test_kzg10_batched_commit_minus_eval_sum_gadget<libff::bw6_761_pp>();
+    test_kzg10_batched_gamma_powers_commit_minus_eval_sum_gadget<
+        libff::bw6_761_pp>();
 }
 
 TEST(TestKZG10VerifierGadget, BatchedValidEvaluation)
