@@ -40,6 +40,112 @@ std::vector<GroupVarT> allocate_variable_array(
 } // namespace internal
 
 //
+// kzg10_batched_witness_variable
+//
+
+template<typename ppT>
+kzg10_batched_witness_variable<ppT>::kzg10_batched_witness_variable(
+    protoboard<libff::Fr<ppT>> &pb, const std::string &annotation_prefix)
+    : W_1(pb, FMT(annotation_prefix, " W_1"))
+    , W_2(pb, FMT(annotation_prefix, " W_2"))
+{
+}
+
+template<typename ppT>
+void kzg10_batched_witness_variable<ppT>::generate_r1cs_witness(
+    const typename kzg10_batched_2_point<other_curve<ppT>>::evaluation_witness
+        &eval_witness)
+{
+    W_1.generate_r1cs_witness(eval_witness.W_1);
+    W_2.generate_r1cs_witness(eval_witness.W_2);
+}
+
+//
+// kzg10_batched_compute_gamma_powers_times_points
+//
+
+template<typename ppT, size_t n>
+kzg10_batched_compute_gamma_powers_times_points<ppT, n>::
+    kzg10_batched_compute_gamma_powers_times_points(
+        protoboard<libff::Fr<ppT>> &pb,
+        const pb_linear_combination<libff::Fr<ppT>> &gamma,
+        const std::vector<G1_variable<ppT>> &points,
+        G1_variable<ppT> &result,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+{
+    intermediate_mul.reserve(n - 1);
+    intermediate_sum.reserve(n - 1);
+
+    // intermediate_mul_result[0] = gamma * points[n-1]
+    intermediate_mul.emplace_back(
+        pb,
+        gamma,
+        points[n - 1],
+        G1_variable_or_identity<ppT>(
+            pb, FMT(annotation_prefix, " intermediate_mul_result[0]")),
+        FMT(annotation_prefix, " intermediate_mul[0]"));
+
+    // intermediate_sum[i=0..n-3] = intermediate_mul[i] + points[n-2-i]
+    // intermediate_mul[i=1..n-2] = gamma * intermediate_sum[i-1]
+    for (size_t i = 1; i < n - 1; ++i) {
+        intermediate_sum.emplace_back(
+            pb,
+            intermediate_mul.back().result(),
+            points[n - 1 - i],
+            G1_variable<ppT>(
+                pb,
+                FMT(annotation_prefix, " intermediate_sum_result[%zu]", i - 1)),
+            FMT(annotation_prefix, " intermediate_sum[%zu]", i - 1));
+
+        intermediate_mul.emplace_back(
+            pb,
+            gamma,
+            intermediate_sum.back().result,
+            G1_variable_or_identity<ppT>(
+                pb, FMT(annotation_prefix, " intermediate_mul_result[%zu]", i)),
+            FMT(annotation_prefix, " intermediate_mul[%zu]", i));
+    }
+
+    //   intermediate_sum[n-2] = result = intermediate_mul[n-2] + points[0]
+    intermediate_sum.emplace_back(
+        pb,
+        intermediate_mul[n - 2].result(),
+        points[0],
+        result,
+        FMT(annotation_prefix, " intermediate_sum[%zu]", n - 2));
+
+    assert(intermediate_mul.size() == n - 1);
+    assert(intermediate_sum.size() == n - 1);
+}
+
+template<typename ppT, size_t n>
+void kzg10_batched_compute_gamma_powers_times_points<ppT, n>::
+    generate_r1cs_constraints()
+{
+    assert(intermediate_mul.size() == n - 1);
+    assert(intermediate_sum.size() == n - 1);
+
+    for (size_t i = 0; i < n - 1; ++i) {
+        intermediate_mul[i].generate_r1cs_constraints();
+        intermediate_sum[i].generate_r1cs_constraints();
+    }
+}
+
+template<typename ppT, size_t n>
+void kzg10_batched_compute_gamma_powers_times_points<ppT, n>::
+    generate_r1cs_witness()
+{
+    assert(intermediate_mul.size() == n - 1);
+    assert(intermediate_sum.size() == n - 1);
+
+    for (size_t i = 0; i < n - 1; ++i) {
+        intermediate_mul[i].generate_r1cs_witness();
+        intermediate_sum[i].generate_r1cs_witness();
+    }
+}
+
+//
 // kzg10_batched_compute_commit_minus_eval_sum
 //
 
@@ -182,7 +288,7 @@ kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
           FMT(annotation_prefix,
               " compute_gamma_power_times_commit_minus_encoded_eval"))
 {
-    // encoded_eval[i] = G1_mul_by_scalar(evals[i], G1::one())
+    // encoded_eval[i] = G1_mul_by_scalar(evals[i], -G1::one())
     // len(encoded_eval) = num_entries
     G1_variable<ppT> g1_minus_one(
         pb,
@@ -340,6 +446,145 @@ void kzg10_batched_compute_commit_minus_eval_sum<ppT, num_entries>::
     // for (auto &gadget : compute_intermediate_sum) {
     //     gadget.generate_r1cs_witness();
     // }
+}
+
+//
+// kzg10_batched_verifier_gadget
+//
+
+template<typename ppT, size_t num_polyomials_1, size_t num_polyomials_2>
+kzg10_batched_verifier_gadget<ppT, num_polyomials_1, num_polyomials_2>::
+    kzg10_batched_verifier_gadget(
+        protoboard<libff::Fr<ppT>> &pb,
+        pb_linear_combination<libff::Fr<ppT>> z_1,
+        pb_linear_combination<libff::Fr<ppT>> z_2,
+        const pb_linear_combination_array<libff::Fr<ppT>> &poly_evals_1,
+        const pb_linear_combination_array<libff::Fr<ppT>> &poly_evals_2,
+        const kzg10_srs_variable<ppT> &srs,
+        pb_linear_combination<libff::Fr<ppT>> gamma_1,
+        pb_linear_combination<libff::Fr<ppT>> gamma_2,
+        const kzg10_batched_witness_variable<ppT> &eval_witness,
+        const std::vector<kzg10_commitment_variable<ppT>> &commitments_1,
+        const std::vector<kzg10_commitment_variable<ppT>> &commitments_2,
+        pb_linear_combination<libff::Fr<ppT>> r,
+        pb_variable<libff::Fr<ppT>> result,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , G(pb, FMT(annotation_prefix, " G"))
+    , compute_G(
+          pb,
+          gamma_1,
+          commitments_1,
+          poly_evals_1,
+          G,
+          FMT(annotation_prefix, " compute_G"))
+    , H(pb, FMT(annotation_prefix, " H"))
+    , compute_H(
+          pb,
+          gamma_2,
+          commitments_2,
+          poly_evals_2,
+          H,
+          FMT(annotation_prefix, " compute_H"))
+    , rH(pb, FMT(annotation_prefix, " rH"))
+    // NOTE: this ignores H.is_identity
+    , compute_rH(pb, r, H, rH, FMT(annotation_prefix, " compute_rH"))
+    , F(pb, FMT(annotation_prefix, " F"))
+    , compute_F(pb, rH, G, F, FMT(annotation_prefix, " compute_F"))
+    //   A = W_1 + r * W_2
+    , r_times_W_2(pb, FMT(annotation_prefix, " r_times_W_2"))
+    , compute_r_times_W_2(
+          pb,
+          r,
+          eval_witness.W_2,
+          r_times_W_2,
+          FMT(annotation_prefix, " compute_r_times_W_2"))
+    , A(pb, FMT(annotation_prefix, " A"))
+    , compute_A(
+          pb,
+          r_times_W_2,
+          eval_witness.W_1,
+          A,
+          FMT(annotation_prefix, " compute_A"))
+    //   B = F + z_1 * W_1 + r * z_2 * W_2
+    , r_times_z_2_times_W_2(
+          pb, FMT(annotation_prefix, " r_times_z_2_times_W_2"))
+    , compute_r_times_z_2_times_W_2(
+          pb,
+          z_2,
+          r_times_W_2,
+          r_times_z_2_times_W_2,
+          FMT(annotation_prefix, " compute_r_times_z_2_times_W_2"))
+    , z_1_times_W_1(pb, FMT(annotation_prefix, " z_1_times_W_1"))
+    , compute_z_1_times_W_1(
+          pb,
+          z_1,
+          eval_witness.W_1,
+          z_1_times_W_1,
+          FMT(annotation_prefix, " compute_z_1_times_W_1"))
+    , F_plus_z_1_times_W_1(pb, FMT(annotation_prefix, " F_plus_z_1_times_W_1"))
+    , compute_F_plus_z_1_times_W_1(
+          pb,
+          z_1_times_W_1,
+          F,
+          F_plus_z_1_times_W_1,
+          FMT(annotation_prefix, " compute_F_plus_z_1_times_W_1"))
+    , B(pb, FMT(annotation_prefix, " B"))
+    , compute_B(
+          pb,
+          r_times_z_2_times_W_2,
+          F_plus_z_1_times_W_1,
+          B,
+          FMT(annotation_prefix, " compute_B"))
+    , pairing_check(
+          pb,
+          A,
+          srs.alpha_g2,
+          B,
+          libff::G2<other_curve<ppT>>::one(),
+          result,
+          FMT(annotation_prefix, " pairing_check"))
+{
+}
+
+template<typename ppT, size_t num_polyomials_1, size_t num_polyomials_2>
+void kzg10_batched_verifier_gadget<ppT, num_polyomials_1, num_polyomials_2>::
+    generate_r1cs_constraints()
+{
+    compute_G.generate_r1cs_constraints();
+    compute_H.generate_r1cs_constraints();
+    compute_rH.generate_r1cs_constraints();
+    compute_F.generate_r1cs_constraints();
+    compute_r_times_W_2.generate_r1cs_constraints();
+    compute_A.generate_r1cs_constraints();
+    compute_r_times_z_2_times_W_2.generate_r1cs_constraints();
+    compute_z_1_times_W_1.generate_r1cs_constraints();
+    compute_F_plus_z_1_times_W_1.generate_r1cs_constraints();
+    compute_B.generate_r1cs_constraints();
+    pairing_check.generate_r1cs_constraints();
+}
+
+template<typename ppT, size_t num_polyomials_1, size_t num_polyomials_2>
+void kzg10_batched_verifier_gadget<ppT, num_polyomials_1, num_polyomials_2>::
+    generate_r1cs_witness()
+{
+    compute_G.generate_r1cs_witness();
+    compute_H.generate_r1cs_witness();
+    compute_rH.generate_r1cs_witness();
+    compute_F.generate_r1cs_witness();
+    compute_r_times_W_2.generate_r1cs_witness();
+    compute_A.generate_r1cs_witness();
+    compute_r_times_z_2_times_W_2.generate_r1cs_witness();
+    compute_z_1_times_W_1.generate_r1cs_witness();
+    compute_F_plus_z_1_times_W_1.generate_r1cs_witness();
+    compute_B.generate_r1cs_witness();
+    pairing_check.generate_r1cs_witness();
+
+    // // result = (1 - B.is_identity) * pairing_check_result
+    // const Field pairing_check_result_val =
+    // this->pb.val(pairing_check_result); const Field B_is_identity_val =
+    // this->pb.lc_val(B.is_identity); this->pb.val(result) =
+    //     (Field::one() - B_is_identity_val) * pairing_check_result_val;
 }
 
 } // namespace libsnark
