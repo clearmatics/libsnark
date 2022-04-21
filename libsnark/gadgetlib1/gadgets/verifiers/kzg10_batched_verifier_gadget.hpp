@@ -61,11 +61,13 @@ public:
         protoboard<libff::Fr<ppT>> &pb,
         const pb_linear_combination<libff::Fr<ppT>> &gamma,
         const std::vector<G1_variable<ppT>> &points,
-        G1_variable<ppT> &result,
+        const G1_variable<ppT> &result,
         const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
+
+    const G1_variable<ppT> &result() const;
 };
 
 /// Given an array of commitments, and array of evaluations, and some field
@@ -105,9 +107,9 @@ public:
     kzg10_batched_compute_gamma_powers_commit_minus_eval_sum(
         protoboard<libff::Fr<ppT>> &pb,
         const pb_linear_combination<libff::Fr<ppT>> &gamma,
-        const std::vector<kzg10_commitment_variable<ppT>> &commitments,
+        const std::vector<kzg10_commitment_variable<ppT>> &commits,
         const pb_linear_combination_array<libff::Fr<ppT>> &evals,
-        G1_variable<ppT> &result,
+        const G1_variable<ppT> &result,
         const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
@@ -139,10 +141,10 @@ public:
 
     kzg10_batched_compute_gamma_powers_commit_minus_eval_sum(
         protoboard<libff::Fr<ppT>> &pb,
-        pb_linear_combination<libff::Fr<ppT>> gamma,
-        const std::vector<kzg10_commitment_variable<ppT>> commitments,
+        const pb_linear_combination<libff::Fr<ppT>> &gamma,
+        const std::vector<kzg10_commitment_variable<ppT>> &commitments,
         const pb_linear_combination_array<libff::Fr<ppT>> &evals,
-        G1_variable<ppT> &result,
+        const G1_variable<ppT> &result,
         const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
