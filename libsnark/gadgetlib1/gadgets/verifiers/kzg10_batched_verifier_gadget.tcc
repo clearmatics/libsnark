@@ -70,7 +70,7 @@ kzg10_batched_compute_gamma_powers_times_points<ppT, n>::
         protoboard<libff::Fr<ppT>> &pb,
         const pb_linear_combination<libff::Fr<ppT>> &gamma,
         const std::vector<G1_variable<ppT>> &points,
-        G1_variable<ppT> &result,
+        const G1_variable<ppT> &result,
         const std::string &annotation_prefix)
     : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
 {
@@ -145,106 +145,16 @@ void kzg10_batched_compute_gamma_powers_times_points<ppT, n>::
     }
 }
 
-//
-// kzg10_batched_compute_commit_minus_eval_sum
-//
-
-// specialization for 2 entries
-template<typename ppT>
-kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::
-    kzg10_batched_compute_gamma_powers_commit_minus_eval_sum(
-        protoboard<libff::Fr<ppT>> &pb,
-        pb_linear_combination<libff::Fr<ppT>> gamma,
-        const std::vector<kzg10_commitment_variable<ppT>> commits,
-        const pb_linear_combination_array<libff::Fr<ppT>> &evals,
-        G1_variable<ppT> &result,
-        const std::string &annotation_prefix)
-    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
-{
-    G1_variable<ppT> g1_minus_1(
-        pb,
-        -libff::G1<other_curve<ppT>>::one(),
-        FMT(annotation_prefix, " g1_minus_1"));
-
-    // encoded_evals[i] = evals[i] * -G1::one()
-    compute_encoded_evals.emplace_back(
-        pb,
-        evals[0],
-        g1_minus_1,
-        G1_variable_or_identity<ppT>(
-            pb, FMT(annotation_prefix, " encoded_evals[0]")),
-        FMT(annotation_prefix, " compute_encoded_evals[0]"));
-    compute_encoded_evals.emplace_back(
-        pb,
-        evals[1],
-        g1_minus_1,
-        G1_variable_or_identity<ppT>(
-            pb, FMT(annotation_prefix, " encoded_evals[1]")),
-        FMT(annotation_prefix, " compute_encoded_evals[1]"));
-
-    // cm_minus_encoded_eval[i] = commits[i] - encoded_evals[i]
-    compute_cm_minus_eval.emplace_back(
-        pb,
-        compute_encoded_evals[0].result(),
-        commits[0],
-        G1_variable<ppT>(pb, FMT(annotation_prefix, " cm_minus_eval[0]")),
-        FMT(annotation_prefix, " compute_cm_minus_eval[0]"));
-    compute_cm_minus_eval.emplace_back(
-        pb,
-        compute_encoded_evals[1].result(),
-        commits[1],
-        G1_variable<ppT>(pb, FMT(annotation_prefix, " cm_minus_eval[1]")),
-        FMT(annotation_prefix, " compute_cm_minus_eval[1]"));
-
-    // gamma_term = gamma * commit_minus_encoded_eval[1]
-    // return = gamma_term + (commit_minus_encoded_eval[0]
-    compute_gamma_term = std::make_shared<G1_mul_by_scalar_gadget<ppT>>(
-        pb,
-        gamma,
-        compute_cm_minus_eval[1].result,
-        G1_variable_or_identity<ppT>(pb, FMT(annotation_prefix, " gamma_term")),
-        FMT(annotation_prefix, " compute_gamma_term"));
-
-    compute_result =
-        std::make_shared<G1_add_variable_and_variable_or_identity_gadget<ppT>>(
-            pb,
-            compute_gamma_term->result(),
-            compute_cm_minus_eval[0].result,
-            result,
-            FMT(annotation_prefix, " compute_result"));
-}
-
-template<typename ppT>
-void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::
-    generate_r1cs_constraints()
-{
-    compute_encoded_evals[0].generate_r1cs_constraints();
-    compute_encoded_evals[1].generate_r1cs_constraints();
-    compute_cm_minus_eval[0].generate_r1cs_constraints();
-    compute_cm_minus_eval[1].generate_r1cs_constraints();
-    compute_gamma_term->generate_r1cs_constraints();
-    compute_result->generate_r1cs_constraints();
-}
-
-template<typename ppT>
-void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::
-    generate_r1cs_witness()
-{
-    compute_encoded_evals[0].generate_r1cs_witness();
-    compute_encoded_evals[1].generate_r1cs_witness();
-    compute_cm_minus_eval[0].generate_r1cs_witness();
-    compute_cm_minus_eval[1].generate_r1cs_witness();
-    compute_gamma_term->generate_r1cs_witness();
-    compute_result->generate_r1cs_witness();
-}
-
-template<typename ppT>
+template<typename ppT, size_t n>
 const G1_variable<ppT>
-    &kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::result()
-        const
+    &kzg10_batched_compute_gamma_powers_times_points<ppT, n>::result() const
 {
-    return compute_result->result;
+    return intermediate_sum.back().result;
 }
+
+//
+// kzg10_batched_compute_gamma_powers_commit_minus_eval_sum
+//
 
 // specialization for >2 entries
 template<typename ppT, size_t num_entries>
@@ -252,9 +162,9 @@ kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, num_entries>::
     kzg10_batched_compute_gamma_powers_commit_minus_eval_sum(
         protoboard<libff::Fr<ppT>> &pb,
         const pb_linear_combination<libff::Fr<ppT>> &gamma,
-        const std::vector<kzg10_commitment_variable<ppT>> &commitments,
+        const std::vector<kzg10_commitment_variable<ppT>> &commits,
         const pb_linear_combination_array<libff::Fr<ppT>> &evals,
-        G1_variable<ppT> &result,
+        const G1_variable<ppT> &result,
         const std::string &annotation_prefix)
     : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
     , encoded_evals(
@@ -311,7 +221,7 @@ kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, num_entries>::
         compute_commit_minus_encoded_eval.emplace_back(
             pb,
             encoded_evals[i],
-            commitments[i],
+            commits[i],
             commit_minus_encoded_eval[i],
             FMT(annotation_prefix, " compute_commit_minus_encoded_eval"));
     }
@@ -449,6 +359,112 @@ void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<
     // for (auto &gadget : compute_intermediate_sum) {
     //     gadget.generate_r1cs_witness();
     // }
+}
+
+template<typename ppT, size_t num_entries>
+const G1_variable<ppT>
+    &kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<
+        ppT,
+        num_entries>::result() const
+{
+    return compute_gamma_power_times_commit_minus_encoded_eval.result();
+}
+
+// specialization for 2 entries
+template<typename ppT>
+kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::
+    kzg10_batched_compute_gamma_powers_commit_minus_eval_sum(
+        protoboard<libff::Fr<ppT>> &pb,
+        const pb_linear_combination<libff::Fr<ppT>> &gamma,
+        const std::vector<kzg10_commitment_variable<ppT>> &commits,
+        const pb_linear_combination_array<libff::Fr<ppT>> &evals,
+        const G1_variable<ppT> &result,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+{
+    G1_variable<ppT> g1_minus_1(
+        pb,
+        -libff::G1<other_curve<ppT>>::one(),
+        FMT(annotation_prefix, " g1_minus_1"));
+
+    // encoded_evals[i] = evals[i] * -G1::one()
+    compute_encoded_evals.emplace_back(
+        pb,
+        evals[0],
+        g1_minus_1,
+        G1_variable_or_identity<ppT>(
+            pb, FMT(annotation_prefix, " encoded_evals[0]")),
+        FMT(annotation_prefix, " compute_encoded_evals[0]"));
+    compute_encoded_evals.emplace_back(
+        pb,
+        evals[1],
+        g1_minus_1,
+        G1_variable_or_identity<ppT>(
+            pb, FMT(annotation_prefix, " encoded_evals[1]")),
+        FMT(annotation_prefix, " compute_encoded_evals[1]"));
+
+    // cm_minus_encoded_eval[i] = commits[i] - encoded_evals[i]
+    compute_cm_minus_eval.emplace_back(
+        pb,
+        compute_encoded_evals[0].result(),
+        commits[0],
+        G1_variable<ppT>(pb, FMT(annotation_prefix, " cm_minus_eval[0]")),
+        FMT(annotation_prefix, " compute_cm_minus_eval[0]"));
+    compute_cm_minus_eval.emplace_back(
+        pb,
+        compute_encoded_evals[1].result(),
+        commits[1],
+        G1_variable<ppT>(pb, FMT(annotation_prefix, " cm_minus_eval[1]")),
+        FMT(annotation_prefix, " compute_cm_minus_eval[1]"));
+
+    // gamma_term = gamma * commit_minus_encoded_eval[1]
+    // return = gamma_term + (commit_minus_encoded_eval[0]
+    compute_gamma_term = std::make_shared<G1_mul_by_scalar_gadget<ppT>>(
+        pb,
+        gamma,
+        compute_cm_minus_eval[1].result,
+        G1_variable_or_identity<ppT>(pb, FMT(annotation_prefix, " gamma_term")),
+        FMT(annotation_prefix, " compute_gamma_term"));
+
+    compute_result =
+        std::make_shared<G1_add_variable_and_variable_or_identity_gadget<ppT>>(
+            pb,
+            compute_gamma_term->result(),
+            compute_cm_minus_eval[0].result,
+            result,
+            FMT(annotation_prefix, " compute_result"));
+}
+
+template<typename ppT>
+void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::
+    generate_r1cs_constraints()
+{
+    compute_encoded_evals[0].generate_r1cs_constraints();
+    compute_encoded_evals[1].generate_r1cs_constraints();
+    compute_cm_minus_eval[0].generate_r1cs_constraints();
+    compute_cm_minus_eval[1].generate_r1cs_constraints();
+    compute_gamma_term->generate_r1cs_constraints();
+    compute_result->generate_r1cs_constraints();
+}
+
+template<typename ppT>
+void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::
+    generate_r1cs_witness()
+{
+    compute_encoded_evals[0].generate_r1cs_witness();
+    compute_encoded_evals[1].generate_r1cs_witness();
+    compute_cm_minus_eval[0].generate_r1cs_witness();
+    compute_cm_minus_eval[1].generate_r1cs_witness();
+    compute_gamma_term->generate_r1cs_witness();
+    compute_result->generate_r1cs_witness();
+}
+
+template<typename ppT>
+const G1_variable<ppT>
+    &kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, 2>::result()
+        const
+{
+    return compute_result->result;
 }
 
 //
