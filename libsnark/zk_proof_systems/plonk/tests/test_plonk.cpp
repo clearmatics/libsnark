@@ -259,6 +259,7 @@ namespace libsnark
 						  polynomial<libff::Fr<ppT>> f_poly
 						  )
   {
+    assert(f_poly.size() <= alpha_powers_g1.size());
     const size_t chunks = 1;
     const size_t num_coefficients = f_poly.size();
     libff::G1<ppT> f_poly_at_secret_g1 = 
@@ -285,6 +286,7 @@ namespace libsnark
   {
     assert(alpha_powers_g1.size());
     assert(Q_polys.size());
+    assert(Q_polys.size() <= alpha_powers_g1.size());
     const size_t npolys = Q_polys.size();
     for (size_t i = 0; i < npolys; ++i) {
       Q_polys_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(alpha_powers_g1, Q_polys[i]);
@@ -366,9 +368,13 @@ namespace libsnark
   FieldT plonk_evaluate_poly_at_point(
 				      polynomial<FieldT> P,
 				      FieldT t,
-				      size_t n // nconstraints
+				      size_t n // nconstraints = size of domain
 				      )
   {
+    // make sure that the size of the domain is equal (can it be
+    // less?) to the degree of the polyomial (to be able to evaluate
+    // the polynomial on this domain)
+    assert(P.size() == n);
     std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain = libfqfft::get_evaluation_domain<FieldT>(n);
     // evaluate all Lagrange polynomials at point x
     std::vector<FieldT> Lt = domain->evaluate_all_lagrange_polynomials(t);
@@ -380,44 +386,6 @@ namespace libsnark
     return res;
   }
 
-  //
-  // Evaluate a polynomial P(x) at all (shifted) roots of unity tw^0,
-  // tw^1, ..., tw^{n-1} where t is a shift equal to w^i: 1<i<={n-1}
-  //
-  // Example: Suppose t=w then the function computes the evaluations
-  // P(w), P(w^2), ..., P(w^{n-1}), P(w^n=w^0)
-  //
-  // This function is needed in Prover Round 3 for computing z(xw)
-  //
-  template<typename FieldT>
-  void plonk_evaluate_poly_at_roots_of_unity(
-					     polynomial<FieldT> P,
-					     std::vector<FieldT>& P_eval,
-					     std::vector<FieldT> roots,
-					     FieldT root_shift,
-					     size_t n // domain size
-					     )
-  {
-    assert(roots.size() == n);
-    assert(P.size() <= n);
-    assert(P_eval.size() == P.size());
-    // make sure the shift is an n-th root of unity
-    assert(libff::power(root_shift, libff::bigint<1>(n)) == FieldT(1));
-    FieldT root_base = libff::get_root_of_unity<FieldT>(n);
-    assert(roots[1] == root_base);
-    for (size_t i = 0; i < P.size(); ++i) {
-      FieldT tmp = libff::power(root_base, libff::bigint<1>(i));
-      printf("[%s:%d] i %2d\n", __FILE__, __LINE__, (int)i);
-      roots[i].print();
-      tmp.print();
-      assert(roots[i] == libff::power(root_base, libff::bigint<1>(i)));
-      // w_shift * w^i
-      FieldT t = root_shift * roots[i];
-      // compute P(w_shift * w^i)
-      P_eval[i] = plonk_evaluate_poly_at_point(P, t, n);
-    }
-  }
-  
   template<typename ppT> void test_plonk()
   {
     // Execute all tests for the given curve.
@@ -494,12 +462,6 @@ namespace libsnark
     // output from plonk_compute_permutation()
     std::vector<int> wire_permutation{9, 17, 18, 5, 4, 19, 7, 8, 10, 11, 1, 14, 21, 20, 15, 16, 2, 3, 6, 12, 22, 13, 23, 24};
 
-    // public input (PI)
-    Field public_input = Field(35);
-
-    // index of the row of the PI in the non-transposed gates_matrix 
-    int public_input_index = 4;
-
     // Get the n-th root of unity omega in Fq (n=8 is the number of
     // constraints in the example). omega is a generator of the
     // multiplicative subgroup H.  Example (2**32)-th primitive root
@@ -536,8 +498,7 @@ namespace libsnark
     omega_temp.print();
     assert(omega_temp == 1);
 #endif // #ifdef DEBUG
-
-
+    
     // We represent the constraints q_L, q_R, q_O, q_M, q_C and the
     // witness w_L, w_R, w_O as polynomials in the roots of unity
     // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
@@ -546,6 +507,21 @@ namespace libsnark
     std::vector<polynomial<Field>> L(nconstraints, polynomial<Field>(nconstraints));
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(nconstraints);
     plonk_compute_lagrange_basis<Field>(nconstraints, L);
+
+    // public input (PI)
+    Field PI_value = Field(35);
+    // index of the row of the PI in the non-transposed gates_matrix 
+    int PI_index = 4;
+    assert(nconstraints == omega.size());
+    // compute public input (PI) polynomial
+    std::vector<Field> PI_points(nconstraints, Field(0));
+    PI_points[PI_index] = Field(-PI_value);
+    polynomial<Field> PI_poly;
+    plonk_interpolate_over_lagrange_basis<Field>(L, PI_points, PI_poly);
+#ifdef DEBUG
+    printf("[%s:%d] PI_poly\n", __FILE__, __LINE__);
+    print_vector(PI_poly);
+#endif // #ifdef DEBUG
 
 #if 1 // DEBUG
     // test Lagrange polynomials
@@ -810,6 +786,11 @@ namespace libsnark
 #endif // #ifdef DEBUG
 
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1(W_polys_blinded.size());
+    printf("[%s:%d] poly %d %d %d alpha %d\n", __FILE__, __LINE__,
+	   (int)W_polys_blinded[0].size(),
+	   (int)W_polys_blinded[1].size(),
+	   (int)W_polys_blinded[2].size(),
+	   (int)alpha_powers_g1.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
 #ifdef DEBUG
     for (int i = 0; i < nwitness; ++i) {
@@ -873,21 +854,16 @@ namespace libsnark
     // plonk_poly_shifted    
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
     // w=omega is the base root of unity and z is z_poly. we do this
-    // as follows:
-    //
-    // - evaluate z(x) at points tw^0, tw^1, ... tw^{n-1} for shift
-    //   t=w using FFT to get y0, y1, ..., y_{n-1}
-    //
-    // - given the evaluations (y0, y1, ..., y_{n-1}) and the roots of
-    //   unity (w^0, w^1, ..., w^{n-1}), use iFFT to compute
-    //   coefficients a0, a1, ..., a_{n-1} for the polynomila z' such
-    //   that z'(x) = a0x^0 + a1x + ... + a_{n-1}x^{n-1} and z'(w^i) =
-    //   yi i.e. z' evlauated at the roots of unity w equals the
-    //   evaluation of z at the shifted roots of unity tw
+    // by multiplying the coefficients of z by w
+    std::vector<Field> z_poly_omega_shift(z_poly.size(), Field(0));
+    for (size_t i = 0; i < z_poly.size(); ++i) {
+      z_poly_omega_shift[i] = z_poly[i] * omega[1];
+    }
 
-    // P(x) plonk_evaluate_poly_at_point(P, x)
-    std::vector<Field> z_poly_eval_shift(z_poly.size(), Field(0));
-    plonk_evaluate_poly_at_roots_of_unity(z_poly, z_poly_eval_shift, omega2, omega2[1], 2*nconstraints);
+#ifdef DEBUG
+    printf("[%s:%d] z_poly_omega_shift\n", __FILE__, __LINE__);
+    print_vector(z_poly_omega_shift);
+#endif // #ifdef DEBUG
 
     // end 
 
