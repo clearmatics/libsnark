@@ -156,13 +156,13 @@ public:
 /// Gadget version of the native KZG10 batched verifier in
 /// libsnark/polynomial_commitments/kzg10_batched.hpp.
 ///
-/// Each polynomials can be evaluated at 1 of 2 points. `polyomials_1`
-/// determines the number of polynomials evaluated at the first point `z_1`,
-/// and `polynomials_2` determines the number to be evaluated at the second
-/// point `z_2`. Hence these also determine the number of commitments and
-/// evaluation points.
+/// Each polynomial in a batch can be evaluated at 1 of 2 points.
+/// `polyomials_1` determines the number of polynomials evaluated at the first
+/// point `z_1`, and `polynomials_2` determines the number to be evaluated at
+/// the second point `z_2`. Hence these also determine the number of
+/// commitments and evaluation points.
 ///
-/// The number of polynomials inn each group is intentionally a template
+/// The number of polynomials in each group is intentionally a template
 /// parameter, reflecting the fact that it must be statically defined for a
 /// given circuit.
 template<typename ppT, size_t num_polyomials_1, size_t num_polyomials_2>
