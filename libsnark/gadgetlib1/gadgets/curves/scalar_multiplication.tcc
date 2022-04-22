@@ -842,21 +842,21 @@ point_variable_or_identity_mul_by_scalar_gadget<
         const groupVarOrIdentity &result,
         const std::string &annotation_prefix)
     : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
-    , scalar_mul_result(pb, FMT(annotation_prefix, " scalar_mul_result"))
     , scalar_mul(
           pb,
           scalar,
           P.value,
-          scalar_mul_result,
+          groupVarOrIdentity(pb, FMT(annotation_prefix, " scalar_mul_result")),
           FMT(annotation_prefix, " scalar_mul"))
     // result = P.is_identity ? P : scalar_mul_result
     //        = select(P.is_identity, scalar_mul_result, P)
+    , selected_result(result)
     , select_result(
           pb,
           P.is_identity,
-          scalar_mul_result,
+          scalar_mul.result(),
           P,
-          result,
+          selected_result,
           FMT(annotation_prefix, " select_result"))
 {
 }
@@ -897,6 +897,25 @@ void point_variable_or_identity_mul_by_scalar_gadget<
 {
     scalar_mul.generate_r1cs_witness();
     select_result.generate_r1cs_witness();
+}
+
+template<
+    typename ppT,
+    typename groupT,
+    typename groupVarT,
+    typename selectorGadgetT,
+    typename addGadgetT,
+    typename dblGadgetT>
+const variable_or_identity<ppT, groupT, groupVarT>
+    &point_variable_or_identity_mul_by_scalar_gadget<
+        ppT,
+        groupT,
+        groupVarT,
+        selectorGadgetT,
+        addGadgetT,
+        dblGadgetT>::result() const
+{
+    return selected_result;
 }
 
 } // namespace libsnark
