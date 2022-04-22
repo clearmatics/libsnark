@@ -16,9 +16,7 @@ gadget<FieldT>::gadget(
     protoboard<FieldT> &pb, const std::string &annotation_prefix)
     : pb(pb), annotation_prefix(annotation_prefix)
 {
-#ifdef DEBUG
     assert(annotation_prefix != "");
-#endif
 }
 
 } // namespace libsnark
