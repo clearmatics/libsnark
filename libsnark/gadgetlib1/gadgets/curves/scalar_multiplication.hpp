@@ -73,7 +73,7 @@ protected:
 };
 
 /// Selector gadget for variable_or_identity. Outputs one of two
-/// variable_or_identity objeects, depending on a scalar parameter.
+/// variable_or_identity objects, depending on a scalar parameter.
 template<
     typename ppT,
     typename groupT,
