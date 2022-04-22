@@ -407,21 +407,24 @@ void do_test_kzg10_batched_verifier_gadget(
         const nG1 B_expect =
             F_plus_z_1_times_W_1_expect + r_times_z_2_times_W_2_expect;
 
-        ASSERT_EQ(G_expect, verifier_gadget.G.get_element());
-        ASSERT_EQ(H_expect, verifier_gadget.H.get_element());
-        ASSERT_EQ(F_expect, verifier_gadget.F.get_element());
+        ASSERT_EQ(G_expect, verifier_gadget.compute_G.result().get_element());
+        ASSERT_EQ(H_expect, verifier_gadget.compute_H.result().get_element());
+        ASSERT_EQ(F_expect, verifier_gadget.compute_F.result.get_element());
         ASSERT_EQ(
-            r_times_W_2_expect, verifier_gadget.r_times_W_2.get_element());
-        ASSERT_EQ(A_expect, verifier_gadget.A.get_element());
+            r_times_W_2_expect,
+            verifier_gadget.compute_r_times_W_2.result().get_element());
+        ASSERT_EQ(A_expect, verifier_gadget.compute_A.result.get_element());
         ASSERT_EQ(
             r_times_z_2_times_W_2_expect,
-            verifier_gadget.r_times_z_2_times_W_2.get_element());
+            verifier_gadget.compute_r_times_z_2_times_W_2.result()
+                .get_element());
         ASSERT_EQ(
-            z_1_times_W_1_expect, verifier_gadget.z_1_times_W_1.get_element());
+            z_1_times_W_1_expect,
+            verifier_gadget.compute_z_1_times_W_1.result().get_element());
         ASSERT_EQ(
             F_plus_z_1_times_W_1_expect,
-            verifier_gadget.F_plus_z_1_times_W_1.get_element());
-        ASSERT_EQ(B_expect, verifier_gadget.B.get_element());
+            verifier_gadget.compute_F_plus_z_1_times_W_1.result.get_element());
+        ASSERT_EQ(B_expect, verifier_gadget.compute_B.result.get_element());
     }
 
     // Check the result.

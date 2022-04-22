@@ -181,19 +181,15 @@ public:
     //
     //   G = \sum_{i=1}^{t1} \gamma_1^{i-1} (cm_1[i] - [s_1[i]]_1)
     //   H = \sum_{i=1}^{t2} \gamma_2^{i-1} (cm_2[i] - [s_2[i]]_1)
-    G1_variable<ppT> G;
     kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<
         ppT,
         num_polyomials_1>
         compute_G;
-    G1_variable<ppT> H;
     kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<
         ppT,
         num_polyomials_2>
         compute_H;
-    G1_variable_or_identity<ppT> rH;
     G1_mul_by_scalar_gadget<ppT> compute_rH;
-    G1_variable<ppT> F;
     G1_add_variable_and_variable_or_identity_gadget<ppT> compute_F;
 
     // Expression to check is:
@@ -206,24 +202,13 @@ public:
     //   A = W_1 + r * W_2
     //   B = F + z_1 * W_1 + r * z_2 * W_2
 
-    G1_variable_or_identity<ppT> r_times_W_2;
     G1_mul_by_scalar_gadget<ppT> compute_r_times_W_2;
-
-    G1_variable<ppT> A;
     G1_add_variable_and_variable_or_identity_gadget<ppT> compute_A;
-
-    G1_variable_or_identity<ppT> r_times_z_2_times_W_2;
     G1_variable_or_identity_mul_by_scalar_gadget<ppT>
         compute_r_times_z_2_times_W_2;
-
-    G1_variable_or_identity<ppT> z_1_times_W_1;
     G1_mul_by_scalar_gadget<ppT> compute_z_1_times_W_1;
-
-    G1_variable<ppT> F_plus_z_1_times_W_1;
     G1_add_variable_and_variable_or_identity_gadget<ppT>
         compute_F_plus_z_1_times_W_1;
-
-    G1_variable<ppT> B;
     G1_add_variable_and_variable_or_identity_gadget<ppT> compute_B;
 
     kzg10_pairing_check_gadget<ppT> pairing_check;
