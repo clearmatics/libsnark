@@ -431,8 +431,8 @@ public:
     using selectVarIdentityGadget =
         variable_or_identity_selector<ppT, groupT, groupVarT, selectorGadgetT>;
 
-    groupVarOrIdentity scalar_mul_result;
     varMulByScalar scalar_mul;
+    groupVarOrIdentity selected_result;
     selectVarIdentityGadget select_result;
 
     point_variable_or_identity_mul_by_scalar_gadget(
@@ -444,6 +444,7 @@ public:
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
+    const groupVarOrIdentity &result() const;
 };
 
 } // namespace libsnark
