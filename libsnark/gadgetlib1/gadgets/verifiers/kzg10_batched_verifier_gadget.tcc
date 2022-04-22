@@ -177,20 +177,6 @@ kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, num_entries>::
               num_entries,
               FMT(annotation_prefix, " commit_minus_encoded_eval")))
     , compute_commit_minus_encoded_eval()
-    // , gamma(gamma)
-    // , gamma_powers()
-    // , gamma_power_times_commit_minus_encoded_eval(
-    //       internal::allocate_variable_array<ppT,
-    //       G1_variable_or_identity<ppT>>(
-    //           pb,
-    //           num_entries - 1,
-    //           FMT(annotation_prefix,
-    //               " gamma_power_times_commit_minus_encoded_eval")))
-    // , compute_gamma_power_times_commit_minus_encoded_eval()
-    // , intermediate_sum(internal::allocate_variable_array<ppT,
-    // G1_variable<ppT>>(
-    //       pb, num_entries - 2, FMT(annotation_prefix, " intermediate_sum")))
-    // , compute_intermediate_sum()
     , compute_gamma_power_times_commit_minus_encoded_eval(
           pb,
           gamma,
@@ -225,81 +211,6 @@ kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<ppT, num_entries>::
             commit_minus_encoded_eval[i],
             FMT(annotation_prefix, " compute_commit_minus_encoded_eval"));
     }
-
-    // // gamma_powers[0] = gamma * gamma
-    // // gamma_powers[i>0] = gamma * gamma_powers[i-1]
-    // gamma_powers.allocate(
-    //     pb, num_entries - 2, FMT(annotation_prefix, " gamma_powers"));
-    // this->pb.add_r1cs_constraint(
-    //     r1cs_constraint<Field>(gamma, gamma, gamma_powers[0]),
-    //     FMT(annotation_prefix, " compute_gamma_power[0](gamma^2)"));
-    // for (size_t i = 1; i < num_entries - 2; ++i) {
-    //     this->pb.add_r1cs_constraint(
-    //         r1cs_constraint<Field>(gamma, gamma_powers[i - 1],
-    //         gamma_powers[i]), FMT(annotation_prefix,
-    //             " compute_gamma_power[%zu](gamma^%zu)",
-    //             i,
-    //             i + 2));
-    // }
-
-    // // gamma_power_times_commit_minus_encoded_eval[0] =
-    // //   G1_mul(gamma, compute_commit_minus_encoded_eval[1])
-    // // gamma_power_times_commit_minus_encoded_eval[i>0] =
-    // //   G1_mul(gamma_powers[i-1], commit_minus_encoded_eval[i+1]
-    // compute_gamma_power_times_commit_minus_encoded_eval.reserve(
-    //     num_entries - 1);
-    // compute_gamma_power_times_commit_minus_encoded_eval.emplace_back(
-    //     pb,
-    //     gamma,
-    //     commit_minus_encoded_eval[1],
-    //     gamma_power_times_commit_minus_encoded_eval[0],
-    //     FMT(annotation_prefix,
-    //         "compute_gamma_power_times_commit_minus_encoded_eval[0]"));
-    // for (size_t i = 1; i < num_entries - 1; ++i) {
-    //     compute_gamma_power_times_commit_minus_encoded_eval.emplace_back(
-    //         pb,
-    //         gamma_powers[i - 1],
-    //         commit_minus_encoded_eval[i + 1],
-    //         gamma_power_times_commit_minus_encoded_eval[i],
-    //         FMT(annotation_prefix,
-    //             "compute_gamma_power_times_commit_minus_encoded_eval[0]"));
-    // }
-
-    // // intermediate_sum[0] = G1_add(
-    // //   commit_minus_encoded_eval[0],
-    // //   gamma_power_times_commit_minus_encoded_eval[0])
-    // // intermediate_sum[0<i<num_entries - 2] = G1_add(
-    // //   intermediate_sum[i-1],
-    // //   gamma_power_times_commit_minus_encoded_eval[i])
-    // // result = G1_add(
-    // //   intermediate_sum[num_entries - 2],
-    // //   gamma_power_times_commit_minus_encoded_eval[num_entries - 2])
-    // compute_intermediate_sum.reserve(num_entries - 1);
-    // compute_intermediate_sum.emplace_back(
-    //     pb,
-    //     gamma_power_times_commit_minus_encoded_eval[0],
-    //     commit_minus_encoded_eval[0],
-    //     intermediate_sum[0],
-    //     FMT(annotation_prefix, " compute_intermediate_sum[0]"));
-    // for (size_t i = 1; i < num_entries - 2; ++i) {
-    //     compute_intermediate_sum.emplace_back(
-    //         pb,
-    //         gamma_power_times_commit_minus_encoded_eval[i],
-    //         intermediate_sum[i - 1],
-    //         intermediate_sum[i],
-    //         FMT(annotation_prefix, " compute_intermediate_sum[%zu]", i));
-    // }
-
-    // compute_intermediate_sum.emplace_back(
-    //     pb,
-    //     gamma_power_times_commit_minus_encoded_eval[num_entries - 2],
-    //     intermediate_sum[num_entries - 3],
-    //     result,
-    //     FMT(annotation_prefix,
-    //         " compute_intermediate_sum[%zu]",
-    //         num_entries - 2));
-    // assert(intermediate_sum.size() == num_entries - 2);
-    // assert(compute_intermediate_sum.size() == num_entries - 1);
 }
 
 template<typename ppT, size_t num_entries>
@@ -317,15 +228,6 @@ void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<
 
     compute_gamma_power_times_commit_minus_encoded_eval
         .generate_r1cs_constraints();
-
-    // for (auto &gadget : compute_gamma_power_times_commit_minus_encoded_eval)
-    // {
-    //     gadget.generate_r1cs_constraints();
-    // }
-
-    // for (auto &gadget : compute_intermediate_sum) {
-    //     gadget.generate_r1cs_constraints();
-    // }
 }
 
 template<typename ppT, size_t num_entries>
@@ -342,23 +244,6 @@ void kzg10_batched_compute_gamma_powers_commit_minus_eval_sum<
     }
 
     compute_gamma_power_times_commit_minus_encoded_eval.generate_r1cs_witness();
-
-    // const Field gamma_val = this->pb.lc_val(gamma);
-    // Field gamma_power_val = gamma_val;
-
-    // for (auto &gamma_power : gamma_powers) {
-    //     gamma_power_val = gamma_power_val * gamma_val;
-    //     this->pb.val(gamma_power) = gamma_power_val;
-    // }
-
-    // for (auto &gadget : compute_gamma_power_times_commit_minus_encoded_eval)
-    // {
-    //     gadget.generate_r1cs_witness();
-    // }
-
-    // for (auto &gadget : compute_intermediate_sum) {
-    //     gadget.generate_r1cs_witness();
-    // }
 }
 
 template<typename ppT, size_t num_entries>
@@ -489,77 +374,78 @@ kzg10_batched_verifier_gadget<ppT, num_polyomials_1, num_polyomials_2>::
         pb_variable<libff::Fr<ppT>> result,
         const std::string &annotation_prefix)
     : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
-    , G(pb, FMT(annotation_prefix, " G"))
     , compute_G(
           pb,
           gamma_1,
           commitments_1,
           poly_evals_1,
-          G,
+          G1_variable<ppT>(pb, FMT(annotation_prefix, " G")),
           FMT(annotation_prefix, " compute_G"))
-    , H(pb, FMT(annotation_prefix, " H"))
     , compute_H(
           pb,
           gamma_2,
           commitments_2,
           poly_evals_2,
-          H,
+          G1_variable<ppT>(pb, FMT(annotation_prefix, " H")),
           FMT(annotation_prefix, " compute_H"))
-    , rH(pb, FMT(annotation_prefix, " rH"))
-    // NOTE: this ignores H.is_identity
-    , compute_rH(pb, r, H, rH, FMT(annotation_prefix, " compute_rH"))
-    , F(pb, FMT(annotation_prefix, " F"))
-    , compute_F(pb, rH, G, F, FMT(annotation_prefix, " compute_F"))
+    , compute_rH(
+          pb,
+          r,
+          compute_H.result(),
+          G1_variable_or_identity<ppT>(pb, FMT(annotation_prefix, " rH")),
+          FMT(annotation_prefix, " compute_rH"))
+    , compute_F(
+          pb,
+          compute_rH.result(),
+          compute_G.result(),
+          G1_variable<ppT>(pb, FMT(annotation_prefix, " F")),
+          FMT(annotation_prefix, " compute_F"))
     //   A = W_1 + r * W_2
-    , r_times_W_2(pb, FMT(annotation_prefix, " r_times_W_2"))
     , compute_r_times_W_2(
           pb,
           r,
           eval_witness.W_2,
-          r_times_W_2,
+          G1_variable_or_identity<ppT>(
+              pb, FMT(annotation_prefix, " r_times_W_2")),
           FMT(annotation_prefix, " compute_r_times_W_2"))
-    , A(pb, FMT(annotation_prefix, " A"))
     , compute_A(
           pb,
-          r_times_W_2,
+          compute_r_times_W_2.result(),
           eval_witness.W_1,
-          A,
+          G1_variable<ppT>(pb, FMT(annotation_prefix, " A")),
           FMT(annotation_prefix, " compute_A"))
     //   B = F + z_1 * W_1 + r * z_2 * W_2
-    , r_times_z_2_times_W_2(
-          pb, FMT(annotation_prefix, " r_times_z_2_times_W_2"))
     , compute_r_times_z_2_times_W_2(
           pb,
           z_2,
-          r_times_W_2,
-          r_times_z_2_times_W_2,
+          compute_r_times_W_2.result(),
+          G1_variable_or_identity<ppT>(
+              pb, FMT(annotation_prefix, " r_times_z_2_times_W_2")),
           FMT(annotation_prefix, " compute_r_times_z_2_times_W_2"))
-    , z_1_times_W_1(pb, FMT(annotation_prefix, " z_1_times_W_1"))
     , compute_z_1_times_W_1(
           pb,
           z_1,
           eval_witness.W_1,
-          z_1_times_W_1,
+          G1_variable_or_identity<ppT>(
+              pb, FMT(annotation_prefix, " z_1_times_W_1")),
           FMT(annotation_prefix, " compute_z_1_times_W_1"))
-    , F_plus_z_1_times_W_1(pb, FMT(annotation_prefix, " F_plus_z_1_times_W_1"))
     , compute_F_plus_z_1_times_W_1(
           pb,
-          z_1_times_W_1,
-          F,
-          F_plus_z_1_times_W_1,
+          compute_z_1_times_W_1.result(),
+          compute_F.result,
+          G1_variable<ppT>(pb, FMT(annotation_prefix, " F_plus_z_1_times_W_1")),
           FMT(annotation_prefix, " compute_F_plus_z_1_times_W_1"))
-    , B(pb, FMT(annotation_prefix, " B"))
     , compute_B(
           pb,
-          r_times_z_2_times_W_2,
-          F_plus_z_1_times_W_1,
-          B,
+          compute_r_times_z_2_times_W_2.result(),
+          compute_F_plus_z_1_times_W_1.result,
+          G1_variable<ppT>(pb, FMT(annotation_prefix, " B")),
           FMT(annotation_prefix, " compute_B"))
     , pairing_check(
           pb,
-          A,
+          compute_A.result,
           srs.alpha_g2,
-          B,
+          compute_B.result,
           libff::G2<other_curve<ppT>>::one(),
           result,
           FMT(annotation_prefix, " pairing_check"))
@@ -598,12 +484,6 @@ void kzg10_batched_verifier_gadget<ppT, num_polyomials_1, num_polyomials_2>::
     compute_F_plus_z_1_times_W_1.generate_r1cs_witness();
     compute_B.generate_r1cs_witness();
     pairing_check.generate_r1cs_witness();
-
-    // // result = (1 - B.is_identity) * pairing_check_result
-    // const Field pairing_check_result_val =
-    // this->pb.val(pairing_check_result); const Field B_is_identity_val =
-    // this->pb.lc_val(B.is_identity); this->pb.val(result) =
-    //     (Field::one() - B_is_identity_val) * pairing_check_result_val;
 }
 
 } // namespace libsnark
