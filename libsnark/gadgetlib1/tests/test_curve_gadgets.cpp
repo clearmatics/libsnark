@@ -6,6 +6,7 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#include "libsnark/common/constraints_tracker/constraints_tracker.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bw6_761_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
@@ -25,6 +26,8 @@ using npp = other_curve<wpp>;
 namespace
 {
 
+static constraints_tracker constraints;
+
 template<typename ppT>
 void generate_and_check_proof(
     protoboard<libff::Fr<ppT>> &pb, const std::string &test_name)
@@ -33,7 +36,8 @@ void generate_and_check_proof(
     ASSERT_TRUE(pb.is_satisfied());
     const r1cs_gg_ppzksnark_keypair<ppT> keypair =
         r1cs_gg_ppzksnark_generator<ppT>(pb.get_constraint_system(), true);
-    printf("%s: %zu constraints\n", test_name.c_str(), pb.num_constraints());
+
+    constraints.add_measurement<ppT>(test_name, pb.num_constraints());
     r1cs_primary_input<libff::Fr<wpp>> primary_input = pb.primary_input();
     r1cs_auxiliary_input<libff::Fr<ppT>> auxiliary_input = pb.auxiliary_input();
     r1cs_gg_ppzksnark_proof<ppT> proof = r1cs_gg_ppzksnark_prover(
@@ -50,20 +54,16 @@ void test_G2_checker_gadget(const std::string &annotation)
     G2_checker_gadget<ppT> g_check(pb, g, "g_check");
     g_check.generate_r1cs_constraints();
 
-    printf("positive test\n");
     g.generate_r1cs_witness(libff::G2<other_curve<ppT>>::one());
     g_check.generate_r1cs_witness();
     assert(pb.is_satisfied());
 
-    printf("negative test\n");
     g.generate_r1cs_witness(libff::G2<other_curve<ppT>>::zero());
     g_check.generate_r1cs_witness();
     assert(!pb.is_satisfied());
 
-    printf(
-        "number of constraints for G2 checker (Fr is %s)  = %zu\n",
-        annotation.c_str(),
-        pb.num_constraints());
+    constraints.add_measurement<ppT>(
+        "G2_checker_gadget - " + annotation, pb.num_constraints());
 }
 
 template<
@@ -97,7 +97,7 @@ void test_add_gadget(
     ASSERT_TRUE(pb.is_satisfied());
     ASSERT_EQ(expect_val, result_val);
 
-    printf("%s: %zu constraints\n", test_name.c_str(), pb.num_constraints());
+    constraints.add_measurement<wpp>(test_name, pb.num_constraints());
 }
 
 template<typename ppT, typename GroupT, typename VarT, typename DblGadgetT>
@@ -120,7 +120,7 @@ void test_dbl_gadget(
     ASSERT_TRUE(pb.is_satisfied());
     ASSERT_EQ(expect_val, result_val);
 
-    printf("%s: %zu constraints\n", test_name.c_str(), pb.num_constraints());
+    constraints.add_measurement<wpp>(test_name, pb.num_constraints());
 }
 
 template<
@@ -801,22 +801,38 @@ TEST(TestCurveGadgets, VarOrIdentityMulScalarVar)
             G2_variable_or_identity_mul_by_scalar_gadget<wpp>>;
 
     test_g1_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), libff::Fr<npp>::zero());
+        libff::Fr<npp>(13),
+        libff::Fr<npp>::zero(),
+        "G1_var_or_identity_mul_by_scalar_gadget (0*[13]_1)");
     test_g1_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>::zero(), libff::Fr<npp>(13));
+        libff::Fr<npp>::zero(),
+        libff::Fr<npp>(13),
+        "G1_var_or_identity_mul_by_scalar_gadget (13*[0]_1)");
     test_g1_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), libff::Fr<npp>(127));
+        libff::Fr<npp>(13),
+        libff::Fr<npp>(127),
+        "G1_var_or_identity_mul_by_scalar_gadget (127*[13]_1)");
     test_g1_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), -libff::Fr<npp>::one());
+        libff::Fr<npp>(13),
+        -libff::Fr<npp>::one(),
+        "G1_var_or_identity_mul_by_scalar_gadget (-1*[13]_1)");
 
     test_g2_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), libff::Fr<npp>::zero());
+        libff::Fr<npp>(13),
+        libff::Fr<npp>::zero(),
+        "G2_var_or_identity_mul_by_scalar_gadget (0*[13]_2)");
     test_g2_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>::zero(), libff::Fr<npp>(13));
+        libff::Fr<npp>::zero(),
+        libff::Fr<npp>(13),
+        "G2_var_or_identity_mul_by_scalar_gadget (13*[0]_2)");
     test_g2_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), libff::Fr<npp>(127));
+        libff::Fr<npp>(13),
+        libff::Fr<npp>(127),
+        "G2_var_or_identity_mul_by_scalar_gadget (127*[13]_2)");
     test_g2_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), -libff::Fr<npp>::one());
+        libff::Fr<npp>(13),
+        -libff::Fr<npp>::one(),
+        "G2_var_or_identity_mul_by_scalar_gadget (-1*[13]_2)");
 }
 
 } // namespace

@@ -6,6 +6,7 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#include "libsnark/common/constraints_tracker/constraints_tracker.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bw6_761_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/verifiers/r1cs_gg_ppzksnark_verifier_gadget.hpp"
@@ -21,11 +22,11 @@ using namespace libsnark;
 namespace
 {
 
+static constraints_tracker constraints;
+
 /// This test generates a valid proof and checks that this valid proof
 /// is succesfully verified by the groth16 verifier gadget
-template<typename ppT_A, typename ppT_B>
-void test_verifier(
-    const std::string &annotation_A, const std::string &annotation_B)
+template<typename ppT_A, typename ppT_B> void test_verifier()
 {
     using FieldT_A = libff::Fr<ppT_A>;
     using FieldT_B = libff::Fr<ppT_B>;
@@ -101,17 +102,12 @@ void test_verifier(
     std::cout << "Negative test case" << std::endl;
     ASSERT_FALSE(pb.is_satisfied());
     PRINT_CONSTRAINT_PROFILING();
-    printf(
-        "number of constraints for verifier: %zu (verifier is implemented in "
-        "%s constraints and verifies %s proofs))\n",
-        pb.num_constraints(),
-        annotation_B.c_str(),
-        annotation_A.c_str());
+
+    constraints.add_measurement<ppT_B>(
+        "r1cs_gg_ppzksnark_verifier - " + ppT_A::name, pb.num_constraints());
 }
 
-template<typename ppT_A, typename ppT_B>
-void test_hardcoded_verifier(
-    const std::string &annotation_A, const std::string &annotation_B)
+template<typename ppT_A, typename ppT_B> void test_hardcoded_verifier()
 {
     using FieldT_A = libff::Fr<ppT_A>;
     using FieldT_B = libff::Fr<ppT_B>;
@@ -189,30 +185,26 @@ void test_hardcoded_verifier(
     printf("Negative test:\n");
     ASSERT_FALSE(pb.is_satisfied());
     PRINT_CONSTRAINT_PROFILING();
-    printf(
-        "number of constraints for verifier: %zu (verifier is implemented in "
-        "%s constraints and verifies %s proofs))\n",
-        pb.num_constraints(),
-        annotation_B.c_str(),
-        annotation_A.c_str());
+
+    constraints.add_measurement<ppT_B>(
+        "r1cs_gg_ppzksnark_verifier - hardcoded - " + ppT_A::name,
+        pb.num_constraints());
 }
 
 TEST(Groth16VerifierGadgetTests, MntGroth16VerifierGadget)
 {
-    test_verifier<libff::mnt4_pp, libff::mnt6_pp>("mnt4", "mnt6");
-    test_verifier<libff::mnt6_pp, libff::mnt4_pp>("mnt6", "mnt4");
+    test_verifier<libff::mnt4_pp, libff::mnt6_pp>();
+    test_verifier<libff::mnt6_pp, libff::mnt4_pp>();
 
-    test_hardcoded_verifier<libff::mnt4_pp, libff::mnt6_pp>("mnt4", "mnt6");
-    test_hardcoded_verifier<libff::mnt6_pp, libff::mnt4_pp>("mnt6", "mnt4");
+    test_hardcoded_verifier<libff::mnt4_pp, libff::mnt6_pp>();
+    test_hardcoded_verifier<libff::mnt6_pp, libff::mnt4_pp>();
 }
 
 TEST(Groth16VerifierGadgetTests, BlsGroth16VerifierGadget)
 {
-    test_verifier<libff::bls12_377_pp, libff::bw6_761_pp>(
-        "bls12-377", "bw6-761");
+    test_verifier<libff::bls12_377_pp, libff::bw6_761_pp>();
 
-    test_hardcoded_verifier<libff::bls12_377_pp, libff::bw6_761_pp>(
-        "bls12-377", "bw6-761");
+    test_hardcoded_verifier<libff::bls12_377_pp, libff::bw6_761_pp>();
 }
 
 } // namespace

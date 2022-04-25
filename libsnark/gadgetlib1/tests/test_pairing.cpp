@@ -6,6 +6,7 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#include "libsnark/common/constraints_tracker/constraints_tracker.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bw6_761_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
 #include "libsnark/gadgetlib1/protoboard.hpp"
@@ -18,6 +19,8 @@
 
 namespace libsnark
 {
+
+static constraints_tracker constraints;
 
 template<typename ppT>
 void test_G1_variable_precomp(const std::string &annotation)
@@ -47,10 +50,8 @@ void test_G1_variable_precomp(const std::string &annotation)
         const_precomp.PY_twist_squared->get_element(),
         native_precomp.PY_twist_squared);
 
-    printf(
-        "number of constraints for G1 precomp (Fr is %s)  = %zu\n",
-        annotation.c_str(),
-        pb.num_constraints());
+    constraints.add_measurement<ppT>(
+        "G1 precomp - " + annotation, pb.num_constraints());
 }
 
 template<typename ppT>
@@ -91,10 +92,8 @@ void test_G2_variable_precomp(const std::string &annotation)
             native_precomp.coeffs[i].gamma_X);
     }
 
-    printf(
-        "number of constraints for G2 precomp (Fr is %s)  = %zu\n",
-        annotation.c_str(),
-        pb.num_constraints());
+    constraints.add_measurement<ppT>(
+        "G2 precomp - " + annotation, pb.num_constraints());
 }
 
 template<typename ppT>
@@ -137,13 +136,12 @@ void test_miller_loop(
     Q.generate_r1cs_witness(Q_val);
     compute_prec_Q.generate_r1cs_witness();
     miller.generate_r1cs_witness();
-    ASSERT_TRUE(pb.is_satisfied());
 
+    constraints.add_measurement<ppT>(
+        "Miller loop + precomp - " + annotation, pb.num_constraints());
+
+    ASSERT_TRUE(pb.is_satisfied());
     ASSERT_EQ(expect_result, result.get_element());
-    printf(
-        "number of constraints for Miller loop (Fr is %s)  = %zu\n",
-        annotation.c_str(),
-        pb.num_constraints());
 }
 
 template<typename ppT> void test_mnt_miller_loop(const std::string &annotation)
@@ -244,13 +242,10 @@ void test_e_over_e_miller_loop(
     compute_prec_Q2.generate_r1cs_witness();
     miller.generate_r1cs_witness();
 
+    constraints.add_measurement<ppT>(
+        "e_over_e_miller_loop + precomp - " + annotation, pb.num_constraints());
+
     ASSERT_TRUE(pb.is_satisfied());
-
-    printf(
-        "number of constraints for e over e Miller loop (Fr is %s)  = %zu\n",
-        annotation.c_str(),
-        pb.num_constraints());
-
     ASSERT_EQ(expect_result, result.get_element());
 }
 
@@ -441,12 +436,11 @@ void test_mnt_e_times_e_over_e_miller_loop(const std::string &annotation)
              native_prec_P3, native_prec_Q3)
              .inverse());
 
-    ASSERT_EQ(native_result, result.get_element());
-    printf(
-        "number of constraints for e times e over e Miller loop (Fr is %s)  = "
-        "%zu\n",
-        annotation.c_str(),
+    constraints.add_measurement<ppT>(
+        "e_times_e_over_e_Miller_loop + precomp - " + annotation,
         pb.num_constraints());
+
+    ASSERT_EQ(native_result, result.get_element());
 }
 
 template<typename ppT>
@@ -551,14 +545,11 @@ void test_e_times_e_times_e_over_e_miller_loop(
     compute_prec_Q4.generate_r1cs_witness();
     miller.generate_r1cs_witness();
 
-    ASSERT_TRUE(pb.is_satisfied());
-
-    printf(
-        "number of constraints for e times e times e over e Miller loop (Fr is "
-        "%s)  = %zu\n",
-        annotation.c_str(),
+    constraints.add_measurement<ppT>(
+        "e_times_e_times_e_over_e Miller loop + precomp - " + annotation,
         pb.num_constraints());
 
+    ASSERT_TRUE(pb.is_satisfied());
     ASSERT_EQ(expect_result, result.get_element());
 }
 

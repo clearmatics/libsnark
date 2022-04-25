@@ -6,6 +6,7 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#include "libsnark/common/constraints_tracker/constraints_tracker.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bw6_761_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/pairing_checks.hpp"
@@ -19,6 +20,8 @@
 namespace libsnark
 {
 
+static constraints_tracker constraints;
+
 /// Carry out a pairing check between elements of G1 and G2 defined over
 /// other_curve<ppT>, in a circuit defined over Fr<ppT>.
 template<typename ppT>
@@ -27,31 +30,30 @@ bool test_check_e_equals_e_gadget(
     libff::G2<other_curve<ppT>> l_Q,
     libff::G1<other_curve<ppT>> r_P,
     libff::G2<other_curve<ppT>> r_Q,
-    libff::Fr<ppT> expected_result,
-    const std::string &annotation_prefix)
+    libff::Fr<ppT> expected_result)
 {
     protoboard<libff::Fr<ppT>> pb;
-    G1_variable<ppT> lhs_P(pb, FMT(annotation_prefix, " lhs_P"));
-    G2_variable<ppT> lhs_Q(pb, FMT(annotation_prefix, " lhs_Q"));
-    G1_variable<ppT> rhs_P(pb, FMT(annotation_prefix, " rhs_P"));
-    G2_variable<ppT> rhs_Q(pb, FMT(annotation_prefix, " rhs_Q"));
+    G1_variable<ppT> lhs_P(pb, "lhs_P");
+    G2_variable<ppT> lhs_Q(pb, "lhs_Q");
+    G1_variable<ppT> rhs_P(pb, "rhs_P");
+    G2_variable<ppT> rhs_Q(pb, "rhs_Q");
 
     G1_precomputation<ppT> lhs_prec_P;
     precompute_G1_gadget<ppT> compute_lhs_prec_P(
-        pb, lhs_P, lhs_prec_P, FMT(annotation_prefix, "compute_lhs_prec_P"));
+        pb, lhs_P, lhs_prec_P, "compute_lhs_prec_P");
     G2_precomputation<ppT> lhs_prec_Q;
     precompute_G2_gadget<ppT> compute_lhs_prec_Q(
-        pb, lhs_Q, lhs_prec_Q, FMT(annotation_prefix, "compute_lhs_prec_Q"));
+        pb, lhs_Q, lhs_prec_Q, "compute_lhs_prec_Q");
 
     G1_precomputation<ppT> rhs_prec_P;
     precompute_G1_gadget<ppT> compute_rhs_prec_P(
-        pb, rhs_P, rhs_prec_P, FMT(annotation_prefix, " compute_rhs_prec1_P"));
+        pb, rhs_P, rhs_prec_P, "compute_rhs_prec1_P");
     G2_precomputation<ppT> rhs_prec_Q;
     precompute_G2_gadget<ppT> compute_rhs_prec_Q(
-        pb, rhs_Q, rhs_prec_Q, FMT(annotation_prefix, " compute_rhs_prec1_Q"));
+        pb, rhs_Q, rhs_prec_Q, "compute_rhs_prec1_Q");
 
     pb_variable<libff::Fr<ppT>> result;
-    result.allocate(pb, FMT(annotation_prefix, " result"));
+    result.allocate(pb, "result");
 
     check_e_equals_e_gadget<ppT> pairing_check(
         pb,
@@ -60,7 +62,7 @@ bool test_check_e_equals_e_gadget(
         rhs_prec_P,
         rhs_prec_Q,
         result,
-        FMT(annotation_prefix, " pairing_check"));
+        "pairing_check");
 
     PROFILE_CONSTRAINTS(pb, "precompute P")
     {
@@ -79,7 +81,7 @@ bool test_check_e_equals_e_gadget(
     PRINT_CONSTRAINT_PROFILING();
 
     generate_r1cs_equals_const_constraint<libff::Fr<ppT>>(
-        pb, result, expected_result, FMT(annotation_prefix, " result"));
+        pb, result, expected_result, "result");
 
     lhs_P.generate_r1cs_witness(l_P);
     compute_lhs_prec_P.generate_r1cs_witness();
@@ -93,15 +95,10 @@ bool test_check_e_equals_e_gadget(
 
     pairing_check.generate_r1cs_witness();
 
-    assert(pb.is_satisfied());
-    printf(
-        "number of constraints for check_e_equals_e_gadget (Fr is "
-        "%s)  = %zu\n",
-        annotation_prefix.c_str(),
-        pb.num_constraints());
+    constraints.add_measurement<ppT>(
+        "check_e_equals_e_gadget", pb.num_constraints());
 
-    bool test_success = (pb.val(result) == expected_result);
-    return test_success;
+    return pb.is_satisfied() && (pb.val(result) == expected_result);
 }
 
 /// In this test we carry out - via a circuit defined over Fr<ppT> - a pairing
@@ -251,19 +248,14 @@ bool test_check_e_equals_eee_gadget(
 
     pairing_check.generate_r1cs_witness();
 
-    assert(pb.is_satisfied());
-    printf(
-        "number of constraints for check_e_equals_eee_gadget (Fr is "
-        "%s) = %zu\n",
-        annotation_prefix.c_str(),
+    constraints.add_measurement<ppT>(
+        "check_e_equals_eee_gadget - " + annotation_prefix,
         pb.num_constraints());
 
-    bool test_success = (pb.val(result) == expected_result);
-    return test_success;
+    return pb.is_satisfied() && (pb.val(result) == expected_result);
 }
 
-template<typename ppT>
-void test_valid_pairing_check_e_equals_e_gadget(const std::string &pairing_name)
+template<typename ppT> void test_valid_pairing_check_e_equals_e_gadget()
 {
     const libff::G1<other_curve<ppT>> G1_base =
         libff::G1<other_curve<ppT>>::one();
@@ -310,8 +302,7 @@ void test_valid_pairing_check_e_equals_e_gadget(const std::string &pairing_name)
         lhs_pairing_Q,
         rhs_pairing_P,
         rhs_pairing_Q,
-        expected_result,
-        "test_check_e_equals_e_gadget_" + pairing_name);
+        expected_result);
     ASSERT_TRUE(res);
 }
 
@@ -322,9 +313,7 @@ void test_valid_pairing_check_e_equals_e_gadget(const std::string &pairing_name)
 /// As such, `ppT` represents the curve we use to encode the arithmetic
 /// circuit wire. In other words, the pairing check gadget called here
 /// will be instantiated from `libff::Fr<ppT>`.
-template<typename ppT>
-void test_valid_pairing_check_e_equals_eee_gadget(
-    const std::string &pairing_name)
+template<typename ppT> void test_valid_pairing_check_e_equals_eee_gadget()
 {
     const libff::G1<other_curve<ppT>> G1_base =
         libff::G1<other_curve<ppT>>::one();
@@ -405,7 +394,7 @@ void test_valid_pairing_check_e_equals_eee_gadget(
         rhs_pairing3_P,
         rhs_pairing3_Q,
         expected_result,
-        "test_check_e_equals_eee_gadget_" + pairing_name);
+        "valid");
 
     // Check that the pairing check circuit returns the same result as
     // the one carried out "outside" the circuit (see above)
@@ -419,9 +408,7 @@ void test_valid_pairing_check_e_equals_eee_gadget(
 /// As such, `ppT` represents the curve we use to encode the arithmetic
 /// circuit wire. In other words, the pairing check gadget called here
 /// will be instantiated from `libff::Fr<ppT>`.
-template<typename ppT>
-void test_invalid_pairing_check_e_equals_eee_gadget(
-    const std::string &pairing_name)
+template<typename ppT> void test_invalid_pairing_check_e_equals_eee_gadget()
 {
     const libff::G1<other_curve<ppT>> G1_base =
         libff::G1<other_curve<ppT>>::one();
@@ -500,7 +487,7 @@ void test_invalid_pairing_check_e_equals_eee_gadget(
         rhs_pairing3_P,
         rhs_pairing3_Q,
         expected_result,
-        "test_check_e_equals_eee_gadget_" + pairing_name);
+        "invalid");
 
     // Check that the pairing check circuit returns the same result as
     // the one carried out "outside" the circuit (see above)
@@ -509,36 +496,35 @@ void test_invalid_pairing_check_e_equals_eee_gadget(
 
 TEST(MainTests, TestMntValidCheckEequalsEgadget)
 {
-    test_valid_pairing_check_e_equals_e_gadget<libff::mnt4_pp>("mnt4");
-    test_valid_pairing_check_e_equals_e_gadget<libff::mnt6_pp>("mnt6");
+    test_valid_pairing_check_e_equals_e_gadget<libff::mnt4_pp>();
+    test_valid_pairing_check_e_equals_e_gadget<libff::mnt6_pp>();
 }
 
 TEST(MainTests, TestBlsValidCheckEequalsEgadget)
 {
-    test_valid_pairing_check_e_equals_e_gadget<libff::bw6_761_pp>("bw6_761");
+    test_valid_pairing_check_e_equals_e_gadget<libff::bw6_761_pp>();
 }
 
 TEST(MainTests, TestMntValidCheckEequalsEEEgadget)
 {
-    test_valid_pairing_check_e_equals_eee_gadget<libff::mnt4_pp>("mnt4");
-    test_valid_pairing_check_e_equals_eee_gadget<libff::mnt6_pp>("mnt6");
+    test_valid_pairing_check_e_equals_eee_gadget<libff::mnt4_pp>();
+    test_valid_pairing_check_e_equals_eee_gadget<libff::mnt6_pp>();
 }
 
 TEST(MainTests, TestMntInvalidCheckEequalsEEEgadget)
 {
-    test_invalid_pairing_check_e_equals_eee_gadget<libff::mnt4_pp>("mnt4");
-    test_invalid_pairing_check_e_equals_eee_gadget<libff::mnt6_pp>("mnt6");
+    test_invalid_pairing_check_e_equals_eee_gadget<libff::mnt4_pp>();
+    test_invalid_pairing_check_e_equals_eee_gadget<libff::mnt6_pp>();
 }
 
 TEST(MainTests, TestBlsValidCheckEequalsEEEgadget)
 {
-    test_valid_pairing_check_e_equals_eee_gadget<libff::bw6_761_pp>("bw6_761");
+    test_valid_pairing_check_e_equals_eee_gadget<libff::bw6_761_pp>();
 }
 
 TEST(MainTests, TestBlsInvalidCheckEequalsEEEgadget)
 {
-    test_invalid_pairing_check_e_equals_eee_gadget<libff::bw6_761_pp>(
-        "bw6_761");
+    test_invalid_pairing_check_e_equals_eee_gadget<libff::bw6_761_pp>();
 }
 
 } // namespace libsnark
