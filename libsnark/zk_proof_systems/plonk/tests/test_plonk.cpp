@@ -239,27 +239,27 @@ namespace libsnark
 
   //
   // Evaluate a polynomial F at the encrypted secret input
-  // \alpha^i*G_1 ie. compute f(\alpha)*G1 = [f(\alpha)]_i
+  // \secret^i*G_1 ie. compute f(\secret)*G1 = [f(\secret)]_i
   //
   // INPUT
   //
-  // alpha_powers_g1: \alpha^i*G1: 0\le{i}<max_degree(Q[j]): 0\le{j}<n
+  // secret_powers_g1: \secret^i*G1: 0\le{i}<max_degree(Q[j]): 0\le{j}<n
   // Q_polys[0..n-1]: a set of n polynomials
   //
   // OUTPUT
   //
-  // [Q_polys[i](\alpha)]_1, 0\le 1<n : the "encrypted" evaluation of
-  // the polynomials Q_polys[i] in the secret parameter \alpha (the
+  // [Q_polys[i](\secret)]_1, 0\le 1<n : the "encrypted" evaluation of
+  // the polynomials Q_polys[i] in the secret parameter \secret (the
   // toxic waste) multiplied by the group generator G_1 i.e. compute
-  // Q_polys[i](\alpha)*G_1
+  // Q_polys[i](\secret)*G_1
   //
   template<typename ppT>
   libff::G1<ppT> plonk_evaluate_poly_at_secret_G1(
-						  std::vector<libff::G1<ppT>> alpha_powers_g1,
+						  std::vector<libff::G1<ppT>> secret_powers_g1,
 						  polynomial<libff::Fr<ppT>> f_poly
 						  )
   {
-    assert(f_poly.size() <= alpha_powers_g1.size());
+    assert(f_poly.size() <= secret_powers_g1.size());
     const size_t chunks = 1;
     const size_t num_coefficients = f_poly.size();
     libff::G1<ppT> f_poly_at_secret_g1 = 
@@ -267,8 +267,8 @@ namespace libsnark
 	libff::G1<ppT>,
       libff::Fr<ppT>,
       libff::multi_exp_method_BDLO12_signed>(
-					     alpha_powers_g1.begin(),
-					     alpha_powers_g1.begin() + num_coefficients,
+					     secret_powers_g1.begin(),
+					     secret_powers_g1.begin() + num_coefficients,
 					     f_poly.begin(),
 					     f_poly.end(),
 					     chunks);
@@ -279,17 +279,17 @@ namespace libsnark
   // plonk_evaluate_poly_at_secret_G1
   template<typename ppT>
   void plonk_evaluate_polys_at_secret_G1(
-					 std::vector<libff::G1<ppT>> alpha_powers_g1,
+					 std::vector<libff::G1<ppT>> secret_powers_g1,
 					 std::vector<polynomial<libff::Fr<ppT>>> Q_polys,
 					 std::vector<libff::G1<ppT>>& Q_polys_at_secret_g1
 					 )
   {
-    assert(alpha_powers_g1.size());
+    assert(secret_powers_g1.size());
     assert(Q_polys.size());
-    assert(Q_polys.size() <= alpha_powers_g1.size());
+    assert(Q_polys.size() <= secret_powers_g1.size());
     const size_t npolys = Q_polys.size();
     for (size_t i = 0; i < npolys; ++i) {
-      Q_polys_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(alpha_powers_g1, Q_polys[i]);
+      Q_polys_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(secret_powers_g1, Q_polys[i]);
     }
   }
 
@@ -400,6 +400,11 @@ namespace libsnark
     // this setting
     //    libff::G1<ppT> G2 = libff::G1<ppT>::G1_one;
 
+    enum W_polys_id{a, b, c};
+    enum Q_polys_id{L, R, M, O, C};
+    enum t_polys_id{lo, mid, hi};
+    enum omega_id{base, base_k1, base_k2}; // roots of unity
+
     // --- SETUP ---
 
     printf("[%s:%d] Start setup...\n", __FILE__, __LINE__);
@@ -479,17 +484,22 @@ namespace libsnark
     assert(temp == 1);
 #endif // #ifdef DEBUG
 
-    // output from plonk_compute_roots_of_unity
-    std::vector<Field> omega;    
+    // number of generators for H, Hk1, Hk2
+    int ngen = 3;
+    
+    // output from plonk_compute_roots_of_unity omega[0] are the n
+    // roots of unity, omega[1] are omega[0]*k1, omega[2] are
+    // omega[0]*k2
+    std::vector<std::vector<Field>> omega(ngen);    
     for (int i = 0; i < nconstraints; ++i) {
       Field omega_i = libff::power(omega_base, libff::bigint<1>(i));
-      omega.push_back(omega_i);
+      omega[base].push_back(omega_i);
     }
 
 #ifdef DEBUG
     for (int i = 0; i < nconstraints; ++i) {
       printf("w^%d: ", i);
-      omega[i].print();
+      omega[base][i].print();
     }
     // check that omega^8 = 1 i.e. omega is a generator of the
     // multiplicative subgroup H of Fq of order 'nconstraints'
@@ -504,20 +514,20 @@ namespace libsnark
     // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
     
     // output from plonk_compute_lagrange_basis
-    std::vector<polynomial<Field>> L(nconstraints, polynomial<Field>(nconstraints));
+    std::vector<polynomial<Field>> L_basis(nconstraints, polynomial<Field>(nconstraints));
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(nconstraints);
-    plonk_compute_lagrange_basis<Field>(nconstraints, L);
+    plonk_compute_lagrange_basis<Field>(nconstraints, L_basis);
 
     // public input (PI)
     Field PI_value = Field(35);
     // index of the row of the PI in the non-transposed gates_matrix 
     int PI_index = 4;
-    assert(nconstraints == omega.size());
+    assert(nconstraints == omega[base].size());
     // compute public input (PI) polynomial
     std::vector<Field> PI_points(nconstraints, Field(0));
     PI_points[PI_index] = Field(-PI_value);
     polynomial<Field> PI_poly;
-    plonk_interpolate_over_lagrange_basis<Field>(L, PI_points, PI_poly);
+    plonk_interpolate_over_lagrange_basis<Field>(L_basis, PI_points, PI_poly);
 #ifdef DEBUG
     printf("[%s:%d] PI_poly\n", __FILE__, __LINE__);
     print_vector(PI_poly);
@@ -536,7 +546,7 @@ namespace libsnark
     std::vector<polynomial<Field>> Q_polys(nqpoly, polynomial<Field>(nconstraints));
     for (size_t i = 0; i < nqpoly; ++i) {
       std::vector<Field> q_vec = gates_matrix_transpose[i];
-      plonk_interpolate_over_lagrange_basis<Field>(L, q_vec, Q_polys[i]);
+      plonk_interpolate_over_lagrange_basis<Field>(L_basis, q_vec, Q_polys[i]);
     }
 
 #if 1 // DEBUG
@@ -546,41 +556,39 @@ namespace libsnark
     }
 #endif // #if 1 // DEBUG
     
-    // Generate domains on which to evaluate the witness polynomials k
-    // can be random, but we fix it for debug to match against the
-    // test vector values
-    Field k = Field("7069874114745813936829552608791213902061117400356596714713673571023200548519");
+    // Generate domains on which to evaluate the witness
+    // polynomials. k can be random, but we fix it for debug to match
+    // against the test vector values
+    Field k1 = Field("7069874114745813936829552608791213902061117400356596714713673571023200548519"); // k1
+    // similarly, k2 can be random, but we fix it to match the test
+    // vectors
+    Field k2 = libff::power(k1, libff::bigint<1>(2)); // k2 = k1^2
 #if 1 // DEBUG
-    printf("[%s:%d] k ", __FILE__, __LINE__);
-    k.print();
+    printf("[%s:%d] k1 ", __FILE__, __LINE__);
+    k1.print();    
+    printf("[%s:%d] k2 ", __FILE__, __LINE__);
+    k2.print();    
 #endif // #if 1 // DEBUG
 
-    // k1 H is a coset of H with generator omega_k1 distinct from H
-    std::vector<Field> omega_k1;    
+    // k1 H is a coset of H with generator omega_k1 distinct from H k2
+    // H is a coset of H with generator omega_k2, distinct from H and
+    // k1 H
     for (int i = 0; i < nconstraints; ++i) {
-      Field omega_k1_i = omega[i] * k;
-      omega_k1.push_back(omega_k1_i);
+      Field omega_k1_i = omega[base][i] * k1;
+      Field omega_k2_i = omega[base][i] * k2;
+      omega[base_k1].push_back(omega_k1_i);
+      omega[base_k2].push_back(omega_k2_i);
     }
     
-    // k2 H is a coset of H with generator omega_k2, distinct from H
-    // and k1 H
-    std::vector<Field> omega_k2;    
-    for (int i = 0; i < nconstraints; ++i) {
-      Field omega_k2_i = omega[i] * libff::power(k, libff::bigint<1>(2));
-      omega_k2.push_back(omega_k2_i);
-    }
-
     // H_gen contains the generators of H, k1 H and K2 H in one place
     // ie. omega, omega_k1 and omega_k2
     std::vector<Field> H_gen;
-    std::copy(omega.begin(), omega.end(), back_inserter(H_gen));
-    std::copy(omega_k1.begin(), omega_k1.end(), back_inserter(H_gen));
-    std::copy(omega_k2.begin(), omega_k2.end(), back_inserter(H_gen));
+    std::copy(omega[base].begin(), omega[base].end(), back_inserter(H_gen));
+    std::copy(omega[base_k1].begin(), omega[base_k1].end(), back_inserter(H_gen));
+    std::copy(omega[base_k2].begin(), omega[base_k2].end(), back_inserter(H_gen));
     printf("[%s:%d] H_gen\n", __FILE__, __LINE__);
     print_vector(H_gen);
 
-    // number of ngen polynomials S
-    int ngen = 3;
     // permute H_gen according to the wire permutation
     std::vector<Field> H_gen_permute(ngen*nconstraints, Field(0));
     for (int i = 0; i < ngen*nconstraints; ++i) {
@@ -595,7 +603,7 @@ namespace libsnark
       typename std::vector<Field>::iterator begin = H_gen_permute.begin()+(i*nconstraints);
       typename std::vector<Field>::iterator end = H_gen_permute.begin()+(i*nconstraints)+(nconstraints);
       std::vector<Field> S_points(begin, end);
-      plonk_interpolate_over_lagrange_basis<Field>(L, S_points, S_polys[i]);
+      plonk_interpolate_over_lagrange_basis<Field>(L_basis, S_points, S_polys[i]);
     }
 
 #if 1 // DEBUG
@@ -605,36 +613,36 @@ namespace libsnark
     }
 #endif // #if 1 // DEBUG
 
-    // random hidden element alpha (toxic waste). we fix it to a
+    // random hidden element secret (toxic waste). we fix it to a
     // constant in order to match against the test vectors
-    Field alpha = Field("13778279493383315901513166932749987230291710199728570152123261818328463629146");
+    Field secret = Field("13778279493383315901513166932749987230291710199728570152123261818328463629146");
 #if 1 // DEBUG
-    printf("[%s:%d] alpha ", __FILE__, __LINE__);
-    alpha.print();
+    printf("[%s:%d] secret ", __FILE__, __LINE__);
+    secret.print();
 #endif // #if 1 // DEBUG
     
-    // compute powers of alpha * G1: 1*G1, alpha*G1, alpha^2*G1, ...
-    const libff::bigint<Field::num_limbs> alpha_bigint = alpha.as_bigint();
+    // compute powers of secret * G1: 1*G1, secret*G1, secret^2*G1, ...
+    const libff::bigint<Field::num_limbs> secret_bigint = secret.as_bigint();
     const size_t window_size = std::max(
-					libff::wnaf_opt_window_size<libff::G1<ppT>>(alpha_bigint.num_bits()),
+					libff::wnaf_opt_window_size<libff::G1<ppT>>(secret_bigint.num_bits()),
 					1ul);
     const std::vector<long> naf =
-      libff::find_wnaf<Field::num_limbs>(window_size, alpha_bigint);    
-    std::vector<libff::G1<ppT>> alpha_powers_g1;
-    alpha_powers_g1.reserve(nconstraints + 3);
-    libff::G1<ppT> alpha_i_g1 = libff::G1<ppT>::one();
-    alpha_powers_g1.push_back(alpha_i_g1);
+      libff::find_wnaf<Field::num_limbs>(window_size, secret_bigint);    
+    std::vector<libff::G1<ppT>> secret_powers_g1;
+    secret_powers_g1.reserve(nconstraints + 3);
+    libff::G1<ppT> secret_i_g1 = libff::G1<ppT>::one();
+    secret_powers_g1.push_back(secret_i_g1);
     for (size_t i = 1; i < (nconstraints + 3); ++i) {
-      // alpha^i * G1
-      alpha_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
-								window_size, alpha_i_g1, naf);
-      alpha_powers_g1.push_back(alpha_i_g1);
+      // secret^i * G1
+      secret_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
+								window_size, secret_i_g1, naf);
+      secret_powers_g1.push_back(secret_i_g1);
     }    
 
 #if 1 // DEBUG
     for (int i = 0; i < nconstraints + 3; ++i) {
-      printf("alpha_power[%2d] ", i);
-      alpha_powers_g1[i].print();
+      printf("secret_power[%2d] ", i);
+      secret_powers_g1[i].print();
     }
 #endif // #if 1 // DEBUG
 
@@ -647,9 +655,9 @@ namespace libsnark
 
     // Verifier precomputation:
     std::vector<libff::G1<ppT>> Q_polys_at_secret_g1(Q_polys.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, Q_polys, Q_polys_at_secret_g1);
+    plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, Q_polys, Q_polys_at_secret_g1);
     std::vector<libff::G1<ppT>> S_polys_at_secret_g1(S_polys.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, S_polys, S_polys_at_secret_g1);
+    plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, S_polys, S_polys_at_secret_g1);
     
 #if 1 // DEBUG
     for (int i = 0; i < (int)Q_polys.size(); ++i) {
@@ -672,7 +680,7 @@ namespace libsnark
       typename std::vector<Field>::iterator begin = witness.begin()+(i*nconstraints);
       typename std::vector<Field>::iterator end = witness.begin()+(i*nconstraints)+(nconstraints);
       std::vector<Field> W_points(begin, end);
-      plonk_interpolate_over_lagrange_basis<Field>(L, W_points, W_polys[i]);
+      plonk_interpolate_over_lagrange_basis<Field>(L_basis, W_points, W_polys[i]);
     }
 
 #if 1 // DEBUG
@@ -729,21 +737,21 @@ namespace libsnark
     assert(omega3_temp == 1);
 #endif // #ifdef DEBUG
 
-    Field t = Field(omega_base);
-    Field a;
-    a = domain->compute_vanishing_polynomial(t);
-    printf("[%s:%d] a ", __FILE__, __LINE__);
-    a.print();
+    //    Field t = Field(omega_base);
+    //    Field a;
+    //    a = domain->compute_vanishing_polynomial(t);
+    //    printf("[%s:%d] a ", __FILE__, __LINE__);
+    //    a.print();
 
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
 
-    // vanishing polynomial Zh(X) = x^n-1. vanishes on all n roots of
+    // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
     // unity omega
-    std::vector<Field> Zh(nconstraints+1, Field(0));
-    Zh[0] = Field(-1);
-    Zh[nconstraints] = Field(1);
+    std::vector<Field> zh_poly(nconstraints+1, Field(0));
+    zh_poly[0] = Field(-1);
+    zh_poly[nconstraints] = Field(1);
     printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
-    print_vector(Zh);
+    print_vector(zh_poly);
 
     // blinding scalars b1, b2, ..., b9. random but fixed to match the
     // python test vectors
@@ -772,10 +780,10 @@ namespace libsnark
        {rand_scalars[5], rand_scalars[4]}  // b5 + b4 X
       };
     
-    // a_poly = blind_polys[0] * Zh + W_polys[0]
+    // a_poly = blind_polys[0] * zh_poly + W_polys[0]
     std::vector<std::vector<Field>> W_polys_blinded(nwitness);
     for (int i = 0; i < nwitness; ++i) {
-      libfqfft::_polynomial_multiplication<Field>(W_polys_blinded[i], blind_polys[i], Zh);
+      libfqfft::_polynomial_multiplication<Field>(W_polys_blinded[i], blind_polys[i], zh_poly);
       libfqfft::_polynomial_addition<Field>(W_polys_blinded[i], W_polys_blinded[i], W_polys[i]);
     }
 #ifdef DEBUG
@@ -786,12 +794,12 @@ namespace libsnark
 #endif // #ifdef DEBUG
 
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1(W_polys_blinded.size());
-    printf("[%s:%d] poly %d %d %d alpha %d\n", __FILE__, __LINE__,
+    printf("[%s:%d] poly %d %d %d secret %d\n", __FILE__, __LINE__,
 	   (int)W_polys_blinded[0].size(),
 	   (int)W_polys_blinded[1].size(),
 	   (int)W_polys_blinded[2].size(),
-	   (int)alpha_powers_g1.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(alpha_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
+	   (int)secret_powers_g1.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
 #ifdef DEBUG
     for (int i = 0; i < nwitness; ++i) {
       printf("W_polys_at_secret_g1[%d]\n", i);
@@ -810,10 +818,10 @@ namespace libsnark
 
     // blinding polynomial
     std::vector<Field> z1_blind_poly{rand_scalars[8], rand_scalars[7], rand_scalars[6]}; // b8 + b7 X + b6 X^2
-    // multiply by the vanishing polynomial: z1 = z1 * Zh
-    libfqfft::_polynomial_multiplication<Field>(z1_blind_poly, z1_blind_poly, Zh);
+    // multiply by the vanishing polynomial: z1 = z1 * zh_poly
+    libfqfft::_polynomial_multiplication<Field>(z1_blind_poly, z1_blind_poly, zh_poly);
 #ifdef DEBUG
-    printf("[%s:%d] z1_blind_poly * Zh\n", __FILE__, __LINE__);
+    printf("[%s:%d] z1_blind_poly * zh_poly\n", __FILE__, __LINE__);
     print_vector(z1_blind_poly);
 #endif // #ifdef DEBUG
 
@@ -828,7 +836,7 @@ namespace libsnark
 #endif // #ifdef DEBUG
 
     polynomial<Field> A_poly(nconstraints);
-    plonk_interpolate_over_lagrange_basis<Field>(L, A_vector, A_poly);
+    plonk_interpolate_over_lagrange_basis<Field>(L_basis, A_vector, A_poly);
 #ifdef DEBUG
     printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
     print_vector(A_poly);
@@ -842,29 +850,172 @@ namespace libsnark
     print_vector(z_poly);
 #endif // #ifdef DEBUG
     
-    libff::G1<ppT> z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(alpha_powers_g1, z_poly);
+    libff::G1<ppT> z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(secret_powers_g1, z_poly);
 #ifdef DEBUG
     printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
     z_poly_at_secret_g1.print();
 #endif // #ifdef DEBUG
 
+
+    // -- Verified up to here with the Plonk-Py implementation ---
+    
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
     // W_polys_blinded = [a_poly, b_poly, c_poly]
 
+    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
+    // the test vectors
+    Field alpha = Field("37979978999274723893071781986484838492111162341880360022719385400306128734648");
+    
     // plonk_poly_shifted    
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
     // w=omega is the base root of unity and z is z_poly. we do this
     // by multiplying the coefficients of z by w
-    std::vector<Field> z_poly_omega_shift(z_poly.size(), Field(0));
+    std::vector<Field> z_poly_xomega(z_poly.size(), Field(0));
     for (size_t i = 0; i < z_poly.size(); ++i) {
-      z_poly_omega_shift[i] = z_poly[i] * omega[1];
+      z_poly_xomega[i] = z_poly[i] * omega[base][1];
     }
 
 #ifdef DEBUG
-    printf("[%s:%d] z_poly_omega_shift\n", __FILE__, __LINE__);
-    print_vector(z_poly_omega_shift);
+    printf("[%s:%d] z_poly_xomega\n", __FILE__, __LINE__);
+    print_vector(z_poly_xomega);
 #endif // #ifdef DEBUG
 
+    // start computation of polynomial t(X) in round 3. we break t
+    // into 4 parts which we compute separately. each of the 4 parts
+    // is multiplied by 1/zh_poly in the paper
+    std::vector<polynomial<Field>> t_part(4);
+
+    // --- Computation of t_part[0]
+    
+    // a(x)b(x)q_M(x)
+    polynomial<Field> abqM;
+    libfqfft::_polynomial_multiplication<Field>(abqM, W_polys[a], W_polys[b]);
+    libfqfft::_polynomial_multiplication<Field>(abqM, abqM, Q_polys[M]);    
+    // a(x)q_L(x)
+    polynomial<Field> aqL;
+    libfqfft::_polynomial_multiplication<Field>(aqL, W_polys[a], Q_polys[L]);
+    // b(x)q_R(x)
+    polynomial<Field> bqR;
+    libfqfft::_polynomial_multiplication<Field>(bqR, W_polys[b], Q_polys[R]);
+    // c(x)q_O(x)
+    polynomial<Field> cqO;
+    libfqfft::_polynomial_multiplication<Field>(cqO, W_polys[c], Q_polys[O]);
+    // t_part[0](x) = a(x)b(x)q_M(x) + a(x)q_L(x) + b(x)q_R(x) + c(x)q_O(x) + PI(x) + q_C(x)
+    libfqfft::_polynomial_addition<Field>(t_part[0], abqM, aqL);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], bqR);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], cqO);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], PI_poly);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], Q_polys[C]);
+    
+    // --- Computation of t_part[1]
+    
+    // X*beta as polynomial in X
+    std::vector<polynomial<Field>> xbeta_poly
+      {
+       {Field(0), beta}, // X*beta
+       {Field(0), beta*k1}, // X*beta*k1
+       {Field(0), beta*k2} // X*beta*k2
+      };    
+    // represent gamma as polynomial in X, needed for prover Round 3
+    polynomial<Field> gamma_poly{gamma}; // gamma
+    // represent alpha as polynomial in X, needed for prover Round 3
+    polynomial<Field> alpha_poly{alpha}; // alpha
+
+    // a(x) + beta*x + gamma 
+    polynomial<Field> a_xbeta_gamma;
+    libfqfft::_polynomial_addition<Field>(a_xbeta_gamma, W_polys[a], xbeta_poly[base]);    
+    libfqfft::_polynomial_addition<Field>(a_xbeta_gamma, a_xbeta_gamma, gamma_poly);    
+    // b(x) + beta_k1*x + gamma 
+    polynomial<Field> b_xbeta_gamma_k1;
+    libfqfft::_polynomial_addition<Field>(b_xbeta_gamma_k1, W_polys[b], xbeta_poly[base_k1]);
+    libfqfft::_polynomial_addition<Field>(b_xbeta_gamma_k1, b_xbeta_gamma_k1, gamma_poly);
+    // c(x) + beta_k1*x + gamma 
+    polynomial<Field> c_xbeta_gamma_k2;
+    libfqfft::_polynomial_addition<Field>(c_xbeta_gamma_k2, W_polys[c], xbeta_poly[base_k2]);
+    libfqfft::_polynomial_addition<Field>(c_xbeta_gamma_k2, c_xbeta_gamma_k2, gamma_poly);
+    // t_part[1] = (a(x) + beta*x + gamma)*(b(x) + beta_k1*x +
+    // gamma)*(c(x) + beta_k1*x + gamma)*z(x)*alpha
+    libfqfft::_polynomial_multiplication<Field>(t_part[1], a_xbeta_gamma, b_xbeta_gamma_k1);
+    libfqfft::_polynomial_multiplication<Field>(t_part[1], t_part[1], c_xbeta_gamma_k2);
+    libfqfft::_polynomial_multiplication<Field>(t_part[1], t_part[1], z_poly);
+    libfqfft::_polynomial_multiplication<Field>(t_part[1], t_part[1], alpha_poly);
+
+    // --- Computation of t_part[2]
+    
+    // represent beta as polynomial in X, needed for prover Round 3
+    polynomial<Field> beta_poly{beta};
+    // S*beta as polynomial
+    // S_sigma1(x)*beta, S_sigma2(x)*beta, S_sigma3(x)*beta
+    std::vector<polynomial<Field>> sbeta_poly(ngen);
+    for (int i = 0; i < ngen; ++i) {
+      libfqfft::_polynomial_multiplication<Field>(sbeta_poly[i], S_polys[i], beta_poly);
+    }
+    // a(x) + S_sigma1(x)*beta + gamma
+    polynomial<Field> a_sbeta_gamma;
+    libfqfft::_polynomial_addition<Field>(a_sbeta_gamma, W_polys[a], sbeta_poly[base]);    
+    libfqfft::_polynomial_addition<Field>(a_sbeta_gamma, a_sbeta_gamma, gamma_poly);    
+    // b(x) + S_sigma2(x)*beta + gamma
+    polynomial<Field> b_sbeta_gamma_k1;
+    libfqfft::_polynomial_addition<Field>(b_sbeta_gamma_k1, W_polys[b], sbeta_poly[base_k1]);    
+    libfqfft::_polynomial_addition<Field>(b_sbeta_gamma_k1, b_sbeta_gamma_k1, gamma_poly);    
+    // b(x) + S_sigma2(x)*beta + gamma
+    polynomial<Field> c_sbeta_gamma_k2;
+    libfqfft::_polynomial_addition<Field>(c_sbeta_gamma_k2, W_polys[c], sbeta_poly[base_k2]);    
+    libfqfft::_polynomial_addition<Field>(c_sbeta_gamma_k2, c_sbeta_gamma_k2, gamma_poly);    
+    // t_part[2] = (a(x) + S_sigma1(x)*beta + gamma)*(b(x) +
+    // S_sigma2(x)*beta + gamma)*(b(x) + S_sigma2(x)*beta +
+    // gamma)*z(x*omega)*alpha
+    libfqfft::_polynomial_multiplication<Field>(t_part[2], a_sbeta_gamma, b_sbeta_gamma_k1);
+    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], c_sbeta_gamma_k2);
+    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], z_poly_xomega);
+    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], alpha_poly);
+    // -t_part[2]
+    polynomial<Field> neg_one_poly = {-Field("1")};
+    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], neg_one_poly);
+    
+    // --- Computation of t_part[3]
+
+    // z(x) - 1
+    polynomial<Field> z_neg_one;
+    libfqfft::_polynomial_addition<Field>(z_neg_one, z_poly, neg_one_poly);
+    // (z(x)-1) * L_1(x)
+    libfqfft::_polynomial_multiplication<Field>(t_part[3], z_neg_one, L_basis[0]);
+    // (z(x)-1) * L_1(x) * alpha
+    libfqfft::_polynomial_multiplication<Field>(t_part[3], t_part[3], alpha_poly);
+    // (z(x)-1) * L_1(x) * alpha * alpha
+    libfqfft::_polynomial_multiplication<Field>(t_part[3], t_part[3], alpha_poly);
+
+
+    // --- computation of t(x)
+
+    // t(x) = (t[0] + t[1] + (-t[2]) + t[3]) / zh(x)
+    polynomial<Field> t_poly{Field(0)};
+    libfqfft::_polynomial_addition<Field>(t_poly, t_poly, t_part[1]);
+    //    libfqfft::_polynomial_addition<Field>(t_poly, t_poly, t_part[2]);
+    //    libfqfft::_polynomial_addition<Field>(t_poly, t_poly, t_part[2]);
+    //    libfqfft::_polynomial_addition<Field>(t_poly, t_poly, t_part[3]);
+#ifdef DEBUG
+    printf("[%s:%d] t_poly\n", __FILE__, __LINE__);
+    print_vector(t_poly);
+#endif // #ifdef DEBUG
+
+    //    t(x) = t(x) / zh(x): A/B = (Q, R) st. A = (Q * B) + R.
+    polynomial<Field> remainder;
+    libfqfft::_polynomial_division(t_poly, remainder, t_poly, zh_poly);
+#ifdef DEBUG
+    printf("[%s:%d] remainder\n", __FILE__, __LINE__);
+    print_vector(remainder);
+#endif // #ifdef DEBUG
+    //    assert(libfqfft::_is_zero(remainder));
+
+    /**
+     * Perform the standard Euclidean Division algorithm.
+     * Input: Polynomial A, Polynomial B, where A / B
+     * Output: Polynomial Q, Polynomial R, such that A = (Q * B) + R.
+     */
+    //    template<typename FieldT>
+    //      void _polynomial_division(std::vector<FieldT> &q, std::vector<FieldT> &r, const std::vector<FieldT> &a, const std::vector<FieldT> &b);
+   
     // end 
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
