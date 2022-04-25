@@ -9,6 +9,8 @@
 #ifndef __LIBSNARK_POLYNOMIAL_COMMITMENTS_KZG10_HPP__
 #define __LIBSNARK_POLYNOMIAL_COMMITMENTS_KZG10_HPP__
 
+#include "libsnark/common/data_structures/polynomial.hpp"
+
 #include <libff/algebra/curves/public_params.hpp>
 #include <libff/algebra/fields/fp.hpp>
 #include <vector>
@@ -20,11 +22,6 @@
 
 namespace libsnark
 {
-
-/// Polynomial type, as a list of coefficients (currently only represents
-/// univariate polynomials). Value at index i is the coefficient of x^i. (Once
-/// other schemes are implemented, this could be moved into a common file.)
-template<typename FieldT> using polynomial = std::vector<FieldT>;
 
 /// Implementation of the scheme described in [KZG10]. The interface and types
 /// diverge slightly from [KZG10] in some places (in order to use the generic
