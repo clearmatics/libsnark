@@ -6,6 +6,7 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#include "libsnark/common/constraints_tracker/constraints_tracker.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bw6_761_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/verifiers/kzg10_batched_verifier_gadget.hpp"
 #include "libsnark/gadgetlib1/gadgets/verifiers/kzg10_verifier_gadget.hpp"
@@ -26,6 +27,8 @@ static const size_t POLYNOMIAL_SIZE = 5;
 namespace
 {
 
+static constraints_tracker constraints;
+
 template<typename wppT, typename scheme>
 void test_polynomial_commitment_verifier_gadget(
     const typename scheme::srs &srs,
@@ -33,7 +36,8 @@ void test_polynomial_commitment_verifier_gadget(
     const libff::Fr<other_curve<wppT>> &i,
     const libff::Fr<other_curve<wppT>> &evaluation,
     const typename kzg10<other_curve<wppT>>::evaluation_witness &eval_witness,
-    const bool expected_result)
+    const bool expected_result,
+    const std::string &test_name)
 {
     using Field = libff::Fr<wppT>;
     using npp = other_curve<wppT>;
@@ -82,6 +86,9 @@ void test_polynomial_commitment_verifier_gadget(
     pb.val(poly_eval_var) = wrapping_evaluation;
     witness_var.generate_r1cs_witness(eval_witness);
     verifier_gadget.generate_r1cs_witness();
+
+    constraints.add_measurement<wppT>(
+        "kzg10_verifier_gadget - " + test_name, pb.num_constraints());
 
     // Check some members of verifier_gadget
     {
@@ -135,7 +142,7 @@ template<typename wppT> void test_kzg10_verifier_gadget()
     ASSERT_TRUE(scheme::verify_evaluation(i, evaluation, srs, eval_witness, C));
 
     test_polynomial_commitment_verifier_gadget<wppT, scheme>(
-        srs, C, i, evaluation, eval_witness, true);
+        srs, C, i, evaluation, eval_witness, true, "valid");
 
     // Test some failure cases:
 
@@ -143,16 +150,28 @@ template<typename wppT> void test_kzg10_verifier_gadget()
     {
         // Invalid evaluation point
         test_polynomial_commitment_verifier_gadget<wppT, scheme>(
-            srs, C, i + 1, evaluation, eval_witness, false);
+            srs,
+            C,
+            i + 1,
+            evaluation,
+            eval_witness,
+            false,
+            "invalid_eval_point");
         // Invalid evaluation
         test_polynomial_commitment_verifier_gadget<wppT, scheme>(
-            srs, C, i, evaluation + 1, eval_witness, false);
+            srs, C, i, evaluation + 1, eval_witness, false, "invalid_eval");
         // Invalid evaluation witness
         test_polynomial_commitment_verifier_gadget<wppT, scheme>(
-            srs, C, i, evaluation, eval_witness + eval_witness, false);
+            srs,
+            C,
+            i,
+            evaluation,
+            eval_witness + eval_witness,
+            false,
+            "invalid_witness");
         // Invalid commitment
         test_polynomial_commitment_verifier_gadget<wppT, scheme>(
-            srs, C + C, i, evaluation, eval_witness, false);
+            srs, C + C, i, evaluation, eval_witness, false, "invalid_commit");
     }
 }
 
@@ -162,7 +181,8 @@ void do_test_kzg10_batched_gamma_powers_commit_minus_eval_sum(
     const std::vector<libff::Fr<other_curve<wppT>>> &evals,
     const std::vector<typename kzg10<other_curve<wppT>>::commitment> &cms,
     const libff::G1<other_curve<wppT>> &r,
-    const bool expected_result)
+    const bool expected_result,
+    const std::string &test_name)
 {
     using Field = libff::Fr<wppT>;
 
@@ -201,6 +221,11 @@ void do_test_kzg10_batched_gamma_powers_commit_minus_eval_sum(
         pb.val(evals_var[i]) = wrapping_eval;
     }
     compute_sum.generate_r1cs_witness();
+
+    constraints.add_measurement<wppT>(
+        "kzg10_batched_compute_gamma_powers_commit_minus_eval_sum - " +
+            test_name,
+        pb.num_constraints());
 
     // Check result value
 
@@ -249,7 +274,8 @@ void test_kzg10_batched_gamma_powers_commit_minus_eval_sum_gadget()
         {evals[0], evals[1], evals[2]},
         {cms[0], cms[1], cms[2]},
         r_3,
-        true);
+        true,
+        "n=3");
 
     // 4-entry case
     const nG1 r_4 = nField(
@@ -257,7 +283,7 @@ void test_kzg10_batched_gamma_powers_commit_minus_eval_sum_gadget()
                         (51 * 51 * 51) * (23 - 11)) *
                     nG1::one();
     do_test_kzg10_batched_gamma_powers_commit_minus_eval_sum<wppT, 4>(
-        gamma, evals, cms, r_4, true);
+        gamma, evals, cms, r_4, true, "n=4");
 }
 
 template<typename wppT, size_t num_polynomials_1, size_t num_polynomials_2>
@@ -274,7 +300,8 @@ void do_test_kzg10_batched_verifier_gadget(
     const std::vector<typename kzg10<other_curve<wppT>>::commitment> &cm_1s,
     const std::vector<typename kzg10<other_curve<wppT>>::commitment> &cm_2s,
     const libff::Fr<other_curve<wppT>> &r,
-    const bool expected_result)
+    const bool expected_result,
+    const std::string &test_name)
 {
     using Field = libff::Fr<wppT>;
     using npp = other_curve<wppT>;
@@ -388,6 +415,9 @@ void do_test_kzg10_batched_verifier_gadget(
     pb.val(r_var) = wrapping_r;
 
     verifier_gadget.generate_r1cs_witness();
+
+    constraints.add_measurement<wppT>(
+        "kzg10_batched_verifier_gadget - " + test_name, pb.num_constraints());
 
     // Check intermediate values
 
@@ -521,7 +551,8 @@ template<typename wppT> void test_kzg10_batched_verifier_gadget()
         cm_1s,
         cm_2s,
         r,
-        true);
+        true,
+        "valid");
 
     // Test some failure cases:
 
@@ -542,7 +573,8 @@ template<typename wppT> void test_kzg10_batched_verifier_gadget()
             cm_1s,
             cm_2s,
             r,
-            false);
+            false,
+            "invalid_z1");
 
         do_test_kzg10_batched_verifier_gadget<
             wppT,
@@ -558,7 +590,8 @@ template<typename wppT> void test_kzg10_batched_verifier_gadget()
             cm_1s,
             cm_2s,
             r,
-            false);
+            false,
+            "invalid_z2");
 
         do_test_kzg10_batched_verifier_gadget<
             wppT,
@@ -574,7 +607,8 @@ template<typename wppT> void test_kzg10_batched_verifier_gadget()
             cm_1s,
             cm_2s,
             r,
-            false);
+            false,
+            "invalid_gamma_1");
 
         do_test_kzg10_batched_verifier_gadget<
             wppT,
@@ -590,7 +624,8 @@ template<typename wppT> void test_kzg10_batched_verifier_gadget()
             cm_1s,
             cm_2s,
             r,
-            false);
+            false,
+            "invalid_gamma_2");
 
         do_test_kzg10_batched_verifier_gadget<
             wppT,
@@ -606,7 +641,8 @@ template<typename wppT> void test_kzg10_batched_verifier_gadget()
             cm_1s_invalid,
             cm_2s,
             r,
-            false);
+            false,
+            "invalid_cm_1s");
 
         do_test_kzg10_batched_verifier_gadget<
             wppT,
@@ -622,7 +658,8 @@ template<typename wppT> void test_kzg10_batched_verifier_gadget()
             cm_1s,
             cm_2s_invalid,
             r,
-            false);
+            false,
+            "invalid_cm_2s");
     }
 }
 
