@@ -872,7 +872,10 @@ namespace libsnark
     // by multiplying the coefficients of z by w
     std::vector<Field> z_poly_xomega(z_poly.size(), Field(0));
     for (size_t i = 0; i < z_poly.size(); ++i) {
-      z_poly_xomega[i] = z_poly[i] * omega[base][1];
+      // omega^i
+      //      z_poly_xomega[i] = z_poly[i] * omega[base][1]; // !!!! <----- (omega[base][i]**i)
+      Field omega_i = libff::power(omega[base][1], libff::bigint<1>(i));
+      z_poly_xomega[i] = z_poly[i] * omega_i;
     }
 
 #ifdef DEBUG
@@ -886,26 +889,42 @@ namespace libsnark
     std::vector<polynomial<Field>> t_part(4);
 
     // --- Computation of t_part[0]
-    
+
     // a(x)b(x)q_M(x)
     polynomial<Field> abqM;
-    libfqfft::_polynomial_multiplication<Field>(abqM, W_polys[a], W_polys[b]);
+    libfqfft::_polynomial_multiplication<Field>(abqM, W_polys_blinded[a], W_polys_blinded[b]);
     libfqfft::_polynomial_multiplication<Field>(abqM, abqM, Q_polys[M]);    
     // a(x)q_L(x)
     polynomial<Field> aqL;
-    libfqfft::_polynomial_multiplication<Field>(aqL, W_polys[a], Q_polys[L]);
+    libfqfft::_polynomial_multiplication<Field>(aqL, W_polys_blinded[a], Q_polys[L]);
     // b(x)q_R(x)
     polynomial<Field> bqR;
-    libfqfft::_polynomial_multiplication<Field>(bqR, W_polys[b], Q_polys[R]);
+    libfqfft::_polynomial_multiplication<Field>(bqR, W_polys_blinded[b], Q_polys[R]);
     // c(x)q_O(x)
     polynomial<Field> cqO;
-    libfqfft::_polynomial_multiplication<Field>(cqO, W_polys[c], Q_polys[O]);
+    libfqfft::_polynomial_multiplication<Field>(cqO, W_polys_blinded[c], Q_polys[O]);
     // t_part[0](x) = a(x)b(x)q_M(x) + a(x)q_L(x) + b(x)q_R(x) + c(x)q_O(x) + PI(x) + q_C(x)
-    libfqfft::_polynomial_addition<Field>(t_part[0], abqM, aqL);
+    polynomial<Field> poly_null{Field(0)};
+    libfqfft::_polynomial_addition<Field>(t_part[0], poly_null, abqM);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], aqL);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], bqR);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], cqO);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], PI_poly);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], Q_polys[C]);
+    
+#ifdef NDEBUG
+    printf("[%s:%d] W_polys_blinded[a]\n", __FILE__, __LINE__);
+    print_vector(W_polys_blinded[a]);
+    printf("[%s:%d] W_polys_blinded[b]\n", __FILE__, __LINE__);
+    print_vector(W_polys_blinded[b]);
+    printf("[%s:%d] Q_polys[M]\n", __FILE__, __LINE__);
+    print_vector(Q_polys[M]);
+    printf("[%s:%d] abqM\n", __FILE__, __LINE__);
+    print_vector(abqM);    
+    printf("[%s:%d] t_part[0]\n", __FILE__, __LINE__);
+    print_vector(t_part[0]);    
+    assert(0);    
+#endif // #ifdef DEBUG
     
     // --- Computation of t_part[1]
     
@@ -923,15 +942,15 @@ namespace libsnark
 
     // a(x) + beta*x + gamma 
     polynomial<Field> a_xbeta_gamma;
-    libfqfft::_polynomial_addition<Field>(a_xbeta_gamma, W_polys[a], xbeta_poly[base]);    
+    libfqfft::_polynomial_addition<Field>(a_xbeta_gamma, W_polys_blinded[a], xbeta_poly[base]);    
     libfqfft::_polynomial_addition<Field>(a_xbeta_gamma, a_xbeta_gamma, gamma_poly);    
     // b(x) + beta_k1*x + gamma 
     polynomial<Field> b_xbeta_gamma_k1;
-    libfqfft::_polynomial_addition<Field>(b_xbeta_gamma_k1, W_polys[b], xbeta_poly[base_k1]);
+    libfqfft::_polynomial_addition<Field>(b_xbeta_gamma_k1, W_polys_blinded[b], xbeta_poly[base_k1]);
     libfqfft::_polynomial_addition<Field>(b_xbeta_gamma_k1, b_xbeta_gamma_k1, gamma_poly);
     // c(x) + beta_k1*x + gamma 
     polynomial<Field> c_xbeta_gamma_k2;
-    libfqfft::_polynomial_addition<Field>(c_xbeta_gamma_k2, W_polys[c], xbeta_poly[base_k2]);
+    libfqfft::_polynomial_addition<Field>(c_xbeta_gamma_k2, W_polys_blinded[c], xbeta_poly[base_k2]);
     libfqfft::_polynomial_addition<Field>(c_xbeta_gamma_k2, c_xbeta_gamma_k2, gamma_poly);
     // t_part[1] = (a(x) + beta*x + gamma)*(b(x) + beta_k1*x +
     // gamma)*(c(x) + beta_k1*x + gamma)*z(x)*alpha
@@ -952,15 +971,15 @@ namespace libsnark
     }
     // a(x) + S_sigma1(x)*beta + gamma
     polynomial<Field> a_sbeta_gamma;
-    libfqfft::_polynomial_addition<Field>(a_sbeta_gamma, W_polys[a], sbeta_poly[base]);    
+    libfqfft::_polynomial_addition<Field>(a_sbeta_gamma, W_polys_blinded[a], sbeta_poly[base]);    
     libfqfft::_polynomial_addition<Field>(a_sbeta_gamma, a_sbeta_gamma, gamma_poly);    
     // b(x) + S_sigma2(x)*beta + gamma
     polynomial<Field> b_sbeta_gamma_k1;
-    libfqfft::_polynomial_addition<Field>(b_sbeta_gamma_k1, W_polys[b], sbeta_poly[base_k1]);    
+    libfqfft::_polynomial_addition<Field>(b_sbeta_gamma_k1, W_polys_blinded[b], sbeta_poly[base_k1]);    
     libfqfft::_polynomial_addition<Field>(b_sbeta_gamma_k1, b_sbeta_gamma_k1, gamma_poly);    
     // b(x) + S_sigma2(x)*beta + gamma
     polynomial<Field> c_sbeta_gamma_k2;
-    libfqfft::_polynomial_addition<Field>(c_sbeta_gamma_k2, W_polys[c], sbeta_poly[base_k2]);    
+    libfqfft::_polynomial_addition<Field>(c_sbeta_gamma_k2, W_polys_blinded[c], sbeta_poly[base_k2]);    
     libfqfft::_polynomial_addition<Field>(c_sbeta_gamma_k2, c_sbeta_gamma_k2, gamma_poly);    
     // t_part[2] = (a(x) + S_sigma1(x)*beta + gamma)*(b(x) +
     // S_sigma2(x)*beta + gamma)*(b(x) + S_sigma2(x)*beta +
@@ -989,33 +1008,57 @@ namespace libsnark
     // --- computation of t(x)
 
     // t(x) = (t[0] + t[1] + (-t[2]) + t[3]) / zh(x)
-    polynomial<Field> t_poly{Field(0)};
-    libfqfft::_polynomial_addition<Field>(t_poly, t_poly, t_part[1]);
-    //    libfqfft::_polynomial_addition<Field>(t_poly, t_poly, t_part[2]);
-    //    libfqfft::_polynomial_addition<Field>(t_poly, t_poly, t_part[2]);
-    //    libfqfft::_polynomial_addition<Field>(t_poly, t_poly, t_part[3]);
-#ifdef DEBUG
-    printf("[%s:%d] t_poly\n", __FILE__, __LINE__);
-    print_vector(t_poly);
+    polynomial<Field> t_poly_long{Field(0)};
+    libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[0]);
+#if 1 // DEBUG   
+    libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[1]);
+    libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[2]);
+    libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[3]);
+#endif // #if 0 // DEBUG   
+#if 1 // DEBUG   
+    printf("[%s:%d] before t_poly_long\n", __FILE__, __LINE__);
+    print_vector(t_poly_long);    
 #endif // #ifdef DEBUG
-
     //    t(x) = t(x) / zh(x): A/B = (Q, R) st. A = (Q * B) + R.
     polynomial<Field> remainder;
-    libfqfft::_polynomial_division(t_poly, remainder, t_poly, zh_poly);
+    libfqfft::_polynomial_division(t_poly_long, remainder, t_poly_long, zh_poly);
+#ifdef DEBUG
+    printf("[%s:%d] after t_poly_long\n", __FILE__, __LINE__);
+    print_vector(t_poly_long);
+#endif // #ifdef DEBUG
 #ifdef DEBUG
     printf("[%s:%d] remainder\n", __FILE__, __LINE__);
     print_vector(remainder);
 #endif // #ifdef DEBUG
-    //    assert(libfqfft::_is_zero(remainder));
+    assert(libfqfft::_is_zero(remainder));
 
-    /**
-     * Perform the standard Euclidean Division algorithm.
-     * Input: Polynomial A, Polynomial B, where A / B
-     * Output: Polynomial Q, Polynomial R, such that A = (Q * B) + R.
-     */
-    //    template<typename FieldT>
-    //      void _polynomial_division(std::vector<FieldT> &q, std::vector<FieldT> &r, const std::vector<FieldT> &a, const std::vector<FieldT> &b);
-   
+    // break t_poly_long into three parts: lo, mid, hi, each of degree 7
+    // note: (nconstraints+3) is the length of the CRS = (nconstraints+2) powers of G1 + 1 power of G2
+    std::vector<polynomial<Field>> t_poly(ngen);
+    for (int i = 0; i < ngen; ++i) {
+      typename std::vector<Field>::iterator begin = t_poly_long.begin()+(i*(nconstraints+2));
+      typename std::vector<Field>::iterator end = t_poly_long.begin()+(i*(nconstraints+2))+(nconstraints+2);
+      std::vector<Field> tmp(begin, end);
+      t_poly[i] = tmp;
+    }
+#ifdef DEBUG
+    for (int i = 0; i < ngen; ++i) {
+      printf("[%s:%d] t_poly[%d]\n", __FILE__, __LINE__, i);
+      print_vector(t_poly[i]);
+    }
+#endif // #ifdef DEBUG
+    // evaluate each part of t_poly in the secret input
+    std::vector<libff::G1<ppT>> t_poly_at_secret_g1(ngen);
+    for (int i = 0; i < ngen; ++i) {
+      t_poly_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(secret_powers_g1, t_poly[i]);
+    }
+#ifdef DEBUG
+    for (int i = 0; i < ngen; ++i) {
+      printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
+      t_poly_at_secret_g1[i].print();
+    }
+#endif // #ifdef DEBUG
+    
     // end 
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
