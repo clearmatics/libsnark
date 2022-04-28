@@ -376,14 +376,23 @@ namespace libsnark
     // less?) to the degree of the polyomial (to be able to evaluate
     // the polynomial on this domain)
     assert(P.size() == n);
+    FieldT res = FieldT(0);    
+#if 0  // using Lagrange basis
     std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain = libfqfft::get_evaluation_domain<FieldT>(n);
     // evaluate all Lagrange polynomials at point x
     std::vector<FieldT> Lt = domain->evaluate_all_lagrange_polynomials(t);
-    FieldT res = FieldT(0);    
     // P(t) = p0 L0(t) + p1 L1(t) + ... + p_{n-1} L_{n-1}(t)
     for (size_t i = 0; i < P.size(); ++i) {
       res = res + (P[i] * Lt[i]);
     }
+#endif
+#if 1 // direct computation
+    for (size_t i = 0; i < P.size(); ++i) {
+      FieldT t_power_i = libff::power(t, libff::bigint<1>(i));
+      res = res + (t_power_i * P[i]);
+    }
+#endif     
+    
     return res;
   }
 
@@ -858,7 +867,6 @@ namespace libsnark
 #endif // #ifdef DEBUG
 
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
-    // W_polys_blinded = [a_poly, b_poly, c_poly]
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
@@ -1013,15 +1021,11 @@ namespace libsnark
     libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[2]);
     libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[3]);
 #endif // #if 0 // DEBUG   
-#if 1 // DEBUG   
-    printf("[%s:%d] before t_poly_long\n", __FILE__, __LINE__);
-    print_vector(t_poly_long);    
-#endif // #ifdef DEBUG
     //    t(x) = t(x) / zh(x): A/B = (Q, R) st. A = (Q * B) + R.
     polynomial<Field> remainder;
     libfqfft::_polynomial_division(t_poly_long, remainder, t_poly_long, zh_poly);
 #ifdef DEBUG
-    printf("[%s:%d] after t_poly_long\n", __FILE__, __LINE__);
+    printf("[%s:%d] t_poly_long\n", __FILE__, __LINE__);
     print_vector(t_poly_long);
 #endif // #ifdef DEBUG
 #ifdef DEBUG
@@ -1076,7 +1080,58 @@ namespace libsnark
       assert(t_poly_at_secret_g1_i.Y == t_poly_at_secret_g1_expected[i][1]);
     }
 #endif // #ifdef DEBUG
+
+    printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
+
+    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
+    // the test vectors
+    Field zeta = Field("43271972289218399355833643945502350270719103959803126415018065799136107272465");
+#ifdef DEBUG
+    printf("[%s:%d] zeta\n", __FILE__, __LINE__);
+    zeta.print();
+#endif // #ifdef DEBUG
+    Field a_poly_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[a], zeta, nconstraints + 2);
+    Field b_poly_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[b], zeta, nconstraints + 2);
+    Field c_poly_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[c], zeta, nconstraints + 2);
+    Field S_poly_0_zeta = plonk_evaluate_poly_at_point<Field>(S_polys[0], zeta, nconstraints);
+    Field S_poly_1_zeta = plonk_evaluate_poly_at_point<Field>(S_polys[1], zeta, nconstraints);
+    Field t_poly_zeta = plonk_evaluate_poly_at_point<Field>(t_poly_long, zeta, t_poly_long.size());
+    Field z_poly_xomega_zeta = plonk_evaluate_poly_at_point<Field>(z_poly_xomega, zeta, z_poly_xomega.size());
     
+#ifdef DEBUG
+    // output of Round 4: test vector values
+    Field a_poly_zeta_expected = Field("8901875463326310313456570652869873776746767429001289506712732994487869455294");
+    Field b_poly_zeta_expected  = Field("17059370482702287697833061796226204248201565415155528923232473993993212080397");
+    Field c_poly_zeta_expected  = Field("2409756965930008556696371654169913125397449986372522636184003898699439708220");
+    Field S_poly_0_zeta_expected  = Field("46143626155803287918330279428390848286076645428477353060129573054942492588828");
+    Field S_poly_1_zeta_expected  = Field("24392704635891252343143269633563768345145008520140360299402842967762646340846");
+    Field t_poly_zeta_expected = Field("17704211079697158667898451781925539666888780633357685549668669638883218786797");
+    Field z_poly_xomega_zeta_expected = Field("28842520748921749858267479462666161290723351257502457358354355079408206613634");
+
+    printf("a_poly_zeta ");
+    a_poly_zeta.print();
+    assert(a_poly_zeta == a_poly_zeta_expected);
+    printf("b_poly_zeta ");
+    b_poly_zeta.print();
+    assert(b_poly_zeta == b_poly_zeta_expected);
+    printf("c_poly_zeta ");
+    c_poly_zeta.print();
+    assert(c_poly_zeta == c_poly_zeta_expected);
+    printf("S_poly_0_zeta ");
+    S_poly_0_zeta.print();
+    assert(S_poly_0_zeta == S_poly_0_zeta_expected);
+    printf("S_poly_1_zeta ");
+    S_poly_1_zeta.print();
+    assert(S_poly_1_zeta == S_poly_1_zeta_expected);
+    printf("t_poly_zeta ");
+    t_poly_zeta.print();
+    assert(t_poly_zeta == t_poly_zeta_expected);
+    printf("z_poly_xomega_zeta ");
+    z_poly_xomega_zeta.print();
+    assert(z_poly_xomega_zeta == z_poly_xomega_zeta_expected);
+#endif // #ifdef DEBUG
+    
+
     // end 
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
