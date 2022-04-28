@@ -36,4 +36,4 @@ jobs:
     - name: build
       run: cd build && make -j $(($(nproc)+1))
     - name: test
-      run: cd build && make check -j $(($(nproc)+1))
+      run: cd build && CTEST_OUTPUT_ON_FAILURE=1 make check -j $(($(nproc)+1))
