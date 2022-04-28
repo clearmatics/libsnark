@@ -6,6 +6,7 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#include "libsnark/common/constraints_tracker/constraints_tracker.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bw6_761_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/mnt/mnt_pairing_params.hpp"
 #include "libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp"
@@ -25,13 +26,18 @@ using npp = other_curve<wpp>;
 namespace
 {
 
+static constraints_tracker constraints;
+
 template<typename ppT>
-void generate_and_check_proof(protoboard<libff::Fr<ppT>> &pb)
+void generate_and_check_proof(
+    protoboard<libff::Fr<ppT>> &pb, const std::string &test_name)
 {
     // Generate and check the proof
     ASSERT_TRUE(pb.is_satisfied());
     const r1cs_gg_ppzksnark_keypair<ppT> keypair =
         r1cs_gg_ppzksnark_generator<ppT>(pb.get_constraint_system(), true);
+
+    constraints.add_measurement<ppT>(test_name, pb.num_constraints());
     r1cs_primary_input<libff::Fr<wpp>> primary_input = pb.primary_input();
     r1cs_auxiliary_input<libff::Fr<ppT>> auxiliary_input = pb.auxiliary_input();
     r1cs_gg_ppzksnark_proof<ppT> proof = r1cs_gg_ppzksnark_prover(
@@ -48,20 +54,16 @@ void test_G2_checker_gadget(const std::string &annotation)
     G2_checker_gadget<ppT> g_check(pb, g, "g_check");
     g_check.generate_r1cs_constraints();
 
-    printf("positive test\n");
     g.generate_r1cs_witness(libff::G2<other_curve<ppT>>::one());
     g_check.generate_r1cs_witness();
     assert(pb.is_satisfied());
 
-    printf("negative test\n");
     g.generate_r1cs_witness(libff::G2<other_curve<ppT>>::zero());
     g_check.generate_r1cs_witness();
     assert(!pb.is_satisfied());
 
-    printf(
-        "number of constraints for G2 checker (Fr is %s)  = %zu\n",
-        annotation.c_str(),
-        pb.num_constraints());
+    constraints.add_measurement<ppT>(
+        "G2_checker_gadget - " + annotation, pb.num_constraints());
 }
 
 template<
@@ -72,7 +74,10 @@ template<
     typename VarR,
     typename AddGadgetT>
 void test_add_gadget(
-    const GroupT &a_val, const GroupT &b_val, const GroupT &expect_val)
+    const GroupT &a_val,
+    const GroupT &b_val,
+    const GroupT &expect_val,
+    const std::string &test_name)
 {
     ASSERT_EQ(expect_val, a_val + b_val);
 
@@ -91,10 +96,13 @@ void test_add_gadget(
     const GroupT result_val = result.get_element();
     ASSERT_TRUE(pb.is_satisfied());
     ASSERT_EQ(expect_val, result_val);
+
+    constraints.add_measurement<wpp>(test_name, pb.num_constraints());
 }
 
 template<typename ppT, typename GroupT, typename VarT, typename DblGadgetT>
-void test_dbl_gadget(const GroupT &a_val, const GroupT &expect_val)
+void test_dbl_gadget(
+    const GroupT &a_val, const GroupT &expect_val, const std::string &test_name)
 {
     ASSERT_EQ(expect_val, a_val + a_val);
 
@@ -111,6 +119,8 @@ void test_dbl_gadget(const GroupT &a_val, const GroupT &expect_val)
     const GroupT result_val = result.get_element();
     ASSERT_TRUE(pb.is_satisfied());
     ASSERT_EQ(expect_val, result_val);
+
+    constraints.add_measurement<wpp>(test_name, pb.num_constraints());
 }
 
 template<
@@ -120,7 +130,8 @@ template<
     typename VarB,
     typename VarR,
     typename SelectorGadgetT>
-void test_selector_gadget(GroupT a_val, GroupT b_val)
+void test_selector_gadget(
+    GroupT a_val, GroupT b_val, const std::string &test_name)
 {
     a_val.to_affine_coordinates();
     b_val.to_affine_coordinates();
@@ -171,11 +182,11 @@ void test_selector_gadget(GroupT a_val, GroupT b_val)
     ASSERT_EQ(b_val, one_result.get_element());
 
     // Verify in a proof
-    generate_and_check_proof<wpp>(pb);
+    generate_and_check_proof<wpp>(pb, test_name);
 }
 
 template<typename ppT, typename GroupT, typename VarT, typename SelectorGadgetT>
-void test_variable_or_identity_selector_gadget()
+void test_variable_or_identity_selector_gadget(const std::string &test_name)
 {
     auto test_selector =
         test_selector_gadget<wpp, GroupT, VarT, VarT, VarT, SelectorGadgetT>;
@@ -183,10 +194,10 @@ void test_variable_or_identity_selector_gadget()
     const GroupT a_val = GroupT::one() + GroupT::one();
     const GroupT b_val = -GroupT::one();
 
-    test_selector(a_val, b_val);
-    test_selector(GroupT::zero(), b_val);
-    test_selector(a_val, GroupT::zero());
-    test_selector(GroupT::zero(), GroupT::zero());
+    test_selector(a_val, b_val, "N_N_" + test_name);
+    test_selector(GroupT::zero(), b_val, "Z_N_" + test_name);
+    test_selector(a_val, GroupT::zero(), "N_Z_" + test_name);
+    test_selector(GroupT::zero(), GroupT::zero(), "Z_Z_" + test_name);
 }
 
 template<
@@ -196,7 +207,8 @@ template<
     typename VarB,
     typename VarR,
     typename SelectorGadgetT>
-void test_variable_and_variable_or_identity_selector_gadget()
+void test_variable_and_variable_or_identity_selector_gadget(
+    const std::string &test_name)
 {
     auto test_selector =
         test_selector_gadget<wpp, GroupT, VarA, VarB, VarR, SelectorGadgetT>;
@@ -204,8 +216,8 @@ void test_variable_and_variable_or_identity_selector_gadget()
     const GroupT a_val = GroupT::one() + GroupT::one();
     const GroupT b_val = -GroupT::one();
 
-    test_selector(a_val, b_val);
-    test_selector(GroupT::zero(), b_val);
+    test_selector(a_val, b_val, "V_V_" + test_name);
+    test_selector(GroupT::zero(), b_val, "N_V_" + test_name);
 }
 
 TEST(TestCurveGadgets, G2Checker)
@@ -225,7 +237,8 @@ TEST(TestCurveGadgets, G1SelectorGadget)
         G1_variable<wpp>,
         G1_variable_selector_gadget<wpp>>;
 
-    test_selector(Group::one() + Group::one(), -Group::one());
+    test_selector(
+        Group::one() + Group::one(), -Group::one(), "test_selector_g1_bw6_761");
 }
 
 TEST(TestCurveGadgets, G2SelectorGadget)
@@ -239,7 +252,8 @@ TEST(TestCurveGadgets, G2SelectorGadget)
         G2_variable<wpp>,
         G2_variable_selector_gadget<wpp>>;
 
-    test_selector(Group::one() + Group::one(), -Group::one());
+    test_selector(
+        Group::one() + Group::one(), -Group::one(), "test_selector_g2_bw6_761");
 }
 
 TEST(TestCurveGadgets, G1VarOrIdentitySelectorGadget)
@@ -248,7 +262,8 @@ TEST(TestCurveGadgets, G1VarOrIdentitySelectorGadget)
         wpp,
         libff::G1<npp>,
         G1_variable_or_identity<wpp>,
-        G1_variable_or_identity_selector_gadget<wpp>>();
+        G1_variable_or_identity_selector_gadget<wpp>>(
+        "test_var_or_id_selector_gadget_g1_bw6_761");
 }
 
 TEST(TestCurveGadgets, G2VarOrIdentitySelectorGadget)
@@ -257,7 +272,8 @@ TEST(TestCurveGadgets, G2VarOrIdentitySelectorGadget)
         wpp,
         libff::G2<npp>,
         G2_variable_or_identity<wpp>,
-        G2_variable_or_identity_selector_gadget<wpp>>();
+        G2_variable_or_identity_selector_gadget<wpp>>(
+        "test_var_or_id_selector_gadget_g2_bw6_761");
 }
 
 TEST(TestCurveGadgets, G1VarAndVarOrIdentitySelectorGadget)
@@ -268,7 +284,8 @@ TEST(TestCurveGadgets, G1VarAndVarOrIdentitySelectorGadget)
         G1_variable_or_identity<wpp>,
         G1_variable<wpp>,
         G1_variable_or_identity<wpp>,
-        G1_variable_and_variable_or_identity_selector_gadget<wpp>>();
+        G1_variable_and_variable_or_identity_selector_gadget<wpp>>(
+        "test_var_and_var_or_id_selector_gasgete_g1_bw6_761");
 }
 
 TEST(TestCurveGadgets, G2VarAndVarOrIdentitySelectorGadget)
@@ -279,7 +296,8 @@ TEST(TestCurveGadgets, G2VarAndVarOrIdentitySelectorGadget)
         G2_variable_or_identity<wpp>,
         G2_variable<wpp>,
         G2_variable_or_identity<wpp>,
-        G2_variable_and_variable_or_identity_selector_gadget<wpp>>();
+        G2_variable_and_variable_or_identity_selector_gadget<wpp>>(
+        "test_var_and_var_or_id_selector_gasgete_g2_bw6_761");
 }
 
 TEST(TestCurveGadgets, G1AddGadget)
@@ -293,7 +311,8 @@ TEST(TestCurveGadgets, G1AddGadget)
         G1_add_gadget<wpp>>(
         libff::Fr<npp>(13) * libff::G1<npp>::one(),
         libff::Fr<npp>(12) * libff::G1<npp>::one(),
-        libff::Fr<npp>(12 + 13) * libff::G1<npp>::one());
+        libff::Fr<npp>(12 + 13) * libff::G1<npp>::one(),
+        "test_add_gadget_g1_bw6_761");
 }
 
 TEST(TestCurveGadgets, G2AddGadget)
@@ -307,7 +326,8 @@ TEST(TestCurveGadgets, G2AddGadget)
         G2_add_gadget<wpp>>(
         libff::Fr<npp>(13) * libff::G2<npp>::one(),
         libff::Fr<npp>(12) * libff::G2<npp>::one(),
-        libff::Fr<npp>(12 + 13) * libff::G2<npp>::one());
+        libff::Fr<npp>(12 + 13) * libff::G2<npp>::one(),
+        "test_add_gadget_g2_bw6_761");
 }
 
 TEST(TestCurveGadgets, G1AddVarOrIdentityGadget)
@@ -323,17 +343,20 @@ TEST(TestCurveGadgets, G1AddVarOrIdentityGadget)
     test_add_variable_or_identity(
         libff::Fr<npp>(13) * libff::G1<npp>::one(),
         libff::Fr<npp>(12) * libff::G1<npp>::one(),
-        libff::Fr<npp>(12 + 13) * libff::G1<npp>::one());
+        libff::Fr<npp>(12 + 13) * libff::G1<npp>::one(),
+        "test_add_var_or_id_gadget_N_N_g1_bw6_761");
 
     test_add_variable_or_identity(
         libff::Fr<npp>(0) * libff::G1<npp>::one(),
         libff::Fr<npp>(12) * libff::G1<npp>::one(),
-        libff::Fr<npp>(12) * libff::G1<npp>::one());
+        libff::Fr<npp>(12) * libff::G1<npp>::one(),
+        "test_add_var_or_id_gadget_Z_N_g1_bw6_761");
 
     test_add_variable_or_identity(
         libff::Fr<npp>(13) * libff::G1<npp>::one(),
         libff::Fr<npp>(0) * libff::G1<npp>::one(),
-        libff::Fr<npp>(13) * libff::G1<npp>::one());
+        libff::Fr<npp>(13) * libff::G1<npp>::one(),
+        "test_add_var_or_id_gadget_N_Z_g1_bw6_761");
 
     // Note, the 0 + 0 case is not supported.
 }
@@ -351,17 +374,20 @@ TEST(TestCurveGadgets, G2AddVarOrIdentityGadget)
     test_add_variable_or_identity(
         libff::Fr<npp>(13) * libff::G2<npp>::one(),
         libff::Fr<npp>(12) * libff::G2<npp>::one(),
-        libff::Fr<npp>(12 + 13) * libff::G2<npp>::one());
+        libff::Fr<npp>(12 + 13) * libff::G2<npp>::one(),
+        "test_add_var_or_id_gadget_N_N_g2_bw6_761");
 
     test_add_variable_or_identity(
         libff::Fr<npp>(0) * libff::G2<npp>::one(),
         libff::Fr<npp>(12) * libff::G2<npp>::one(),
-        libff::Fr<npp>(12) * libff::G2<npp>::one());
+        libff::Fr<npp>(12) * libff::G2<npp>::one(),
+        "test_add_var_or_id_gadget_Z_N_g2_bw6_761");
 
     test_add_variable_or_identity(
         libff::Fr<npp>(13) * libff::G2<npp>::one(),
         libff::Fr<npp>(0) * libff::G2<npp>::one(),
-        libff::Fr<npp>(13) * libff::G2<npp>::one());
+        libff::Fr<npp>(13) * libff::G2<npp>::one(),
+        "test_add_var_or_id_gadget_N_Z_g2_bw6_761");
 
     // Note, the 0 + 0 case is not supported.
 }
@@ -379,12 +405,14 @@ TEST(TestCurveGadgets, G1AddVarAndVarOrIdentityGadget)
     test_add_variable_and_variable_or_identity(
         libff::Fr<npp>(13) * libff::G1<npp>::one(),
         libff::Fr<npp>(12) * libff::G1<npp>::one(),
-        libff::Fr<npp>(12 + 13) * libff::G1<npp>::one());
+        libff::Fr<npp>(12 + 13) * libff::G1<npp>::one(),
+        "test_add_var_and_var_or_id_N_g1_bw6_761");
 
     test_add_variable_and_variable_or_identity(
         libff::Fr<npp>(0) * libff::G1<npp>::one(),
         libff::Fr<npp>(12) * libff::G1<npp>::one(),
-        libff::Fr<npp>(12) * libff::G1<npp>::one());
+        libff::Fr<npp>(12) * libff::G1<npp>::one(),
+        "test_add_var_and_var_or_id_Z_g1_bw6_761");
 
     // Note, the 0 + 0 case is not supported.
 }
@@ -402,12 +430,14 @@ TEST(TestCurveGadgets, G2AddVarAndVarOrIdentityGadget)
     test_add_variable_and_variable_or_identity(
         libff::Fr<npp>(13) * libff::G2<npp>::one(),
         libff::Fr<npp>(12) * libff::G2<npp>::one(),
-        libff::Fr<npp>(12 + 13) * libff::G2<npp>::one());
+        libff::Fr<npp>(12 + 13) * libff::G2<npp>::one(),
+        "test_add_var_and_var_or_id_N_g2_bw6_761");
 
     test_add_variable_and_variable_or_identity(
         libff::Fr<npp>(0) * libff::G2<npp>::one(),
         libff::Fr<npp>(12) * libff::G2<npp>::one(),
-        libff::Fr<npp>(12) * libff::G2<npp>::one());
+        libff::Fr<npp>(12) * libff::G2<npp>::one(),
+        "test_add_var_and_var_or_id_Z_g2_bw6_761");
 
     // Note, the 0 + 0 case is not supported.
 }
@@ -416,14 +446,16 @@ TEST(TestCurveGadgets, G1DblGadget)
 {
     test_dbl_gadget<wpp, libff::G1<npp>, G1_variable<wpp>, G1_dbl_gadget<wpp>>(
         libff::Fr<npp>(13) * libff::G1<npp>::one(),
-        libff::Fr<npp>(13 + 13) * libff::G1<npp>::one());
+        libff::Fr<npp>(13 + 13) * libff::G1<npp>::one(),
+        "test_dbl_g1_bw6_761");
 }
 
 TEST(TestCurveGadgets, G2DblGadget)
 {
     test_dbl_gadget<wpp, libff::G2<npp>, G2_variable<wpp>, G2_dbl_gadget<wpp>>(
         libff::Fr<npp>(13) * libff::G2<npp>::one(),
-        libff::Fr<npp>(13 + 13) * libff::G2<npp>::one());
+        libff::Fr<npp>(13 + 13) * libff::G2<npp>::one(),
+        "test_dbl_g2_bw6_761");
 }
 
 TEST(TestCurveGadgets, G1DblVarOrIdentityGadget)
@@ -436,10 +468,13 @@ TEST(TestCurveGadgets, G1DblVarOrIdentityGadget)
 
     test_dbl_variable_or_identity(
         libff::Fr<npp>(13) * libff::G1<npp>::one(),
-        libff::Fr<npp>(13 + 13) * libff::G1<npp>::one());
+        libff::Fr<npp>(13 + 13) * libff::G1<npp>::one(),
+        "test_dbl_var_or_id_N_g1_bw6_761");
 
     test_dbl_variable_or_identity(
-        libff::G1<npp>::zero(), libff::G1<npp>::zero());
+        libff::G1<npp>::zero(),
+        libff::G1<npp>::zero(),
+        "test_dbl_var_or_id_Z_g1_bw6_761");
 }
 
 TEST(TestCurveGadgets, G2DblVarOrIdentityGadget)
@@ -452,10 +487,13 @@ TEST(TestCurveGadgets, G2DblVarOrIdentityGadget)
 
     test_dbl_variable_or_identity(
         libff::Fr<npp>(13) * libff::G2<npp>::one(),
-        libff::Fr<npp>(13 + 13) * libff::G2<npp>::one());
+        libff::Fr<npp>(13 + 13) * libff::G2<npp>::one(),
+        "test_dbl_var_or_id_N_g2_bw6_761");
 
     test_dbl_variable_or_identity(
-        libff::G2<npp>::zero(), libff::G2<npp>::zero());
+        libff::G2<npp>::zero(),
+        libff::G2<npp>::zero(),
+        "test_dbl_var_or_id_Z_g2_bw6_761");
 }
 
 TEST(TestCurveGadgets, G1MulByConstScalar)
@@ -644,7 +682,8 @@ template<
     typename scalarMulGadgetT>
 void test_mul_by_scalar_gadget(
     const libff::Fr<other_curve<ppT>> &base_scalar,
-    const libff::Fr<other_curve<ppT>> &scalar)
+    const libff::Fr<other_curve<ppT>> &scalar,
+    const std::string &test_name)
 {
     using nFr = libff::Fr<other_curve<ppT>>;
 
@@ -697,7 +736,7 @@ void test_mul_by_scalar_gadget(
     // Check circuit satisfaction and proof generation.
 
     ASSERT_TRUE(pb.is_satisfied());
-    generate_and_check_proof<wpp>(pb);
+    generate_and_check_proof<wpp>(pb, test_name);
 }
 
 TEST(TestCurveGadgets, MulScalarVar)
@@ -716,13 +755,31 @@ TEST(TestCurveGadgets, MulScalarVar)
         G2_variable_or_identity<wpp>,
         G2_mul_by_scalar_gadget<wpp>>;
 
-    test_g1_mul_by_scalar_gadget(libff::Fr<npp>(13), libff::Fr<npp>::zero());
-    test_g1_mul_by_scalar_gadget(libff::Fr<npp>(13), libff::Fr<npp>(127));
-    test_g1_mul_by_scalar_gadget(libff::Fr<npp>(13), -libff::Fr<npp>::one());
+    test_g1_mul_by_scalar_gadget(
+        libff::Fr<npp>(13),
+        libff::Fr<npp>::zero(),
+        "test_mul_scalar_var_Z_g1_bw6_761");
+    test_g1_mul_by_scalar_gadget(
+        libff::Fr<npp>(13),
+        libff::Fr<npp>(127),
+        "test_mul_scalar_var_N_g1_bw6_761");
+    test_g1_mul_by_scalar_gadget(
+        libff::Fr<npp>(13),
+        -libff::Fr<npp>::one(),
+        "test_mul_scalar_var_minus_1_g1_bw6_761");
 
-    test_g2_mul_by_scalar_gadget(libff::Fr<npp>(13), libff::Fr<npp>::zero());
-    test_g2_mul_by_scalar_gadget(libff::Fr<npp>(13), libff::Fr<npp>(127));
-    test_g2_mul_by_scalar_gadget(libff::Fr<npp>(13), -libff::Fr<npp>::one());
+    test_g2_mul_by_scalar_gadget(
+        libff::Fr<npp>(13),
+        libff::Fr<npp>::zero(),
+        "test_mul_scalar_var_Z_g2_bw6_761");
+    test_g2_mul_by_scalar_gadget(
+        libff::Fr<npp>(13),
+        libff::Fr<npp>(127),
+        "test_mul_scalar_var_N_g2_bw6_761");
+    test_g2_mul_by_scalar_gadget(
+        libff::Fr<npp>(13),
+        -libff::Fr<npp>::one(),
+        "test_mul_scalar_var_minus_1_g2_bw6_761");
 }
 
 TEST(TestCurveGadgets, VarOrIdentityMulScalarVar)
@@ -744,22 +801,38 @@ TEST(TestCurveGadgets, VarOrIdentityMulScalarVar)
             G2_variable_or_identity_mul_by_scalar_gadget<wpp>>;
 
     test_g1_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), libff::Fr<npp>::zero());
+        libff::Fr<npp>(13),
+        libff::Fr<npp>::zero(),
+        "G1_var_or_identity_mul_by_scalar_gadget (0*[13]_1)");
     test_g1_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>::zero(), libff::Fr<npp>(13));
+        libff::Fr<npp>::zero(),
+        libff::Fr<npp>(13),
+        "G1_var_or_identity_mul_by_scalar_gadget (13*[0]_1)");
     test_g1_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), libff::Fr<npp>(127));
+        libff::Fr<npp>(13),
+        libff::Fr<npp>(127),
+        "G1_var_or_identity_mul_by_scalar_gadget (127*[13]_1)");
     test_g1_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), -libff::Fr<npp>::one());
+        libff::Fr<npp>(13),
+        -libff::Fr<npp>::one(),
+        "G1_var_or_identity_mul_by_scalar_gadget (-1*[13]_1)");
 
     test_g2_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), libff::Fr<npp>::zero());
+        libff::Fr<npp>(13),
+        libff::Fr<npp>::zero(),
+        "G2_var_or_identity_mul_by_scalar_gadget (0*[13]_2)");
     test_g2_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>::zero(), libff::Fr<npp>(13));
+        libff::Fr<npp>::zero(),
+        libff::Fr<npp>(13),
+        "G2_var_or_identity_mul_by_scalar_gadget (13*[0]_2)");
     test_g2_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), libff::Fr<npp>(127));
+        libff::Fr<npp>(13),
+        libff::Fr<npp>(127),
+        "G2_var_or_identity_mul_by_scalar_gadget (127*[13]_2)");
     test_g2_var_or_identity_mul_by_scalar_gadget(
-        libff::Fr<npp>(13), -libff::Fr<npp>::one());
+        libff::Fr<npp>(13),
+        -libff::Fr<npp>::one(),
+        "G2_var_or_identity_mul_by_scalar_gadget (-1*[13]_2)");
 }
 
 } // namespace
@@ -770,6 +843,8 @@ int main(int argc, char **argv)
     libff::bw6_761_pp::init_public_params();
     libff::mnt4_pp::init_public_params();
     libff::mnt6_pp::init_public_params();
+    libff::inhibit_profiling_info = true;
+    libff::inhibit_profiling_counters = true;
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
