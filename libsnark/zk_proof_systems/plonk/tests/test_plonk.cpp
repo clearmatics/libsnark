@@ -17,6 +17,7 @@
 #include <libff/common/utils.hpp>
 #include <gtest/gtest.h>
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
+#include <libff/algebra/curves/bls12_381/bls12_381_init.hpp>
 #include <libff/algebra/scalar_multiplication/multiexp.hpp>
 #include <libff/algebra/scalar_multiplication/wnaf.hpp>
 #include <libff/algebra/curves/curve_serialization.hpp>
@@ -392,7 +393,7 @@ namespace libsnark
     ppT::init_public_params();
     
     using Field = libff::Fr<ppT>;
-    //    using Group = libff::G1<ppT>;
+    typedef libff::bigint<libff::bls12_381_q_limbs> bigint_q;
     //    libff::G1<ppT> G1 = libff::G1<ppT>::G1_one;
     // libff::G2<ppT> G2 = libff::G2<ppT>::G2_one;
     // Setting G2 equal to G1 (Type1 Bilinear group) for simplicity
@@ -856,9 +857,6 @@ namespace libsnark
     z_poly_at_secret_g1.print();
 #endif // #ifdef DEBUG
 
-
-    // -- Verified up to here with the Plonk-Py implementation ---
-    
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
     // W_polys_blinded = [a_poly, b_poly, c_poly]
 
@@ -1053,9 +1051,29 @@ namespace libsnark
       t_poly_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(secret_powers_g1, t_poly[i]);
     }
 #ifdef DEBUG
+    // verify the output from Round 3 to the test vectors. test
+    // vectors obtained from the Plonk Python reference implementation
+    // (used for debug)
+    bigint_q x_lo = bigint_q("3633475304544039580937168033891821181031270028948315156966430357290637750912918602224358395819959043217498580613188");
+    bigint_q y_lo = bigint_q("1428090154951261810016759192966903623360639220861161704510358440208878251190328471919089961503194904379492282570328");    
+    bigint_q x_mi = bigint_q("763634090322259543766607669979108502605520397912172619611323329140740033948682915660599655604319492439350037062593");
+    bigint_q y_mi = bigint_q("2813678383705930006472398012708516812631766189864357429304341222779755096333176883586053913173384834727806732577514");
+    bigint_q x_hi = bigint_q("1133773332119974571006388114320487134122128432292374613610471191239740936855771046194807037399513728603857921779020");
+    bigint_q y_hi = bigint_q("2371743385249340433047174208075481672774011018845240422821241326403735375534578397825283190840736410689009347296342");    
+    std::vector<std::vector<bigint_q>> t_poly_at_secret_g1_expected
+      {
+       {x_lo, y_lo},
+       {x_mi, y_mi},
+       {x_hi, y_hi},
+      };
+      
     for (int i = 0; i < ngen; ++i) {
       printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
       t_poly_at_secret_g1[i].print();
+      libff::G1<ppT> t_poly_at_secret_g1_i(t_poly_at_secret_g1[i]);
+      t_poly_at_secret_g1_i.to_affine_coordinates();
+      assert(t_poly_at_secret_g1_i.X == t_poly_at_secret_g1_expected[i][0]);
+      assert(t_poly_at_secret_g1_i.Y == t_poly_at_secret_g1_expected[i][1]);
     }
 #endif // #ifdef DEBUG
     
