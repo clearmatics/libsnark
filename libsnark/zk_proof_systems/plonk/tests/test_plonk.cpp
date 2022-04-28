@@ -384,6 +384,7 @@ namespace libsnark
     // P(t) = p0 L0(t) + p1 L1(t) + ... + p_{n-1} L_{n-1}(t)
     for (size_t i = 0; i < P.size(); ++i) {
       res = res + (P[i] * Lt[i]);
+      // xxx polynomial_addition
     }
 #endif
 #if 1 // direct computation
@@ -1090,48 +1091,132 @@ namespace libsnark
     printf("[%s:%d] zeta\n", __FILE__, __LINE__);
     zeta.print();
 #endif // #ifdef DEBUG
-    Field a_poly_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[a], zeta, nconstraints + 2);
-    Field b_poly_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[b], zeta, nconstraints + 2);
-    Field c_poly_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[c], zeta, nconstraints + 2);
-    Field S_poly_0_zeta = plonk_evaluate_poly_at_point<Field>(S_polys[0], zeta, nconstraints);
-    Field S_poly_1_zeta = plonk_evaluate_poly_at_point<Field>(S_polys[1], zeta, nconstraints);
-    Field t_poly_zeta = plonk_evaluate_poly_at_point<Field>(t_poly_long, zeta, t_poly_long.size());
+    Field a_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[a], zeta, nconstraints + 2);
+    Field b_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[b], zeta, nconstraints + 2);
+    Field c_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[c], zeta, nconstraints + 2);
+    Field S_0_zeta = plonk_evaluate_poly_at_point<Field>(S_polys[0], zeta, nconstraints);
+    Field S_1_zeta = plonk_evaluate_poly_at_point<Field>(S_polys[1], zeta, nconstraints);
+    Field t_zeta = plonk_evaluate_poly_at_point<Field>(t_poly_long, zeta, t_poly_long.size());
     Field z_poly_xomega_zeta = plonk_evaluate_poly_at_point<Field>(z_poly_xomega, zeta, z_poly_xomega.size());
     
 #ifdef DEBUG
     // output of Round 4: test vector values
-    Field a_poly_zeta_expected = Field("8901875463326310313456570652869873776746767429001289506712732994487869455294");
-    Field b_poly_zeta_expected  = Field("17059370482702287697833061796226204248201565415155528923232473993993212080397");
-    Field c_poly_zeta_expected  = Field("2409756965930008556696371654169913125397449986372522636184003898699439708220");
-    Field S_poly_0_zeta_expected  = Field("46143626155803287918330279428390848286076645428477353060129573054942492588828");
-    Field S_poly_1_zeta_expected  = Field("24392704635891252343143269633563768345145008520140360299402842967762646340846");
-    Field t_poly_zeta_expected = Field("17704211079697158667898451781925539666888780633357685549668669638883218786797");
+    Field a_zeta_expected = Field("8901875463326310313456570652869873776746767429001289506712732994487869455294");
+    Field b_zeta_expected  = Field("17059370482702287697833061796226204248201565415155528923232473993993212080397");
+    Field c_zeta_expected  = Field("2409756965930008556696371654169913125397449986372522636184003898699439708220");
+    Field S_0_zeta_expected  = Field("46143626155803287918330279428390848286076645428477353060129573054942492588828");
+    Field S_1_zeta_expected  = Field("24392704635891252343143269633563768345145008520140360299402842967762646340846");
+    Field t_zeta_expected = Field("17704211079697158667898451781925539666888780633357685549668669638883218786797");
     Field z_poly_xomega_zeta_expected = Field("28842520748921749858267479462666161290723351257502457358354355079408206613634");
 
-    printf("a_poly_zeta ");
-    a_poly_zeta.print();
-    assert(a_poly_zeta == a_poly_zeta_expected);
-    printf("b_poly_zeta ");
-    b_poly_zeta.print();
-    assert(b_poly_zeta == b_poly_zeta_expected);
-    printf("c_poly_zeta ");
-    c_poly_zeta.print();
-    assert(c_poly_zeta == c_poly_zeta_expected);
-    printf("S_poly_0_zeta ");
-    S_poly_0_zeta.print();
-    assert(S_poly_0_zeta == S_poly_0_zeta_expected);
-    printf("S_poly_1_zeta ");
-    S_poly_1_zeta.print();
-    assert(S_poly_1_zeta == S_poly_1_zeta_expected);
-    printf("t_poly_zeta ");
-    t_poly_zeta.print();
-    assert(t_poly_zeta == t_poly_zeta_expected);
+    printf("a_zeta ");
+    a_zeta.print();
+    assert(a_zeta == a_zeta_expected);
+    printf("b_zeta ");
+    b_zeta.print();
+    assert(b_zeta == b_zeta_expected);
+    printf("c_zeta ");
+    c_zeta.print();
+    assert(c_zeta == c_zeta_expected);
+    printf("S_0_zeta ");
+    S_0_zeta.print();
+    assert(S_0_zeta == S_0_zeta_expected);
+    printf("S_1_zeta ");
+    S_1_zeta.print();
+    assert(S_1_zeta == S_1_zeta_expected);
+    printf("t_zeta ");
+    t_zeta.print();
+    assert(t_zeta == t_zeta_expected);
     printf("z_poly_xomega_zeta ");
     z_poly_xomega_zeta.print();
     assert(z_poly_xomega_zeta == z_poly_xomega_zeta_expected);
 #endif // #ifdef DEBUG
     
+    printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
 
+    // compute linerisation polynomial r in five parts
+    std::vector<polynomial<Field>> r_part(5);
+
+    // --- Computation of r_part[0]
+    
+    // represent values as constant term polynomials in orderto use
+    // the functions in the libfqfft library on polynomials
+    polynomial<Field> a_zeta_poly{a_zeta}; 
+    polynomial<Field> b_zeta_poly{b_zeta}; 
+    polynomial<Field> c_zeta_poly{c_zeta}; 
+    // a(z)b(z)q_M(x)
+    polynomial<Field> abqM_zeta;
+    libfqfft::_polynomial_multiplication<Field>(abqM_zeta, Q_polys[M], a_zeta_poly);
+    libfqfft::_polynomial_multiplication<Field>(abqM_zeta, abqM_zeta, b_zeta_poly);    
+    // a(z)q_L(x)
+    polynomial<Field> aqL_zeta;
+    libfqfft::_polynomial_multiplication<Field>(aqL_zeta, Q_polys[L], a_zeta_poly);
+    // b(z)q_R(x)
+    polynomial<Field> bqR_zeta;
+    libfqfft::_polynomial_multiplication<Field>(bqR_zeta, Q_polys[R], b_zeta_poly);
+    // c(z)q_O(x)
+    polynomial<Field> cqO_zeta;
+    libfqfft::_polynomial_multiplication<Field>(cqO_zeta, Q_polys[O], c_zeta_poly);
+    // a(z)b(z)q_M(x) + a(z)q_L(x) + b(z)q_R(x) + c(z)q_O(x) + q_C(x)
+    libfqfft::_polynomial_addition<Field>(r_part[0], poly_null, abqM_zeta);
+    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], aqL_zeta);
+    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], bqR_zeta);
+    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], cqO_zeta);
+    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], Q_polys[C]);
+
+    // --- Computation of r_part[1]
+
+    polynomial<Field> r1_const_poly
+      {
+       (a_zeta + (beta * zeta) + gamma) *
+       (b_zeta + (beta * k1 * zeta) + gamma) *
+       (c_zeta + (beta * k2 * zeta) + gamma) * alpha
+      };
+    libfqfft::_polynomial_multiplication<Field>(r_part[1], r1_const_poly, z_poly);
+
+    // --- Computation of r_part[2]
+    
+    polynomial<Field> r2_const_poly
+      {
+       (a_zeta + (beta * S_0_zeta) + gamma) *
+       (b_zeta + (beta * S_1_zeta) + gamma) *
+       (alpha * beta * z_poly_xomega_zeta)
+      };
+    libfqfft::_polynomial_multiplication<Field>(r_part[2], r2_const_poly, S_polys[2]);
+    // -r_part[2]
+    libfqfft::_polynomial_multiplication<Field>(r_part[2], r_part[2], neg_one_poly);
+    
+    // --- Computation of r_part[3]
+    
+    //     r3 = accumulator_poly_ext3 * eval_poly(L_1, [zeta])[0] * alpha ** 2
+    polynomial<Field> L_0_zeta_poly{plonk_evaluate_poly_at_point<Field>(L_basis[0], zeta, L_basis[0].size())};
+    polynomial<Field> alpha_power2_poly{libff::power(alpha, libff::bigint<1>(2))};
+    libfqfft::_polynomial_multiplication<Field>(r_part[3], z_poly, L_0_zeta_poly);
+    libfqfft::_polynomial_multiplication<Field>(r_part[3], r_part[3], alpha_power2_poly);
+
+    // --- Computation of r_poly = (r0+r1-r2+r3)
+
+    polynomial<Field> r_poly; 
+    libfqfft::_polynomial_addition<Field>(r_poly, poly_null, r_part[0]);
+    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[1]);
+    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[2]);
+    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[3]);
+    
+#if DEBUG    
+    //    printf("abqM_zeta\n");
+    //    print_vector(abqM_zeta);
+    printf("[%s:%d] r_part[0]\n", __FILE__, __LINE__);
+    print_vector(r_part[0]);
+    printf("[%s:%d] r_part[1]\n", __FILE__, __LINE__);
+    print_vector(r_part[1]);
+    printf("[%s:%d] r_part[2]\n", __FILE__, __LINE__);
+    print_vector(r_part[2]);
+    printf("[%s:%d] r_part[3]\n", __FILE__, __LINE__);
+    print_vector(r_part[3]);
+    printf("[%s:%d] r_poly\n", __FILE__, __LINE__);
+    print_vector(r_poly);
+#endif // #if DEBUG
+    
     // end 
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
