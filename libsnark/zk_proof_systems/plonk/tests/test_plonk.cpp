@@ -24,6 +24,7 @@
 
 #include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
 #include <libfqfft/evaluation_domain/domains/basic_radix2_domain.hpp>
+#include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
 
 #define DEBUG 1
 const size_t MAX_DEGREE = 254;
@@ -354,47 +355,6 @@ namespace libsnark
     for (size_t i = 0; i < n; ++i) {
       A[i] = plonk_compute_accumulator_factor(i, n, beta, gamma, witness, H_gen, H_gen_permute, A);
     }
-  }
-
-  //
-  // P(x) plonk_evaluate_poly_at_point(P, x)
-  //
-  // evaluate a polynomial P given as list of coefficients (p0, p1,
-  // ..., p_{n-1}) at a given point t using the lagrange basis L_i:
-  // 0 <= i <= deg(P) ie. compute P(t) as:
-  //
-  // P(t) = p0 L0(t) + p1 L1(t) + ... + p_{n-1} L_{n-1}(t)
-  //
-  template<typename FieldT>
-  FieldT plonk_evaluate_poly_at_point(
-				      polynomial<FieldT> P,
-				      FieldT t,
-				      size_t n // nconstraints = size of domain
-				      )
-  {
-    // make sure that the size of the domain is equal (can it be
-    // less?) to the degree of the polyomial (to be able to evaluate
-    // the polynomial on this domain)
-    assert(P.size() == n);
-    FieldT res = FieldT(0);    
-#if 0  // using Lagrange basis
-    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain = libfqfft::get_evaluation_domain<FieldT>(n);
-    // evaluate all Lagrange polynomials at point x
-    std::vector<FieldT> Lt = domain->evaluate_all_lagrange_polynomials(t);
-    // P(t) = p0 L0(t) + p1 L1(t) + ... + p_{n-1} L_{n-1}(t)
-    for (size_t i = 0; i < P.size(); ++i) {
-      res = res + (P[i] * Lt[i]);
-      // xxx polynomial_addition
-    }
-#endif
-#if 1 // direct computation
-    for (size_t i = 0; i < P.size(); ++i) {
-      FieldT t_power_i = libff::power(t, libff::bigint<1>(i));
-      res = res + (t_power_i * P[i]);
-    }
-#endif     
-    
-    return res;
   }
 
   template<typename ppT> void test_plonk()
@@ -1091,13 +1051,13 @@ namespace libsnark
     printf("[%s:%d] zeta\n", __FILE__, __LINE__);
     zeta.print();
 #endif // #ifdef DEBUG
-    Field a_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[a], zeta, nconstraints + 2);
-    Field b_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[b], zeta, nconstraints + 2);
-    Field c_zeta = plonk_evaluate_poly_at_point<Field>(W_polys_blinded[c], zeta, nconstraints + 2);
-    Field S_0_zeta = plonk_evaluate_poly_at_point<Field>(S_polys[0], zeta, nconstraints);
-    Field S_1_zeta = plonk_evaluate_poly_at_point<Field>(S_polys[1], zeta, nconstraints);
-    Field t_zeta = plonk_evaluate_poly_at_point<Field>(t_poly_long, zeta, t_poly_long.size());
-    Field z_poly_xomega_zeta = plonk_evaluate_poly_at_point<Field>(z_poly_xomega, zeta, z_poly_xomega.size());
+    Field a_zeta = libfqfft::evaluate_polynomial<Field>(nconstraints + 2, W_polys_blinded[a], zeta);
+    Field b_zeta = libfqfft::evaluate_polynomial<Field>(nconstraints + 2, W_polys_blinded[b], zeta);
+    Field c_zeta = libfqfft::evaluate_polynomial<Field>(nconstraints + 2, W_polys_blinded[c], zeta);
+    Field S_0_zeta = libfqfft::evaluate_polynomial<Field>(nconstraints, S_polys[0], zeta);
+    Field S_1_zeta = libfqfft::evaluate_polynomial<Field>(nconstraints, S_polys[1], zeta);
+    Field t_zeta = libfqfft::evaluate_polynomial<Field>(t_poly_long.size(), t_poly_long, zeta);
+    Field z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega.size(), z_poly_xomega, zeta);
     
 #ifdef DEBUG
     // output of Round 4: test vector values
@@ -1132,8 +1092,12 @@ namespace libsnark
     assert(z_poly_xomega_zeta == z_poly_xomega_zeta_expected);
 #endif // #ifdef DEBUG
     
-    printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
+    printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
 
+    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
+    // the test vectors
+    Field nu = Field("27515859833869775242150726508092341429478280783192379165155175653098691426347");
+    
     // compute linerisation polynomial r in five parts
     std::vector<polynomial<Field>> r_part(5);
 
@@ -1189,13 +1153,22 @@ namespace libsnark
     // --- Computation of r_part[3]
     
     //     r3 = accumulator_poly_ext3 * eval_poly(L_1, [zeta])[0] * alpha ** 2
-    polynomial<Field> L_0_zeta_poly{plonk_evaluate_poly_at_point<Field>(L_basis[0], zeta, L_basis[0].size())};
+    polynomial<Field> L_0_zeta_poly{libfqfft::evaluate_polynomial<Field>(L_basis[0].size(), L_basis[0], zeta)};
     polynomial<Field> alpha_power2_poly{libff::power(alpha, libff::bigint<1>(2))};
     libfqfft::_polynomial_multiplication<Field>(r_part[3], z_poly, L_0_zeta_poly);
     libfqfft::_polynomial_multiplication<Field>(r_part[3], r_part[3], alpha_power2_poly);
 
     // --- Computation of r_poly = (r0+r1-r2+r3)
 
+    //
+    // Note: here the reference Python implementation differs from the
+    // paper where:
+    //
+    // r(x) = r(x) - zh(zeta) (t_lo(x) + zeta^n t_mid(x) + zeta^2n t_hi(x))
+    //
+    // In the reference implementation, the missing term is added in
+    // the computation of the W_zeta(x) polynomial
+    //
     polynomial<Field> r_poly; 
     libfqfft::_polynomial_addition<Field>(r_poly, poly_null, r_part[0]);
     libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[1]);
@@ -1216,7 +1189,59 @@ namespace libsnark
     printf("[%s:%d] r_poly\n", __FILE__, __LINE__);
     print_vector(r_poly);
 #endif // #if DEBUG
+
+    // Evaluate the r-polynomial at zeta
+    Field r_zeta = libfqfft::evaluate_polynomial<Field>(r_poly.size(), r_poly, zeta);
+#ifdef DEBUG
+    Field r_zeta_expected = Field("9840183355354075764860129139740187852136872731945621853688663309524905254695");
+    printf("r_zeta ");
+    r_zeta.print();
+    assert(r_zeta == r_zeta_expected);
+#endif // #ifdef DEBUG
+
+
+    // W_zeta polynomial is of degree 6 in the random element nu and
+    // hence has 7 terms
+    std::vector<polynomial<Field>> W_zeta_part(7);
+
+    // --- compute W_zeta_part[0]
     
+    // t_lo(x)
+    polynomial<Field> t_lo{t_poly[lo]};
+    // t_mid(x) * zeta^(n+2)
+    polynomial<Field> t_mid_zeta_n;
+    polynomial<Field> zeta_powern_poly{libff::power(zeta, libff::bigint<1>(nconstraints+2))};
+    libfqfft::_polynomial_multiplication<Field>(t_mid_zeta_n, t_poly[mid], zeta_powern_poly);
+    // t_hi(x) * zeta^(2(n+1))
+    polynomial<Field> t_hi_zeta_2n;
+    polynomial<Field> zeta_power2n_poly{libff::power(zeta, libff::bigint<1>(2*(nconstraints+2)))};
+    libfqfft::_polynomial_multiplication<Field>(t_hi_zeta_2n, t_poly[hi], zeta_power2n_poly);
+    // -t_zeta as constant term polynomial
+    polynomial<Field> t_zeta_poly{-t_zeta};
+    // t_lo(x) + (t_mid(x) * zeta^n) + (t_hi(x) * zeta^2n) + t_zeta_poly
+    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], poly_null, t_lo);
+    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_mid_zeta_n);
+    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_hi_zeta_2n);
+    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_zeta_poly);    
+    
+    // --- compute W_zeta_part[1]
+
+    // -r_zeta as constant term polynomial
+    polynomial<Field> r_zeta_poly{-r_zeta};
+    // r(x) - r_zeta
+    polynomial<Field> r_sub_rzeta;
+    libfqfft::_polynomial_addition<Field>(r_sub_rzeta, r_poly, r_zeta_poly);
+    // (r(x) - r_zeta) * nu
+    polynomial<Field> nu_poly{nu};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[1], r_sub_rzeta, nu_poly);
+    
+#ifdef DEBUG
+    printf("W_zeta_part[0]\n");
+    print_vector(W_zeta_part[0]);
+    printf("W_zeta_part[1]\n");
+    print_vector(W_zeta_part[1]);
+#endif // #ifdef DEBUG
+      
     // end 
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
