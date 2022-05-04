@@ -43,7 +43,8 @@ static void polynomial_add_inplace(
     polynomial<FieldT> &poly, const polynomial<FieldT> &other)
 {
     // If `other` is longer, resize `polynomial` and copy any trailing
-    // coefficients.
+    // coefficients. We then add in the coefficients from other which were not
+    // copied.
     const size_t p_orig_size = poly.size();
     if (p_orig_size < other.size()) {
         poly.resize(other.size());
@@ -51,6 +52,11 @@ static void polynomial_add_inplace(
             other.begin() + p_orig_size,
             other.end(),
             poly.begin() + p_orig_size);
+        for (size_t i = 0; i < p_orig_size; ++i) {
+            poly[i] += other[i];
+        }
+
+        return;
     }
 
     // Add coefficients of `other` into `polynomial`.
