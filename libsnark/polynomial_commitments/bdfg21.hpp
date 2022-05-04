@@ -43,8 +43,9 @@ public:
     ///
     ///   - a set $T$ of all evaluation points
     ///
-    ///   - the set $\{ S_i \}$ of subsets $S_i$ of $T$ where the polynomial
-    ///     $f_i$ is will be evaluated at the points in $S_i$.
+    ///   - the set $\{ S_i \}$ of subsets $S_i$ of $T$ (for $T$ a subset of
+    ///     the field of interest) where each polynomial $f_i$ will be
+    ///     evaluated at points in $S_i$.
     ///
     /// To match the expected use-cases, we assume that each polynomial $f_i$
     /// is evaluated at exactly one point $z_i \in T$, and use a specification
@@ -52,14 +53,14 @@ public:
     ///
     ///   - `std::vector<Field> T` is a set of evaluation points.
     ///
-    ///   - `std::vector<std::vector<polynomial>> f_sets` is a set of sets of
-    ///     polynomials, where `f_sets[i]` is the set of polynomials to be
-    ///     evaluated at `T[i]`.
+    ///   - `std::vector<std::vector<polynomial>> f_sets` is the set of sets
+    ///     where `f_sets[i]` contains the polynomials to be evaluated at
+    ///     `T[i]`.
     ///
-    /// Repeated polynomials (that is, a polynomial `f` which is to be evaluated
-    /// at multiple points and therefore appears in multiple entries of
-    /// `f_sets`), would be very inefficient in this formulation, but are
-    /// expected to be rare.
+    /// Repeated polynomials (that is, a polynomial `f` which is to be
+    /// evaluated at multiple points) must appear in multiple entries of
+    /// `f_sets`, and is therefore inefficient in this formulation. This case
+    /// is expected to be rare.
     ///
     /// Other formulations can be supported as they are required.
 
