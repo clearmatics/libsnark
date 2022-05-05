@@ -1235,11 +1235,78 @@ namespace libsnark
     polynomial<Field> nu_poly{nu};
     libfqfft::_polynomial_multiplication<Field>(W_zeta_part[1], r_sub_rzeta, nu_poly);
     
+    // --- compute W_zeta_part[2]
+    
+    // -a_zeta as constant term polynomial
+    polynomial<Field> a_zeta_poly_neg;
+    libfqfft::_polynomial_multiplication<Field>(a_zeta_poly_neg, a_zeta_poly, neg_one_poly);
+    // a(x) - a_zeta
+    polynomial<Field> a_sub_azeta;
+    libfqfft::_polynomial_addition<Field>(a_sub_azeta, W_polys_blinded[a], a_zeta_poly_neg);
+    // (a(x) - a_zeta) * nu^2
+    Field nu2 = libff::power(nu, libff::bigint<1>(2));
+    polynomial<Field> nu2_poly{nu2};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[2], a_sub_azeta, nu2_poly);
+    
+    // -b_zeta as constant term polynomial
+    polynomial<Field> b_zeta_poly_neg;
+    libfqfft::_polynomial_multiplication<Field>(b_zeta_poly_neg, b_zeta_poly, neg_one_poly);
+    // (b(x) - b_zeta)
+    polynomial<Field> b_sub_bzeta;
+    libfqfft::_polynomial_addition<Field>(b_sub_bzeta, W_polys_blinded[b], b_zeta_poly_neg);
+    // (b(x) - b_zeta) * nu^3
+    Field nu3 = libff::power(nu, libff::bigint<1>(3));
+    polynomial<Field> nu3_poly{nu3};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[3], b_sub_bzeta, nu3_poly);
+
+    // -c_zeta as constant term polynomial
+    polynomial<Field> c_zeta_poly_neg;
+    libfqfft::_polynomial_multiplication<Field>(c_zeta_poly_neg, c_zeta_poly, neg_one_poly);
+    // (c(x) - c_zeta)
+    polynomial<Field> c_sub_czeta;
+    libfqfft::_polynomial_addition<Field>(c_sub_czeta, W_polys_blinded[c], c_zeta_poly_neg);
+    // (c(x) - c_zeta) * nu^4
+    Field nu4 = libff::power(nu, libff::bigint<1>(4));
+    polynomial<Field> nu4_poly{nu4};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[4], c_sub_czeta, nu4_poly);
+
+    // -S_0_zeta as constant term polynomial
+    polynomial<Field> S_0_zeta_poly_neg{-S_0_zeta};
+    //    libfqfft::_polynomial_multiplication<Field>(S_0_zeta_poly_neg, S_0_zeta_poly, neg_one_poly);
+    // (S0(x) - S_0_zeta)
+    polynomial<Field> S0_sub_szeta;
+    libfqfft::_polynomial_addition<Field>(S0_sub_szeta, S_polys[0], S_0_zeta_poly_neg);
+    // (S0(x) - S_0_zeta) * nu^5
+    Field nu5 = libff::power(nu, libff::bigint<1>(5));
+    polynomial<Field> nu5_poly{nu5};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[5], S0_sub_szeta, nu5_poly);
+
+    // -S_1_zeta as constant term polynomial
+    polynomial<Field> S_1_zeta_poly_neg{-S_1_zeta};
+    //    libfqfft::_polynomial_multiplication<Field>(S_1_zeta_poly_neg, S_1_zeta_poly, neg_one_poly);
+    // (S1(x) - S_1_zeta)
+    polynomial<Field> S1_sub_szeta;
+    libfqfft::_polynomial_addition<Field>(S1_sub_szeta, S_polys[1], S_1_zeta_poly_neg);
+    // (S1(x) - S_1_zeta) * nu^6
+    Field nu6 = libff::power(nu, libff::bigint<1>(6));
+    polynomial<Field> nu6_poly{nu6};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[6], S1_sub_szeta, nu6_poly);
+
 #ifdef DEBUG
     printf("W_zeta_part[0]\n");
     print_vector(W_zeta_part[0]);
     printf("W_zeta_part[1]\n");
     print_vector(W_zeta_part[1]);
+    printf("W_zeta_part[2]\n");
+    print_vector(W_zeta_part[2]);
+    printf("W_zeta_part[3]\n");
+    print_vector(W_zeta_part[3]);
+    printf("W_zeta_part[4]\n");
+    print_vector(W_zeta_part[4]);
+    printf("W_zeta_part[5]\n");
+    print_vector(W_zeta_part[5]);
+    printf("W_zeta_part[6]\n");
+    print_vector(W_zeta_part[6]);
 #endif // #ifdef DEBUG
       
     // end 
