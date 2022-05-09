@@ -813,7 +813,7 @@ namespace libsnark
     print_vector(A_poly);
 #endif // #ifdef DEBUG
 
-    // add blinding polynomial z_1 to the accumulatir polynomial A_poly
+    // add blinding polynomial z_1 to the accumulator polynomial A_poly
     polynomial<Field> z_poly;
     libfqfft::_polynomial_addition<Field>(z_poly, z1_blind_poly, A_poly);
 #ifdef DEBUG
@@ -1292,6 +1292,39 @@ namespace libsnark
     polynomial<Field> nu6_poly{nu6};
     libfqfft::_polynomial_multiplication<Field>(W_zeta_part[6], S1_sub_szeta, nu6_poly);
 
+    // compute full zeta polynomial W_zeta = \sum W_zeta_part[i]
+    int nzeta = 7;
+    polynomial<Field> W_zeta(poly_null);
+    for (int i = 0; i < nzeta; ++i) {
+      libfqfft::_polynomial_addition<Field>(W_zeta, W_zeta, W_zeta_part[i]);
+    }
+
+    // compute 1/(X-zeta) * W_zeta
+    polynomial<Field> x_sub_zeta_poly{-zeta, Field(1)};
+    libfqfft::_polynomial_division(W_zeta, remainder, W_zeta, x_sub_zeta_poly);
+#ifdef DEBUG
+    printf("W_zeta\n");
+    print_vector(W_zeta);
+#endif // #ifdef DEBUG
+    assert(libfqfft::_is_zero(remainder));
+
+    //    polynomial<Field> z_poly;
+    
+    // Compute opening proof:
+    // W_zeta_omega = z(X) - z(zeta*omega) / X - (zeta*omega)
+    polynomial<Field> W_zeta_omega{poly_null};
+    
+    // -z(zeta*omega)
+    polynomial<Field> z_poly_xomega_zeta_neg{-z_poly_xomega_zeta};
+    // z(X) - z(zeta*omega) 
+    libfqfft::_polynomial_addition<Field>(W_zeta_omega, z_poly, z_poly_xomega_zeta_neg);    
+    // -zeta*omega; omega[base][1] = omega_base
+    polynomial<Field> x_sub_zeta_omega{-(zeta*omega[base][1]), Field(1)};
+    
+    // z(X) - z(zeta*omega) / X - (zeta*omega)
+    libfqfft::_polynomial_division(W_zeta_omega, remainder, W_zeta_omega, x_sub_zeta_omega);
+    assert(libfqfft::_is_zero(remainder));
+
 #ifdef DEBUG
     printf("W_zeta_part[0]\n");
     print_vector(W_zeta_part[0]);
@@ -1307,8 +1340,27 @@ namespace libsnark
     print_vector(W_zeta_part[5]);
     printf("W_zeta_part[6]\n");
     print_vector(W_zeta_part[6]);
+    printf("W_zeta\n");
+    print_vector(W_zeta);
+    printf("W_zeta_omega\n");
+    print_vector(W_zeta_omega);
 #endif // #ifdef DEBUG
       
+    // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
+    // input
+    libff::G1<ppT> W_zeta_at_secret =
+      plonk_evaluate_poly_at_secret_G1<ppT>(secret_powers_g1, W_zeta);    
+    libff::G1<ppT> W_zeta_omega_at_secret =
+      plonk_evaluate_poly_at_secret_G1<ppT>(secret_powers_g1, W_zeta_omega);
+    
+#ifdef DEBUG
+    printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
+    printf("[%s:%d] W_zeta_at_secret \n", __FILE__, __LINE__);
+    W_zeta_at_secret.print();
+    printf("[%s:%d] W_zeta_omega_at_secret \n", __FILE__, __LINE__);
+    W_zeta_omega_at_secret.print();
+#endif // #ifdef DEBUG
+    
     // end 
 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
