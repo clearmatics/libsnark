@@ -26,8 +26,12 @@
 #include <libfqfft/evaluation_domain/domains/basic_radix2_domain.hpp>
 #include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
 
+#include <libsnark/zk_proof_systems/plonk/tests/plonk_test_vectors.hpp>
+//#include <libsnark/zk_proof_systems/plonk/tests/plonk_test_vectors.cpp>
+
 #define DEBUG 1
 const size_t MAX_DEGREE = 254;
+
 
 /*
 
@@ -357,19 +361,17 @@ namespace libsnark
     }
   }
 
+ 
   template<typename ppT> void test_plonk()
   {
     // Execute all tests for the given curve.
     ppT::init_public_params();
+
+    plonk_test_vectors<ppT>* test_vectors = new plonk_test_vectors<ppT>;
+    test_vectors->initialize();
     
     using Field = libff::Fr<ppT>;
-    typedef libff::bigint<libff::bls12_381_q_limbs> bigint_q;
-    //    libff::G1<ppT> G1 = libff::G1<ppT>::G1_one;
-    // libff::G2<ppT> G2 = libff::G2<ppT>::G2_one;
-    // Setting G2 equal to G1 (Type1 Bilinear group) for simplicity
-    // and in order to match the test vectors which are produced under
-    // this setting
-    //    libff::G1<ppT> G2 = libff::G1<ppT>::G1_one;
+    using BaseField = libff::Fq<ppT>;
 
     enum W_polys_id{a, b, c};
     enum Q_polys_id{L, R, M, O, C};
@@ -624,25 +626,9 @@ namespace libsnark
     //    const libff::Fr<ppT> i
     //    const Field phi_i = libfqfft::evaluate_polynomial(num_coefficients, phi, i);
 
-    // Verifier precomputation:
-    std::vector<libff::G1<ppT>> Q_polys_at_secret_g1(Q_polys.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, Q_polys, Q_polys_at_secret_g1);
-    std::vector<libff::G1<ppT>> S_polys_at_secret_g1(S_polys.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, S_polys, S_polys_at_secret_g1);
-    
-#if 1 // DEBUG
-    for (int i = 0; i < (int)Q_polys.size(); ++i) {
-      printf("Q_polys_at_secret_G1[%d] \n", i);
-      Q_polys_at_secret_g1[i].print();
-    }
-    for (int i = 0; i < (int)S_polys.size(); ++i) {
-      printf("S_polys_at_secret_G1[%d] \n", i);
-      S_polys_at_secret_g1[i].print();
-    }
-#endif // #if 1 // DEBUG
-
     // --- PROVER ---
 
+    
     printf("[%s:%d] Prover preparation...\n", __FILE__, __LINE__);
     
     int nwitness = 3;
@@ -1019,13 +1005,13 @@ namespace libsnark
     // verify the output from Round 3 to the test vectors. test
     // vectors obtained from the Plonk Python reference implementation
     // (used for debug)
-    bigint_q x_lo = bigint_q("3633475304544039580937168033891821181031270028948315156966430357290637750912918602224358395819959043217498580613188");
-    bigint_q y_lo = bigint_q("1428090154951261810016759192966903623360639220861161704510358440208878251190328471919089961503194904379492282570328");    
-    bigint_q x_mi = bigint_q("763634090322259543766607669979108502605520397912172619611323329140740033948682915660599655604319492439350037062593");
-    bigint_q y_mi = bigint_q("2813678383705930006472398012708516812631766189864357429304341222779755096333176883586053913173384834727806732577514");
-    bigint_q x_hi = bigint_q("1133773332119974571006388114320487134122128432292374613610471191239740936855771046194807037399513728603857921779020");
-    bigint_q y_hi = bigint_q("2371743385249340433047174208075481672774011018845240422821241326403735375534578397825283190840736410689009347296342");    
-    std::vector<std::vector<bigint_q>> t_poly_at_secret_g1_expected
+    BaseField x_lo = BaseField("3633475304544039580937168033891821181031270028948315156966430357290637750912918602224358395819959043217498580613188");
+    BaseField y_lo = BaseField("1428090154951261810016759192966903623360639220861161704510358440208878251190328471919089961503194904379492282570328");    
+    BaseField x_mi = BaseField("763634090322259543766607669979108502605520397912172619611323329140740033948682915660599655604319492439350037062593");
+    BaseField y_mi = BaseField("2813678383705930006472398012708516812631766189864357429304341222779755096333176883586053913173384834727806732577514");
+    BaseField x_hi = BaseField("1133773332119974571006388114320487134122128432292374613610471191239740936855771046194807037399513728603857921779020");
+    BaseField y_hi = BaseField("2371743385249340433047174208075481672774011018845240422821241326403735375534578397825283190840736410689009347296342");    
+    std::vector<std::vector<BaseField>> t_poly_at_secret_g1_expected
       {
        {x_lo, y_lo},
        {x_mi, y_mi},
@@ -1039,6 +1025,9 @@ namespace libsnark
       t_poly_at_secret_g1_i.to_affine_coordinates();
       assert(t_poly_at_secret_g1_i.X == t_poly_at_secret_g1_expected[i][0]);
       assert(t_poly_at_secret_g1_i.Y == t_poly_at_secret_g1_expected[i][1]);
+      
+      assert(t_poly_at_secret_g1_i.X == test_vectors->t_poly_at_secret_g1[i][0]);
+      assert(t_poly_at_secret_g1_i.Y == test_vectors->t_poly_at_secret_g1[i][1]);
     }
 #endif // #ifdef DEBUG
 
@@ -1360,9 +1349,42 @@ namespace libsnark
     printf("[%s:%d] W_zeta_omega_at_secret \n", __FILE__, __LINE__);
     W_zeta_omega_at_secret.print();
 #endif // #ifdef DEBUG
-    
-    // end 
 
+    // --- VERIFIER ---
+
+    printf("[%s:%d] Verifier preparation...\n", __FILE__, __LINE__);
+    
+    // Verifier precomputation:
+    std::vector<libff::G1<ppT>> Q_polys_at_secret_g1(Q_polys.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, Q_polys, Q_polys_at_secret_g1);
+    std::vector<libff::G1<ppT>> S_polys_at_secret_g1(S_polys.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, S_polys, S_polys_at_secret_g1);
+    
+#if 1 // DEBUG
+    for (int i = 0; i < (int)Q_polys.size(); ++i) {
+      printf("Q_polys_at_secret_G1[%d] \n", i);
+      Q_polys_at_secret_g1[i].print();
+    }
+    for (int i = 0; i < (int)S_polys.size(); ++i) {
+      printf("S_polys_at_secret_G1[%d] \n", i);
+      S_polys_at_secret_g1[i].print();
+    }
+#endif // #if 1 // DEBUG
+
+    //    using namespace plonk_test_vectors;
+    //    libff::G1<ppT> point(BaseField("378726381176462718147300358135739414750401881865179496688045184488721729111812849671928978444183306485908524284480"), BaseField("791833214624823925392353480024899450306823972545233663950102448253555712343824442312037763251986444707559468789167"), BaseField(1));
+    //    Q_polys_at_secret_g1[0].print();
+    //    Q_polys_at_secret_g1[0].X.print();
+    //    plonk_test_vectors::Q_polys_at_secret_g1_0_X.print();
+    //    assert(Q_polys_at_secret_g1[0] == plonk_test_vectors::Q_polys_at_secret_g1[0]);
+    //    point.print();
+    //    assert(Q_polys_at_secret_g1[0] == plonk_test_vectors::Q_polys_at_secret_g1[0]);
+    //    std::vector<libff::G1<ppT>> Q_polys_at_secret_g1_expected
+    //      {
+    //	(Field("378726381176462718147300358135739414750401881865179496688045184488721729111812849671928978444183306485908524284480"), Field("791833214624823925392353480024899450306823972545233663950102448253555712343824442312037763251986444707559468789167"))	  
+    //      };
+
+    // end 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
 
