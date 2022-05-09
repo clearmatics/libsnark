@@ -371,7 +371,7 @@ namespace libsnark
     test_vectors->initialize();
     
     using Field = libff::Fr<ppT>;
-    using BaseField = libff::Fq<ppT>;
+    //    using BaseField = libff::Fq<ppT>;
 
     enum W_polys_id{a, b, c};
     enum Q_polys_id{L, R, M, O, C};
@@ -1005,27 +1005,11 @@ namespace libsnark
     // verify the output from Round 3 to the test vectors. test
     // vectors obtained from the Plonk Python reference implementation
     // (used for debug)
-    BaseField x_lo = BaseField("3633475304544039580937168033891821181031270028948315156966430357290637750912918602224358395819959043217498580613188");
-    BaseField y_lo = BaseField("1428090154951261810016759192966903623360639220861161704510358440208878251190328471919089961503194904379492282570328");    
-    BaseField x_mi = BaseField("763634090322259543766607669979108502605520397912172619611323329140740033948682915660599655604319492439350037062593");
-    BaseField y_mi = BaseField("2813678383705930006472398012708516812631766189864357429304341222779755096333176883586053913173384834727806732577514");
-    BaseField x_hi = BaseField("1133773332119974571006388114320487134122128432292374613610471191239740936855771046194807037399513728603857921779020");
-    BaseField y_hi = BaseField("2371743385249340433047174208075481672774011018845240422821241326403735375534578397825283190840736410689009347296342");    
-    std::vector<std::vector<BaseField>> t_poly_at_secret_g1_expected
-      {
-       {x_lo, y_lo},
-       {x_mi, y_mi},
-       {x_hi, y_hi},
-      };
-      
     for (int i = 0; i < ngen; ++i) {
       printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
       t_poly_at_secret_g1[i].print();
       libff::G1<ppT> t_poly_at_secret_g1_i(t_poly_at_secret_g1[i]);
       t_poly_at_secret_g1_i.to_affine_coordinates();
-      assert(t_poly_at_secret_g1_i.X == t_poly_at_secret_g1_expected[i][0]);
-      assert(t_poly_at_secret_g1_i.Y == t_poly_at_secret_g1_expected[i][1]);
-      
       assert(t_poly_at_secret_g1_i.X == test_vectors->t_poly_at_secret_g1[i][0]);
       assert(t_poly_at_secret_g1_i.Y == test_vectors->t_poly_at_secret_g1[i][1]);
     }
@@ -1049,36 +1033,27 @@ namespace libsnark
     Field z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega.size(), z_poly_xomega, zeta);
     
 #ifdef DEBUG
-    // output of Round 4: test vector values
-    Field a_zeta_expected = Field("8901875463326310313456570652869873776746767429001289506712732994487869455294");
-    Field b_zeta_expected  = Field("17059370482702287697833061796226204248201565415155528923232473993993212080397");
-    Field c_zeta_expected  = Field("2409756965930008556696371654169913125397449986372522636184003898699439708220");
-    Field S_0_zeta_expected  = Field("46143626155803287918330279428390848286076645428477353060129573054942492588828");
-    Field S_1_zeta_expected  = Field("24392704635891252343143269633563768345145008520140360299402842967762646340846");
-    Field t_zeta_expected = Field("17704211079697158667898451781925539666888780633357685549668669638883218786797");
-    Field z_poly_xomega_zeta_expected = Field("28842520748921749858267479462666161290723351257502457358354355079408206613634");
-
     printf("a_zeta ");
     a_zeta.print();
-    assert(a_zeta == a_zeta_expected);
+    assert(a_zeta == test_vectors->a_zeta);
     printf("b_zeta ");
     b_zeta.print();
-    assert(b_zeta == b_zeta_expected);
+    assert(b_zeta == test_vectors->b_zeta);
     printf("c_zeta ");
     c_zeta.print();
-    assert(c_zeta == c_zeta_expected);
+    assert(c_zeta == test_vectors->c_zeta);
     printf("S_0_zeta ");
     S_0_zeta.print();
-    assert(S_0_zeta == S_0_zeta_expected);
+    assert(S_0_zeta == test_vectors->S_0_zeta);
     printf("S_1_zeta ");
     S_1_zeta.print();
-    assert(S_1_zeta == S_1_zeta_expected);
+    assert(S_1_zeta == test_vectors->S_1_zeta);
     printf("t_zeta ");
     t_zeta.print();
-    assert(t_zeta == t_zeta_expected);
+    assert(t_zeta == test_vectors->t_zeta);
     printf("z_poly_xomega_zeta ");
     z_poly_xomega_zeta.print();
-    assert(z_poly_xomega_zeta == z_poly_xomega_zeta_expected);
+    assert(z_poly_xomega_zeta == test_vectors->z_poly_xomega_zeta);
 #endif // #ifdef DEBUG
     
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
