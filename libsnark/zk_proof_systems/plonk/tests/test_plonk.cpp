@@ -26,8 +26,7 @@
 #include <libfqfft/evaluation_domain/domains/basic_radix2_domain.hpp>
 #include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
 
-#include <libsnark/zk_proof_systems/plonk/tests/plonk_test_vectors.hpp>
-//#include <libsnark/zk_proof_systems/plonk/tests/plonk_test_vectors.cpp>
+#include <libsnark/zk_proof_systems/plonk/tests/plonk_example.hpp>
 
 #define DEBUG 1
 const size_t MAX_DEGREE = 254;
@@ -367,8 +366,8 @@ namespace libsnark
     // Execute all tests for the given curve.
     ppT::init_public_params();
 
-    plonk_test_vectors<ppT>* test_vectors = new plonk_test_vectors<ppT>;
-    test_vectors->initialize();
+    plonk_example<ppT>* example = new plonk_example<ppT>;
+    example->initialize();
     
     using Field = libff::Fr<ppT>;
     //    using BaseField = libff::Fq<ppT>;
@@ -1010,8 +1009,8 @@ namespace libsnark
       t_poly_at_secret_g1[i].print();
       libff::G1<ppT> t_poly_at_secret_g1_i(t_poly_at_secret_g1[i]);
       t_poly_at_secret_g1_i.to_affine_coordinates();
-      assert(t_poly_at_secret_g1_i.X == test_vectors->t_poly_at_secret_g1[i][0]);
-      assert(t_poly_at_secret_g1_i.Y == test_vectors->t_poly_at_secret_g1[i][1]);
+      assert(t_poly_at_secret_g1_i.X == example->t_poly_at_secret_g1[i][0]);
+      assert(t_poly_at_secret_g1_i.Y == example->t_poly_at_secret_g1[i][1]);
     }
 #endif // #ifdef DEBUG
 
@@ -1035,25 +1034,25 @@ namespace libsnark
 #ifdef DEBUG
     printf("a_zeta ");
     a_zeta.print();
-    assert(a_zeta == test_vectors->a_zeta);
+    assert(a_zeta == example->a_zeta);
     printf("b_zeta ");
     b_zeta.print();
-    assert(b_zeta == test_vectors->b_zeta);
+    assert(b_zeta == example->b_zeta);
     printf("c_zeta ");
     c_zeta.print();
-    assert(c_zeta == test_vectors->c_zeta);
+    assert(c_zeta == example->c_zeta);
     printf("S_0_zeta ");
     S_0_zeta.print();
-    assert(S_0_zeta == test_vectors->S_0_zeta);
+    assert(S_0_zeta == example->S_0_zeta);
     printf("S_1_zeta ");
     S_1_zeta.print();
-    assert(S_1_zeta == test_vectors->S_1_zeta);
+    assert(S_1_zeta == example->S_1_zeta);
     printf("t_zeta ");
     t_zeta.print();
-    assert(t_zeta == test_vectors->t_zeta);
+    assert(t_zeta == example->t_zeta);
     printf("z_poly_xomega_zeta ");
     z_poly_xomega_zeta.print();
-    assert(z_poly_xomega_zeta == test_vectors->z_poly_xomega_zeta);
+    assert(z_poly_xomega_zeta == example->z_poly_xomega_zeta);
 #endif // #ifdef DEBUG
     
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
@@ -1157,12 +1156,11 @@ namespace libsnark
     // Evaluate the r-polynomial at zeta
     Field r_zeta = libfqfft::evaluate_polynomial<Field>(r_poly.size(), r_poly, zeta);
 #ifdef DEBUG
-    Field r_zeta_expected = Field("9840183355354075764860129139740187852136872731945621853688663309524905254695");
     printf("r_zeta ");
     r_zeta.print();
-    assert(r_zeta == r_zeta_expected);
 #endif // #ifdef DEBUG
-
+    
+    assert(r_zeta == example->r_zeta);
 
     // W_zeta polynomial is of degree 6 in the random element nu and
     // hence has 7 terms
@@ -1310,6 +1308,9 @@ namespace libsnark
     print_vector(W_zeta_omega);
 #endif // #ifdef DEBUG
       
+    assert(W_zeta == example->W_zeta);
+    assert(W_zeta_omega == example->W_zeta_omega);
+    
     // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
     // input
     libff::G1<ppT> W_zeta_at_secret =
@@ -1319,10 +1320,20 @@ namespace libsnark
     
 #ifdef DEBUG
     printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
+    
     printf("[%s:%d] W_zeta_at_secret \n", __FILE__, __LINE__);
     W_zeta_at_secret.print();
+    libff::G1<ppT> W_zeta_at_secret_aff(W_zeta_at_secret);
+    W_zeta_at_secret_aff.to_affine_coordinates();
+    assert(W_zeta_at_secret_aff.X == example->W_zeta_at_secret[0]);
+    assert(W_zeta_at_secret_aff.Y == example->W_zeta_at_secret[1]);
+    
     printf("[%s:%d] W_zeta_omega_at_secret \n", __FILE__, __LINE__);
     W_zeta_omega_at_secret.print();
+    libff::G1<ppT> W_zeta_omega_at_secret_aff(W_zeta_omega_at_secret);
+    W_zeta_omega_at_secret_aff.to_affine_coordinates();
+    assert(W_zeta_omega_at_secret_aff.X == example->W_zeta_omega_at_secret[0]);
+    assert(W_zeta_omega_at_secret_aff.Y == example->W_zeta_omega_at_secret[1]);
 #endif // #ifdef DEBUG
 
     // --- VERIFIER ---
@@ -1338,26 +1349,21 @@ namespace libsnark
 #if 1 // DEBUG
     for (int i = 0; i < (int)Q_polys.size(); ++i) {
       printf("Q_polys_at_secret_G1[%d] \n", i);
-      Q_polys_at_secret_g1[i].print();
+      Q_polys_at_secret_g1[i].print();      
+      libff::G1<ppT> Q_poly_at_secret_g1_i(Q_polys_at_secret_g1[i]);
+      Q_poly_at_secret_g1_i.to_affine_coordinates();      
+      assert(Q_poly_at_secret_g1_i.X == example->Q_polys_at_secret_g1[i][0]);
+      assert(Q_poly_at_secret_g1_i.Y == example->Q_polys_at_secret_g1[i][1]);
     }
     for (int i = 0; i < (int)S_polys.size(); ++i) {
       printf("S_polys_at_secret_G1[%d] \n", i);
       S_polys_at_secret_g1[i].print();
+      libff::G1<ppT> S_poly_at_secret_g1_i(S_polys_at_secret_g1[i]);
+      S_poly_at_secret_g1_i.to_affine_coordinates();      
+      assert(S_poly_at_secret_g1_i.X == example->S_polys_at_secret_g1[i][0]);
+      assert(S_poly_at_secret_g1_i.Y == example->S_polys_at_secret_g1[i][1]);
     }
 #endif // #if 1 // DEBUG
-
-    //    using namespace plonk_test_vectors;
-    //    libff::G1<ppT> point(BaseField("378726381176462718147300358135739414750401881865179496688045184488721729111812849671928978444183306485908524284480"), BaseField("791833214624823925392353480024899450306823972545233663950102448253555712343824442312037763251986444707559468789167"), BaseField(1));
-    //    Q_polys_at_secret_g1[0].print();
-    //    Q_polys_at_secret_g1[0].X.print();
-    //    plonk_test_vectors::Q_polys_at_secret_g1_0_X.print();
-    //    assert(Q_polys_at_secret_g1[0] == plonk_test_vectors::Q_polys_at_secret_g1[0]);
-    //    point.print();
-    //    assert(Q_polys_at_secret_g1[0] == plonk_test_vectors::Q_polys_at_secret_g1[0]);
-    //    std::vector<libff::G1<ppT>> Q_polys_at_secret_g1_expected
-    //      {
-    //	(Field("378726381176462718147300358135739414750401881865179496688045184488721729111812849671928978444183306485908524284480"), Field("791833214624823925392353480024899450306823972545233663950102448253555712343824442312037763251986444707559468789167"))	  
-    //      };
 
     // end 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
