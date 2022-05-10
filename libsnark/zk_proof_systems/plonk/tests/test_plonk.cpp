@@ -360,7 +360,37 @@ namespace libsnark
     }
   }
 
- 
+  //
+  // Note: the following function copied from
+  // libff/algebra/curves/tests/test_groups.cpp TODO: maybe add the
+  // declaration in a header to use it directly from here. Uded in the
+  // Verifier code.
+  //
+  // Check that a group element satisfies the curve equation Y^2 = X^3
+  // + a X + b
+  //
+  template<typename GroupT>
+  bool check_curve_equation(GroupT P)
+  {
+    P.to_affine_coordinates();
+    using Fq = typename std::decay<decltype(P.X)>::type;
+    Fq LHS = (P.Y * P.Y);
+    Fq RHS = ((P.X * P.X * P.X) + (GroupT::coeff_a * P.X) + GroupT::coeff_b);
+    bool b_equal = (LHS == RHS);
+    return b_equal;
+  }
+
+  //
+  // check that the input is an elemnet of the field
+  // Warning: under development
+  //
+  template<typename FieldT>
+  bool check_field_element(FieldT x)
+  {
+    bool b_valid = (typeid(x) == typeid(FieldT));
+    return b_valid;
+  }
+  
   template<typename ppT> void test_plonk()
   {
     // Execute all tests for the given curve.
@@ -593,11 +623,10 @@ namespace libsnark
     secret.print();
 #endif // #if 1 // DEBUG
     
-    // compute powers of secret * G1: 1*G1, secret*G1, secret^2*G1, ...
+    // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
     const libff::bigint<Field::num_limbs> secret_bigint = secret.as_bigint();
-    const size_t window_size = std::max(
-					libff::wnaf_opt_window_size<libff::G1<ppT>>(secret_bigint.num_bits()),
-					1ul);
+    const size_t window_size =
+      std::max(libff::wnaf_opt_window_size<libff::G1<ppT>>(secret_bigint.num_bits()), 1ul);
     const std::vector<long> naf =
       libff::find_wnaf<Field::num_limbs>(window_size, secret_bigint);    
     std::vector<libff::G1<ppT>> secret_powers_g1;
@@ -610,23 +639,28 @@ namespace libsnark
 								window_size, secret_i_g1, naf);
       secret_powers_g1.push_back(secret_i_g1);
     }    
+    // compute powers of secret times G2: 1*G2, secret^1*G2
+    std::vector<libff::G2<ppT>> secret_powers_g2;
+    secret_powers_g2.reserve(2);
+    // secret^0 * G2 = G2
+    libff::G2<ppT> secret_0_g2 = libff::G2<ppT>::one();
+    secret_powers_g2.push_back(secret_0_g2);
+    // secret^1 * G2
+    libff::G2<ppT> secret_1_g2 = secret * libff::G2<ppT>::one();
+    secret_powers_g2.push_back(secret_1_g2);
 
 #if 1 // DEBUG
     for (int i = 0; i < nconstraints + 3; ++i) {
-      printf("secret_power[%2d] ", i);
+      printf("secret_power_G1[%2d] ", i);
       secret_powers_g1[i].print();
+    }
+    for (int i = 0; i < 2; ++i) {
+      printf("secret_power_G2[%2d] ", i);
+      secret_powers_g2[i].print();
     }
 #endif // #if 1 // DEBUG
 
-    //    std::vector<polynomial<Field>> Q_polys(nqpoly, polynomial<Field>(nconstraints));
-    // Q_polys[i] is polynomial<Field>
-
-    //    const size_t num_coefficients = phi.size();
-    //    const libff::Fr<ppT> i
-    //    const Field phi_i = libfqfft::evaluate_polynomial(num_coefficients, phi, i);
-
     // --- PROVER ---
-
     
     printf("[%s:%d] Prover preparation...\n", __FILE__, __LINE__);
     
@@ -1338,6 +1372,34 @@ namespace libsnark
 
     // --- VERIFIER ---
 
+    //
+    // SNARK proof
+    //
+    // Pi ([a]_1, [b]_1, [c]_1, [z]_1,
+    //     [t_lo]_1, [t_mi]_1, [t_hi]_1,
+    //     \bar{a}, \bar{b}, \bar{c},
+    //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
+    //     [W_zeta]_1, [W_{zeta omega}]_1)
+    //
+    // Mapping code-to-paper quantities
+    //
+    // - W_polys_blinded_at_secret_g1[a, b, c]: [a]_1, [b]_1, [c]_1 (from Round 1)
+    // - z_poly_at_secret_g1: [z]_1 (from Round 2)
+    // - t_poly_at_secret_g1[lo, mi, hi]: [t_lo]_1, [t_mi]_1, [t_hi]_1 (from Round 3)
+    // - a_zeta, b_zeta, c_zeta, S_0_zeta, S_1_zeta, z_poly_xomega_zeta: \bar{a}, \bar{b}, \bar{c}, \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w} (from Round 4)
+    // - W_zeta_at_secret, W_zeta_omega_at_secret: [W_zeta]_1, [W_{zeta omega}]_1 (from Round 5)
+    //
+    //
+    // Verifier preprocessed input
+    //
+    //  - Q_polys_at_secret_g1[0..3]: [q_M]_1, [q_L]_1, [q_R]_1, [q_O]_1
+    //  - S_polys_at_secret_g1[0..2]: [S_sigma1]_1, [S_sigma2]_1, [S_sigma3]_1
+    //  - secret_powers_g2[1]: [secret]_2 = secret^1 * G2
+    //
+    // Public input polynomial
+    //
+    // PI_poly: w_i, 0\le{i}<l<n
+    //    
     printf("[%s:%d] Verifier preparation...\n", __FILE__, __LINE__);
     
     // Verifier precomputation:
@@ -1345,8 +1407,10 @@ namespace libsnark
     plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, Q_polys, Q_polys_at_secret_g1);
     std::vector<libff::G1<ppT>> S_polys_at_secret_g1(S_polys.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, S_polys, S_polys_at_secret_g1);
+
+    // secret * G2
     
-#if 1 // DEBUG
+#ifdef DEBUG
     for (int i = 0; i < (int)Q_polys.size(); ++i) {
       printf("Q_polys_at_secret_G1[%d] \n", i);
       Q_polys_at_secret_g1[i].print();      
@@ -1363,7 +1427,51 @@ namespace libsnark
       assert(S_poly_at_secret_g1_i.X == example->S_polys_at_secret_g1[i][0]);
       assert(S_poly_at_secret_g1_i.Y == example->S_polys_at_secret_g1[i][1]);
     }
-#endif // #if 1 // DEBUG
+#endif // #ifdef DEBUG
+    
+    bool b_valid = false;
+
+    // --- Verifier Step 1: assert elements belong to group G1
+    b_valid = check_curve_equation<libff::G1<ppT>>(W_polys_blinded_at_secret_g1[a]);
+    assert(b_valid);
+    b_valid = check_curve_equation<libff::G1<ppT>>(W_polys_blinded_at_secret_g1[b]);
+    assert(b_valid);
+    b_valid = check_curve_equation<libff::G1<ppT>>(W_polys_blinded_at_secret_g1[c]);
+    assert(b_valid);
+    b_valid = check_curve_equation<libff::G1<ppT>>(z_poly_at_secret_g1);
+    assert(b_valid);
+    b_valid = check_curve_equation<libff::G1<ppT>>(t_poly_at_secret_g1[lo]);
+    assert(b_valid);
+    b_valid = check_curve_equation<libff::G1<ppT>>(t_poly_at_secret_g1[mid]);
+    assert(b_valid);
+    b_valid = check_curve_equation<libff::G1<ppT>>(t_poly_at_secret_g1[hi]);
+    assert(b_valid);
+    b_valid = check_curve_equation<libff::G1<ppT>>(W_zeta_at_secret);
+    assert(b_valid);
+    b_valid = check_curve_equation<libff::G1<ppT>>(W_zeta_omega_at_secret);
+    assert(b_valid);
+
+    // --- Verifier Step 2: assert elements belong to scalar field Fr
+    b_valid = check_field_element<Field>(a_zeta);    
+    assert(b_valid);
+    b_valid = check_field_element<Field>(b_zeta);    
+    assert(b_valid);
+    b_valid = check_field_element<Field>(c_zeta);    
+    assert(b_valid);
+    b_valid = check_field_element<Field>(S_0_zeta);    
+    assert(b_valid);
+    b_valid = check_field_element<Field>(S_1_zeta);    
+    assert(b_valid);
+    b_valid = check_field_element<Field>(z_poly_xomega_zeta);    
+    assert(b_valid);
+    
+    // --- Verifier Step 3: assert the public input belongs to scalar field Fr
+    assert(PI_poly.size() <= nconstraints);
+    for (int i = 0; i < (int)PI_poly.size(); ++i) {
+      b_valid = check_field_element<Field>(PI_poly[i]);    
+      assert(b_valid);      
+    }    
+
 
     // end 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
