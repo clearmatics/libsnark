@@ -16,6 +16,8 @@ gadget<FieldT>::gadget(
     protoboard<FieldT> &pb, const std::string &annotation_prefix)
     : pb(pb), annotation_prefix(annotation_prefix)
 {
+    // Annotations may appear as "" (even if set by the calling code) unless
+    // DEBUG is set. See pb_variable.tcc.
 #ifdef DEBUG
     assert(annotation_prefix != "");
 #endif
