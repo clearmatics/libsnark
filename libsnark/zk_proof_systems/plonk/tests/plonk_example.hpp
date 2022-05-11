@@ -17,8 +17,7 @@ public:
   Field alpha;
   Field zeta;
   Field nu; // v
-  Field u; 
-  
+  Field u;   
   // Prover Round 3
   std::vector<std::vector<BaseField>> t_poly_at_secret_g1;
   // Prover Round 4
@@ -40,6 +39,14 @@ public:
   // Verifier precomputation
   std::vector<std::vector<BaseField>> Q_polys_at_secret_g1;
   std::vector<std::vector<BaseField>> S_polys_at_secret_g1;
+  // Verifier Step 5: vanishing polynomial evaluation at zeta
+  Field zh_zeta;
+  // Verifier Step 6: compute Lagrange polynomial evaluation L1(zeta)
+  Field L_0_zeta;
+  // Verifier Step7: evaluate public input polynomial at zeta
+  Field PI_zeta;
+  // Verifier Step 8: compute quotient polynomial evaluation r'(zeta) = r(zeta) - r0, where r0 is a constant term
+  Field r_prime_zeta;
 
   void initialize();
 };

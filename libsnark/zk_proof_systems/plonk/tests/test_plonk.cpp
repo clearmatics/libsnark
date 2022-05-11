@@ -535,12 +535,6 @@ namespace libsnark
     print_vector(PI_poly);
 #endif // #ifdef DEBUG
 
-#if 1 // DEBUG
-    // test Lagrange polynomials
-    //template<typename FieldT>
-    //FieldT evaluate_lagrange_polynomial(const size_t &m, const std::vector<FieldT> &domain, const FieldT &t, const size_t &idx);
-#endif // #if 1 // DEBUG
-    
     // output from plonk_compute_constraints_polynomials() compute the q-polynomials from the
     // (transposed) gates matrix over the Lagrange basis q_poly =
     // \sum_i q[i] * L[i] where q[i] is a coefficient (a Field
@@ -726,12 +720,6 @@ namespace libsnark
     omega3_temp.print();
     assert(omega3_temp == 1);
 #endif // #ifdef DEBUG
-
-    //    Field t = Field(omega_base);
-    //    Field a;
-    //    a = domain->compute_vanishing_polynomial(t);
-    //    printf("[%s:%d] a ", __FILE__, __LINE__);
-    //    a.print();
 
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
 
@@ -1187,13 +1175,16 @@ namespace libsnark
     print_vector(r_poly);
 #endif // #if DEBUG
 
-    // Evaluate the r-polynomial at zeta
+    // Evaluate the r-polynomial at zeta. Note: in the reference
+    // implementation, r_zeta is added to the pi-SNARK proof. In the
+    // paper this is omitted, which makes the proof shorter at the
+    // epxense of a slightly heavier computation on the verifier's
+    // side 
     Field r_zeta = libfqfft::evaluate_polynomial<Field>(r_poly.size(), r_poly, zeta);
 #ifdef DEBUG
     printf("r_zeta ");
     r_zeta.print();
-#endif // #ifdef DEBUG
-    
+#endif // #ifdef DEBUG    
     assert(r_zeta == example->r_zeta);
 
     // W_zeta polynomial is of degree 6 in the random element nu and
@@ -1383,7 +1374,18 @@ namespace libsnark
     //     [t_lo]_1, [t_mi]_1, [t_hi]_1,
     //     \bar{a}, \bar{b}, \bar{c},
     //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
-    //     [W_zeta]_1, [W_{zeta omega}]_1)
+    //     [W_zeta]_1, [W_{zeta omega}]_1
+    //     r_zeta (*))
+    //
+    // (*) Note: in the reference Python implementation, r_zeta (the
+    // evaluation of the r(X) polynomial at zeta from Prover round 5)
+    // is added to the pi-SNARK proof. In the paper this is omitted,
+    // which seems to make the proof shorter by 1 element at the
+    // epxense of a slightly heavier computation on the verifier's
+    // side. Here we follow the reference implementation to make sure
+    // we match the test values. TODO: once all test vectors are
+    // verified, we may remove r_zeta from the proof to be fully
+    // compliant with the paper.
     //
     // Mapping code-to-paper quantities
     //
@@ -1392,7 +1394,6 @@ namespace libsnark
     // - t_poly_at_secret_g1[lo, mi, hi]: [t_lo]_1, [t_mi]_1, [t_hi]_1 (from Round 3)
     // - a_zeta, b_zeta, c_zeta, S_0_zeta, S_1_zeta, z_poly_xomega_zeta: \bar{a}, \bar{b}, \bar{c}, \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w} (from Round 4)
     // - W_zeta_at_secret, W_zeta_omega_at_secret: [W_zeta]_1, [W_{zeta omega}]_1 (from Round 5)
-    //
     //
     // Verifier preprocessed input
     //
@@ -1435,7 +1436,7 @@ namespace libsnark
     
     bool b_valid = false;
 
-    // --- Verifier Step 1: assert elements belong to group G1
+    // --- Verifier Step 1: validate that elements belong to group G1
     b_valid = check_curve_equation<libff::G1<ppT>>(W_polys_blinded_at_secret_g1[a]);
     assert(b_valid);
     b_valid = check_curve_equation<libff::G1<ppT>>(W_polys_blinded_at_secret_g1[b]);
@@ -1455,7 +1456,7 @@ namespace libsnark
     b_valid = check_curve_equation<libff::G1<ppT>>(W_zeta_omega_at_secret);
     assert(b_valid);
 
-    // --- Verifier Step 2: assert elements belong to scalar field Fr
+    // --- Verifier Step 2: validate that elements belong to scalar field Fr
     b_valid = check_field_element<Field>(a_zeta);    
     assert(b_valid);
     b_valid = check_field_element<Field>(b_zeta);    
@@ -1468,14 +1469,80 @@ namespace libsnark
     assert(b_valid);
     b_valid = check_field_element<Field>(z_poly_xomega_zeta);    
     assert(b_valid);
+    b_valid = check_field_element<Field>(r_zeta);    
+    assert(b_valid);
     
-    // --- Verifier Step 3: assert the public input belongs to scalar field Fr
+    // --- Verifier Step 3: validate that the public input belongs to scalar field Fr
     assert(PI_poly.size() <= nconstraints);
     for (int i = 0; i < (int)PI_poly.size(); ++i) {
       b_valid = check_field_element<Field>(PI_poly[i]);    
       assert(b_valid);      
     }    
 
+    // --- Verifier Step 4: compute challenges hashed transcript as in
+    //     prover description, from the common inputs, public input,
+    //     and elements of pi-SNARK .  TODO: fixed to the test vectors for now
+    beta = example->beta;
+    gamma = example->gamma;
+    alpha = example->alpha;
+    zeta = example->zeta;
+    nu = example->nu;
+    u = example->u;
+
+    // --- Verifier Step 5: compute zero polynomial evaluation
+    domain = libfqfft::get_evaluation_domain<Field>(nconstraints);
+    Field zh_zeta = domain->compute_vanishing_polynomial(zeta);
+    printf("[%s:%d] zh_zeta ", __FILE__, __LINE__);
+    zh_zeta.print();
+    assert(zh_zeta == example->zh_zeta);
+
+    // --- Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
+    // Note: the paper counts the L-polynomials from 1; we count from 0
+    Field L_0_zeta = libfqfft::evaluate_polynomial<Field>(L_basis[0].size(), L_basis[0], zeta);   
+#ifdef DEBUG
+    printf("L_0_zeta ");
+    L_0_zeta.print();
+#endif // #ifdef DEBUG    
+    assert(L_0_zeta == example->L_0_zeta);
+
+    // --- Verifier Step 7: compute public input polynomial evaluation PI(zeta)
+    Field PI_zeta = libfqfft::evaluate_polynomial<Field>(PI_poly.size(), PI_poly, zeta);   
+#ifdef DEBUG
+    printf("PI_zeta ");
+    PI_zeta.print();
+#endif // #ifdef DEBUG    
+    assert(PI_zeta == example->PI_zeta);
+    
+    // --- Verifier Step 8: compute quotient polynomial evaluation
+    // r'(zeta) = r(zeta) - r0, where r0 is a constant term    
+    // Note: follows the Python reference implementation, which
+    // slightly deviates from the paper due to the presence of the
+    // r_zeta term in the proof
+
+    // compute polynomial r'(zeta) = r(zeta) - r_0
+    std::vector<Field> r_prime_zeta_parts(5);
+    r_prime_zeta_parts[0] = r_zeta + PI_zeta;
+    r_prime_zeta_parts[1] = (a_zeta + (beta * S_0_zeta) + gamma);
+    r_prime_zeta_parts[2] = (b_zeta + (beta * S_1_zeta) + gamma);
+    r_prime_zeta_parts[3] = (c_zeta + gamma) * z_poly_xomega_zeta * alpha;
+    r_prime_zeta_parts[4] = (L_0_zeta * libff::power(alpha, libff::bigint<1>(2)));
+    Field r_prime_zeta = (r_prime_zeta_parts[0] - (r_prime_zeta_parts[1] * r_prime_zeta_parts[2] * r_prime_zeta_parts[3]) - r_prime_zeta_parts[4]) * zh_zeta.inverse();
+    
+#ifdef DEBUG
+    printf("r_prime_zeta_parts[%d] ", 0);
+    r_prime_zeta_parts[0].print();
+    printf("r_prime_zeta_parts[%d] ", 1);
+    r_prime_zeta_parts[1].print();
+    printf("r_prime_zeta_parts[%d] ", 2);
+    r_prime_zeta_parts[2].print();
+    printf("r_prime_zeta_parts[%d] ", 3);
+    r_prime_zeta_parts[3].print();
+    printf("r_prime_zeta_parts[%d] ", 4);
+    r_prime_zeta_parts[4].print();
+    printf("r_prime_zeta          ");
+    r_prime_zeta.print();
+#endif // #ifdef DEBUG    
+    assert(r_prime_zeta == example->r_prime_zeta);
 
     // end 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
