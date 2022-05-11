@@ -11,6 +11,14 @@ public:
   using BaseField = libff::Fq<ppT>;
   template<typename FieldT> using polynomial = std::vector<FieldT>;
 
+  // Hashes of transcript (Fiat-Shamir heuristic)
+  Field beta;
+  Field gamma;
+  Field alpha;
+  Field zeta;
+  Field nu; // v
+  Field u; 
+  
   // Prover Round 3
   std::vector<std::vector<BaseField>> t_poly_at_secret_g1;
   // Prover Round 4

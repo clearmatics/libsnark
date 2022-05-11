@@ -801,8 +801,8 @@ namespace libsnark
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
-    Field beta = Field("3710899868510394644410941212967766116886736137326022751891187938298987182388");
-    Field gamma = Field("11037930384083194587907709665332116843267274045828802249545114995763715746939");
+    Field beta = example->beta;
+    Field gamma = example->gamma;
 
     // compute permutation polynomial
 
@@ -850,7 +850,7 @@ namespace libsnark
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
-    Field alpha = Field("37979978999274723893071781986484838492111162341880360022719385400306128734648");
+    Field alpha = example->alpha;
     
     // plonk_poly_shifted    
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
@@ -1052,7 +1052,7 @@ namespace libsnark
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
-    Field zeta = Field("43271972289218399355833643945502350270719103959803126415018065799136107272465");
+    Field zeta = example->zeta;
 #ifdef DEBUG
     printf("[%s:%d] zeta\n", __FILE__, __LINE__);
     zeta.print();
@@ -1093,7 +1093,7 @@ namespace libsnark
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
-    Field nu = Field("27515859833869775242150726508092341429478280783192379165155175653098691426347");
+    Field nu = example->nu;
     
     // compute linerisation polynomial r in five parts
     std::vector<polynomial<Field>> r_part(5);
@@ -1369,6 +1369,10 @@ namespace libsnark
     assert(W_zeta_omega_at_secret_aff.X == example->W_zeta_omega_at_secret[0]);
     assert(W_zeta_omega_at_secret_aff.Y == example->W_zeta_omega_at_secret[1]);
 #endif // #ifdef DEBUG
+
+    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
+    // the test vectors
+    Field u = example->u;
 
     // --- VERIFIER ---
 
