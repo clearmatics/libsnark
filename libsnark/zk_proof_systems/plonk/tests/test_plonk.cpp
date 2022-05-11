@@ -242,6 +242,54 @@ namespace libsnark
 
   }
 
+  // A wrapper for multi_exp_method_BDLO12_signed() for multiplying a
+  // single group element in G1 (a point on the curve) to a scalar
+  // elements in Fr
+  template<typename ppT>
+  libff::G1<ppT> plonk_exp_G1(
+			      libff::G1<ppT> curve_point,
+			      libff::Fr<ppT> scalar_element
+			      )
+  {
+    std::vector<libff::Fr<ppT>> scalar{scalar_element};
+    std::vector<libff::G1<ppT>> point{curve_point};
+    const size_t chunks = 1;
+    libff::G1<ppT> product = 
+      libff::multi_exp<
+	libff::G1<ppT>,
+      libff::Fr<ppT>,
+      libff::multi_exp_method_BDLO12_signed>(
+					     point.begin(),
+					     point.end(),
+					     scalar.begin(),
+					     scalar.end(),
+					     chunks);
+    return product;
+  }
+
+  // A wrapper for multi_exp_method_BDLO12_signed() dot-product a
+  // vector of group elements in G1 (curve points) with a vector of
+  // scalar elements in Fr
+  template<typename ppT>
+  libff::G1<ppT> plonk_multi_exp_G1(
+				    std::vector<libff::G1<ppT>> curve_points,
+				    std::vector<libff::Fr<ppT>> scalar_elements
+				    )
+  {
+    const size_t chunks = 1;
+    libff::G1<ppT> product = 
+      libff::multi_exp<
+	libff::G1<ppT>,
+      libff::Fr<ppT>,
+      libff::multi_exp_method_BDLO12_signed>(
+					     curve_points.begin(),
+					     curve_points.end(),
+					     scalar_elements.begin(),
+					     scalar_elements.end(),
+					     chunks);
+    return product;
+  }
+  
   //
   // Evaluate a polynomial F at the encrypted secret input
   // \secret^i*G_1 ie. compute f(\secret)*G1 = [f(\secret)]_i
@@ -249,14 +297,14 @@ namespace libsnark
   // INPUT
   //
   // secret_powers_g1: \secret^i*G1: 0\le{i}<max_degree(Q[j]): 0\le{j}<n
-  // Q_polys[0..n-1]: a set of n polynomials
+  // f_poly: a polynomial
   //
   // OUTPUT
   //
-  // [Q_polys[i](\secret)]_1, 0\le 1<n : the "encrypted" evaluation of
-  // the polynomials Q_polys[i] in the secret parameter \secret (the
+  // [f_poly(\secret)]_1, 0\le 1<n : the "encrypted" evaluation of
+  // the polynomial f_poly in the secret parameter \secret (the
   // toxic waste) multiplied by the group generator G_1 i.e. compute
-  // Q_polys[i](\secret)*G_1
+  // f_poly(\secret)*G_1
   //
   template<typename ppT>
   libff::G1<ppT> plonk_evaluate_poly_at_secret_G1(
@@ -1433,6 +1481,8 @@ namespace libsnark
       assert(S_poly_at_secret_g1_i.Y == example->S_polys_at_secret_g1[i][1]);
     }
 #endif // #ifdef DEBUG
+
+    Field alpha_power2 = libff::power(alpha, libff::bigint<1>(2));
     
     bool b_valid = false;
 
@@ -1520,30 +1570,95 @@ namespace libsnark
     // r_zeta term in the proof
 
     // compute polynomial r'(zeta) = r(zeta) - r_0
-    std::vector<Field> r_prime_zeta_parts(5);
-    r_prime_zeta_parts[0] = r_zeta + PI_zeta;
-    r_prime_zeta_parts[1] = (a_zeta + (beta * S_0_zeta) + gamma);
-    r_prime_zeta_parts[2] = (b_zeta + (beta * S_1_zeta) + gamma);
-    r_prime_zeta_parts[3] = (c_zeta + gamma) * z_poly_xomega_zeta * alpha;
-    r_prime_zeta_parts[4] = (L_0_zeta * libff::power(alpha, libff::bigint<1>(2)));
-    Field r_prime_zeta = (r_prime_zeta_parts[0] - (r_prime_zeta_parts[1] * r_prime_zeta_parts[2] * r_prime_zeta_parts[3]) - r_prime_zeta_parts[4]) * zh_zeta.inverse();
-    
+    std::vector<Field> r_prime_parts(5);
+    r_prime_parts[0] = r_zeta + PI_zeta;
+    r_prime_parts[1] = (a_zeta + (beta * S_0_zeta) + gamma);
+    r_prime_parts[2] = (b_zeta + (beta * S_1_zeta) + gamma);
+    r_prime_parts[3] = (c_zeta + gamma) * z_poly_xomega_zeta * alpha;
+    r_prime_parts[4] = (L_0_zeta * alpha_power2);
+    Field r_prime_zeta = (r_prime_parts[0] - (r_prime_parts[1] * r_prime_parts[2] * r_prime_parts[3]) - r_prime_parts[4]) * zh_zeta.inverse();    
 #ifdef DEBUG
-    printf("r_prime_zeta_parts[%d] ", 0);
-    r_prime_zeta_parts[0].print();
-    printf("r_prime_zeta_parts[%d] ", 1);
-    r_prime_zeta_parts[1].print();
-    printf("r_prime_zeta_parts[%d] ", 2);
-    r_prime_zeta_parts[2].print();
-    printf("r_prime_zeta_parts[%d] ", 3);
-    r_prime_zeta_parts[3].print();
-    printf("r_prime_zeta_parts[%d] ", 4);
-    r_prime_zeta_parts[4].print();
-    printf("r_prime_zeta          ");
+    printf("r_prime_parts[%d] ", 0);
+    r_prime_parts[0].print();
+    printf("r_prime_parts[%d] ", 1);
+    r_prime_parts[1].print();
+    printf("r_prime_parts[%d] ", 2);
+    r_prime_parts[2].print();
+    printf("r_prime_parts[%d] ", 3);
+    r_prime_parts[3].print();
+    printf("r_prime_parts[%d] ", 4);
+    r_prime_parts[4].print();
+    printf("r_prime_zeta     ");
     r_prime_zeta.print();
 #endif // #ifdef DEBUG    
     assert(r_prime_zeta == example->r_prime_zeta);
 
+    // --- Verifier Step 9: compute first part of batched polynomial commitment [D]_1
+
+    // Note: the reference implemention differs from the paper -- it
+    // does not add the following term to D1, but to F1 (Step 10):
+    // -Zh(zeta)([t_lo]_1 + zeta^n [t_mid]_1 + zeta^2n [t_hi]_1)
+
+    // D1 is computed in 3 parts
+    std::vector<libff::G1<ppT>> D1_part(3);
+
+    // compute D1_part[0]:    
+    // (a_bar b_bar [q_M]_1 + a_bar [q_L]_1 + b_bar [q_R]_1 + c_bar [q_O]_1 + [q_C]_1) nu
+    // Note: the paper omits the final multiplication by nu    
+    std::vector<libff::G1<ppT>> curve_points
+      {
+       Q_polys_at_secret_g1[M],
+       Q_polys_at_secret_g1[L],
+       Q_polys_at_secret_g1[R],
+       Q_polys_at_secret_g1[O],
+       Q_polys_at_secret_g1[C]
+      };
+    std::vector<libff::Fr<ppT>> scalar_elements
+     {
+       a_zeta * b_zeta * nu,
+       a_zeta * nu,
+       b_zeta * nu,
+       c_zeta * nu,
+       nu
+      };
+    D1_part[0] = plonk_multi_exp_G1<ppT>(curve_points, scalar_elements);
+
+    // compute D1_part[1]:
+    // ((a_bar + beta zeta + gamma)(b_bar + beta k1 zeta + gamma)(c_bar + beta k2 zeta + gamma) alpha + L1(zeta) alpha^2 + u) [z]_1
+    Field D1_part1_scalar = 
+      (a_zeta + (beta * zeta) + gamma) *
+      (b_zeta + (beta * k1 * zeta) + gamma) *
+      (c_zeta + (beta * k2 * zeta) + gamma) * alpha * nu
+      + L_0_zeta * alpha_power2 * nu + u;
+    D1_part[1] = plonk_exp_G1<ppT>(z_poly_at_secret_g1, D1_part1_scalar);
+
+    // compute D1_part[2]:
+    // (a_bar + beta s_sigma1_bar + gamma)(b_bar + beta s_sigma2_bar + gamma)alpha beta z_omega_bar [s_sigma3]_1
+    Field D1_part2_scalar = 
+      ((a_zeta + (beta * S_0_zeta) + gamma) *
+       (b_zeta + (beta * S_1_zeta) + gamma) *
+       alpha * beta * z_poly_xomega_zeta * nu) * Field(-1);
+    D1_part[2] = plonk_exp_G1<ppT>(S_polys_at_secret_g1[2], D1_part2_scalar);
+
+    // Compute D1 = D1_part[0] + D1_part[1] + D1_part[2]
+    libff::G1<ppT> D1 = D1_part[0] + D1_part[1] + D1_part[2];
+    
+#ifdef DEBUG    
+    printf("[%s:%d] D1_part[%d]\n", __FILE__, __LINE__, 0);
+    D1_part[0].print();
+    printf("[%s:%d] D1_part[%d]\n", __FILE__, __LINE__, 1);
+    D1_part[1].print();
+    printf("[%s:%d] D1_part[%d]\n", __FILE__, __LINE__, 2);
+    D1_part[2].print();
+    printf("[%s:%d] D1\n", __FILE__, __LINE__);
+    D1.print();
+#endif // #ifdef DEBUG    
+
+    libff::G1<ppT> D1_aff(D1);
+    D1_aff.to_affine_coordinates();      
+    assert(D1_aff.X == example->D1[0]);
+    assert(D1_aff.Y == example->D1[1]);
+    
     // end 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }

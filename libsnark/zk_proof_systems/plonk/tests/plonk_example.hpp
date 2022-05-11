@@ -47,6 +47,8 @@ public:
   Field PI_zeta;
   // Verifier Step 8: compute quotient polynomial evaluation r'(zeta) = r(zeta) - r0, where r0 is a constant term
   Field r_prime_zeta;
+  // Verifier Step 9
+  std::vector<BaseField> D1;
 
   void initialize();
 };
