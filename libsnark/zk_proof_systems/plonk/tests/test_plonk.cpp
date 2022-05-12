@@ -276,6 +276,7 @@ namespace libsnark
 				    std::vector<libff::Fr<ppT>> scalar_elements
 				    )
   {
+    assert(curve_points.size() == scalar_elements.size());
     const size_t chunks = 1;
     libff::G1<ppT> product = 
       libff::multi_exp<
@@ -1564,10 +1565,14 @@ namespace libsnark
     assert(PI_zeta == example->PI_zeta);
     
     // --- Verifier Step 8: compute quotient polynomial evaluation
-    // r'(zeta) = r(zeta) - r0, where r0 is a constant term    
-    // Note: follows the Python reference implementation, which
-    // slightly deviates from the paper due to the presence of the
-    // r_zeta term in the proof
+    // r'(zeta) = r(zeta) - r0, where r0 is a constant term Note:
+    // follows the Python reference implementation, which slightly
+    // deviates from the paper due to the presence of the r_zeta term
+    // in the proof (not present in the paper.  In particular, the
+    // reference code computes and uses r'(zeta) in step 8, while the
+    // paper uses r0. In addition, the reference code divides r'(zeta)
+    // by the vanishing polynomial at zeta zh_zeta, while the paper
+    // does not do that (see also Step 9).
 
     // compute polynomial r'(zeta) = r(zeta) - r_0
     std::vector<Field> r_prime_parts(5);
@@ -1597,7 +1602,11 @@ namespace libsnark
 
     // Note: the reference implemention differs from the paper -- it
     // does not add the following term to D1, but to F1 (Step 10):
-    // -Zh(zeta)([t_lo]_1 + zeta^n [t_mid]_1 + zeta^2n [t_hi]_1)
+    // -Zh(zeta)([t_lo]_1 + zeta^n [t_mid]_1 + zeta^2n
+    // [t_hi]_1). Instead ([t_lo]_1 + zeta^n [t_mid]_1 + zeta^2n
+    // [t_hi]_1) is added to F1 in Step 10 and the multiplication by
+    // Zh(zeta) is accounted for by dividing by Zh(zeta) of r'(zeta)
+    // in Step 8.
 
     // D1 is computed in 3 parts
     std::vector<libff::G1<ppT>> D1_part(3);
@@ -1605,7 +1614,7 @@ namespace libsnark
     // compute D1_part[0]:    
     // (a_bar b_bar [q_M]_1 + a_bar [q_L]_1 + b_bar [q_R]_1 + c_bar [q_O]_1 + [q_C]_1) nu
     // Note: the paper omits the final multiplication by nu    
-    std::vector<libff::G1<ppT>> curve_points
+    std::vector<libff::G1<ppT>> curve_points_9
       {
        Q_polys_at_secret_g1[M],
        Q_polys_at_secret_g1[L],
@@ -1613,7 +1622,7 @@ namespace libsnark
        Q_polys_at_secret_g1[O],
        Q_polys_at_secret_g1[C]
       };
-    std::vector<libff::Fr<ppT>> scalar_elements
+    std::vector<libff::Fr<ppT>> scalar_elements_9
      {
        a_zeta * b_zeta * nu,
        a_zeta * nu,
@@ -1621,7 +1630,7 @@ namespace libsnark
        c_zeta * nu,
        nu
       };
-    D1_part[0] = plonk_multi_exp_G1<ppT>(curve_points, scalar_elements);
+    D1_part[0] = plonk_multi_exp_G1<ppT>(curve_points_9, scalar_elements_9);
 
     // compute D1_part[1]:
     // ((a_bar + beta zeta + gamma)(b_bar + beta k1 zeta + gamma)(c_bar + beta k2 zeta + gamma) alpha + L1(zeta) alpha^2 + u) [z]_1
@@ -1652,12 +1661,59 @@ namespace libsnark
     D1_part[2].print();
     printf("[%s:%d] D1\n", __FILE__, __LINE__);
     D1.print();
-#endif // #ifdef DEBUG    
-
     libff::G1<ppT> D1_aff(D1);
     D1_aff.to_affine_coordinates();      
     assert(D1_aff.X == example->D1[0]);
     assert(D1_aff.Y == example->D1[1]);
+#endif // #ifdef DEBUG    
+    
+    // --- Verifier Step 10: compute full batched polynomial
+    // commitment [F]_1 [F]_1 = [D]_1 + v [a]_1 + v^2 [b]_1 + v^3
+    // [c]_1 + v^4 [s_sigma_1]_1 + v^5 [s_sigma_2]_1 Note: to [F]_1
+    // the erefernce code also adds the term ([t_lo]_1 + zeta^n
+    // [t_mid]_1 + zeta^2n [t_hi]_1) which is addedto [D]_1 in the
+    // paper (see commenst to Steps 8,9)
+
+    Field zeta_power_n = libff::power(zeta, libff::bigint<1>(nconstraints+2));
+    Field zeta_power_2n = libff::power(zeta, libff::bigint<1>(2*(nconstraints+2)));
+    std::vector<Field> nu_power(7);
+    for (size_t i = 0; i < nu_power.size(); ++i) {
+      nu_power[i] = libff::power(nu, libff::bigint<1>(i));
+    }    
+    std::vector<libff::G1<ppT>> curve_points_10
+      {
+       t_poly_at_secret_g1[lo], // nu^0
+       t_poly_at_secret_g1[mid], // nu^0
+       t_poly_at_secret_g1[hi], // nu^0
+       D1, // nu^1
+       W_polys_blinded_at_secret_g1[a], // nu^2
+       W_polys_blinded_at_secret_g1[b], // nu^3
+       W_polys_blinded_at_secret_g1[c], // nu^4
+       S_polys_at_secret_g1[0], // nu^5
+       S_polys_at_secret_g1[1] // nu^6
+      };
+    std::vector<libff::Fr<ppT>> scalar_elements_10
+      {
+       Field(1), 
+       zeta_power_n,  // zeta^(n+2), 
+       zeta_power_2n, // zeta^(2*(n+2)), 
+       Field(1), 
+       nu_power[2], // nu^2, 
+       nu_power[3], // nu^3, 
+       nu_power[4], // nu^4, 
+       nu_power[5], // nu^5, 
+       nu_power[6]  // nu^6
+      };
+    libff::G1<ppT> F1 = plonk_multi_exp_G1<ppT>(curve_points_10, scalar_elements_10);
+
+#ifdef DEBUG    
+    printf("[%s:%d] F1\n", __FILE__, __LINE__);
+    F1.print();
+    libff::G1<ppT> F1_aff(F1);
+    F1_aff.to_affine_coordinates();      
+    assert(F1_aff.X == example->F1[0]);
+    assert(F1_aff.Y == example->F1[1]);
+#endif // #ifdef DEBUG    
     
     // end 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);

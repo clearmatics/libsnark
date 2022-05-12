@@ -49,6 +49,8 @@ public:
   Field r_prime_zeta;
   // Verifier Step 9
   std::vector<BaseField> D1;
+  // Verifier Step 10: compute full batched polynomial commitment
+  std::vector<BaseField> F1;
 
   void initialize();
 };
