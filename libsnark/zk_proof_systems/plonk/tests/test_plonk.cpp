@@ -1717,8 +1717,6 @@ namespace libsnark
 
     // --- Verifier Step 11: compute group-encoded batch evaluation [E]_1
 
-    // t_zeta -> r_prime_zeta
-    // accumulator_shift_zeta -> z_poly_xomega_zeta
     std::vector<libff::G1<ppT>> curve_points_11
       {
        libff::G1<ppT>::one()
@@ -1747,6 +1745,60 @@ namespace libsnark
     assert(E1_aff.Y == example->E1[1]);
 #endif // #ifdef DEBUG    
 
+    // --- Verifier Step 12: batch validate all evaluations
+
+    // Check the following equality
+    //
+    // e( [W_zeta]_1 + u [W_{zeta omega}]_1, [x]_2 ) =
+    // e( zeta [W_zeta ]_1 + u zeta omega [W_{zeta omega}]_1 + [F]_1 - [E]_1, [1]_2 )
+    //
+
+    std::vector<libff::G1<ppT>> curve_points_lhs
+      {
+       W_zeta_at_secret,
+       W_zeta_omega_at_secret
+      };
+    std::vector<libff::Fr<ppT>> scalar_elements_lhs
+      {
+       Field(1),
+       u
+      };
+    libff::G1<ppT> pairing_first_lhs = plonk_multi_exp_G1<ppT>(curve_points_lhs, scalar_elements_lhs);
+    libff::G2<ppT> pairing_second_lhs = secret_powers_g2[1];
+    
+    std::vector<libff::G1<ppT>> curve_points_rhs
+      {
+       W_zeta_at_secret,
+       W_zeta_omega_at_secret,
+       F1,
+       E1
+      };
+    std::vector<libff::Fr<ppT>> scalar_elements_rhs
+      {
+       zeta,
+       u * zeta * omega[base][1],
+       Field(1),
+       Field(-1)
+      };
+    libff::G1<ppT> pairing_first_rhs = plonk_multi_exp_G1<ppT>(curve_points_rhs, scalar_elements_rhs);
+    libff::G2<ppT> pairing_second_rhs = secret_powers_g2[0];
+
+#ifdef DEBUG    
+    printf("[%s:%d] pairing_first_lhs\n", __FILE__, __LINE__);
+    pairing_first_lhs.print();
+    libff::G1<ppT> pairing_first_lhs_aff(pairing_first_lhs);
+    pairing_first_lhs_aff.to_affine_coordinates();      
+    assert(pairing_first_lhs_aff.X == example->pairing_first_lhs[0]);
+    assert(pairing_first_lhs_aff.Y == example->pairing_first_lhs[1]);
+
+    printf("[%s:%d] pairing_first_rhs\n", __FILE__, __LINE__);
+    pairing_first_rhs.print();
+    libff::G1<ppT> pairing_first_rhs_aff(pairing_first_rhs);
+    pairing_first_rhs_aff.to_affine_coordinates();      
+    assert(pairing_first_rhs_aff.X == example->pairing_first_rhs[0]);
+    assert(pairing_first_rhs_aff.Y == example->pairing_first_rhs[1]);
+#endif // #ifdef DEBUG    
+    
     // end 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }

@@ -53,6 +53,11 @@ public:
   std::vector<BaseField> F1;
   // Verifier Step 11: compute group-encoded batch evaluation [E]_1
   std::vector<BaseField> E1;
+  // Verifier Step 12: batch validate all evaluations via pairing
+  std::vector<BaseField> pairing_first_lhs;
+  std::vector<BaseField> pairing_first_rhs;
+  //  std::vector<BaseField> pairing_second_lhs;
+  //  std::vector<BaseField> pairing_second_rhs;
 
   void initialize();
 };
