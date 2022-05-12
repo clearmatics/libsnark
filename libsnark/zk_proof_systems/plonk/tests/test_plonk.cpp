@@ -1714,7 +1714,39 @@ namespace libsnark
     assert(F1_aff.X == example->F1[0]);
     assert(F1_aff.Y == example->F1[1]);
 #endif // #ifdef DEBUG    
+
+    // --- Verifier Step 11: compute group-encoded batch evaluation [E]_1
+
+    // t_zeta -> r_prime_zeta
+    // accumulator_shift_zeta -> z_poly_xomega_zeta
+    std::vector<libff::G1<ppT>> curve_points_11
+      {
+       libff::G1<ppT>::one()
+      };
+    std::vector<libff::Fr<ppT>> scalar_elements_11
+      {
+       r_prime_zeta +
+       nu_power[1] * r_zeta + // v^1
+       nu_power[2] * a_zeta + // v^2
+       nu_power[3] * b_zeta + // v^3
+       nu_power[4] * c_zeta + // v^4
+       nu_power[5] * S_0_zeta + // v^5
+       nu_power[6] * S_1_zeta + // v^6
+       u * z_poly_xomega_zeta
+      };
+    libff::G1<ppT> E1 = plonk_multi_exp_G1<ppT>(curve_points_11, scalar_elements_11);
     
+#ifdef DEBUG    
+    printf("[%s:%d] G\n", __FILE__, __LINE__);
+    libff::G1<ppT>::one().print();
+    printf("[%s:%d] E1\n", __FILE__, __LINE__);
+    E1.print();
+    libff::G1<ppT> E1_aff(E1);
+    E1_aff.to_affine_coordinates();      
+    assert(E1_aff.X == example->E1[0]);
+    assert(E1_aff.Y == example->E1[1]);
+#endif // #ifdef DEBUG    
+
     // end 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }

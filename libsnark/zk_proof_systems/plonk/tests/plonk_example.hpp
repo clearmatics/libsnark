@@ -51,6 +51,8 @@ public:
   std::vector<BaseField> D1;
   // Verifier Step 10: compute full batched polynomial commitment
   std::vector<BaseField> F1;
+  // Verifier Step 11: compute group-encoded batch evaluation [E]_1
+  std::vector<BaseField> E1;
 
   void initialize();
 };
