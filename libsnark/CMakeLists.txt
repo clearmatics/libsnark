@@ -152,54 +152,54 @@ if ("${IS_LIBSNARK_PARENT}")
     add_dependencies(check ${TEST_NAME})
   endfunction()
 
-  libsnark_test(gadgetlib1_simple_test gadgetlib1/tests/gadgetlib1_test.cpp)
-  libsnark_test(gadgetlib2_adapters_test gadgetlib2/tests/adapters_UTEST.cpp)
-  libsnark_test(gadgetlib2_constraint_test gadgetlib2/tests/constraint_UTEST.cpp)
-  libsnark_test(gadgetlib2_gadget_test gadgetlib2/tests/gadget_UTEST.cpp)
-  libsnark_test(
-    gadgetlib2_integration_test
-    gadgetlib2/examples/simple_example.hpp
-    gadgetlib2/tests/integration_UTEST.cpp
-    relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp
-    relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.tcc
-    zk_proof_systems/ppzksnark/r1cs_ppzksnark/examples/run_r1cs_ppzksnark.hpp
-    zk_proof_systems/ppzksnark/r1cs_ppzksnark/examples/run_r1cs_ppzksnark.tcc
-    gadgetlib2/examples/simple_example.cpp
-    gadgetlib2/examples/simple_example.hpp
-    )
-  libsnark_test(gadgetlib2_protoboard_test gadgetlib2/tests/protoboard_UTEST.cpp)
-  libsnark_test(gadgetlib2_variable_test gadgetlib2/tests/variable_UTEST.cpp)
-  libsnark_test(relations_qap_test relations/arithmetic_programs/qap/tests/test_qap.cpp)
-  libsnark_test(relations_sap_test relations/arithmetic_programs/sap/tests/test_sap.cpp)
-  libsnark_test(relations_ssp_test relations/arithmetic_programs/ssp/tests/test_ssp.cpp)
-  libsnark_test(zk_proof_systems_bacs_ppzksnark_test zk_proof_systems/ppzksnark/bacs_ppzksnark/tests/test_bacs_ppzksnark.cpp)
-  libsnark_test(zk_proof_systems_r1cs_ppzksnark_test zk_proof_systems/ppzksnark/r1cs_ppzksnark/tests/test_r1cs_ppzksnark.cpp)
-  libsnark_test(zk_proof_systems_r1cs_se_ppzksnark_test zk_proof_systems/ppzksnark/r1cs_se_ppzksnark/tests/test_r1cs_se_ppzksnark.cpp)
-  libsnark_test(zk_proof_systems_r1cs_gg_ppzksnark_test zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/tests/test_r1cs_gg_ppzksnark.cpp)
-  libsnark_test(zk_proof_systems_ram_ppzksnark_test zk_proof_systems/ppzksnark/ram_ppzksnark/tests/test_ram_ppzksnark.cpp)
-  libsnark_test(
-    zk_proof_systems_tbcs_ppzksnark_test
-    relations/circuit_satisfaction_problems/tbcs/examples/tbcs_examples.cpp
-    zk_proof_systems/ppzksnark/tbcs_ppzksnark/tests/test_tbcs_ppzksnark.cpp
-    )
-  libsnark_test(zk_proof_systems_uscs_ppzksnark_test zk_proof_systems/ppzksnark/uscs_ppzksnark/tests/test_uscs_ppzksnark.cpp)
-  libsnark_test(test_basic_gadgets gadgetlib1/tests/test_basic_gadgets.cpp)
-  libsnark_test(test_knapsack_gadget gadgetlib1/gadgets/hashes/knapsack/tests/test_knapsack_gadget.cpp)
-  libsnark_test(test_merkle_tree_gadgets gadgetlib1/gadgets/merkle_tree/tests/test_merkle_tree_gadgets.cpp)
-  libsnark_test(test_set_commitment_gadget gadgetlib1/gadgets/set_commitment/tests/test_set_commitment_gadget.cpp)
-  libsnark_test(test_sha256_gadget gadgetlib1/gadgets/hashes/sha256/tests/test_sha256_gadget.cpp)
-  libsnark_test(test_polynomial_commitments polynomial_commitments/tests/test_polynomial_commitments.cpp)
-  libsnark_test(test_common_routing_algorithms common/routing_algorithms/tests/test_routing_algorithms.cpp)
-  libsnark_test(test_pairing gadgetlib1/tests/test_pairing.cpp)
-  libsnark_test(test_fp6_3over2_gadgets gadgetlib1/tests/test_fp6_3over2_gadgets.cpp)
-  libsnark_test(test_fp12_2over3over2_gadgets gadgetlib1/tests/test_fp12_2over3over2_gadgets.cpp)
-  libsnark_test(test_curve_gadgets gadgetlib1/tests/test_curve_gadgets.cpp)
-  libsnark_test(test_bls12_377_membership_checks gadgetlib1/tests/test_bls12_377_membership_checks.cpp)
-  libsnark_test(test_bls12_377_pairing gadgetlib1/tests/test_bls12_377_pairing.cpp)
-  libsnark_test(test_pairing_checks gadgetlib1/tests/test_pairing_checks.cpp)
-  libsnark_test(test_r1cs_ppzksnark_verifier_gadget gadgetlib1/tests/test_r1cs_ppzksnark_verifier_gadget.cpp)
-  libsnark_test(test_r1cs_gg_ppzksnark_verifier_gadget gadgetlib1/tests/test_r1cs_gg_ppzksnark_verifier_gadget.cpp)
-  libsnark_test(test_kzg10_verifier_gadget gadgetlib1/tests/test_kzg10_verifier_gadget.cpp)
+#  libsnark_test(gadgetlib1_simple_test gadgetlib1/tests/gadgetlib1_test.cpp)
+#  libsnark_test(gadgetlib2_adapters_test gadgetlib2/tests/adapters_UTEST.cpp)
+#  libsnark_test(gadgetlib2_constraint_test gadgetlib2/tests/constraint_UTEST.cpp)
+#  libsnark_test(gadgetlib2_gadget_test gadgetlib2/tests/gadget_UTEST.cpp)
+#  libsnark_test(
+#    gadgetlib2_integration_test
+#    gadgetlib2/examples/simple_example.hpp
+#    gadgetlib2/tests/integration_UTEST.cpp
+#    relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp
+#    relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.tcc
+#    zk_proof_systems/ppzksnark/r1cs_ppzksnark/examples/run_r1cs_ppzksnark.hpp
+#    zk_proof_systems/ppzksnark/r1cs_ppzksnark/examples/run_r1cs_ppzksnark.tcc
+#    gadgetlib2/examples/simple_example.cpp
+#    gadgetlib2/examples/simple_example.hpp
+#    )
+#  libsnark_test(gadgetlib2_protoboard_test gadgetlib2/tests/protoboard_UTEST.cpp)
+#  libsnark_test(gadgetlib2_variable_test gadgetlib2/tests/variable_UTEST.cpp)
+#  libsnark_test(relations_qap_test relations/arithmetic_programs/qap/tests/test_qap.cpp)
+#  libsnark_test(relations_sap_test relations/arithmetic_programs/sap/tests/test_sap.cpp)
+#  libsnark_test(relations_ssp_test relations/arithmetic_programs/ssp/tests/test_ssp.cpp)
+#  libsnark_test(zk_proof_systems_bacs_ppzksnark_test zk_proof_systems/ppzksnark/bacs_ppzksnark/tests/test_bacs_ppzksnark.cpp)
+#  libsnark_test(zk_proof_systems_r1cs_ppzksnark_test zk_proof_systems/ppzksnark/r1cs_ppzksnark/tests/test_r1cs_ppzksnark.cpp)
+#  libsnark_test(zk_proof_systems_r1cs_se_ppzksnark_test zk_proof_systems/ppzksnark/r1cs_se_ppzksnark/tests/test_r1cs_se_ppzksnark.cpp)
+#  libsnark_test(zk_proof_systems_r1cs_gg_ppzksnark_test zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/tests/test_r1cs_gg_ppzksnark.cpp)
+#  libsnark_test(zk_proof_systems_ram_ppzksnark_test zk_proof_systems/ppzksnark/ram_ppzksnark/tests/test_ram_ppzksnark.cpp)
+#  libsnark_test(
+#    zk_proof_systems_tbcs_ppzksnark_test
+#    relations/circuit_satisfaction_problems/tbcs/examples/tbcs_examples.cpp
+#    zk_proof_systems/ppzksnark/tbcs_ppzksnark/tests/test_tbcs_ppzksnark.cpp
+#    )
+#  libsnark_test(zk_proof_systems_uscs_ppzksnark_test zk_proof_systems/ppzksnark/uscs_ppzksnark/tests/test_uscs_ppzksnark.cpp)
+#  libsnark_test(test_basic_gadgets gadgetlib1/tests/test_basic_gadgets.cpp)
+#  libsnark_test(test_knapsack_gadget gadgetlib1/gadgets/hashes/knapsack/tests/test_knapsack_gadget.cpp)
+#  libsnark_test(test_merkle_tree_gadgets gadgetlib1/gadgets/merkle_tree/tests/test_merkle_tree_gadgets.cpp)
+#  libsnark_test(test_set_commitment_gadget gadgetlib1/gadgets/set_commitment/tests/test_set_commitment_gadget.cpp)
+#  libsnark_test(test_sha256_gadget gadgetlib1/gadgets/hashes/sha256/tests/test_sha256_gadget.cpp)
+#  libsnark_test(test_polynomial_commitments polynomial_commitments/tests/test_polynomial_commitments.cpp)
+#  libsnark_test(test_common_routing_algorithms common/routing_algorithms/tests/test_routing_algorithms.cpp)
+#  libsnark_test(test_pairing gadgetlib1/tests/test_pairing.cpp)
+#  libsnark_test(test_fp6_3over2_gadgets gadgetlib1/tests/test_fp6_3over2_gadgets.cpp)
+#  libsnark_test(test_fp12_2over3over2_gadgets gadgetlib1/tests/test_fp12_2over3over2_gadgets.cpp)
+#  libsnark_test(test_curve_gadgets gadgetlib1/tests/test_curve_gadgets.cpp)
+#  libsnark_test(test_bls12_377_membership_checks gadgetlib1/tests/test_bls12_377_membership_checks.cpp)
+#  libsnark_test(test_bls12_377_pairing gadgetlib1/tests/test_bls12_377_pairing.cpp)
+#  libsnark_test(test_pairing_checks gadgetlib1/tests/test_pairing_checks.cpp)
+#  libsnark_test(test_r1cs_ppzksnark_verifier_gadget gadgetlib1/tests/test_r1cs_ppzksnark_verifier_gadget.cpp)
+#  libsnark_test(test_r1cs_gg_ppzksnark_verifier_gadget gadgetlib1/tests/test_r1cs_gg_ppzksnark_verifier_gadget.cpp)
+#  libsnark_test(test_kzg10_verifier_gadget gadgetlib1/tests/test_kzg10_verifier_gadget.cpp)
   libsnark_test(test_plonk zk_proof_systems/plonk/tests/test_plonk.cpp)
 
   # TODO (howardwu): Resolve runtime on targets:
