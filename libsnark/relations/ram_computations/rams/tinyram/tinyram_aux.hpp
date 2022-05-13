@@ -101,11 +101,12 @@ const static int tinyram_opcodes_control_flow[] = {
  * Instructions that make the program counter stall;
  * these are "answer" plus all the undefined opcodes.
  */
-const static int tinyram_opcodes_stall[] = {tinyram_opcode_10111,
-                                            tinyram_opcode_11000,
-                                            tinyram_opcode_11001,
+const static int tinyram_opcodes_stall[] = {
+    tinyram_opcode_10111,
+    tinyram_opcode_11000,
+    tinyram_opcode_11001,
 
-                                            tinyram_opcode_ANSWER};
+    tinyram_opcode_ANSWER};
 
 typedef size_t reg_count_t; // type for the number of registers
 typedef size_t reg_width_t; // type for the width of a register
