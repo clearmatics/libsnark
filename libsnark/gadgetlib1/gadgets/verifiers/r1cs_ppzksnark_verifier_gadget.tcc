@@ -73,13 +73,14 @@ void r1cs_ppzksnark_proof_variable<ppT>::generate_r1cs_witness(
     std::vector<libff::G1<other_curve<ppT>>> G1_elems;
     std::vector<libff::G2<other_curve<ppT>>> G2_elems;
 
-    G1_elems = {proof.g_A.g,
-                proof.g_A.h,
-                proof.g_B.h,
-                proof.g_C.g,
-                proof.g_C.h,
-                proof.g_H,
-                proof.g_K};
+    G1_elems = {
+        proof.g_A.g,
+        proof.g_A.h,
+        proof.g_B.h,
+        proof.g_C.g,
+        proof.g_C.h,
+        proof.g_H,
+        proof.g_K};
     G2_elems = {proof.g_B.g};
 
     assert(G1_elems.size() == all_G1_vars.size());
@@ -138,11 +139,12 @@ r1cs_ppzksnark_verification_key_variable<ppT>::
         new G2_variable<ppT>(pb, FMT(annotation_prefix, " rC_Z_g2")));
 
     all_G1_vars = {this->alphaB_g1, this->gamma_beta_g1};
-    all_G2_vars = {this->alphaA_g2,
-                   this->alphaC_g2,
-                   this->gamma_g2,
-                   this->gamma_beta_g2,
-                   this->rC_Z_g2};
+    all_G2_vars = {
+        this->alphaA_g2,
+        this->alphaC_g2,
+        this->gamma_g2,
+        this->gamma_beta_g2,
+        this->rC_Z_g2};
 
     this->encoded_IC_query.resize(input_size);
     this->encoded_IC_base.reset(
