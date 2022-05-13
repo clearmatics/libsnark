@@ -1764,7 +1764,9 @@ namespace libsnark
        u
       };
     libff::G1<ppT> pairing_first_lhs = plonk_multi_exp_G1<ppT>(curve_points_lhs, scalar_elements_lhs);
+#if 0 // unused yet, remove compilation warnings        
     libff::G2<ppT> pairing_second_lhs = secret_powers_g2[1];
+#endif // #if 0 // unused yet, remove compilation warnings        
     
     std::vector<libff::G1<ppT>> curve_points_rhs
       {
@@ -1781,7 +1783,9 @@ namespace libsnark
        Field(-1)
       };
     libff::G1<ppT> pairing_first_rhs = plonk_multi_exp_G1<ppT>(curve_points_rhs, scalar_elements_rhs);
+#if 0 // unused yet, remove compilation warnings    
     libff::G2<ppT> pairing_second_rhs = secret_powers_g2[0];
+#endif // #if 0 // unused yet, remove compilation warnings        
 
 #ifdef DEBUG    
     printf("[%s:%d] pairing_first_lhs\n", __FILE__, __LINE__);
