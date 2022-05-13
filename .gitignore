@@ -50,3 +50,4 @@ libsnark/zk_proof_systems/zksnark/ram_zksnark/tests/test_ram_zksnark
 
 build
 *~
+TAGS
