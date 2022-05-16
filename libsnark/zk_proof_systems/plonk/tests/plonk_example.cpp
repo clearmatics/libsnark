@@ -9,7 +9,84 @@ void plonk_example<ppT>::initialize()
 {
   using Field = libff::Fr<ppT>;
   using BaseField = libff::Fq<ppT>;
+  
+  // Circuit data
+  
+  // number of gates / constraints. we have 6 gates for the example
+  // circuit + 2 dummy gates to make it a power of 2 (for the fft)
+  this->num_gates = 8;
+    
+  // number of q-polynomials
+  this->num_qpolys = 5;
+  
+  // hard-coded gates matrix for the example circuit
+  // P(x) = x**3 + x + 5 = 3
+  // Each column is a q-vector
+  this->gates_matrix =
+    {
+     // q_L     q_R        q_M         q_O       q_C
+     {Field(0), Field(0), Field(1), -Field("1"), Field(0)},   // mul
+     {Field(0), Field(0), Field(1), -Field("1"), Field(0)},   // mul
+     {Field(1), Field(1), Field(0), -Field("1"), Field(0)},   // add
+     {Field(0), Field(1), Field(0),  Field(0),  -Field("5")}, // con5
+     {Field(0), Field(1), Field(0),  Field(0),   Field(0)},   // PI
+     {Field(1), Field(1), Field(0), -Field("1"), Field(0)},   // add
+     {Field(0), Field(0), Field(0),  Field(0),   Field(0)},   // dummy
+     {Field(0), Field(0), Field(0),  Field(0),   Field(0)},   // dummy
+    };
+  
+    this->gates_matrix_transpose = 
+      {
+       //  mul          mul          add          con5       PI           add        dum        dum
+       {   Field(0),    Field(0),    Field(1),    Field(0),  Field(0),    Field(1),  Field(0),  Field(0)}, // q_L
+       {   Field(0),    Field(0),    Field(1),    Field(1),  Field(1),    Field(1),  Field(0),  Field(0)}, // q_R
+       {   Field(1),    Field(1),    Field(0),    Field(0),  Field(0),    Field(0),  Field(0),  Field(0)}, // q_M
+       {-Field("1"), -Field("1"), -Field("1"),    Field(0),  Field(0), -Field("1"),  Field(0),  Field(0)}, // q_O
+       {   Field(0),    Field(0),    Field(0), -Field("5"),  Field(0),    Field(0),  Field(0),  Field(0)}, // q_C
+      };
 
+    // witness values
+    // w_L = a = [ 3,  9, 27,  1,  1, 30,  0,  0]
+    // w_R = b = [ 3,  3,  3,  5, 35,  5,  0,  0]
+    // w_O = c = [ 9, 27, 30,  5, 35, 35,  0,  0]
+    // W = w_L + w_R + w_O
+    this->witness = 
+      {
+       3,  9, 27,  1,  1, 30,  0,  0, // w_L 
+       3,  3,  3,  5, 35,  5,  0,  0, // w_R
+       9, 27, 30,  5, 35, 35,  0,  0  // w_O
+      };
+    
+  // wire permutation (TODO: add function plonk_compute_permutation())
+  this->wire_permutation =
+    {9, 17, 18, 5, 4, 19, 7, 8, 10, 11, 1, 14, 21, 20, 15, 16, 2, 3, 6, 12, 22, 13, 23, 24};
+  
+  // public input (PI)
+  this->public_input = Field(35);;
+  // index of the row of the PI in the non-transposed gates_matrix 
+  this->public_input_index = 4;
+    
+  // n-th root of unity omega in Fq (n=8 is the number of constraints
+  // in the example). omega is a generator of the multiplicative
+  // subgroup H.  Example (2**32)-th primitive root of unity in the
+  // base field Fq of bls12-381 i.e. such that omega_base**(2**32) =
+  // 1. The bls12-381 prime q is such that any power of 2 divides
+  // (q-1). In particular 2**32|(q-1) and so the 2**32-th root of
+  // unity exists.
+  this->omega_base = Field("23674694431658770659612952115660802947967373701506253797663184111817857449850");
+
+  // Constants k1,k2 to generate domains on which to evaluate the witness
+  // polynomials. k can be random, but we fix it for debug to match
+  // against the test vector values
+  this->k1 = Field("7069874114745813936829552608791213902061117400356596714713673571023200548519"); 
+  // Similarly, k2 can be random, but we fix it to match the test
+  // vectors
+  this->k2 = libff::power(k1, libff::bigint<1>(2));
+  
+  // random hidden element secret (toxic waste). we fix it to a
+  // constant in order to match against the test vectors
+  this->secret = Field("13778279493383315901513166932749987230291710199728570152123261818328463629146");
+    
   // Hashes of transcript (Fiat-Shamir heuristic)
   this->beta = Field("3710899868510394644410941212967766116886736137326022751891187938298987182388");
   this->gamma = Field("11037930384083194587907709665332116843267274045828802249545114995763715746939");
