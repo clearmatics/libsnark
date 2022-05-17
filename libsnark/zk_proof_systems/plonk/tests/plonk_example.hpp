@@ -108,7 +108,7 @@ public:
   std::vector<Field> witness;
 
   // wire permutation (TODO: add function plonk_compute_permutation())
-  std::vector<int> wire_permutation;
+  std::vector<size_t> wire_permutation;
 
   // public input (PI)
   Field public_input;
@@ -131,10 +131,22 @@ public:
   // Similarly, k2 can be random, but we fix it to match the test
   // vectors
   Field k2;
+
+  // H_gen contains the generators of H, k1 H and K2 H in one place
+  // ie. omega, omega_k1 and omega_k2
+  std::vector<Field> H_gen;
+  // H_gen permuted according to the wire permutation
+  std::vector<Field> H_gen_permute;
   
   // random hidden element secret (toxic waste). we fix it to a
   // constant in order to match against the test vectors
   Field secret;
+  
+  // powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
+  std::vector<std::vector<BaseField>> secret_powers_g1;
+  
+  // powers of secret times G2: 1*G2, secret^1*G2
+  std::vector<std::vector<BaseField>> secret_powers_g2;
   
   // Hashes of transcript (Fiat-Shamir heuristic)
   Field beta;
