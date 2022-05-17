@@ -119,8 +119,17 @@ public:
   
 /***************************** Main algorithms *******************************/
 
+  // Generate the proving and verification key
+  // \see r1cs_gg_ppzksnark_generator_from_secrets
+  template<typename ppT>
+  plonk_keypair<ppT> plonk_generator_from_secrets(
+						  const libff::Fr<ppT> secret,
+						  size_t num_gates
+						  );
+
+  
 } // namespace libsnark
 
-#include <libsnark/zk_proof_systems/plonk/plonk.tcc>
+#include "libsnark/zk_proof_systems/plonk/plonk.tcc"
 
 #endif // PLONK_PPZKSNARK_HPP_
