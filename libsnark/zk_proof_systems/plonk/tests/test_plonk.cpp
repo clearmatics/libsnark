@@ -193,12 +193,10 @@ namespace libsnark
     plonk_interpolate_over_lagrange_basis<FieldT>(PI_points, PI_poly, L_basis);
   };
 
-  // output from plonk_compute_roots_of_unity omega[0] are the n
-  // roots of unity, omega[1] are omega[0]*k1, omega[2] are
-  // omega[0]*k2
-  // k1 H is a coset of H with generator omega_k1 distinct from H k2
-  // H is a coset of H with generator omega_k2, distinct from H and
-  // k1 H 
+  // output: omega[0] are the n roots of unity, omega[1] are
+  // omega[0]*k1, omega[2] are omega[0]*k2; k1 H is a coset of H with
+  // generator omega_k1 distinct from H; k2 H is a coset of H with
+  // generator omega_k2, distinct from H and k1 H
   template<typename FieldT>
   void plonk_compute_roots_of_unity_omega(
 					  const FieldT k1,
@@ -223,7 +221,7 @@ namespace libsnark
     FieldT temp = libff::power(omega_base, libff::bigint<1>(std::pow(2,32)));
     assert(temp == 1);
 #endif // #ifdef DEBUG
-    for (int i = 0; i < (int)omega.size(); ++i) {
+    for (int i = 0; i < (int)num_gates; ++i) {
       FieldT omega_i = libff::power(omega_base, libff::bigint<1>(i));
       omega[base][i] = omega_i;
       FieldT omega_k1_i = omega[base][i] * k1;
@@ -233,11 +231,63 @@ namespace libsnark
     }
   }
 
-  
+  // copy the roots of unity omega[base], omega[k1] and omega[k2] into
+  // a single vector H_gen representing the multiplicative subgroups
+  // H, k1 H and k2 H (see [GWC19] Sect. 8); \see
+  // plonk_compute_roots_of_unity_omega
+  template<typename FieldT>
+  void plonk_roots_of_unity_omega_to_subgroup_H(
+				       std::vector<std::vector<FieldT>> omega,
+				       std::vector<FieldT>& H_gen
+				       )
+  {
+    assert(omega.size() == NUM_HGEN);
+    assert(omega[0].size() > 0);
+    std::copy(omega[base].begin(), omega[base].end(), back_inserter(H_gen));
+    std::copy(omega[base_k1].begin(), omega[base_k1].end(), back_inserter(H_gen));
+    std::copy(omega[base_k2].begin(), omega[base_k2].end(), back_inserter(H_gen));
+  }
+
+  // permute the multiplicative subgroup H accordingto the wire
+  // permutation: (see [GWC19] Sect. 8), \see
+  // plonk_compute_roots_of_unity_omega, \see
+  // plonk_roots_of_unity_omega_to_subgroup_H
+  template<typename FieldT>
+  void plonk_permute_subgroup_H(
+				std::vector<FieldT>& H_gen_permute,
+				std::vector<FieldT> H_gen,
+				std::vector<size_t> wire_permutation
+				)
+  {
+    assert(H_gen.size() > 0);
+    for (size_t i = 0; i < H_gen.size(); ++i) {
+      H_gen_permute[i] = H_gen[wire_permutation[i]-1];
+    }    
+  }  
+  // compute the permutation polynomials S_sigma_1, S_sigma_2,
+  // S_sigma_2 (see [GWC19], Sect. 8.1)
+  template<typename FieldT>
+  void plonk_compute_permutation_polynomials(
+					     std::vector<polynomial<FieldT>>& S_polys,
+					     std::vector<FieldT> H_gen_permute,
+					     std::vector<polynomial<FieldT>> L_basis,
+					     size_t num_gates
+					     )
+  {
+    assert(S_polys.size() == NUM_HGEN);
+    assert(S_polys[0].size() == num_gates);
+    assert(H_gen_permute.size() == (NUM_HGEN*num_gates));
+    for (size_t i = 0; i < NUM_HGEN; ++i) {
+      typename std::vector<FieldT>::iterator begin = H_gen_permute.begin()+(i*num_gates);
+      typename std::vector<FieldT>::iterator end = H_gen_permute.begin()+(i*num_gates)+(num_gates);
+      std::vector<FieldT> S_points(begin, end);
+      plonk_interpolate_over_lagrange_basis<FieldT>(S_points, S_polys[i], L_basis);
+    }
+  }  
   
   // A wrapper for multi_exp_method_BDLO12_signed() for multiplying a
   // single group element in G1 (a point on the curve) to a scalar
-  // elements in Fr
+  // element in Fr
   template<typename ppT>
   libff::G1<ppT> plonk_exp_G1(
 			      libff::G1<ppT> curve_point,
@@ -432,6 +482,47 @@ namespace libsnark
     bool b_valid = (typeid(x) == typeid(FieldT));
     return b_valid;
   }
+
+  // Generate the proving and verification key
+  // \see r1cs_gg_ppzksnark_generator_from_secrets
+  template<typename ppT>
+  plonk_keypair<ppT> plonk_generator_from_secrets(
+						  const libff::Fr<ppT> secret,
+						  size_t num_gates
+						  )
+  {
+    // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
+    const libff::bigint<libff::Fr<ppT>::num_limbs> secret_bigint = secret.as_bigint();
+    const size_t window_size =
+      std::max(libff::wnaf_opt_window_size<libff::G1<ppT>>(secret_bigint.num_bits()), 1ul);
+    const std::vector<long> naf =
+      libff::find_wnaf<libff::Fr<ppT>::num_limbs>(window_size, secret_bigint);    
+    std::vector<libff::G1<ppT>> secret_powers_g1;
+    secret_powers_g1.reserve(num_gates + 3);
+    libff::G1<ppT> secret_i_g1 = libff::G1<ppT>::one();
+    secret_powers_g1.push_back(secret_i_g1);
+    for (size_t i = 1; i < (num_gates + 3); ++i) {
+      // secret^i * G1
+      secret_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
+								window_size, secret_i_g1, naf);
+      secret_powers_g1.push_back(secret_i_g1);
+    }
+    plonk_proving_key<ppT> pk = plonk_proving_key<ppT>(std::move(secret_powers_g1));
+
+    // compute powers of secret times G2: 1*G2, secret^1*G2
+    std::vector<libff::G2<ppT>> secret_powers_g2;
+    secret_powers_g2.reserve(2);
+    // secret^0 * G2 = G2
+    libff::G2<ppT> secret_0_g2 = libff::G2<ppT>::one();
+    secret_powers_g2.push_back(secret_0_g2);
+    // secret^1 * G2
+    libff::G2<ppT> secret_1_g2 = secret * libff::G2<ppT>::one();
+    secret_powers_g2.push_back(secret_1_g2);
+    plonk_verification_key<ppT> vk = plonk_verification_key<ppT>(std::move(secret_powers_g2));
+    
+    plonk_keypair<ppT> keypair(std::move(pk), std::move(vk));
+    return keypair;
+  }
   
   template<typename ppT> void test_plonk()
   {
@@ -451,8 +542,7 @@ namespace libsnark
 
     // --- start of example setup
     
-    // number of gates / constraints. we have 6 gates for the example
-    // circuit + 2 dummy gates to make it a power of 2 (for the fft)
+    // number of gates / constraints
     const size_t num_gates = example->num_gates;
 #ifdef DEBUG
     // ensure num_gates is power of 2
@@ -463,22 +553,15 @@ namespace libsnark
 #endif // #ifdef DEBUG 
     // number of q-polynomials
     const size_t num_qpolys = example->num_qpolys;
-    // hard-coded gates matrix for the example circuit
-    // P(x) = x**3 + x + 5 = 3
-    // Each column is a q-vector
+    // hard-coded gates matrix for the example circuit; each column is
+    // a q-vector
     std::vector<std::vector<Field>>gates_matrix = example->gates_matrix;
-    // Transposed gates matrix: each row is a q-vector WARN: rows 2
-    // q_O and 3 q_M are swapped ti match the Plonk_Py test vectors
-    // implementation (reason unclear)
+    // Transposed gates matrix: each row is a q-vector
     std::vector<std::vector<Field>>gates_matrix_transpose = example->gates_matrix_transpose;
     // witness values
-    // w_L = a = [ 3,  9, 27,  1,  1, 30,  0,  0]
-    // w_R = b = [ 3,  3,  3,  5, 35,  5,  0,  0]
-    // w_O = c = [ 9, 27, 30,  5, 35, 35,  0,  0]
-    // W = w_L + w_R + w_O
     std::vector<Field> witness = example->witness;
     // wire permutation
-    std::vector<int> wire_permutation = example->wire_permutation;
+    std::vector<size_t> wire_permutation = example->wire_permutation;
 
     // --- end of example setup
     
@@ -486,7 +569,7 @@ namespace libsnark
     // witness w_L, w_R, w_O as polynomials in the roots of unity
     // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
     
-    // output from plonk_compute_lagrange_basis
+    // compute Lagrange basis
     std::vector<polynomial<Field>> L_basis(num_gates, polynomial<Field>(num_gates));
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(num_gates);
     plonk_compute_lagrange_basis<Field>(num_gates, L_basis);
@@ -506,123 +589,78 @@ namespace libsnark
     print_vector(PI_poly);
 #endif // #ifdef DEBUG
 
-    // output from plonk_compute_constraints_polynomials() compute the q-polynomials from the
-    // (transposed) gates matrix over the Lagrange basis q_poly =
-    // \sum_i q[i] * L[i] where q[i] is a coefficient (a Field
-    // element) and L[i] is a polynomial with Field coeffs
+    // compute the selector polynomials (q-polynomials) from the
+    // transposed gates matrix over the Lagrange basis q_poly = \sum_i
+    // q[i] * L[i] where q[i] is a coefficient (a scalar Field
+    // element) and L[i] is a polynomial with Field coefficients
     std::vector<polynomial<Field>> Q_polys(num_qpolys, polynomial<Field>(num_gates));
     plonk_compute_selector_polynomials<Field>(gates_matrix_transpose, Q_polys, L_basis);
-#if 1 // DEBUG
+#ifdef DEBUG
     for (int i = 0; i < (int)num_qpolys; ++i) {
       printf("\n[%s:%d] Q_polys[%2d]\n", __FILE__, __LINE__, i);
       print_vector(Q_polys[i]);
     }
-#endif // #if 1 // DEBUG
-
-#if 1
-    // Get the n-th root of unity omega in Fq (n=8 is the number of
-    // constraints in the example). omega is a generator of the
-    // multiplicative subgroup H.  Example (2**32)-th primitive root
-    // of unity in the base field Fq of bls12-381 i.e. such that
-    // omega_base**(2**32) = 1. The bls12-381 prime q is such that any
-    // power of 2 divides (q-1). In particular 2**32|(q-1) and so the
-    // 2**32-th root of unity exists.
-    Field omega_base = libff::get_root_of_unity<Field>(num_gates);
-    omega_base.print();
-    assert(omega_base == example->omega_base);
-#ifdef DEBUG
-    // assert that omega_base is a 2^32-th root of unity in Fq
-    Field temp = libff::power(omega_base, libff::bigint<1>(std::pow(2,32)));
-    assert(temp == 1);
 #endif // #ifdef DEBUG
-#endif
+
     // number of generators for H, Hk1, Hk2
     int num_hgen = NUM_HGEN;
     // Generate domains on which to evaluate the witness
-    // polynomials. k1,k2 can be random, but we fix it for debug to
+    // polynomials. k1,k2 can be random, but we fix them for debug to
     // match against the test vector values
     Field k1 = example->k1;
     Field k2 = example->k2;
-#if 1 // DEBUG
+#ifdef DEBUG
     printf("[%s:%d] k1 ", __FILE__, __LINE__);
     k1.print();    
     printf("[%s:%d] k2 ", __FILE__, __LINE__);
     k2.print();    
-#endif // #if 1 // DEBUG
-    
-    // output from plonk_compute_roots_of_unity omega[0] are the n
-    // roots of unity, omega[1] are omega[0]*k1, omega[2] are
-    // omega[0]*k2
-    // k1 H is a coset of H with generator omega_k1 distinct from H k2
-    // H is a coset of H with generator omega_k2, distinct from H and
-    // k1 H
-    std::vector<std::vector<Field>> omega(num_hgen, std::vector<Field>(num_gates));    
-    for (int i = 0; i < (int)num_gates; ++i) {
-      Field omega_i = libff::power(omega_base, libff::bigint<1>(i));
-      omega[base][i] = omega_i;
-      Field omega_k1_i = omega[base][i] * k1;
-      Field omega_k2_i = omega[base][i] * k2;
-      omega[base_k1][i] = omega_k1_i;
-      omega[base_k2][i] = omega_k2_i;
-    }
-    
-#ifdef DEBUG
-    for (int i = 0; i < (int)num_gates; ++i) {
-      printf("w^%d: ", i);
-      omega[base][i].print();
-    }
-    // check that omega^8 = 1 i.e. omega is a generator of the
-    // multiplicative subgroup H of Fq of order 'num_gates'
-    Field omega_temp = libff::power(omega_base, libff::bigint<1>(num_gates));
-    printf("w^%d: ", (int)num_gates);
-    omega_temp.print();
-    assert(omega_temp == 1);
-    assert(num_gates == omega[base].size());
 #endif // #ifdef DEBUG
-
-
-    // plonk_compute_permutation_polynomials()
     
-    // H_gen contains the generators of H, k1 H and K2 H in one place
+    // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
+    // omega[2] are omega[0]*k2
+    std::vector<std::vector<Field>> omega(num_hgen, std::vector<Field>(num_gates));
+    plonk_compute_roots_of_unity_omega(k1, k2, omega);
+    // H_gen contains the generators of H, k1 H and k2 H in one place
     // ie. omega, omega_k1 and omega_k2
     std::vector<Field> H_gen;
-    std::copy(omega[base].begin(), omega[base].end(), back_inserter(H_gen));
-    std::copy(omega[base_k1].begin(), omega[base_k1].end(), back_inserter(H_gen));
-    std::copy(omega[base_k2].begin(), omega[base_k2].end(), back_inserter(H_gen));
+    plonk_roots_of_unity_omega_to_subgroup_H(omega, H_gen);
+#ifdef DEBUG
     printf("[%s:%d] H_gen\n", __FILE__, __LINE__);
     print_vector(H_gen);
-
+    for (int i = 0; i < (int)H_gen.size(); ++i) {
+      assert(H_gen[i] == example->H_gen[i]);
+    }
+#endif // #ifdef DEBUG
+    
     // permute H_gen according to the wire permutation
     std::vector<Field> H_gen_permute(num_hgen*num_gates, Field(0));
-    for (int i = 0; i < (int)(num_hgen*num_gates); ++i) {
-      printf("[%s:%d] i %2d -> %2d, \n", __FILE__, __LINE__, i, wire_permutation[i]-1);
-      H_gen_permute[i] = H_gen[wire_permutation[i]-1];
-    }
+    plonk_permute_subgroup_H<Field>(H_gen_permute, H_gen, wire_permutation);
+#ifdef DEBUG
     printf("[%s:%d] H_gen_permute\n", __FILE__, __LINE__);
     print_vector(H_gen_permute);
-
-    std::vector<polynomial<Field>> S_polys(num_hgen, polynomial<Field>(num_gates));
-    for (int i = 0; i < num_hgen; ++i) {
-      typename std::vector<Field>::iterator begin = H_gen_permute.begin()+(i*num_gates);
-      typename std::vector<Field>::iterator end = H_gen_permute.begin()+(i*num_gates)+(num_gates);
-      std::vector<Field> S_points(begin, end);
-      plonk_interpolate_over_lagrange_basis<Field>(S_points, S_polys[i], L_basis);
+    for (size_t i = 0; i < H_gen_permute.size(); ++i) {
+      assert(H_gen_permute[i] == example->H_gen_permute[i]);
     }
-
-#if 1 // DEBUG
+#endif // #ifdef DEBUG
+    
+    // compute the permutation polynomials S_sigma_1, S_sigma_2,
+    // S_sigma_2 (see [GWC19], Sect. 8.1)
+    std::vector<polynomial<Field>> S_polys(num_hgen, polynomial<Field>(num_gates));
+    plonk_compute_permutation_polynomials<Field>(S_polys, H_gen_permute, L_basis, num_gates);
+#ifdef DEBUG
     for (int i = 0; i < num_hgen; ++i) {
       printf("[%s:%d] S_polys[%d]\n", __FILE__, __LINE__, i);
       print_vector(S_polys[i]);
     }
-#endif // #if 1 // DEBUG
+#endif // #ifdef DEBUG
 
     // random hidden element secret (toxic waste). we fix it to a
     // constant in order to match against the test vectors
     Field secret = example->secret;
-#if 1 // DEBUG
+#ifdef DEBUG
     printf("[%s:%d] secret ", __FILE__, __LINE__);
     secret.print();
-#endif // #if 1 // DEBUG
+#endif // #ifdef DEBUG
     
     // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
     const libff::bigint<Field::num_limbs> secret_bigint = secret.as_bigint();
@@ -639,7 +677,8 @@ namespace libsnark
       secret_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
 								window_size, secret_i_g1, naf);
       secret_powers_g1.push_back(secret_i_g1);
-    }    
+    }
+    
     // compute powers of secret times G2: 1*G2, secret^1*G2
     std::vector<libff::G2<ppT>> secret_powers_g2;
     secret_powers_g2.reserve(2);
@@ -650,16 +689,28 @@ namespace libsnark
     libff::G2<ppT> secret_1_g2 = secret * libff::G2<ppT>::one();
     secret_powers_g2.push_back(secret_1_g2);
 
-#if 1 // DEBUG
+    plonk_keypair<ppT> key_pair =
+      plonk_generator_from_secrets<ppT>(secret, num_gates);
+
+#ifdef DEBUG
     for (int i = 0; i < (int)num_gates + 3; ++i) {
       printf("secret_power_G1[%2d] ", i);
       secret_powers_g1[i].print();
+      libff::G1<ppT> secret_powers_g1_i(secret_powers_g1[i]);
+      secret_powers_g1_i.to_affine_coordinates();
+      assert(secret_powers_g1_i.X == example->secret_powers_g1[i][0]);
+      assert(secret_powers_g1_i.Y == example->secret_powers_g1[i][1]);
+      // test from generator
+      libff::G1<ppT> pk_i(key_pair.pk.secret_powers_g1[i]);
+      pk_i.to_affine_coordinates();
+      assert(pk_i.X == example->secret_powers_g1[i][0]);
+      assert(pk_i.Y == example->secret_powers_g1[i][1]);
     }
     for (int i = 0; i < 2; ++i) {
       printf("secret_power_G2[%2d] ", i);
       secret_powers_g2[i].print();
     }
-#endif // #if 1 // DEBUG
+#endif // #ifdef DEBUG
 
     // --- PROVER ---
     
