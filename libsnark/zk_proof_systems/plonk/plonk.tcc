@@ -18,13 +18,22 @@ See plonk.hpp .
 
 namespace libsnark
 {
-  // Generate the proving and verification key
-  // \see r1cs_gg_ppzksnark_generator_from_secrets
+
   template<typename ppT>
-  plonk_keypair<ppT> plonk_generator_from_secrets(
-						  const libff::Fr<ppT> secret,
-						  size_t num_gates
-						  )
+  srs<ppT>::srs(
+	   std::vector<libff::G1<ppT>> &&secret_powers_g1,
+	   std::vector<libff::G2<ppT>> &&secret_powers_g2)
+    : secret_powers_g1(secret_powers_g1), secret_powers_g2(secret_powers_g2)
+  {
+  }
+
+  // Generate SRS \see r1cs_gg_ppzksnark_generator_from_secrets, \see
+  // kzg10<ppT>::setup_from_secret(
+  template<typename ppT>
+  srs<ppT> plonk_setup_from_secret(
+				   const libff::Fr<ppT> secret,
+				   size_t num_gates
+				   )
   {
     // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
     const libff::bigint<libff::Fr<ppT>::num_limbs> secret_bigint = secret.as_bigint();
@@ -42,7 +51,7 @@ namespace libsnark
 								window_size, secret_i_g1, naf);
       secret_powers_g1.push_back(secret_i_g1);
     }
-    plonk_proving_key<ppT> pk = plonk_proving_key<ppT>(std::move(secret_powers_g1));
+    //    plonk_proving_key<ppT> pk = plonk_proving_key<ppT>(std::move(secret_powers_g1));
 
     // compute powers of secret times G2: 1*G2, secret^1*G2
     std::vector<libff::G2<ppT>> secret_powers_g2;
@@ -53,10 +62,10 @@ namespace libsnark
     // secret^1 * G2
     libff::G2<ppT> secret_1_g2 = secret * libff::G2<ppT>::one();
     secret_powers_g2.push_back(secret_1_g2);
-    plonk_verification_key<ppT> vk = plonk_verification_key<ppT>(std::move(secret_powers_g2));
+    //    plonk_verification_key<ppT> vk = plonk_verification_key<ppT>(std::move(secret_powers_g2));
     
-    plonk_keypair<ppT> keypair(std::move(pk), std::move(vk));
-    return keypair;
+    srs<ppT> srs(std::move(secret_powers_g1), std::move(secret_powers_g2));
+    return srs;
   }
   
 } // namespace libsnark

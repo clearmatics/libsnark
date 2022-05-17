@@ -39,9 +39,6 @@ const size_t NUM_HGEN = 3;
 namespace libsnark
 {
   
-  //  void compute_qpolynomials();
-  //  void compute_wire_permutation();
-
   template<typename FieldT> void print_vector(std::vector<FieldT> v)
   {
     for (size_t i = 0; i < v.size(); ++i) {
@@ -648,8 +645,7 @@ namespace libsnark
     libff::G2<ppT> secret_1_g2 = secret * libff::G2<ppT>::one();
     secret_powers_g2.push_back(secret_1_g2);
 
-    plonk_keypair<ppT> key_pair =
-      plonk_generator_from_secrets<ppT>(secret, num_gates);
+    srs<ppT> srs = plonk_setup_from_secret<ppT>(secret, num_gates);
 
 #ifdef DEBUG
     for (int i = 0; i < (int)num_gates + 3; ++i) {
@@ -660,10 +656,10 @@ namespace libsnark
       assert(secret_powers_g1_i.X == example->secret_powers_g1[i][0]);
       assert(secret_powers_g1_i.Y == example->secret_powers_g1[i][1]);
       // test from generator
-      libff::G1<ppT> pk_i(key_pair.pk.secret_powers_g1[i]);
-      pk_i.to_affine_coordinates();
-      assert(pk_i.X == example->secret_powers_g1[i][0]);
-      assert(pk_i.Y == example->secret_powers_g1[i][1]);
+      libff::G1<ppT> srs_secret_powers_g1_i(srs.secret_powers_g1[i]);
+      srs_secret_powers_g1_i.to_affine_coordinates();
+      assert(srs_secret_powers_g1_i.X == example->secret_powers_g1[i][0]);
+      assert(srs_secret_powers_g1_i.Y == example->secret_powers_g1[i][1]);
     }
     for (int i = 0; i < 2; ++i) {
       printf("secret_power_G2[%2d] ", i);
