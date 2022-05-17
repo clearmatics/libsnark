@@ -40,7 +40,7 @@ namespace libsnark
   enum W_polys_id{a, b, c};
   enum Q_polys_id{L, R, M, O, C};
   enum t_polys_id{lo, mid, hi};
-  enum omega_id{base, base_k1, base_k2}; // roots of unity
+  enum omega_id{base, base_k1, base_k2};
 
 template<typename FieldT> using polynomial = std::vector<FieldT>;
 
@@ -53,9 +53,12 @@ template<typename ppT> class plonk_proving_key
 public:
   /// Array of powers of secret \alpha, encoded in G1:
   /// [1]_1, [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
-  std::vector<libff::G1<ppT>> alpha_powers_g1;
+  std::vector<libff::G1<ppT>> secret_powers_g1;
 
   plonk_proving_key(){};
+  plonk_proving_key(
+		    std::vector<libff::G1<ppT>>&& secret_powers_g1)
+    :secret_powers_g1(std::move(secret_powers_g1)){};
 };
 
 /******************************* Verification key ****************************/
@@ -68,9 +71,12 @@ template<typename ppT> class plonk_verification_key
 public:
   /// Array of powers of secret \alpha, encoded in G2:
   /// [1]_2, [\alpha]_2
-  std::vector<libff::G2<ppT>> alpha_powers_g2;
+  std::vector<libff::G2<ppT>> secret_powers_g2;
   
   plonk_verification_key();
+  plonk_verification_key(
+		    std::vector<libff::G2<ppT>>&& secret_powers_g2)
+    :secret_powers_g2(std::move(secret_powers_g2)){};
 };
 
 /********************************** Key pair *********************************/
