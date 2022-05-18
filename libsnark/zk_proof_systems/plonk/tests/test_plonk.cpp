@@ -1728,7 +1728,7 @@ namespace libsnark
        u
       };
     libff::G1<ppT> pairing_first_lhs = plonk_multi_exp_G1<ppT>(curve_points_lhs, scalar_elements_lhs);
-#if 0 // unused yet, remove compilation warnings        
+#if 1 // unused yet, remove compilation warnings        
     libff::G2<ppT> pairing_second_lhs = secret_powers_g2[1];
 #endif // #if 0 // unused yet, remove compilation warnings        
     
@@ -1741,13 +1741,21 @@ namespace libsnark
       };
     std::vector<libff::Fr<ppT>> scalar_elements_rhs
       {
-       zeta,
-       u * zeta * omega[base][1],
-       Field(1),
-       Field(-1)
+       //       zeta,
+       //       u * zeta * omega[base][1],
+       //       Field(1),
+       //       Field(-1)
+       // Warning! raise to the power of -1
+       Field(-1) * zeta,
+       Field(-1) * u * zeta * omega[base][1],
+       Field(-1) * Field(1),
+       Field(-1) * Field(-1)
       };
+
+    // e(first_lhs, second_lhs) = e(first_rhs, second_rhs)
+    
     libff::G1<ppT> pairing_first_rhs = plonk_multi_exp_G1<ppT>(curve_points_rhs, scalar_elements_rhs);
-#if 0 // unused yet, remove compilation warnings    
+#if 1 // unused yet, remove compilation warnings    
     libff::G2<ppT> pairing_second_rhs = secret_powers_g2[0];
 #endif // #if 0 // unused yet, remove compilation warnings        
 
@@ -1762,10 +1770,23 @@ namespace libsnark
     printf("[%s:%d] pairing_first_rhs\n", __FILE__, __LINE__);
     pairing_first_rhs.print();
     libff::G1<ppT> pairing_first_rhs_aff(pairing_first_rhs);
-    pairing_first_rhs_aff.to_affine_coordinates();      
+    pairing_first_rhs_aff.to_affine_coordinates();
+    // test vector only matches case e() = e() and not the inverted
+    // case e() e^-1() = 1: TODO: fix
+#if 0    
     assert(pairing_first_rhs_aff.X == example->pairing_first_rhs[0]);
     assert(pairing_first_rhs_aff.Y == example->pairing_first_rhs[1]);
+#endif // #if 0         
 #endif // #ifdef DEBUG    
+
+    const libff::G1_precomp<ppT> _A = ppT::precompute_G1(pairing_first_lhs);
+    const libff::G2_precomp<ppT> _B = ppT::precompute_G2(pairing_second_lhs);
+    const libff::G1_precomp<ppT> _C = ppT::precompute_G1(pairing_first_rhs);
+    const libff::G2_precomp<ppT> _D = ppT::precompute_G2(pairing_second_rhs);
+    const libff::Fqk<ppT> miller_result =
+        ppT::double_miller_loop(_A, _B, _C, _D);
+    const libff::GT<ppT> result = ppT::final_exponentiation(miller_result);
+    assert(result == libff::GT<ppT>::one());
     
     // end 
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
