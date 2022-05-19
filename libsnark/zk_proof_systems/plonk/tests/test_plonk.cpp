@@ -1713,13 +1713,22 @@ namespace libsnark
 
     // Check the following equality
     //
-    // e( [W_zeta]_1 + u [W_{zeta omega}]_1, [x]_2 ) =
-    // e( zeta [W_zeta ]_1 + u zeta omega [W_{zeta omega}]_1 + [F]_1 - [E]_1, [1]_2 )
+    // e( [W_zeta]_1 + u [W_{zeta omega}]_1, [x]_2 ) *
+    // e( -zeta [W_zeta ]_1 - u zeta omega [W_{zeta omega}]_1 - [F]_1 + [E]_1, [1]_2 )
+    // = Field(1)
     //
 
+    // add random element (noise) to the opening polynomials to check
+    // that the pairing fails
+#if 0
+    libff::G1<ppT> noise = libff::G1<ppT>::random_element();
+#else    
+    libff::G1<ppT> noise = libff::G1<ppT>::zero();
+#endif    
+    
     std::vector<libff::G1<ppT>> curve_points_lhs
       {
-       W_zeta_at_secret,
+       W_zeta_at_secret + noise,
        W_zeta_omega_at_secret
       };
     std::vector<libff::Fr<ppT>> scalar_elements_lhs
@@ -1728,9 +1737,7 @@ namespace libsnark
        u
       };
     libff::G1<ppT> pairing_first_lhs = plonk_multi_exp_G1<ppT>(curve_points_lhs, scalar_elements_lhs);
-#if 1 // unused yet, remove compilation warnings        
     libff::G2<ppT> pairing_second_lhs = secret_powers_g2[1];
-#endif // #if 0 // unused yet, remove compilation warnings        
     
     std::vector<libff::G1<ppT>> curve_points_rhs
       {
@@ -1741,11 +1748,7 @@ namespace libsnark
       };
     std::vector<libff::Fr<ppT>> scalar_elements_rhs
       {
-       //       zeta,
-       //       u * zeta * omega[base][1],
-       //       Field(1),
-       //       Field(-1)
-       // Warning! raise to the power of -1
+       // Warning! raise to the power of -1 to check e() * e()^-1 = 1
        Field(-1) * zeta,
        Field(-1) * u * zeta * omega[base][1],
        Field(-1) * Field(1),
@@ -1755,9 +1758,7 @@ namespace libsnark
     // e(first_lhs, second_lhs) = e(first_rhs, second_rhs)
     
     libff::G1<ppT> pairing_first_rhs = plonk_multi_exp_G1<ppT>(curve_points_rhs, scalar_elements_rhs);
-#if 1 // unused yet, remove compilation warnings    
     libff::G2<ppT> pairing_second_rhs = secret_powers_g2[0];
-#endif // #if 0 // unused yet, remove compilation warnings        
 
 #ifdef DEBUG    
     printf("[%s:%d] pairing_first_lhs\n", __FILE__, __LINE__);
@@ -1771,12 +1772,8 @@ namespace libsnark
     pairing_first_rhs.print();
     libff::G1<ppT> pairing_first_rhs_aff(pairing_first_rhs);
     pairing_first_rhs_aff.to_affine_coordinates();
-    // test vector only matches case e() = e() and not the inverted
-    // case e() e^-1() = 1: TODO: fix
-#if 0    
     assert(pairing_first_rhs_aff.X == example->pairing_first_rhs[0]);
     assert(pairing_first_rhs_aff.Y == example->pairing_first_rhs[1]);
-#endif // #if 0         
 #endif // #ifdef DEBUG    
 
     const libff::G1_precomp<ppT> _A = ppT::precompute_G1(pairing_first_lhs);
