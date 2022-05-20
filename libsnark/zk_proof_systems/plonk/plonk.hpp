@@ -45,6 +45,34 @@ namespace libsnark
 
 template<typename FieldT> using polynomial = std::vector<FieldT>;
 
+/************************ Common Preprocessed Input ***********************/
+template<typename ppT> class common_preprocessed_input
+{
+public:
+  using Field = libff::Fr<ppT>;
+  // number of gates / constraints
+  size_t num_gates;
+  // Lagrange basis
+  std::vector<polynomial<Field>> L_basis;
+  // Public input polynomial
+  polynomial<Field> PI_poly;
+  // Circuit selector polynomials (Q-polynomials)
+  std::vector<polynomial<Field>> Q_polys;
+  // Permutation polynomials S_sigma_1, S_sigma_2, S_sigma_2 (see
+  // [GWC19], Sect. 8.1)
+  std::vector<polynomial<Field>> S_polys;
+  // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
+  // omega[2] are omega[0]*k2
+  std::vector<std::vector<Field>> omega;
+  // H_gen contains the generators of H, k1 H and k2 H in one place
+  // ie. omega, omega_k1 and omega_k2
+  std::vector<Field> H_gen;
+  // H_gen permuted according to the wire permutation
+  std::vector<Field> H_gen_permute;
+
+  common_preprocessed_input(){};
+  
+};  
 
 /********************************** SRS ***********************************/
 

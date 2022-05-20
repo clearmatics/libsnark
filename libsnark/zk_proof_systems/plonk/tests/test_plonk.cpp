@@ -488,10 +488,11 @@ namespace libsnark
     using Field = libff::Fr<ppT>;
     //    using BaseField = libff::Fq<ppT>;
 
-    // Initialize hard-coded values from example circuit
+    // initialize hard-coded values from example circuit
     plonk_example<ppT> example;
     
-    //    common_preprocessed_input<ppT> commmon_input(example); 
+    // common preprocessed input    
+    common_preprocessed_input<ppT> common_input; 
 
 
     // --- SETUP ---
@@ -523,6 +524,10 @@ namespace libsnark
     std::vector<Field> witness = example.witness;
     // wire permutation
     std::vector<size_t> wire_permutation = example.wire_permutation;
+    // public input (PI)
+    Field PI_value = example.public_input;
+    // index of the row of the PI in the non-transposed gates_matrix 
+    int PI_index = example.public_input_index;
 
     // --- end of example setup
     
@@ -531,20 +536,16 @@ namespace libsnark
     // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
     
     // compute Lagrange basis
-    std::vector<polynomial<Field>> L_basis(num_gates, polynomial<Field>(num_gates));
+    common_input.L_basis.resize(num_gates, polynomial<Field>(num_gates));;
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(num_gates);
-    plonk_compute_lagrange_basis<Field>(num_gates, L_basis);
+    plonk_compute_lagrange_basis<Field>(num_gates, common_input.L_basis);
 
-    // public input (PI)
-    Field PI_value = example.public_input;
-    // index of the row of the PI in the non-transposed gates_matrix 
-    int PI_index = example.public_input_index;
     // compute public input (PI) polynomial
     std::vector<Field> PI_points(num_gates, Field(0));
     PI_points[PI_index] = Field(-PI_value);
     polynomial<Field> PI_poly;
-    plonk_compute_public_input_polynomial(PI_points, PI_poly, L_basis);
-    //    plonk_interpolate_over_lagrange_basis<Field>(PI_points, PI_poly, L_basis);
+    plonk_compute_public_input_polynomial(PI_points, PI_poly, common_input.L_basis);
+    //    plonk_interpolate_over_lagrange_basis<Field>(PI_points, PI_poly, common_input.L_basis);
 #ifdef DEBUG
     printf("[%s:%d] PI_poly\n", __FILE__, __LINE__);
     print_vector(PI_poly);
@@ -555,7 +556,7 @@ namespace libsnark
     // q[i] * L[i] where q[i] is a coefficient (a scalar Field
     // element) and L[i] is a polynomial with Field coefficients
     std::vector<polynomial<Field>> Q_polys(num_qpolys, polynomial<Field>(num_gates));
-    plonk_compute_selector_polynomials<Field>(gates_matrix_transpose, Q_polys, L_basis);
+    plonk_compute_selector_polynomials<Field>(gates_matrix_transpose, Q_polys, common_input.L_basis);
 #ifdef DEBUG
     for (int i = 0; i < (int)num_qpolys; ++i) {
       printf("\n[%s:%d] Q_polys[%2d]\n", __FILE__, __LINE__, i);
@@ -607,7 +608,7 @@ namespace libsnark
     // compute the permutation polynomials S_sigma_1, S_sigma_2,
     // S_sigma_2 (see [GWC19], Sect. 8.1)
     std::vector<polynomial<Field>> S_polys(num_hgen, polynomial<Field>(num_gates));
-    plonk_compute_permutation_polynomials<Field>(S_polys, H_gen_permute, L_basis, num_gates);
+    plonk_compute_permutation_polynomials<Field>(S_polys, H_gen_permute, common_input.L_basis, num_gates);
 #ifdef DEBUG
     for (int i = 0; i < num_hgen; ++i) {
       printf("[%s:%d] S_polys[%d]\n", __FILE__, __LINE__, i);
@@ -653,7 +654,7 @@ namespace libsnark
       typename std::vector<Field>::iterator begin = witness.begin()+(i*num_gates);
       typename std::vector<Field>::iterator end = witness.begin()+(i*num_gates)+(num_gates);
       std::vector<Field> W_points(begin, end);
-      plonk_interpolate_over_lagrange_basis<Field>(W_points, W_polys[i], L_basis);
+      plonk_interpolate_over_lagrange_basis<Field>(W_points, W_polys[i], common_input.L_basis);
     }
 
 #if 1 // DEBUG
@@ -744,7 +745,7 @@ namespace libsnark
 #endif // #ifdef DEBUG
 
     polynomial<Field> A_poly(num_gates);
-    plonk_interpolate_over_lagrange_basis<Field>(A_vector, A_poly, L_basis);
+    plonk_interpolate_over_lagrange_basis<Field>(A_vector, A_poly, common_input.L_basis);
 #ifdef DEBUG
     printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
     print_vector(A_poly);
@@ -902,7 +903,7 @@ namespace libsnark
     polynomial<Field> z_neg_one;
     libfqfft::_polynomial_addition<Field>(z_neg_one, z_poly, neg_one_poly);
     // (z(x)-1) * L_1(x)
-    libfqfft::_polynomial_multiplication<Field>(t_part[3], z_neg_one, L_basis[0]);
+    libfqfft::_polynomial_multiplication<Field>(t_part[3], z_neg_one, common_input.L_basis[0]);
     // (z(x)-1) * L_1(x) * alpha
     libfqfft::_polynomial_multiplication<Field>(t_part[3], t_part[3], alpha_poly);
     // (z(x)-1) * L_1(x) * alpha * alpha
@@ -1068,7 +1069,7 @@ namespace libsnark
     // --- Computation of r_part[3]
     
     //     r3 = accumulator_poly_ext3 * eval_poly(L_1, [zeta])[0] * alpha ** 2
-    polynomial<Field> L_0_zeta_poly{libfqfft::evaluate_polynomial<Field>(L_basis[0].size(), L_basis[0], zeta)};
+    polynomial<Field> L_0_zeta_poly{libfqfft::evaluate_polynomial<Field>(common_input.L_basis[0].size(), common_input.L_basis[0], zeta)};
     polynomial<Field> alpha_power2_poly{libff::power(alpha, libff::bigint<1>(2))};
     libfqfft::_polynomial_multiplication<Field>(r_part[3], z_poly, L_0_zeta_poly);
     libfqfft::_polynomial_multiplication<Field>(r_part[3], r_part[3], alpha_power2_poly);
@@ -1430,7 +1431,7 @@ namespace libsnark
 
     // --- Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
     // Note: the paper counts the L-polynomials from 1; we count from 0
-    Field L_0_zeta = libfqfft::evaluate_polynomial<Field>(L_basis[0].size(), L_basis[0], zeta);   
+    Field L_0_zeta = libfqfft::evaluate_polynomial<Field>(common_input.L_basis[0].size(), common_input.L_basis[0], zeta);   
 #ifdef DEBUG
     printf("L_0_zeta ");
     L_0_zeta.print();
