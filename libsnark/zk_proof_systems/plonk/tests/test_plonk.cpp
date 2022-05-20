@@ -663,52 +663,6 @@ namespace libsnark
     }
 #endif // #if 1 // DEBUG
 
-    // Evaluate polynomials over 2*n points
-    Field omega2_base = libff::get_root_of_unity<Field>(2*num_gates);
-    omega2_base.print();
-    
-    std::vector<Field> omega2;    
-    for (int i = 0; i < (int)(2*num_gates); ++i) {
-      Field omega2_i = libff::power(omega2_base, libff::bigint<1>(i));
-      omega2.push_back(omega2_i);
-    }
-    
-#ifdef NDEBUG
-    for (int i = 0; i < (2*num_gates); ++i) {
-      printf("w^%d: ", i);
-      omega2[i].print();
-    }
-    // check that omega2^8 = 1 i.e. omega2 is a generator of the
-    // multiplicative subgroup H of Fq of order 'num_gates'
-    Field omega2_temp = libff::power(omega2_base, libff::bigint<1>(2*num_gates));
-    printf("w^%2d: ", 2*num_gates);
-    omega2_temp.print();
-    assert(omega2_temp == 1);
-#endif // #ifdef DEBUG
-
-    // Evaluate polynomials over 8*n points
-    Field omega3_base = libff::get_root_of_unity<Field>(8*num_gates);
-    omega3_base.print();
-    
-    std::vector<Field> omega3;    
-    for (int i = 0; i < (int)(8*num_gates); ++i) {
-      Field omega3_i = libff::power(omega3_base, libff::bigint<1>(i));
-      omega3.push_back(omega3_i);
-    }
-    
-#ifdef NDEBUG
-    for (int i = 0; i < (8*num_gates); ++i) {
-      printf("w^%2d: ", i);
-      omega3[i].print();
-    }
-    // check that omega3^8 = 1 i.e. omega3 is a generator of the
-    // multiplicative subgroup H of Fq of order 'num_gates'
-    Field omega3_temp = libff::power(omega3_base, libff::bigint<1>(8*num_gates));
-    printf("w^%d: ", 8*num_gates);
-    omega3_temp.print();
-    assert(omega3_temp == 1);
-#endif // #ifdef DEBUG
-
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
 
     // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
