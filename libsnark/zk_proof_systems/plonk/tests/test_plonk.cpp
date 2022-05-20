@@ -485,39 +485,44 @@ namespace libsnark
     // Execute all tests for the given curve.
     ppT::init_public_params();
 
-    plonk_example<ppT>* example = new plonk_example<ppT>;
-    example->initialize();
-    
     using Field = libff::Fr<ppT>;
     //    using BaseField = libff::Fq<ppT>;
 
+    // Initialize hard-coded values from example circuit
+    plonk_example<ppT> example;
+    
+    //    common_preprocessed_input<ppT> commmon_input(example); 
+
 
     // --- SETUP ---
+
+    // class common_preprocessed_input
 
     printf("[%s:%d] Start setup...\n", __FILE__, __LINE__);
 
     // --- start of example setup
     
     // number of gates / constraints
-    const size_t num_gates = example->num_gates;
+    const size_t num_gates = example.num_gates;
 #ifdef DEBUG
     // ensure num_gates is power of 2
     bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
     assert(b_is_power2);
     // ensure that num_gates is not 0
     assert(num_gates);
-#endif // #ifdef DEBUG 
-    // number of q-polynomials
-    const size_t num_qpolys = example->num_qpolys;
+#endif // #ifdef DEBUG
+    
+    // number of selector polynomials (q-polynomials)
+    const size_t num_qpolys = example.num_qpolys;
     // hard-coded gates matrix for the example circuit; each column is
     // a q-vector
-    std::vector<std::vector<Field>>gates_matrix = example->gates_matrix;
+    std::vector<std::vector<Field>>gates_matrix = example.gates_matrix;
     // Transposed gates matrix: each row is a q-vector
-    std::vector<std::vector<Field>>gates_matrix_transpose = example->gates_matrix_transpose;
+    std::vector<std::vector<Field>>gates_matrix_transpose = example.gates_matrix_transpose;
     // witness values
-    std::vector<Field> witness = example->witness;
+    std::vector<Field> witness = example.witness;
     // wire permutation
-    std::vector<size_t> wire_permutation = example->wire_permutation;
+    std::vector<size_t> wire_permutation = example.wire_permutation;
 
     // --- end of example setup
     
@@ -531,9 +536,9 @@ namespace libsnark
     plonk_compute_lagrange_basis<Field>(num_gates, L_basis);
 
     // public input (PI)
-    Field PI_value = example->public_input;
+    Field PI_value = example.public_input;
     // index of the row of the PI in the non-transposed gates_matrix 
-    int PI_index = example->public_input_index;
+    int PI_index = example.public_input_index;
     // compute public input (PI) polynomial
     std::vector<Field> PI_points(num_gates, Field(0));
     PI_points[PI_index] = Field(-PI_value);
@@ -563,8 +568,8 @@ namespace libsnark
     // Generate domains on which to evaluate the witness
     // polynomials. k1,k2 can be random, but we fix them for debug to
     // match against the test vector values
-    Field k1 = example->k1;
-    Field k2 = example->k2;
+    Field k1 = example.k1;
+    Field k2 = example.k2;
 #ifdef DEBUG
     printf("[%s:%d] k1 ", __FILE__, __LINE__);
     k1.print();    
@@ -584,7 +589,7 @@ namespace libsnark
     printf("[%s:%d] H_gen\n", __FILE__, __LINE__);
     print_vector(H_gen);
     for (int i = 0; i < (int)H_gen.size(); ++i) {
-      assert(H_gen[i] == example->H_gen[i]);
+      assert(H_gen[i] == example.H_gen[i]);
     }
 #endif // #ifdef DEBUG
     
@@ -595,7 +600,7 @@ namespace libsnark
     printf("[%s:%d] H_gen_permute\n", __FILE__, __LINE__);
     print_vector(H_gen_permute);
     for (size_t i = 0; i < H_gen_permute.size(); ++i) {
-      assert(H_gen_permute[i] == example->H_gen_permute[i]);
+      assert(H_gen_permute[i] == example.H_gen_permute[i]);
     }
 #endif // #ifdef DEBUG
     
@@ -612,58 +617,29 @@ namespace libsnark
 
     // random hidden element secret (toxic waste). we fix it to a
     // constant in order to match against the test vectors
-    Field secret = example->secret;
+    Field secret = example.secret;
 #ifdef DEBUG
     printf("[%s:%d] secret ", __FILE__, __LINE__);
     secret.print();
 #endif // #ifdef DEBUG
-    
-    // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
-    const libff::bigint<Field::num_limbs> secret_bigint = secret.as_bigint();
-    const size_t window_size =
-      std::max(libff::wnaf_opt_window_size<libff::G1<ppT>>(secret_bigint.num_bits()), 1ul);
-    const std::vector<long> naf =
-      libff::find_wnaf<Field::num_limbs>(window_size, secret_bigint);    
-    std::vector<libff::G1<ppT>> secret_powers_g1;
-    secret_powers_g1.reserve(num_gates + 3);
-    libff::G1<ppT> secret_i_g1 = libff::G1<ppT>::one();
-    secret_powers_g1.push_back(secret_i_g1);
-    for (size_t i = 1; i < (num_gates + 3); ++i) {
-      // secret^i * G1
-      secret_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
-								window_size, secret_i_g1, naf);
-      secret_powers_g1.push_back(secret_i_g1);
-    }
-    
-    // compute powers of secret times G2: 1*G2, secret^1*G2
-    std::vector<libff::G2<ppT>> secret_powers_g2;
-    secret_powers_g2.reserve(2);
-    // secret^0 * G2 = G2
-    libff::G2<ppT> secret_0_g2 = libff::G2<ppT>::one();
-    secret_powers_g2.push_back(secret_0_g2);
-    // secret^1 * G2
-    libff::G2<ppT> secret_1_g2 = secret * libff::G2<ppT>::one();
-    secret_powers_g2.push_back(secret_1_g2);
 
+    // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
+    // compute powers of secret times G2: 1*G2, secret^1*G2
     srs<ppT> srs = plonk_setup_from_secret<ppT>(secret, num_gates);
 
 #ifdef DEBUG
     for (int i = 0; i < (int)num_gates + 3; ++i) {
       printf("secret_power_G1[%2d] ", i);
-      secret_powers_g1[i].print();
-      libff::G1<ppT> secret_powers_g1_i(secret_powers_g1[i]);
-      secret_powers_g1_i.to_affine_coordinates();
-      assert(secret_powers_g1_i.X == example->secret_powers_g1[i][0]);
-      assert(secret_powers_g1_i.Y == example->secret_powers_g1[i][1]);
+      srs.secret_powers_g1[i].print();
       // test from generator
       libff::G1<ppT> srs_secret_powers_g1_i(srs.secret_powers_g1[i]);
       srs_secret_powers_g1_i.to_affine_coordinates();
-      assert(srs_secret_powers_g1_i.X == example->secret_powers_g1[i][0]);
-      assert(srs_secret_powers_g1_i.Y == example->secret_powers_g1[i][1]);
+      assert(srs_secret_powers_g1_i.X == example.secret_powers_g1[i][0]);
+      assert(srs_secret_powers_g1_i.Y == example.secret_powers_g1[i][1]);
     }
     for (int i = 0; i < 2; ++i) {
       printf("secret_power_G2[%2d] ", i);
-      secret_powers_g2[i].print();
+      srs.secret_powers_g2[i].print();
     }
 #endif // #ifdef DEBUG
 
@@ -686,7 +662,6 @@ namespace libsnark
       print_vector(W_polys[i]);
     }
 #endif // #if 1 // DEBUG
-
 
     // Evaluate polynomials over 2*n points
     Field omega2_base = libff::get_root_of_unity<Field>(2*num_gates);
@@ -789,8 +764,8 @@ namespace libsnark
 	   (int)W_polys_blinded[0].size(),
 	   (int)W_polys_blinded[1].size(),
 	   (int)W_polys_blinded[2].size(),
-	   (int)secret_powers_g1.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
+	   (int)srs.secret_powers_g1.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
 #ifdef DEBUG
     for (int i = 0; i < nwitness; ++i) {
       printf("W_polys_at_secret_g1[%d]\n", i);
@@ -802,8 +777,8 @@ namespace libsnark
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
-    Field beta = example->beta;
-    Field gamma = example->gamma;
+    Field beta = example.beta;
+    Field gamma = example.gamma;
 
     // compute permutation polynomial
 
@@ -841,7 +816,7 @@ namespace libsnark
     print_vector(z_poly);
 #endif // #ifdef DEBUG
     
-    libff::G1<ppT> z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(secret_powers_g1, z_poly);
+    libff::G1<ppT> z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, z_poly);
 #ifdef DEBUG
     printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
     z_poly_at_secret_g1.print();
@@ -851,7 +826,7 @@ namespace libsnark
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
-    Field alpha = example->alpha;
+    Field alpha = example.alpha;
     
     // plonk_poly_shifted    
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
@@ -1033,7 +1008,7 @@ namespace libsnark
     // evaluate each part of t_poly in the secret input
     std::vector<libff::G1<ppT>> t_poly_at_secret_g1(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
-      t_poly_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(secret_powers_g1, t_poly[i]);
+      t_poly_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, t_poly[i]);
     }
 #ifdef DEBUG
     // verify the output from Round 3 to the test vectors. test
@@ -1044,8 +1019,8 @@ namespace libsnark
       t_poly_at_secret_g1[i].print();
       libff::G1<ppT> t_poly_at_secret_g1_i(t_poly_at_secret_g1[i]);
       t_poly_at_secret_g1_i.to_affine_coordinates();
-      assert(t_poly_at_secret_g1_i.X == example->t_poly_at_secret_g1[i][0]);
-      assert(t_poly_at_secret_g1_i.Y == example->t_poly_at_secret_g1[i][1]);
+      assert(t_poly_at_secret_g1_i.X == example.t_poly_at_secret_g1[i][0]);
+      assert(t_poly_at_secret_g1_i.Y == example.t_poly_at_secret_g1[i][1]);
     }
 #endif // #ifdef DEBUG
 
@@ -1053,7 +1028,7 @@ namespace libsnark
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
-    Field zeta = example->zeta;
+    Field zeta = example.zeta;
 #ifdef DEBUG
     printf("[%s:%d] zeta\n", __FILE__, __LINE__);
     zeta.print();
@@ -1069,32 +1044,32 @@ namespace libsnark
 #ifdef DEBUG
     printf("a_zeta ");
     a_zeta.print();
-    assert(a_zeta == example->a_zeta);
+    assert(a_zeta == example.a_zeta);
     printf("b_zeta ");
     b_zeta.print();
-    assert(b_zeta == example->b_zeta);
+    assert(b_zeta == example.b_zeta);
     printf("c_zeta ");
     c_zeta.print();
-    assert(c_zeta == example->c_zeta);
+    assert(c_zeta == example.c_zeta);
     printf("S_0_zeta ");
     S_0_zeta.print();
-    assert(S_0_zeta == example->S_0_zeta);
+    assert(S_0_zeta == example.S_0_zeta);
     printf("S_1_zeta ");
     S_1_zeta.print();
-    assert(S_1_zeta == example->S_1_zeta);
+    assert(S_1_zeta == example.S_1_zeta);
     printf("t_zeta ");
     t_zeta.print();
-    assert(t_zeta == example->t_zeta);
+    assert(t_zeta == example.t_zeta);
     printf("z_poly_xomega_zeta ");
     z_poly_xomega_zeta.print();
-    assert(z_poly_xomega_zeta == example->z_poly_xomega_zeta);
+    assert(z_poly_xomega_zeta == example.z_poly_xomega_zeta);
 #endif // #ifdef DEBUG
     
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
-    Field nu = example->nu;
+    Field nu = example.nu;
     
     // compute linerisation polynomial r in five parts
     std::vector<polynomial<Field>> r_part(5);
@@ -1198,7 +1173,7 @@ namespace libsnark
     printf("r_zeta ");
     r_zeta.print();
 #endif // #ifdef DEBUG    
-    assert(r_zeta == example->r_zeta);
+    assert(r_zeta == example.r_zeta);
 
     // W_zeta polynomial is of degree 6 in the random element nu and
     // hence has 7 terms
@@ -1346,15 +1321,15 @@ namespace libsnark
     print_vector(W_zeta_omega);
 #endif // #ifdef DEBUG
       
-    assert(W_zeta == example->W_zeta);
-    assert(W_zeta_omega == example->W_zeta_omega);
+    assert(W_zeta == example.W_zeta);
+    assert(W_zeta_omega == example.W_zeta_omega);
     
     // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
     // input
     libff::G1<ppT> W_zeta_at_secret =
-      plonk_evaluate_poly_at_secret_G1<ppT>(secret_powers_g1, W_zeta);    
+      plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, W_zeta);    
     libff::G1<ppT> W_zeta_omega_at_secret =
-      plonk_evaluate_poly_at_secret_G1<ppT>(secret_powers_g1, W_zeta_omega);
+      plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, W_zeta_omega);
     
 #ifdef DEBUG
     printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
@@ -1363,20 +1338,20 @@ namespace libsnark
     W_zeta_at_secret.print();
     libff::G1<ppT> W_zeta_at_secret_aff(W_zeta_at_secret);
     W_zeta_at_secret_aff.to_affine_coordinates();
-    assert(W_zeta_at_secret_aff.X == example->W_zeta_at_secret[0]);
-    assert(W_zeta_at_secret_aff.Y == example->W_zeta_at_secret[1]);
+    assert(W_zeta_at_secret_aff.X == example.W_zeta_at_secret[0]);
+    assert(W_zeta_at_secret_aff.Y == example.W_zeta_at_secret[1]);
     
     printf("[%s:%d] W_zeta_omega_at_secret \n", __FILE__, __LINE__);
     W_zeta_omega_at_secret.print();
     libff::G1<ppT> W_zeta_omega_at_secret_aff(W_zeta_omega_at_secret);
     W_zeta_omega_at_secret_aff.to_affine_coordinates();
-    assert(W_zeta_omega_at_secret_aff.X == example->W_zeta_omega_at_secret[0]);
-    assert(W_zeta_omega_at_secret_aff.Y == example->W_zeta_omega_at_secret[1]);
+    assert(W_zeta_omega_at_secret_aff.X == example.W_zeta_omega_at_secret[0]);
+    assert(W_zeta_omega_at_secret_aff.Y == example.W_zeta_omega_at_secret[1]);
 #endif // #ifdef DEBUG
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
-    Field u = example->u;
+    Field u = example.u;
 
     // --- VERIFIER ---
 
@@ -1412,7 +1387,7 @@ namespace libsnark
     //
     //  - Q_polys_at_secret_g1[0..3]: [q_M]_1, [q_L]_1, [q_R]_1, [q_O]_1
     //  - S_polys_at_secret_g1[0..2]: [S_sigma1]_1, [S_sigma2]_1, [S_sigma3]_1
-    //  - secret_powers_g2[1]: [secret]_2 = secret^1 * G2
+    //  - srs.secret_powers_g2[1]: [secret]_2 = secret^1 * G2
     //
     // Public input polynomial
     //
@@ -1422,9 +1397,9 @@ namespace libsnark
     
     // Verifier precomputation:
     std::vector<libff::G1<ppT>> Q_polys_at_secret_g1(Q_polys.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, Q_polys, Q_polys_at_secret_g1);
+    plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, Q_polys, Q_polys_at_secret_g1);
     std::vector<libff::G1<ppT>> S_polys_at_secret_g1(S_polys.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(secret_powers_g1, S_polys, S_polys_at_secret_g1);
+    plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, S_polys, S_polys_at_secret_g1);
 
     // secret * G2
     
@@ -1434,16 +1409,16 @@ namespace libsnark
       Q_polys_at_secret_g1[i].print();      
       libff::G1<ppT> Q_poly_at_secret_g1_i(Q_polys_at_secret_g1[i]);
       Q_poly_at_secret_g1_i.to_affine_coordinates();      
-      assert(Q_poly_at_secret_g1_i.X == example->Q_polys_at_secret_g1[i][0]);
-      assert(Q_poly_at_secret_g1_i.Y == example->Q_polys_at_secret_g1[i][1]);
+      assert(Q_poly_at_secret_g1_i.X == example.Q_polys_at_secret_g1[i][0]);
+      assert(Q_poly_at_secret_g1_i.Y == example.Q_polys_at_secret_g1[i][1]);
     }
     for (int i = 0; i < (int)S_polys.size(); ++i) {
       printf("S_polys_at_secret_G1[%d] \n", i);
       S_polys_at_secret_g1[i].print();
       libff::G1<ppT> S_poly_at_secret_g1_i(S_polys_at_secret_g1[i]);
       S_poly_at_secret_g1_i.to_affine_coordinates();      
-      assert(S_poly_at_secret_g1_i.X == example->S_polys_at_secret_g1[i][0]);
-      assert(S_poly_at_secret_g1_i.Y == example->S_polys_at_secret_g1[i][1]);
+      assert(S_poly_at_secret_g1_i.X == example.S_polys_at_secret_g1[i][0]);
+      assert(S_poly_at_secret_g1_i.Y == example.S_polys_at_secret_g1[i][1]);
     }
 #endif // #ifdef DEBUG
 
@@ -1497,19 +1472,19 @@ namespace libsnark
     // --- Verifier Step 4: compute challenges hashed transcript as in
     //     prover description, from the common inputs, public input,
     //     and elements of pi-SNARK .  TODO: fixed to the test vectors for now
-    beta = example->beta;
-    gamma = example->gamma;
-    alpha = example->alpha;
-    zeta = example->zeta;
-    nu = example->nu;
-    u = example->u;
+    beta = example.beta;
+    gamma = example.gamma;
+    alpha = example.alpha;
+    zeta = example.zeta;
+    nu = example.nu;
+    u = example.u;
 
     // --- Verifier Step 5: compute zero polynomial evaluation
     domain = libfqfft::get_evaluation_domain<Field>(num_gates);
     Field zh_zeta = domain->compute_vanishing_polynomial(zeta);
     printf("[%s:%d] zh_zeta ", __FILE__, __LINE__);
     zh_zeta.print();
-    assert(zh_zeta == example->zh_zeta);
+    assert(zh_zeta == example.zh_zeta);
 
     // --- Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
     // Note: the paper counts the L-polynomials from 1; we count from 0
@@ -1518,7 +1493,7 @@ namespace libsnark
     printf("L_0_zeta ");
     L_0_zeta.print();
 #endif // #ifdef DEBUG    
-    assert(L_0_zeta == example->L_0_zeta);
+    assert(L_0_zeta == example.L_0_zeta);
 
     // --- Verifier Step 7: compute public input polynomial evaluation PI(zeta)
     Field PI_zeta = libfqfft::evaluate_polynomial<Field>(PI_poly.size(), PI_poly, zeta);   
@@ -1526,7 +1501,7 @@ namespace libsnark
     printf("PI_zeta ");
     PI_zeta.print();
 #endif // #ifdef DEBUG    
-    assert(PI_zeta == example->PI_zeta);
+    assert(PI_zeta == example.PI_zeta);
     
     // --- Verifier Step 8: compute quotient polynomial evaluation
     // r'(zeta) = r(zeta) - r0, where r0 is a constant term Note:
@@ -1560,7 +1535,7 @@ namespace libsnark
     printf("r_prime_zeta     ");
     r_prime_zeta.print();
 #endif // #ifdef DEBUG    
-    assert(r_prime_zeta == example->r_prime_zeta);
+    assert(r_prime_zeta == example.r_prime_zeta);
 
     // --- Verifier Step 9: compute first part of batched polynomial commitment [D]_1
 
@@ -1627,8 +1602,8 @@ namespace libsnark
     D1.print();
     libff::G1<ppT> D1_aff(D1);
     D1_aff.to_affine_coordinates();      
-    assert(D1_aff.X == example->D1[0]);
-    assert(D1_aff.Y == example->D1[1]);
+    assert(D1_aff.X == example.D1[0]);
+    assert(D1_aff.Y == example.D1[1]);
 #endif // #ifdef DEBUG    
     
     // --- Verifier Step 10: compute full batched polynomial
@@ -1675,8 +1650,8 @@ namespace libsnark
     F1.print();
     libff::G1<ppT> F1_aff(F1);
     F1_aff.to_affine_coordinates();      
-    assert(F1_aff.X == example->F1[0]);
-    assert(F1_aff.Y == example->F1[1]);
+    assert(F1_aff.X == example.F1[0]);
+    assert(F1_aff.Y == example.F1[1]);
 #endif // #ifdef DEBUG    
 
     // --- Verifier Step 11: compute group-encoded batch evaluation [E]_1
@@ -1705,8 +1680,8 @@ namespace libsnark
     E1.print();
     libff::G1<ppT> E1_aff(E1);
     E1_aff.to_affine_coordinates();      
-    assert(E1_aff.X == example->E1[0]);
-    assert(E1_aff.Y == example->E1[1]);
+    assert(E1_aff.X == example.E1[0]);
+    assert(E1_aff.Y == example.E1[1]);
 #endif // #ifdef DEBUG    
 
     // --- Verifier Step 12: batch validate all evaluations
@@ -1716,6 +1691,9 @@ namespace libsnark
     // e( [W_zeta]_1 + u [W_{zeta omega}]_1, [x]_2 ) *
     // e( -zeta [W_zeta ]_1 - u zeta omega [W_{zeta omega}]_1 - [F]_1 + [E]_1, [1]_2 )
     // = Field(1)
+    //
+    // Denoted as: 
+    // e(first_lhs, second_lhs) * e(first_rhs, second_rhs) = 1
     //
 
     // add random element (noise) to the opening polynomials to check
@@ -1737,7 +1715,7 @@ namespace libsnark
        u
       };
     libff::G1<ppT> pairing_first_lhs = plonk_multi_exp_G1<ppT>(curve_points_lhs, scalar_elements_lhs);
-    libff::G2<ppT> pairing_second_lhs = secret_powers_g2[1];
+    libff::G2<ppT> pairing_second_lhs = srs.secret_powers_g2[1];
     
     std::vector<libff::G1<ppT>> curve_points_rhs
       {
@@ -1754,26 +1732,24 @@ namespace libsnark
        Field(-1) * Field(1),
        Field(-1) * Field(-1)
       };
-
-    // e(first_lhs, second_lhs) = e(first_rhs, second_rhs)
-    
+   
     libff::G1<ppT> pairing_first_rhs = plonk_multi_exp_G1<ppT>(curve_points_rhs, scalar_elements_rhs);
-    libff::G2<ppT> pairing_second_rhs = secret_powers_g2[0];
+    libff::G2<ppT> pairing_second_rhs = srs.secret_powers_g2[0];
 
 #ifdef DEBUG    
     printf("[%s:%d] pairing_first_lhs\n", __FILE__, __LINE__);
     pairing_first_lhs.print();
     libff::G1<ppT> pairing_first_lhs_aff(pairing_first_lhs);
     pairing_first_lhs_aff.to_affine_coordinates();      
-    assert(pairing_first_lhs_aff.X == example->pairing_first_lhs[0]);
-    assert(pairing_first_lhs_aff.Y == example->pairing_first_lhs[1]);
+    assert(pairing_first_lhs_aff.X == example.pairing_first_lhs[0]);
+    assert(pairing_first_lhs_aff.Y == example.pairing_first_lhs[1]);
 
     printf("[%s:%d] pairing_first_rhs\n", __FILE__, __LINE__);
     pairing_first_rhs.print();
     libff::G1<ppT> pairing_first_rhs_aff(pairing_first_rhs);
     pairing_first_rhs_aff.to_affine_coordinates();
-    assert(pairing_first_rhs_aff.X == example->pairing_first_rhs[0]);
-    assert(pairing_first_rhs_aff.Y == example->pairing_first_rhs[1]);
+    assert(pairing_first_rhs_aff.X == example.pairing_first_rhs[0]);
+    assert(pairing_first_rhs_aff.Y == example.pairing_first_rhs[1]);
 #endif // #ifdef DEBUG    
 
     const libff::G1_precomp<ppT> _A = ppT::precompute_G1(pairing_first_lhs);

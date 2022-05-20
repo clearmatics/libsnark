@@ -5,7 +5,8 @@ namespace libsnark
 {
 
 template<typename ppT>
-void plonk_example<ppT>::initialize()
+//void plonk_example<ppT>::initialize()
+plonk_example<ppT>::plonk_example()
 {
   using Field = libff::Fr<ppT>;
   using BaseField = libff::Fq<ppT>;

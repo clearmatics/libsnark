@@ -196,7 +196,8 @@ public:
   //  std::vector<BaseField> pairing_second_lhs;
   //  std::vector<BaseField> pairing_second_rhs;
 
-  void initialize();
+  //  void initialize();
+  plonk_example();
 };
 
 } // namespace libsnark
