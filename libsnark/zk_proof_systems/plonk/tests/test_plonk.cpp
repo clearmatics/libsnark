@@ -675,29 +675,17 @@ namespace libsnark
 
     // blinding scalars b1, b2, ..., b9. random but fixed to match the
     // python test vectors
-    //    size_t nscalars = 9;
-    std::vector<Field> rand_scalars
-      {
-       Field("8063396892870388055806370369789704857755116044327394765020751373651916505604"),
-       Field("6827026430120056597679453111370682306316948363643792417785314991392447377909"),
-       Field("20903799562102387073359556962112335230020378309596765284572286455779329747315"),
-       Field("27445824854335787523979734401573136947589999159092723101543900479804718923773"),
-       Field("5216447975508541021290757380485235885597475407449078898274648785082871817687"),
-       Field("48720156268681305476740160454555587712391923971264646500554531948708930944069"),
-       Field("2131891516651518828698089707163191982683101187444208330829153527689737950718"),
-       Field("47548532878000795436471885496554996210469829388180983864669623532585348412472"),
-       Field("2534599719872500160900817853393315885420633320379105447254598708515031311667")
-      };
+    std::vector<Field> blind_scalars = example.prover_blind_scalars;
 #ifdef DEBUG
-    printf("[%s:%d] rand_scalars\n", __FILE__, __LINE__);
-    print_vector(rand_scalars);
+    printf("[%s:%d] blind_scalars\n", __FILE__, __LINE__);
+    print_vector(blind_scalars);
 #endif // #ifdef DEBUG
 
     std::vector<std::vector<Field>> blind_polys
       {
-       {rand_scalars[1], rand_scalars[0]}, // b1 + b0 X
-       {rand_scalars[3], rand_scalars[2]}, // b3 + b2 X
-       {rand_scalars[5], rand_scalars[4]}  // b5 + b4 X
+       {blind_scalars[1], blind_scalars[0]}, // b1 + b0 X
+       {blind_scalars[3], blind_scalars[2]}, // b3 + b2 X
+       {blind_scalars[5], blind_scalars[4]}  // b5 + b4 X
       };
     
     // a_poly = blind_polys[0] * zh_poly + W_polys[0]
@@ -737,7 +725,7 @@ namespace libsnark
     // compute permutation polynomial
 
     // blinding polynomial
-    std::vector<Field> z1_blind_poly{rand_scalars[8], rand_scalars[7], rand_scalars[6]}; // b8 + b7 X + b6 X^2
+    std::vector<Field> z1_blind_poly{blind_scalars[8], blind_scalars[7], blind_scalars[6]}; // b8 + b7 X + b6 X^2
     // multiply by the vanishing polynomial: z1 = z1 * zh_poly
     libfqfft::_polynomial_multiplication<Field>(z1_blind_poly, z1_blind_poly, zh_poly);
 #ifdef DEBUG
