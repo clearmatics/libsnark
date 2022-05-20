@@ -15,6 +15,7 @@ See plonk.hpp .
 #define PLONK_PPZKSNARK_TCC_
 
 #include "libsnark/zk_proof_systems/plonk/plonk.hpp"
+#include "libsnark/zk_proof_systems/plonk/tests/plonk_example.hpp"
 
 namespace libsnark
 {
@@ -35,6 +36,10 @@ namespace libsnark
 				   size_t num_gates
 				   )
   {
+    // initialize hard-coded values from example circuit (for DEBUG
+    // only)
+    plonk_example<ppT> example;
+    
     // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
     const libff::bigint<libff::Fr<ppT>::num_limbs> secret_bigint = secret.as_bigint();
     const size_t window_size =
@@ -63,7 +68,7 @@ namespace libsnark
     libff::G2<ppT> secret_1_g2 = secret * libff::G2<ppT>::one();
     secret_powers_g2.push_back(secret_1_g2);
     //    plonk_verification_key<ppT> vk = plonk_verification_key<ppT>(std::move(secret_powers_g2));
-    
+
     srs<ppT> srs(std::move(secret_powers_g1), std::move(secret_powers_g2));
     return srs;
   }

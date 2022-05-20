@@ -468,7 +468,7 @@ namespace libsnark
     bool b_equal = (LHS == RHS);
     return b_equal;
   }
-
+  
   //
   // check that the input is an elemnet of the field
   // Warning: under development
@@ -478,6 +478,117 @@ namespace libsnark
   {
     bool b_valid = (typeid(x) == typeid(FieldT));
     return b_valid;
+  }
+  
+  template<typename ppT>
+  void plonk_setup(common_preprocessed_input<ppT>& common_input)
+  {
+    using Field = libff::Fr<ppT>;
+    
+    // initialize hard-coded values from example circuit
+    plonk_example<ppT> example;
+
+    // public input (PI)
+    Field PI_value = example.public_input;
+    // index of the row of the PI in the non-transposed gates_matrix 
+    int PI_index = example.public_input_index;
+    // Transposed gates matrix: each row is a q-vector
+    std::vector<std::vector<Field>>gates_matrix_transpose = example.gates_matrix_transpose;
+    // wire permutation
+    std::vector<size_t> wire_permutation = example.wire_permutation;
+    // Generate domains on which to evaluate the witness
+    // polynomials. k1,k2 can be random, but we fix them for debug to
+    // match against the test vector values
+    Field k1 = example.k1;
+    Field k2 = example.k2;
+#ifdef DEBUG
+    printf("[%s:%d] k1 ", __FILE__, __LINE__);
+    k1.print();    
+    printf("[%s:%d] k2 ", __FILE__, __LINE__);
+    k2.print();    
+#endif // #ifdef DEBUG
+
+    common_input.num_gates = example.num_gates;
+#ifdef DEBUG
+    // ensure num_gates is power of 2
+    bool b_is_power2 = ((common_input.num_gates & (common_input.num_gates - 1)) == 0);
+    assert(b_is_power2);
+    // ensure that num_gates is not 0
+    assert(common_input.num_gates);
+#endif // #ifdef DEBUG
+    
+    common_input.num_qpolys = example.num_qpolys;
+    
+    // We represent the constraints q_L, q_R, q_O, q_M, q_C and the
+    // witness w_L, w_R, w_O as polynomials in the roots of unity
+    // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8    
+    // compute Lagrange basis
+    common_input.L_basis.resize(common_input.num_gates, polynomial<Field>(common_input.num_gates));;
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(common_input.num_gates);
+    plonk_compute_lagrange_basis<Field>(common_input.num_gates, common_input.L_basis);
+
+    // compute public input (PI) polynomial
+    std::vector<Field> PI_points(common_input.num_gates, Field(0));
+    PI_points[PI_index] = Field(-PI_value);
+    plonk_compute_public_input_polynomial(PI_points, common_input.PI_poly, common_input.L_basis);
+    //    plonk_interpolate_over_lagrange_basis<Field>(PI_points, common_input.PI_poly, common_input.L_basis);
+#ifdef DEBUG
+    printf("[%s:%d] common_input.PI_poly\n", __FILE__, __LINE__);
+    print_vector(common_input.PI_poly);
+#endif // #ifdef DEBUG
+
+    // compute the selector polynomials (q-polynomials) from the
+    // transposed gates matrix over the Lagrange basis q_poly = \sum_i
+    // q[i] * L[i] where q[i] is a coefficient (a scalar Field
+    // element) and L[i] is a polynomial with Field coefficients
+    common_input.Q_polys.resize(common_input.num_qpolys, polynomial<Field>(common_input.num_gates));
+    plonk_compute_selector_polynomials<Field>(gates_matrix_transpose, common_input.Q_polys, common_input.L_basis);
+#ifdef DEBUG
+    for (int i = 0; i < (int)common_input.num_qpolys; ++i) {
+      printf("\n[%s:%d] common_input.Q_polys[%2d]\n", __FILE__, __LINE__, i);
+      print_vector(common_input.Q_polys[i]);
+    }
+#endif // #ifdef DEBUG
+
+    // number of generators for H, Hk1, Hk2
+    int num_hgen = NUM_HGEN;    
+    // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
+    // omega[2] are omega[0]*k2
+    //    std::vector<std::vector<Field>> omega;
+    common_input.omega_roots.resize(num_hgen, std::vector<Field>(common_input.num_gates));
+    plonk_compute_roots_of_unity_omega(k1, k2, common_input.omega_roots);
+    // H_gen contains the generators of H, k1 H and k2 H in one place
+    // ie. common_input.omega_roots, common_input.omega_roots_k1 and common_input.omega_roots_k2
+    plonk_roots_of_unity_omega_to_subgroup_H(common_input.omega_roots, common_input.H_gen);
+#ifdef DEBUG
+    printf("[%s:%d] common_input.H_gen\n", __FILE__, __LINE__);
+    print_vector(common_input.H_gen);
+    for (int i = 0; i < (int)common_input.H_gen.size(); ++i) {
+      assert(common_input.H_gen[i] == example.H_gen[i]);
+    }
+#endif // #ifdef DEBUG
+    
+    // permute common_input.H_gen according to the wire permutation
+    common_input.H_gen_permute.resize(num_hgen*common_input.num_gates, Field(0));
+    plonk_permute_subgroup_H<Field>(common_input.H_gen_permute, common_input.H_gen, wire_permutation);
+#ifdef DEBUG
+    printf("[%s:%d] common_input.H_gen_permute\n", __FILE__, __LINE__);
+    print_vector(common_input.H_gen_permute);
+    for (size_t i = 0; i < common_input.H_gen_permute.size(); ++i) {
+      assert(common_input.H_gen_permute[i] == example.H_gen_permute[i]);
+    }
+#endif // #ifdef DEBUG
+    
+    // compute the permutation polynomials S_sigma_1, S_sigma_2,
+    // S_sigma_2 (see [GWC19], Sect. 8.1)
+    common_input.S_polys.resize(num_hgen, polynomial<Field>(common_input.num_gates));
+    plonk_compute_permutation_polynomials<Field>(common_input.S_polys, common_input.H_gen_permute, common_input.L_basis, common_input.num_gates);
+#ifdef DEBUG
+    for (int i = 0; i < num_hgen; ++i) {
+      printf("[%s:%d] common_input.S_polys[%d]\n", __FILE__, __LINE__, i);
+      print_vector(common_input.S_polys[i]);
+    }
+#endif // #ifdef DEBUG
   }
 
   template<typename ppT> void test_plonk()
@@ -491,130 +602,12 @@ namespace libsnark
     // initialize hard-coded values from example circuit
     plonk_example<ppT> example;
     
-    // common preprocessed input    
-    common_preprocessed_input<ppT> common_input; 
-
-
     // --- SETUP ---
-
-    // class common_preprocessed_input
-
     printf("[%s:%d] Start setup...\n", __FILE__, __LINE__);
 
-    // --- start of example setup
-    
-    // number of gates / constraints
-    const size_t num_gates = example.num_gates;
-#ifdef DEBUG
-    // ensure num_gates is power of 2
-    bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
-    assert(b_is_power2);
-    // ensure that num_gates is not 0
-    assert(num_gates);
-#endif // #ifdef DEBUG
-    
-    // number of selector polynomials (q-polynomials)
-    const size_t num_qpolys = example.num_qpolys;
-    // hard-coded gates matrix for the example circuit; each column is
-    // a q-vector
-    std::vector<std::vector<Field>>gates_matrix = example.gates_matrix;
-    // Transposed gates matrix: each row is a q-vector
-    std::vector<std::vector<Field>>gates_matrix_transpose = example.gates_matrix_transpose;
-    // witness values
-    std::vector<Field> witness = example.witness;
-    // wire permutation
-    std::vector<size_t> wire_permutation = example.wire_permutation;
-    // public input (PI)
-    Field PI_value = example.public_input;
-    // index of the row of the PI in the non-transposed gates_matrix 
-    int PI_index = example.public_input_index;
-
-    // --- end of example setup
-    
-    // We represent the constraints q_L, q_R, q_O, q_M, q_C and the
-    // witness w_L, w_R, w_O as polynomials in the roots of unity
-    // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
-    
-    // compute Lagrange basis
-    common_input.L_basis.resize(num_gates, polynomial<Field>(num_gates));;
-    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(num_gates);
-    plonk_compute_lagrange_basis<Field>(num_gates, common_input.L_basis);
-
-    // compute public input (PI) polynomial
-    std::vector<Field> PI_points(num_gates, Field(0));
-    PI_points[PI_index] = Field(-PI_value);
-    polynomial<Field> PI_poly;
-    plonk_compute_public_input_polynomial(PI_points, PI_poly, common_input.L_basis);
-    //    plonk_interpolate_over_lagrange_basis<Field>(PI_points, PI_poly, common_input.L_basis);
-#ifdef DEBUG
-    printf("[%s:%d] PI_poly\n", __FILE__, __LINE__);
-    print_vector(PI_poly);
-#endif // #ifdef DEBUG
-
-    // compute the selector polynomials (q-polynomials) from the
-    // transposed gates matrix over the Lagrange basis q_poly = \sum_i
-    // q[i] * L[i] where q[i] is a coefficient (a scalar Field
-    // element) and L[i] is a polynomial with Field coefficients
-    std::vector<polynomial<Field>> Q_polys(num_qpolys, polynomial<Field>(num_gates));
-    plonk_compute_selector_polynomials<Field>(gates_matrix_transpose, Q_polys, common_input.L_basis);
-#ifdef DEBUG
-    for (int i = 0; i < (int)num_qpolys; ++i) {
-      printf("\n[%s:%d] Q_polys[%2d]\n", __FILE__, __LINE__, i);
-      print_vector(Q_polys[i]);
-    }
-#endif // #ifdef DEBUG
-
-    // number of generators for H, Hk1, Hk2
-    int num_hgen = NUM_HGEN;
-    // Generate domains on which to evaluate the witness
-    // polynomials. k1,k2 can be random, but we fix them for debug to
-    // match against the test vector values
-    Field k1 = example.k1;
-    Field k2 = example.k2;
-#ifdef DEBUG
-    printf("[%s:%d] k1 ", __FILE__, __LINE__);
-    k1.print();    
-    printf("[%s:%d] k2 ", __FILE__, __LINE__);
-    k2.print();    
-#endif // #ifdef DEBUG
-    
-    // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
-    // omega[2] are omega[0]*k2
-    std::vector<std::vector<Field>> omega(num_hgen, std::vector<Field>(num_gates));
-    plonk_compute_roots_of_unity_omega(k1, k2, omega);
-    // H_gen contains the generators of H, k1 H and k2 H in one place
-    // ie. omega, omega_k1 and omega_k2
-    std::vector<Field> H_gen;
-    plonk_roots_of_unity_omega_to_subgroup_H(omega, H_gen);
-#ifdef DEBUG
-    printf("[%s:%d] H_gen\n", __FILE__, __LINE__);
-    print_vector(H_gen);
-    for (int i = 0; i < (int)H_gen.size(); ++i) {
-      assert(H_gen[i] == example.H_gen[i]);
-    }
-#endif // #ifdef DEBUG
-    
-    // permute H_gen according to the wire permutation
-    std::vector<Field> H_gen_permute(num_hgen*num_gates, Field(0));
-    plonk_permute_subgroup_H<Field>(H_gen_permute, H_gen, wire_permutation);
-#ifdef DEBUG
-    printf("[%s:%d] H_gen_permute\n", __FILE__, __LINE__);
-    print_vector(H_gen_permute);
-    for (size_t i = 0; i < H_gen_permute.size(); ++i) {
-      assert(H_gen_permute[i] == example.H_gen_permute[i]);
-    }
-#endif // #ifdef DEBUG
-    
-    // compute the permutation polynomials S_sigma_1, S_sigma_2,
-    // S_sigma_2 (see [GWC19], Sect. 8.1)
-    std::vector<polynomial<Field>> S_polys(num_hgen, polynomial<Field>(num_gates));
-    plonk_compute_permutation_polynomials<Field>(S_polys, H_gen_permute, common_input.L_basis, num_gates);
-#ifdef DEBUG
-    for (int i = 0; i < num_hgen; ++i) {
-      printf("[%s:%d] S_polys[%d]\n", __FILE__, __LINE__, i);
-      print_vector(S_polys[i]);
-    }
-#endif // #ifdef DEBUG
+    // common preprocessed input    
+    common_preprocessed_input<ppT> common_input; 
+    plonk_setup<ppT>(common_input);
 
     // random hidden element secret (toxic waste). we fix it to a
     // constant in order to match against the test vectors
@@ -624,12 +617,14 @@ namespace libsnark
     secret.print();
 #endif // #ifdef DEBUG
 
-    // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
-    // compute powers of secret times G2: 1*G2, secret^1*G2
-    srs<ppT> srs = plonk_setup_from_secret<ppT>(secret, num_gates);
-
+    // --- SRS ---
+    printf("[%s:%d] Prepare SRS...\n", __FILE__, __LINE__);    
+    // compute powers of secret times G1: 1*G1, secret^1*G1,
+    // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
+    srs<ppT> srs = plonk_setup_from_secret<ppT>(secret, common_input.num_gates);    
+    // Compare against reference test values
 #ifdef DEBUG
-    for (int i = 0; i < (int)num_gates + 3; ++i) {
+    for (int i = 0; i < (int)common_input.num_gates + 3; ++i) {
       printf("secret_power_G1[%2d] ", i);
       srs.secret_powers_g1[i].print();
       // test from generator
@@ -643,16 +638,28 @@ namespace libsnark
       srs.secret_powers_g2[i].print();
     }
 #endif // #ifdef DEBUG
+    
 
     // --- PROVER ---
     
     printf("[%s:%d] Prover preparation...\n", __FILE__, __LINE__);
     
+    // Generate domains on which to evaluate the witness
+    // polynomials. k1,k2 can be random, but we fix them for debug to
+    // match against the test vector values
+    Field k1 = example.k1;
+    Field k2 = example.k2;
+    // number of generators for H, Hk1, Hk2
+    int num_hgen = NUM_HGEN;
+    
+    // witness values
+    std::vector<Field> witness = example.witness;
+    
     int nwitness = 3;
-    std::vector<polynomial<Field>> W_polys(nwitness, polynomial<Field>(num_gates));
+    std::vector<polynomial<Field>> W_polys(nwitness, polynomial<Field>(common_input.num_gates));
     for (int i = 0; i < nwitness; ++i) {
-      typename std::vector<Field>::iterator begin = witness.begin()+(i*num_gates);
-      typename std::vector<Field>::iterator end = witness.begin()+(i*num_gates)+(num_gates);
+      typename std::vector<Field>::iterator begin = witness.begin()+(i*common_input.num_gates);
+      typename std::vector<Field>::iterator end = witness.begin()+(i*common_input.num_gates)+(common_input.num_gates);
       std::vector<Field> W_points(begin, end);
       plonk_interpolate_over_lagrange_basis<Field>(W_points, W_polys[i], common_input.L_basis);
     }
@@ -667,10 +674,10 @@ namespace libsnark
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
 
     // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
-    // unity omega
-    std::vector<Field> zh_poly(num_gates+1, Field(0));
+    // unity common_input.omega_roots
+    std::vector<Field> zh_poly(common_input.num_gates+1, Field(0));
     zh_poly[0] = Field(-1);
-    zh_poly[num_gates] = Field(1);
+    zh_poly[common_input.num_gates] = Field(1);
     printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
     print_vector(zh_poly);
 
@@ -735,16 +742,16 @@ namespace libsnark
 #endif // #ifdef DEBUG
 
     // A[0] = 1; ... A[i] = computed from (i-1)
-    std::vector<Field> A_vector(num_gates, Field(0));
-    plonk_compute_accumulator(num_gates, beta, gamma, witness, H_gen, H_gen_permute, A_vector);
+    std::vector<Field> A_vector(common_input.num_gates, Field(0));
+    plonk_compute_accumulator(common_input.num_gates, beta, gamma, witness, common_input.H_gen, common_input.H_gen_permute, A_vector);
 #ifdef DEBUG
-    for (int i = 0; i < (int)num_gates; ++i) {
+    for (int i = 0; i < (int)common_input.num_gates; ++i) {
       printf("A[%d] ", i);
       A_vector[i].print();
     }
 #endif // #ifdef DEBUG
 
-    polynomial<Field> A_poly(num_gates);
+    polynomial<Field> A_poly(common_input.num_gates);
     plonk_interpolate_over_lagrange_basis<Field>(A_vector, A_poly, common_input.L_basis);
 #ifdef DEBUG
     printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
@@ -773,19 +780,19 @@ namespace libsnark
     
     // plonk_poly_shifted    
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
-    // w=omega is the base root of unity and z is z_poly. we do this
+    // w=common_input.omega_roots is the base root of unity and z is z_poly. we do this
     // by multiplying the coefficients of z by w
-    std::vector<Field> z_poly_xomega(z_poly.size(), Field(0));
+    std::vector<Field> z_poly_xomega_roots(z_poly.size(), Field(0));
     for (size_t i = 0; i < z_poly.size(); ++i) {
-      // omega^i
-      //      z_poly_xomega[i] = z_poly[i] * omega[base][1]; // !!!! <----- (omega[base][i]**i)
-      Field omega_i = libff::power(omega[base][1], libff::bigint<1>(i));
-      z_poly_xomega[i] = z_poly[i] * omega_i;
+      // common_input.omega_roots^i
+      //      z_poly_xomega_roots[i] = z_poly[i] * common_input.omega_roots[base][1]; // !!!! <----- (common_input.omega_roots[base][i]**i)
+      Field omega_roots_i = libff::power(common_input.omega_roots[base][1], libff::bigint<1>(i));
+      z_poly_xomega_roots[i] = z_poly[i] * omega_roots_i;
     }
 
 #ifdef DEBUG
-    printf("[%s:%d] z_poly_xomega\n", __FILE__, __LINE__);
-    print_vector(z_poly_xomega);
+    printf("[%s:%d] z_poly_xomega_roots\n", __FILE__, __LINE__);
+    print_vector(z_poly_xomega_roots);
 #endif // #ifdef DEBUG
 
     // start computation of polynomial t(X) in round 3. we break t
@@ -798,32 +805,32 @@ namespace libsnark
     // a(x)b(x)q_M(x)
     polynomial<Field> abqM;
     libfqfft::_polynomial_multiplication<Field>(abqM, W_polys_blinded[a], W_polys_blinded[b]);
-    libfqfft::_polynomial_multiplication<Field>(abqM, abqM, Q_polys[M]);    
+    libfqfft::_polynomial_multiplication<Field>(abqM, abqM, common_input.Q_polys[M]);    
     // a(x)q_L(x)
     polynomial<Field> aqL;
-    libfqfft::_polynomial_multiplication<Field>(aqL, W_polys_blinded[a], Q_polys[L]);
+    libfqfft::_polynomial_multiplication<Field>(aqL, W_polys_blinded[a], common_input.Q_polys[L]);
     // b(x)q_R(x)
     polynomial<Field> bqR;
-    libfqfft::_polynomial_multiplication<Field>(bqR, W_polys_blinded[b], Q_polys[R]);
+    libfqfft::_polynomial_multiplication<Field>(bqR, W_polys_blinded[b], common_input.Q_polys[R]);
     // c(x)q_O(x)
     polynomial<Field> cqO;
-    libfqfft::_polynomial_multiplication<Field>(cqO, W_polys_blinded[c], Q_polys[O]);
+    libfqfft::_polynomial_multiplication<Field>(cqO, W_polys_blinded[c], common_input.Q_polys[O]);
     // t_part[0](x) = a(x)b(x)q_M(x) + a(x)q_L(x) + b(x)q_R(x) + c(x)q_O(x) + PI(x) + q_C(x)
     polynomial<Field> poly_null{Field(0)};
     libfqfft::_polynomial_addition<Field>(t_part[0], poly_null, abqM);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], aqL);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], bqR);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], cqO);
-    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], PI_poly);
-    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], Q_polys[C]);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], common_input.PI_poly);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], common_input.Q_polys[C]);
     
 #ifdef NDEBUG
     printf("[%s:%d] W_polys_blinded[a]\n", __FILE__, __LINE__);
     print_vector(W_polys_blinded[a]);
     printf("[%s:%d] W_polys_blinded[b]\n", __FILE__, __LINE__);
     print_vector(W_polys_blinded[b]);
-    printf("[%s:%d] Q_polys[M]\n", __FILE__, __LINE__);
-    print_vector(Q_polys[M]);
+    printf("[%s:%d] common_input.Q_polys[M]\n", __FILE__, __LINE__);
+    print_vector(common_input.Q_polys[M]);
     printf("[%s:%d] abqM\n", __FILE__, __LINE__);
     print_vector(abqM);    
     printf("[%s:%d] t_part[0]\n", __FILE__, __LINE__);
@@ -872,7 +879,7 @@ namespace libsnark
     // S_sigma1(x)*beta, S_sigma2(x)*beta, S_sigma3(x)*beta
     std::vector<polynomial<Field>> sbeta_poly(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
-      libfqfft::_polynomial_multiplication<Field>(sbeta_poly[i], S_polys[i], beta_poly);
+      libfqfft::_polynomial_multiplication<Field>(sbeta_poly[i], common_input.S_polys[i], beta_poly);
     }
     // a(x) + S_sigma1(x)*beta + gamma
     polynomial<Field> a_sbeta_gamma;
@@ -888,10 +895,10 @@ namespace libsnark
     libfqfft::_polynomial_addition<Field>(c_sbeta_gamma_k2, c_sbeta_gamma_k2, gamma_poly);    
     // t_part[2] = (a(x) + S_sigma1(x)*beta + gamma)*(b(x) +
     // S_sigma2(x)*beta + gamma)*(b(x) + S_sigma2(x)*beta +
-    // gamma)*z(x*omega)*alpha
+    // gamma)*z(x*common_input.omega_roots)*alpha
     libfqfft::_polynomial_multiplication<Field>(t_part[2], a_sbeta_gamma, b_sbeta_gamma_k1);
     libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], c_sbeta_gamma_k2);
-    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], z_poly_xomega);
+    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], z_poly_xomega_roots);
     libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], alpha_poly);
     // -t_part[2]
     polynomial<Field> neg_one_poly = {-Field("1")};
@@ -934,11 +941,11 @@ namespace libsnark
     assert(libfqfft::_is_zero(remainder));
 
     // break t_poly_long into three parts: lo, mid, hi, each of degree 7
-    // note: (num_gates+3) is the length of the CRS = (num_gates+2) powers of G1 + 1 power of G2
+    // note: (common_input.num_gates+3) is the length of the CRS = (common_input.num_gates+2) powers of G1 + 1 power of G2
     std::vector<polynomial<Field>> t_poly(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
-      typename std::vector<Field>::iterator begin = t_poly_long.begin()+(i*(num_gates+2));
-      typename std::vector<Field>::iterator end = t_poly_long.begin()+(i*(num_gates+2))+(num_gates+2);
+      typename std::vector<Field>::iterator begin = t_poly_long.begin()+(i*(common_input.num_gates+2));
+      typename std::vector<Field>::iterator end = t_poly_long.begin()+(i*(common_input.num_gates+2))+(common_input.num_gates+2);
       std::vector<Field> tmp(begin, end);
       t_poly[i] = tmp;
     }
@@ -976,13 +983,13 @@ namespace libsnark
     printf("[%s:%d] zeta\n", __FILE__, __LINE__);
     zeta.print();
 #endif // #ifdef DEBUG
-    Field a_zeta = libfqfft::evaluate_polynomial<Field>(num_gates + 2, W_polys_blinded[a], zeta);
-    Field b_zeta = libfqfft::evaluate_polynomial<Field>(num_gates + 2, W_polys_blinded[b], zeta);
-    Field c_zeta = libfqfft::evaluate_polynomial<Field>(num_gates + 2, W_polys_blinded[c], zeta);
-    Field S_0_zeta = libfqfft::evaluate_polynomial<Field>(num_gates, S_polys[0], zeta);
-    Field S_1_zeta = libfqfft::evaluate_polynomial<Field>(num_gates, S_polys[1], zeta);
+    Field a_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[a], zeta);
+    Field b_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[b], zeta);
+    Field c_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[c], zeta);
+    Field S_0_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[0], zeta);
+    Field S_1_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[1], zeta);
     Field t_zeta = libfqfft::evaluate_polynomial<Field>(t_poly_long.size(), t_poly_long, zeta);
-    Field z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega.size(), z_poly_xomega, zeta);
+    Field z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega_roots.size(), z_poly_xomega_roots, zeta);
     
 #ifdef DEBUG
     printf("a_zeta ");
@@ -1026,23 +1033,23 @@ namespace libsnark
     polynomial<Field> c_zeta_poly{c_zeta}; 
     // a(z)b(z)q_M(x)
     polynomial<Field> abqM_zeta;
-    libfqfft::_polynomial_multiplication<Field>(abqM_zeta, Q_polys[M], a_zeta_poly);
+    libfqfft::_polynomial_multiplication<Field>(abqM_zeta, common_input.Q_polys[M], a_zeta_poly);
     libfqfft::_polynomial_multiplication<Field>(abqM_zeta, abqM_zeta, b_zeta_poly);    
     // a(z)q_L(x)
     polynomial<Field> aqL_zeta;
-    libfqfft::_polynomial_multiplication<Field>(aqL_zeta, Q_polys[L], a_zeta_poly);
+    libfqfft::_polynomial_multiplication<Field>(aqL_zeta, common_input.Q_polys[L], a_zeta_poly);
     // b(z)q_R(x)
     polynomial<Field> bqR_zeta;
-    libfqfft::_polynomial_multiplication<Field>(bqR_zeta, Q_polys[R], b_zeta_poly);
+    libfqfft::_polynomial_multiplication<Field>(bqR_zeta, common_input.Q_polys[R], b_zeta_poly);
     // c(z)q_O(x)
     polynomial<Field> cqO_zeta;
-    libfqfft::_polynomial_multiplication<Field>(cqO_zeta, Q_polys[O], c_zeta_poly);
+    libfqfft::_polynomial_multiplication<Field>(cqO_zeta, common_input.Q_polys[O], c_zeta_poly);
     // a(z)b(z)q_M(x) + a(z)q_L(x) + b(z)q_R(x) + c(z)q_O(x) + q_C(x)
     libfqfft::_polynomial_addition<Field>(r_part[0], poly_null, abqM_zeta);
     libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], aqL_zeta);
     libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], bqR_zeta);
     libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], cqO_zeta);
-    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], Q_polys[C]);
+    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], common_input.Q_polys[C]);
 
     // --- Computation of r_part[1]
 
@@ -1062,7 +1069,7 @@ namespace libsnark
        (b_zeta + (beta * S_1_zeta) + gamma) *
        (alpha * beta * z_poly_xomega_zeta)
       };
-    libfqfft::_polynomial_multiplication<Field>(r_part[2], r2_const_poly, S_polys[2]);
+    libfqfft::_polynomial_multiplication<Field>(r_part[2], r2_const_poly, common_input.S_polys[2]);
     // -r_part[2]
     libfqfft::_polynomial_multiplication<Field>(r_part[2], r_part[2], neg_one_poly);
     
@@ -1128,11 +1135,11 @@ namespace libsnark
     polynomial<Field> t_lo{t_poly[lo]};
     // t_mid(x) * zeta^(n+2)
     polynomial<Field> t_mid_zeta_n;
-    polynomial<Field> zeta_powern_poly{libff::power(zeta, libff::bigint<1>(num_gates+2))};
+    polynomial<Field> zeta_powern_poly{libff::power(zeta, libff::bigint<1>(common_input.num_gates+2))};
     libfqfft::_polynomial_multiplication<Field>(t_mid_zeta_n, t_poly[mid], zeta_powern_poly);
     // t_hi(x) * zeta^(2(n+1))
     polynomial<Field> t_hi_zeta_2n;
-    polynomial<Field> zeta_power2n_poly{libff::power(zeta, libff::bigint<1>(2*(num_gates+2)))};
+    polynomial<Field> zeta_power2n_poly{libff::power(zeta, libff::bigint<1>(2*(common_input.num_gates+2)))};
     libfqfft::_polynomial_multiplication<Field>(t_hi_zeta_2n, t_poly[hi], zeta_power2n_poly);
     // -t_zeta as constant term polynomial
     polynomial<Field> t_zeta_poly{-t_zeta};
@@ -1193,7 +1200,7 @@ namespace libsnark
     //    libfqfft::_polynomial_multiplication<Field>(S_0_zeta_poly_neg, S_0_zeta_poly, neg_one_poly);
     // (S0(x) - S_0_zeta)
     polynomial<Field> S0_sub_szeta;
-    libfqfft::_polynomial_addition<Field>(S0_sub_szeta, S_polys[0], S_0_zeta_poly_neg);
+    libfqfft::_polynomial_addition<Field>(S0_sub_szeta, common_input.S_polys[0], S_0_zeta_poly_neg);
     // (S0(x) - S_0_zeta) * nu^5
     Field nu5 = libff::power(nu, libff::bigint<1>(5));
     polynomial<Field> nu5_poly{nu5};
@@ -1204,7 +1211,7 @@ namespace libsnark
     //    libfqfft::_polynomial_multiplication<Field>(S_1_zeta_poly_neg, S_1_zeta_poly, neg_one_poly);
     // (S1(x) - S_1_zeta)
     polynomial<Field> S1_sub_szeta;
-    libfqfft::_polynomial_addition<Field>(S1_sub_szeta, S_polys[1], S_1_zeta_poly_neg);
+    libfqfft::_polynomial_addition<Field>(S1_sub_szeta, common_input.S_polys[1], S_1_zeta_poly_neg);
     // (S1(x) - S_1_zeta) * nu^6
     Field nu6 = libff::power(nu, libff::bigint<1>(6));
     polynomial<Field> nu6_poly{nu6};
@@ -1229,18 +1236,18 @@ namespace libsnark
     //    polynomial<Field> z_poly;
     
     // Compute opening proof:
-    // W_zeta_omega = z(X) - z(zeta*omega) / X - (zeta*omega)
+    // W_zeta_omega = z(X) - z(zeta*common_input.omega_roots) / X - (zeta*common_input.omega_roots)
     polynomial<Field> W_zeta_omega{poly_null};
     
-    // -z(zeta*omega)
+    // -z(zeta*common_input.omega_roots)
     polynomial<Field> z_poly_xomega_zeta_neg{-z_poly_xomega_zeta};
-    // z(X) - z(zeta*omega) 
+    // z(X) - z(zeta*common_input.omega_roots) 
     libfqfft::_polynomial_addition<Field>(W_zeta_omega, z_poly, z_poly_xomega_zeta_neg);    
-    // -zeta*omega; omega[base][1] = omega_base
-    polynomial<Field> x_sub_zeta_omega{-(zeta*omega[base][1]), Field(1)};
+    // -zeta*common_input.omega_roots; common_input.omega_roots[base][1] = common_input.omega_roots_base
+    polynomial<Field> x_sub_zeta_omega_roots{-(zeta*common_input.omega_roots[base][1]), Field(1)};
     
-    // z(X) - z(zeta*omega) / X - (zeta*omega)
-    libfqfft::_polynomial_division(W_zeta_omega, remainder, W_zeta_omega, x_sub_zeta_omega);
+    // z(X) - z(zeta*common_input.omega_roots) / X - (zeta*common_input.omega_roots)
+    libfqfft::_polynomial_division(W_zeta_omega, remainder, W_zeta_omega, x_sub_zeta_omega_roots);
     assert(libfqfft::_is_zero(remainder));
 
 #ifdef DEBUG
@@ -1305,7 +1312,7 @@ namespace libsnark
     //     [t_lo]_1, [t_mi]_1, [t_hi]_1,
     //     \bar{a}, \bar{b}, \bar{c},
     //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
-    //     [W_zeta]_1, [W_{zeta omega}]_1
+    //     [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1
     //     r_zeta (*))
     //
     // (*) Note: in the reference Python implementation, r_zeta (the
@@ -1324,7 +1331,7 @@ namespace libsnark
     // - z_poly_at_secret_g1: [z]_1 (from Round 2)
     // - t_poly_at_secret_g1[lo, mi, hi]: [t_lo]_1, [t_mi]_1, [t_hi]_1 (from Round 3)
     // - a_zeta, b_zeta, c_zeta, S_0_zeta, S_1_zeta, z_poly_xomega_zeta: \bar{a}, \bar{b}, \bar{c}, \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w} (from Round 4)
-    // - W_zeta_at_secret, W_zeta_omega_at_secret: [W_zeta]_1, [W_{zeta omega}]_1 (from Round 5)
+    // - W_zeta_at_secret, W_zeta_omega_at_secret: [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1 (from Round 5)
     //
     // Verifier preprocessed input
     //
@@ -1334,28 +1341,28 @@ namespace libsnark
     //
     // Public input polynomial
     //
-    // PI_poly: w_i, 0\le{i}<l<n
+    // common_input.PI_poly: w_i, 0\le{i}<l<n
     //    
     printf("[%s:%d] Verifier preparation...\n", __FILE__, __LINE__);
     
     // Verifier precomputation:
-    std::vector<libff::G1<ppT>> Q_polys_at_secret_g1(Q_polys.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, Q_polys, Q_polys_at_secret_g1);
-    std::vector<libff::G1<ppT>> S_polys_at_secret_g1(S_polys.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, S_polys, S_polys_at_secret_g1);
+    std::vector<libff::G1<ppT>> Q_polys_at_secret_g1(common_input.Q_polys.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, common_input.Q_polys, Q_polys_at_secret_g1);
+    std::vector<libff::G1<ppT>> S_polys_at_secret_g1(common_input.S_polys.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, common_input.S_polys, S_polys_at_secret_g1);
 
     // secret * G2
     
 #ifdef DEBUG
-    for (int i = 0; i < (int)Q_polys.size(); ++i) {
-      printf("Q_polys_at_secret_G1[%d] \n", i);
+    for (int i = 0; i < (int)common_input.Q_polys.size(); ++i) {
+      printf("common_input.Q_polys_at_secret_G1[%d] \n", i);
       Q_polys_at_secret_g1[i].print();      
       libff::G1<ppT> Q_poly_at_secret_g1_i(Q_polys_at_secret_g1[i]);
       Q_poly_at_secret_g1_i.to_affine_coordinates();      
       assert(Q_poly_at_secret_g1_i.X == example.Q_polys_at_secret_g1[i][0]);
       assert(Q_poly_at_secret_g1_i.Y == example.Q_polys_at_secret_g1[i][1]);
     }
-    for (int i = 0; i < (int)S_polys.size(); ++i) {
+    for (int i = 0; i < (int)common_input.S_polys.size(); ++i) {
       printf("S_polys_at_secret_G1[%d] \n", i);
       S_polys_at_secret_g1[i].print();
       libff::G1<ppT> S_poly_at_secret_g1_i(S_polys_at_secret_g1[i]);
@@ -1406,9 +1413,9 @@ namespace libsnark
     assert(b_valid);
     
     // --- Verifier Step 3: validate that the public input belongs to scalar field Fr
-    assert(PI_poly.size() <= num_gates);
-    for (int i = 0; i < (int)PI_poly.size(); ++i) {
-      b_valid = check_field_element<Field>(PI_poly[i]);    
+    assert(common_input.PI_poly.size() <= common_input.num_gates);
+    for (int i = 0; i < (int)common_input.PI_poly.size(); ++i) {
+      b_valid = check_field_element<Field>(common_input.PI_poly[i]);    
       assert(b_valid);      
     }    
 
@@ -1423,7 +1430,7 @@ namespace libsnark
     u = example.u;
 
     // --- Verifier Step 5: compute zero polynomial evaluation
-    domain = libfqfft::get_evaluation_domain<Field>(num_gates);
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(common_input.num_gates);
     Field zh_zeta = domain->compute_vanishing_polynomial(zeta);
     printf("[%s:%d] zh_zeta ", __FILE__, __LINE__);
     zh_zeta.print();
@@ -1439,7 +1446,7 @@ namespace libsnark
     assert(L_0_zeta == example.L_0_zeta);
 
     // --- Verifier Step 7: compute public input polynomial evaluation PI(zeta)
-    Field PI_zeta = libfqfft::evaluate_polynomial<Field>(PI_poly.size(), PI_poly, zeta);   
+    Field PI_zeta = libfqfft::evaluate_polynomial<Field>(common_input.PI_poly.size(), common_input.PI_poly, zeta);   
 #ifdef DEBUG
     printf("PI_zeta ");
     PI_zeta.print();
@@ -1524,7 +1531,7 @@ namespace libsnark
     D1_part[1] = plonk_exp_G1<ppT>(z_poly_at_secret_g1, D1_part1_scalar);
 
     // compute D1_part[2]:
-    // (a_bar + beta s_sigma1_bar + gamma)(b_bar + beta s_sigma2_bar + gamma)alpha beta z_omega_bar [s_sigma3]_1
+    // (a_bar + beta s_sigma1_bar + gamma)(b_bar + beta s_sigma2_bar + gamma)alpha beta z_common_input.omega_roots_bar [s_sigma3]_1
     Field D1_part2_scalar = 
       ((a_zeta + (beta * S_0_zeta) + gamma) *
        (b_zeta + (beta * S_1_zeta) + gamma) *
@@ -1556,8 +1563,8 @@ namespace libsnark
     // [t_mid]_1 + zeta^2n [t_hi]_1) which is addedto [D]_1 in the
     // paper (see commenst to Steps 8,9)
 
-    Field zeta_power_n = libff::power(zeta, libff::bigint<1>(num_gates+2));
-    Field zeta_power_2n = libff::power(zeta, libff::bigint<1>(2*(num_gates+2)));
+    Field zeta_power_n = libff::power(zeta, libff::bigint<1>(common_input.num_gates+2));
+    Field zeta_power_2n = libff::power(zeta, libff::bigint<1>(2*(common_input.num_gates+2)));
     std::vector<Field> nu_power(7);
     for (size_t i = 0; i < nu_power.size(); ++i) {
       nu_power[i] = libff::power(nu, libff::bigint<1>(i));
@@ -1631,8 +1638,8 @@ namespace libsnark
 
     // Check the following equality
     //
-    // e( [W_zeta]_1 + u [W_{zeta omega}]_1, [x]_2 ) *
-    // e( -zeta [W_zeta ]_1 - u zeta omega [W_{zeta omega}]_1 - [F]_1 + [E]_1, [1]_2 )
+    // e( [W_zeta]_1 + u [W_{zeta common_input.omega_roots}]_1, [x]_2 ) *
+    // e( -zeta [W_zeta ]_1 - u zeta common_input.omega_roots [W_{zeta common_input.omega_roots}]_1 - [F]_1 + [E]_1, [1]_2 )
     // = Field(1)
     //
     // Denoted as: 
@@ -1671,7 +1678,7 @@ namespace libsnark
       {
        // Warning! raise to the power of -1 to check e() * e()^-1 = 1
        Field(-1) * zeta,
-       Field(-1) * u * zeta * omega[base][1],
+       Field(-1) * u * zeta * common_input.omega_roots[base][1],
        Field(-1) * Field(1),
        Field(-1) * Field(-1)
       };

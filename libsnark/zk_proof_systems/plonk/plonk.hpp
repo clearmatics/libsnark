@@ -35,6 +35,8 @@ Cryptology ePrint Archive, Report 2019/953, 2019,
 #include <libff/algebra/curves/public_params.hpp>
 #include <memory>
 
+#define DEBUG 1
+
 namespace libsnark
 {
 
@@ -52,6 +54,9 @@ public:
   using Field = libff::Fr<ppT>;
   // number of gates / constraints
   size_t num_gates;
+  // number of selector polynomials (q-polynomials) (= 5 in the
+  // vanilla Plonk proposal [GWC19])
+  size_t num_qpolys;
   // Lagrange basis
   std::vector<polynomial<Field>> L_basis;
   // Public input polynomial
@@ -63,7 +68,7 @@ public:
   std::vector<polynomial<Field>> S_polys;
   // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
   // omega[2] are omega[0]*k2
-  std::vector<std::vector<Field>> omega;
+  std::vector<std::vector<Field>> omega_roots;
   // H_gen contains the generators of H, k1 H and k2 H in one place
   // ie. omega, omega_k1 and omega_k2
   std::vector<Field> H_gen;
