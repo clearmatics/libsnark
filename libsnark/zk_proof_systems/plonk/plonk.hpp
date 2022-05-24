@@ -102,7 +102,6 @@ public:
 };
 
   
-  
 /******************************** Proving key ********************************/
 /**
  * A proving key for Plonk
@@ -171,7 +170,37 @@ public:
 template<typename ppT> class plonk_proof
 {
 public:
+  using Field = libff::Fr<ppT>;
+  
   // proof elements
+  //
+  // Pi ([a]_1, [b]_1, [c]_1, [z]_1,
+  //     [t_lo]_1, [t_mi]_1, [t_hi]_1,
+  //     \bar{a}, \bar{b}, \bar{c},
+  //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
+  //     [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1
+  //     r_zeta (*))
+  
+  // [a]_1, [b]_1, [c]_1
+  std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
+  // [z]_1,
+  libff::G1<ppT> z_poly_at_secret_g1;
+  // [t_lo]_1, [t_mi]_1, [t_hi]_1
+  std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
+  // \bar{a}, \bar{b}, \bar{c},
+  Field a_zeta;
+  Field b_zeta;
+  Field c_zeta;
+  // \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
+  Field S_0_zeta;
+  Field S_1_zeta;
+  // \bar{z_w}
+  Field z_poly_xomega_zeta;
+  // [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1  
+  libff::G1<ppT> W_zeta_at_secret;
+  libff::G1<ppT> W_zeta_omega_at_secret;
+  // r_zeta (*)
+  Field r_zeta;
 
   plonk_proof() {};
 };
