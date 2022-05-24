@@ -163,6 +163,7 @@ namespace libsnark
 	   (int)srs.secret_powers_g1.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
 #ifdef DEBUG
+    printf("[%s:%d] Output from Round 1\n", __FILE__, __LINE__);
     for (int i = 0; i < nwitness; ++i) {
       printf("W_polys_at_secret_g1[%d]\n", i);
       W_polys_blinded_at_secret_g1[i].print();
@@ -214,6 +215,7 @@ namespace libsnark
     
     libff::G1<ppT> z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, z_poly);
 #ifdef DEBUG
+    printf("[%s:%d] Output from Round 2\n", __FILE__, __LINE__);
     printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
     z_poly_at_secret_g1.print();
 #endif // #ifdef DEBUG
@@ -407,6 +409,7 @@ namespace libsnark
       t_poly_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, t_poly[i]);
     }
 #ifdef DEBUG
+    printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
     // verify the output from Round 3 to the test vectors. test
     // vectors obtained from the Plonk Python reference implementation
     // (used for debug)
@@ -438,6 +441,7 @@ namespace libsnark
     Field z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega_roots.size(), z_poly_xomega_roots, zeta);
     
 #ifdef DEBUG
+    printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
     printf("a_zeta ");
     a_zeta.print();
     assert(a_zeta == example.a_zeta);
@@ -729,6 +733,9 @@ namespace libsnark
     
 #ifdef DEBUG
     printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
+    
+    printf("r_zeta ");
+    r_zeta.print();
     
     printf("[%s:%d] W_zeta_at_secret \n", __FILE__, __LINE__);
     W_zeta_at_secret.print();
