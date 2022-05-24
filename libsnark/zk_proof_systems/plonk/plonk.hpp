@@ -37,6 +37,9 @@ Cryptology ePrint Archive, Report 2019/953, 2019,
 
 #define DEBUG 1
 
+// number of generators for H, Hk1, Hk2
+const size_t NUM_HGEN = 3;
+
 namespace libsnark
 {
 
@@ -175,6 +178,9 @@ public:
   
 /***************************** Main algorithms *******************************/
 
+//  template<typename FieldT> void print_vector(std::vector<FieldT> v);
+
+  
   // Generate SRS \see r1cs_gg_ppzksnark_generator_from_secrets, \see
   // kzg10<ppT>::setup_from_secret(
   template<typename ppT>
