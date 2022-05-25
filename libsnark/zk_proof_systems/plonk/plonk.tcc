@@ -503,7 +503,7 @@ namespace libsnark
     // witness w_L, w_R, w_O as polynomials in the roots of unity
     // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8    
     // compute Lagrange basis
-    common_input.L_basis.resize(common_input.num_gates, polynomial<Field>(common_input.num_gates));;
+    common_input.L_basis.resize(common_input.num_gates, polynomial<Field>(common_input.num_gates));
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain = libfqfft::get_evaluation_domain<Field>(common_input.num_gates);
     plonk_compute_lagrange_basis<Field>(common_input.num_gates, common_input.L_basis);
 
@@ -580,12 +580,12 @@ namespace libsnark
   }
 
   // Generate SRS \see r1cs_gg_ppzksnark_generator_from_secrets, \see
-  // kzg10<ppT>::setup_from_secret(
+  // kzg10<ppT>::setup_from_secret
   template<typename ppT>
-  srs<ppT> plonk_setup_from_secret(
-				   const libff::Fr<ppT> secret,
-				   size_t num_gates
-				   )
+  srs<ppT> plonk_derive_srs_from_secret(
+					const libff::Fr<ppT> secret,
+					size_t num_gates
+					)
   {
     // initialize hard-coded values from example circuit (for DEBUG
     // only)
