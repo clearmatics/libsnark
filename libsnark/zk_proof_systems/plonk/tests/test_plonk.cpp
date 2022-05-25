@@ -105,6 +105,7 @@ namespace libsnark
     zh_poly[common_input.num_gates] = Field(1);
     printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
     print_vector(zh_poly);
+    assert(zh_poly == example.zh_poly);
 
     // blinding scalars b1, b2, ..., b9. random but fixed to match the
     // python test vectors
@@ -737,7 +738,9 @@ namespace libsnark
 
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
+#if 0 // commented to avoid warnings    
     Field u = example.u;
+#endif // #if 0    
 #endif // #if 1 // prover round 5
     
     return proof;

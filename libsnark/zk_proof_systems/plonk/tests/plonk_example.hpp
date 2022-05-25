@@ -156,6 +156,9 @@ public:
   Field u;
   // Prover Round 1
   std::vector<polynomial<Field>> W_polys;
+  // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
+  // unity common_input.omega_roots
+  std::vector<Field> zh_poly;
   // Prover Round 3
   std::vector<std::vector<BaseField>> t_poly_at_secret_g1;
   // Prover Round 4
