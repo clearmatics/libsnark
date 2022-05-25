@@ -69,8 +69,10 @@ namespace libsnark
   //
   // INPUT
   // - witness: witness values
-  // - common preprocessed input
-  // - blinding scalars b1, b2, ..., b9
+  // - blinding scalars b1, b2, ..., b9 (only b1-b6 used in round 1)
+  // - zh_poly: vanishing polynomial Zh
+  // - common_input: common preprocessed input
+  // - srs: structured reference string
   //
   // OUTPUT
   // - W_polys_blinded: blinded witness polynomials
@@ -82,6 +84,7 @@ namespace libsnark
 			      std::vector<libff::G1<ppT>>& W_polys_blinded_at_secret_g1,
 			      const std::vector<libff::Fr<ppT>> witness,
 			      const std::vector<libff::Fr<ppT>> blind_scalars,
+			      const std::vector<libff::Fr<ppT>> zh_poly,
 			      const common_preprocessed_input<ppT> common_input,
 			      const srs<ppT> srs
 			      )
@@ -104,18 +107,7 @@ namespace libsnark
       assert(W_polys[i] == example.W_polys[i]);
     }
 #endif // #ifdef DEBUG
-    
-    // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
-    // unity common_input.omega_roots
-    std::vector<Field> zh_poly(common_input.num_gates+1, Field(0));
-    zh_poly[0] = Field(-1);
-    zh_poly[common_input.num_gates] = Field(1);
-    
-#ifdef DEBUG
-    printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
-    print_vector(zh_poly);
-    assert(zh_poly == example.zh_poly);
-#endif // #ifdef DEBUG
+  
 
     // represent the blinding scalars b1, b2, ..., b9 as polynomials
 #ifdef DEBUG
@@ -154,87 +146,38 @@ namespace libsnark
   // Prover Round 2
   //
   // INPUT
+  // - beta, gamma: Hashes of transcript (Fiat-Shamir heuristic)
+  // - witness: witness values
+  // - blinding scalars b1, b2, ..., b9 (only b7,b8,b9 used in round 2)
+  // - zh_poly: vanishing polynomial Zh
+  // - common_input: common preprocessed input
+  // - srs: structured reference string
   //
   // OUTPUT
+  // - z_poly: blinded accumulator poly z(x)
+  // - z_poly_at_secret_g1: blinded accumulator poly z(x) evaluated at secret
   //
   template<typename ppT>
   void plonk_prover_round_two(
-			      libff::G1<ppT> z_poly_at_secret_g1,
-			      libff::Fr<ppT> beta,
-			      libff::Fr<ppT> gamma,
-			      const common_preprocessed_input<ppT> common_input
+			      polynomial<libff::Fr<ppT>>& z_poly,
+			      libff::G1<ppT>& z_poly_at_secret_g1,
+			      const libff::Fr<ppT> beta,
+			      const libff::Fr<ppT> gamma,
+			      const std::vector<libff::Fr<ppT>> witness,
+			      const std::vector<libff::Fr<ppT>> blind_scalars,
+			      const std::vector<libff::Fr<ppT>> zh_poly,
+			      const common_preprocessed_input<ppT> common_input,
+			      const srs<ppT> srs
 			      )
   {
-    using Field = libff::Fr<ppT>;
-
-  }
-
-  
-  template<typename ppT>
-  plonk_proof<ppT> plonk_prover(
-				const srs<ppT> srs,
-				const common_preprocessed_input<ppT> common_input
-				)
-  {
-    // return class
-    plonk_proof<ppT> proof;
-    
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
     plonk_example<ppT> example;
     
-    std::vector<Field> witness = example.witness;
-    Field k1 = example.k1;
-    Field k2 = example.k2;
-    std::vector<Field> blind_scalars = example.prover_blind_scalars;
-    int num_hgen = NUM_HGEN;
-    int nwitness = 3;
-
-    // Prover Round 1
-    printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
-    std::vector<std::vector<Field>> W_polys_blinded;
-    std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;    
-    plonk_prover_round_one<ppT>(
-				W_polys_blinded,
-				W_polys_blinded_at_secret_g1,
-				example.witness,
-				example.prover_blind_scalars,
-				common_input,
-				srs);
-    // Prover Round 1 output check against test vectors
-#ifdef DEBUG
-    for (int i = 0; i < nwitness; ++i) {
-      printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
-      print_vector(W_polys_blinded[i]);
-      assert(W_polys_blinded[i] == example.W_polys_blinded[i]);
-    }
-    printf("[%s:%d] Output from Round 1\n", __FILE__, __LINE__);
-    for (int i = 0; i < nwitness; ++i) {
-      printf("W_polys_at_secret_g1[%d]\n", i);
-      W_polys_blinded_at_secret_g1[i].print();
-      libff::G1<ppT> W_polys_blinded_at_secret_g1_i(W_polys_blinded_at_secret_g1[i]);
-      W_polys_blinded_at_secret_g1_i.to_affine_coordinates();
-      assert(W_polys_blinded_at_secret_g1_i.X == example.W_polys_blinded_at_secret_g1[i][0]);
-      assert(W_polys_blinded_at_secret_g1_i.Y == example.W_polys_blinded_at_secret_g1[i][1]);
-    }
-#endif // #ifdef DEBUG
-
-    printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
-#if 1 // prover round 2
-    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
-    // the test vectors
-    Field beta = example.beta;
-    Field gamma = example.gamma;
-
     // compute permutation polynomial
 
     // blinding polynomial
     std::vector<Field> z1_blind_poly{blind_scalars[8], blind_scalars[7], blind_scalars[6]}; // b8 + b7 X + b6 X^2
-    // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
-    // unity common_input.omega_roots
-    std::vector<Field> zh_poly(common_input.num_gates+1, Field(0));
-    zh_poly[0] = Field(-1);
-    zh_poly[common_input.num_gates] = Field(1);
     // multiply by the vanishing polynomial: z1 = z1 * zh_poly
     libfqfft::_polynomial_multiplication<Field>(z1_blind_poly, z1_blind_poly, zh_poly);
 #ifdef DEBUG
@@ -261,16 +204,97 @@ namespace libsnark
 #endif // #ifdef DEBUG
 
     // add blinding polynomial z_1 to the accumulator polynomial A_poly
-    polynomial<Field> z_poly;
+    //    polynomial<Field> z_poly;
     libfqfft::_polynomial_addition<Field>(z_poly, z1_blind_poly, A_poly);
+    z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, z_poly);
+  }
+
+  
+  template<typename ppT>
+  plonk_proof<ppT> plonk_prover(
+				const srs<ppT> srs,
+				const common_preprocessed_input<ppT> common_input
+				)
+  {
+    // return class
+    plonk_proof<ppT> proof;
+    
+    using Field = libff::Fr<ppT>;
+    // initialize hard-coded values from example circuit
+    plonk_example<ppT> example;
+    
+    std::vector<Field> witness = example.witness;
+    Field k1 = example.k1;
+    Field k2 = example.k2;
+    std::vector<Field> blind_scalars = example.prover_blind_scalars;
+    int num_hgen = NUM_HGEN;
+    int nwitness = 3;
+
+    // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
+    // unity common_input.omega_roots
+    std::vector<Field> zh_poly(common_input.num_gates+1, Field(0));
+    zh_poly[0] = Field(-1);
+    zh_poly[common_input.num_gates] = Field(1);
+#ifdef DEBUG
+    printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
+    print_vector(zh_poly);
+    assert(zh_poly == example.zh_poly);
+#endif // #ifdef DEBUG
+
+    // Prover Round 1
+#if 1 // prover round 1
+    printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
+    std::vector<std::vector<Field>> W_polys_blinded;
+    std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;    
+    plonk_prover_round_one<ppT>(
+				W_polys_blinded,
+				W_polys_blinded_at_secret_g1,
+				example.witness,
+				example.prover_blind_scalars,
+				zh_poly,
+				common_input,
+				srs);
+    // Prover Round 1 output check against test vectors
+#ifdef DEBUG
+    for (int i = 0; i < nwitness; ++i) {
+      printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
+      print_vector(W_polys_blinded[i]);
+      assert(W_polys_blinded[i] == example.W_polys_blinded[i]);
+    }
+    printf("[%s:%d] Output from Round 1\n", __FILE__, __LINE__);
+    for (int i = 0; i < nwitness; ++i) {
+      printf("W_polys_at_secret_g1[%d]\n", i);
+      W_polys_blinded_at_secret_g1[i].print();
+      libff::G1<ppT> W_polys_blinded_at_secret_g1_i(W_polys_blinded_at_secret_g1[i]);
+      W_polys_blinded_at_secret_g1_i.to_affine_coordinates();
+      assert(W_polys_blinded_at_secret_g1_i.X == example.W_polys_blinded_at_secret_g1[i][0]);
+      assert(W_polys_blinded_at_secret_g1_i.Y == example.W_polys_blinded_at_secret_g1[i][1]);
+    }
+#endif // #ifdef DEBUG
+#endif // #if 1 // prover round 1
+
+    printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
+#if 1 // prover round 2
+    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
+    // the test vectors
+    Field beta = example.beta;
+    Field gamma = example.gamma;
+    polynomial<Field> z_poly;
+    libff::G1<ppT> z_poly_at_secret_g1;
+    plonk_prover_round_two<ppT>(
+				z_poly,
+				z_poly_at_secret_g1,
+				beta, gamma,
+				example.witness,
+				blind_scalars,
+				zh_poly,
+				common_input, srs
+				);
+    // Prover Round 2 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
     print_vector(z_poly);
     assert(z_poly == example.z_poly);
-#endif // #ifdef DEBUG
-    
-    libff::G1<ppT> z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, z_poly);
-#ifdef DEBUG
     printf("[%s:%d] Output from Round 2\n", __FILE__, __LINE__);
     printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
     z_poly_at_secret_g1.print();
@@ -280,7 +304,7 @@ namespace libsnark
     assert(z_poly_at_secret_g1_aff.Y == example.z_poly_at_secret_g1[1]);
 #endif // #ifdef DEBUG
 #endif // #if 1 // prover round 2
-
+    
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
 #if 1 // prover round 3
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
