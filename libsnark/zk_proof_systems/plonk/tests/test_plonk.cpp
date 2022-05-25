@@ -98,6 +98,7 @@ namespace libsnark
     for (int i = 0; i < nwitness; ++i) {
       printf("[%s:%d] W_polys[%d]\n", __FILE__, __LINE__, i);
       print_vector(W_polys[i]);
+      assert(W_polys[i] == example.W_polys[i]);
     }
 #endif // #if 1 // DEBUG
 #endif // #if 1 // prover setup 

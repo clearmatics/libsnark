@@ -153,7 +153,9 @@ public:
   Field alpha;
   Field zeta;
   Field nu; // v in the paper
-  Field u;   
+  Field u;
+  // Prover Round 1
+  std::vector<polynomial<Field>> W_polys;
   // Prover Round 3
   std::vector<std::vector<BaseField>> t_poly_at_secret_g1;
   // Prover Round 4
