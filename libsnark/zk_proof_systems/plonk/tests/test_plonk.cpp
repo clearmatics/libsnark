@@ -41,19 +41,25 @@ namespace libsnark
   // points w_i. The result is the W_polys polynomials.
   // INPUT
   // - witness: witness values
-  // - k1, k2: constants used to create quadratic-non-residues of the
-  //   set H (see Sect. 8.1 of [GWC19])
+  // - common preprocessed input
   // OUTPUT
   // - W_polys: Lagrange interpolation of the witness values
   template<typename ppT>
   void plonk_prover_compute_witness_polys(
 					  std::vector<polynomial<libff::Fr<ppT>>>& W_polys,
 					  const std::vector<libff::Fr<ppT>> witness,
-					  libff::Fr<ppT> k1,
-					  libff::Fr<ppT> k2
+					  const common_preprocessed_input<ppT> common_input
 					  )
   {
-    //    using Field = libff::Fr<ppT>;
+    using Field = libff::Fr<ppT>;
+    
+    int nwitness = 3;
+    for (int i = 0; i < nwitness; ++i) {
+      typename std::vector<Field>::const_iterator begin = witness.begin()+(i*common_input.num_gates);
+      typename std::vector<Field>::const_iterator end = witness.begin()+(i*common_input.num_gates)+(common_input.num_gates);
+      std::vector<Field> W_points(begin, end);
+      plonk_interpolate_over_lagrange_basis<Field>(W_points, W_polys[i], common_input.L_basis);
+    }
 
   };
 
@@ -70,29 +76,19 @@ namespace libsnark
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
     plonk_example<ppT> example;
-
-    printf("[%s:%d] Prover setup...\n", __FILE__, __LINE__);
-#if 1 // prover preparation    
-    // Generate domains on which to evaluate the witness
-    // polynomials. k1,k2 can be random, but we fix them for debug to
-    // match against the test vector values
+    
+    std::vector<Field> witness = example.witness;
     Field k1 = example.k1;
     Field k2 = example.k2;
-    // number of generators for H, Hk1, Hk2
     int num_hgen = NUM_HGEN;
-    
-    // witness values
-    std::vector<Field> witness = example.witness;
-    
     int nwitness = 3;
-    std::vector<polynomial<Field>> W_polys(nwitness, polynomial<Field>(common_input.num_gates));
-    for (int i = 0; i < nwitness; ++i) {
-      typename std::vector<Field>::iterator begin = witness.begin()+(i*common_input.num_gates);
-      typename std::vector<Field>::iterator end = witness.begin()+(i*common_input.num_gates)+(common_input.num_gates);
-      std::vector<Field> W_points(begin, end);
-      plonk_interpolate_over_lagrange_basis<Field>(W_points, W_polys[i], common_input.L_basis);
-    }
 
+    printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
+#if 1 // prover round 1
+    
+    std::vector<polynomial<Field>> W_polys(nwitness, polynomial<Field>(common_input.num_gates));
+    plonk_prover_compute_witness_polys<ppT>(W_polys, example.witness, common_input);
+    
 #if 1 // DEBUG
     printf("[%s:%d] Output from Prover setup\n", __FILE__, __LINE__);
     for (int i = 0; i < nwitness; ++i) {
@@ -101,10 +97,7 @@ namespace libsnark
       assert(W_polys[i] == example.W_polys[i]);
     }
 #endif // #if 1 // DEBUG
-#endif // #if 1 // prover setup 
     
-    printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
-#if 1 // prover round 1
     // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
     // unity common_input.omega_roots
     std::vector<Field> zh_poly(common_input.num_gates+1, Field(0));
