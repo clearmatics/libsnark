@@ -63,7 +63,6 @@ namespace libsnark
 
   };
 
-  
   template<typename ppT>
   plonk_proof<ppT> plonk_prover(
 				const srs<ppT> srs,
@@ -132,6 +131,7 @@ namespace libsnark
     for (int i = 0; i < nwitness; ++i) {
       printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
       print_vector(W_polys_blinded[i]);
+      assert(W_polys_blinded[i] == example.W_polys_blinded[i]);
     }
 #endif // #ifdef DEBUG
 
@@ -142,14 +142,20 @@ namespace libsnark
 	   (int)W_polys_blinded[2].size(),
 	   (int)srs.secret_powers_g1.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
+    
+#endif // #if 1 // prover round 1
+
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 1\n", __FILE__, __LINE__);
     for (int i = 0; i < nwitness; ++i) {
       printf("W_polys_at_secret_g1[%d]\n", i);
       W_polys_blinded_at_secret_g1[i].print();
+      libff::G1<ppT> W_polys_blinded_at_secret_g1_i(W_polys_blinded_at_secret_g1[i]);
+      W_polys_blinded_at_secret_g1_i.to_affine_coordinates();
+      assert(W_polys_blinded_at_secret_g1_i.X == example.W_polys_blinded_at_secret_g1[i][0]);
+      assert(W_polys_blinded_at_secret_g1_i.Y == example.W_polys_blinded_at_secret_g1[i][1]);
     }
 #endif // #ifdef DEBUG
-#endif // #if 1 // prover round 1
 
     printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
 #if 1 // prover round 2

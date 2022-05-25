@@ -159,6 +159,12 @@ public:
   // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
   // unity common_input.omega_roots
   std::vector<Field> zh_poly;
+  // Witness polynomials blinded by b constants  
+  // a_poly = blind_polys[0] * zh_poly + W_polys[0]
+  std::vector<std::vector<Field>> W_polys_blinded;
+  // blinded witness polynomials evaluate at secret input
+  std::vector<std::vector<BaseField>> W_polys_blinded_at_secret_g1;
+  
   // Prover Round 3
   std::vector<std::vector<BaseField>> t_poly_at_secret_g1;
   // Prover Round 4
