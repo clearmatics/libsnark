@@ -164,6 +164,13 @@ public:
   std::vector<std::vector<Field>> W_polys_blinded;
   // blinded witness polynomials evaluate at secret input
   std::vector<std::vector<BaseField>> W_polys_blinded_at_secret_g1;
+  // Prover Round 2
+  // accumulatro polynomial 
+  std::vector<Field> A_poly;
+  // blinded accumulator poly z(x)
+  std::vector<Field> z_poly;
+  // blinded accumulator poly z(x) evaluated at secret
+  std::vector<BaseField> z_poly_at_secret_g1;
   
   // Prover Round 3
   std::vector<std::vector<BaseField>> t_poly_at_secret_g1;

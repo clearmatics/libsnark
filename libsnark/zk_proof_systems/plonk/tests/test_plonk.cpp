@@ -151,6 +151,25 @@ namespace libsnark
 #endif // #ifdef DEBUG
   }
   
+  // Prover Round 2
+  //
+  // INPUT
+  //
+  // OUTPUT
+  //
+  template<typename ppT>
+  void plonk_prover_round_two(
+			      libff::G1<ppT> z_poly_at_secret_g1,
+			      libff::Fr<ppT> beta,
+			      libff::Fr<ppT> gamma,
+			      const common_preprocessed_input<ppT> common_input
+			      )
+  {
+    using Field = libff::Fr<ppT>;
+
+  }
+
+  
   template<typename ppT>
   plonk_proof<ppT> plonk_prover(
 				const srs<ppT> srs,
@@ -238,6 +257,7 @@ namespace libsnark
 #ifdef DEBUG
     printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
     print_vector(A_poly);
+    assert(A_poly == example.A_poly);
 #endif // #ifdef DEBUG
 
     // add blinding polynomial z_1 to the accumulator polynomial A_poly
@@ -246,6 +266,7 @@ namespace libsnark
 #ifdef DEBUG
     printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
     print_vector(z_poly);
+    assert(z_poly == example.z_poly);
 #endif // #ifdef DEBUG
     
     libff::G1<ppT> z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, z_poly);
@@ -253,6 +274,10 @@ namespace libsnark
     printf("[%s:%d] Output from Round 2\n", __FILE__, __LINE__);
     printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
     z_poly_at_secret_g1.print();
+    libff::G1<ppT> z_poly_at_secret_g1_aff(z_poly_at_secret_g1);
+    z_poly_at_secret_g1_aff.to_affine_coordinates();
+    assert(z_poly_at_secret_g1_aff.X == example.z_poly_at_secret_g1[0]);
+    assert(z_poly_at_secret_g1_aff.Y == example.z_poly_at_secret_g1[1]);
 #endif // #ifdef DEBUG
 #endif // #if 1 // prover round 2
 
