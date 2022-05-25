@@ -172,7 +172,7 @@ template<typename ppT> class plonk_proof
 public:
   using Field = libff::Fr<ppT>;
   
-  // proof elements
+  // Plonk proof Pi
   //
   // Pi ([a]_1, [b]_1, [c]_1, [z]_1,
   //     [t_lo]_1, [t_mi]_1, [t_hi]_1,
