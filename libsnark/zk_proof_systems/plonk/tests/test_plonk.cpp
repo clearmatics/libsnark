@@ -227,8 +227,8 @@ namespace libsnark
   //
   //
   // OUTPUT
-  // - t_poly: the quotient polynomial t(x) (see Round 3, pp28 [GWC19])
-  // - t_poly_long: t(x) divided in three parts t(x) = t_lo(x) +
+  // - t_poly_long: the quotient polynomial t(x) (see Round 3, pp28 [GWC19])
+  // - t_poly: t(x) divided in three parts t(x) = t_lo(x) +
   //   t_mid(x) x^n + t_hi(x) x^{2n}
   // - t_poly_at_secret_g1: t(x) evaluated at the secret input zeta i.e. t(zeta)
   // - z_poly_xomega_roots: the polynomial z(x*w) i.e. z(x) shifted by w
@@ -433,6 +433,67 @@ namespace libsnark
     
   }
 
+  // Prover Round 4
+  //
+  // INPUT
+  // - zeta: Hash of transcript (Fiat-Shamir heuristic)
+  // - W_polys_blinded: blinded witness polynomials (output from Round 1)
+  // - z_poly_xomega_roots: the polynomial z(x*w) i.e. z(x) shifted by
+  //   w (output from Round 3)
+  // - t_poly_long: the quotient polynomial t(x) (see Round 3, pp28
+  //   [GWC19]) (output from Round 3)
+  // - common_input: common preprocessed input
+  //
+  // OUTPUT  
+  // - a_zeta, b_zeta, c_zeta: the blinded witness polynomials a(x),
+  //   b(x), c(x) (denoted by W_polys_blinded[] output from Round 1)
+  //   evaluated at x=zeta i.e. a(z), b(z), c(z)
+  // - S_0_zeta, S_1_zeta: the permutation polynomials S_sigma_1(x),
+  //   S_sigma_2(x) from the common preprocessed input (see [GWC19],
+  //   Sect. 8.1) evaluated at x=zeta i.e. S_sigma_1(z), S_sigma_2(z)
+  // - z_poly_xomega_roots: the polynomial z(x*w) i.e. z(x) shifted by
+  //   w (output from Round 3)  
+  // - t_zeta: the quotient polynomial t(x) output from Round 3, see
+  //   pp28 [GWC19]) evaluated at x=zeta i.e. t(z). IMPORTANT! the
+  //   priginal Plonk proposal [GWC19] does not output this parameter
+  //   t_zeta. The Python reference implementation does, so we do the
+  //   same in order to match the test vectors. TODO can remove t_zeta
+  //   in the future
+  //
+  template<typename ppT>
+  void plonk_prover_round_four(
+			       libff::Fr<ppT>& a_zeta,
+			       libff::Fr<ppT>& b_zeta,
+			       libff::Fr<ppT>& c_zeta,
+			       libff::Fr<ppT>& S_0_zeta,
+			       libff::Fr<ppT>& S_1_zeta,
+			       libff::Fr<ppT>& z_poly_xomega_zeta,
+			       libff::Fr<ppT>& t_zeta,
+			       const libff::Fr<ppT> zeta,
+			       const std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded,
+			       const std::vector<libff::Fr<ppT>> z_poly_xomega_roots,
+			       const polynomial<libff::Fr<ppT>> t_poly_long,
+			       const common_preprocessed_input<ppT> common_input
+			      )
+  {
+    using Field = libff::Fr<ppT>;
+    // initialize hard-coded values from example circuit
+    //#ifdef NDEBUG
+    //    plonk_example<ppT> example;
+    //#endif // #ifdef DEBUG
+#ifdef DEBUG
+    printf("[%s:%d] zeta\n", __FILE__, __LINE__);
+    zeta.print();
+#endif // #ifdef DEBUG
+    a_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[a], zeta);
+    b_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[b], zeta);
+    c_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[c], zeta);
+    S_0_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[0], zeta);
+    S_1_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[1], zeta);
+    t_zeta = libfqfft::evaluate_polynomial<Field>(t_poly_long.size(), t_poly_long, zeta);
+    z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega_roots.size(), z_poly_xomega_roots, zeta);       
+  }  
+  
   template<typename ppT>
   plonk_proof<ppT> plonk_prover(
 				const srs<ppT> srs,
@@ -574,18 +635,19 @@ namespace libsnark
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
     Field zeta = example.zeta;
-#ifdef DEBUG
-    printf("[%s:%d] zeta\n", __FILE__, __LINE__);
-    zeta.print();
-#endif // #ifdef DEBUG
-    Field a_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[a], zeta);
-    Field b_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[b], zeta);
-    Field c_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[c], zeta);
-    Field S_0_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[0], zeta);
-    Field S_1_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[1], zeta);
-    Field t_zeta = libfqfft::evaluate_polynomial<Field>(t_poly_long.size(), t_poly_long, zeta);
-    Field z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega_roots.size(), z_poly_xomega_roots, zeta);
-    
+    Field a_zeta, b_zeta, c_zeta, S_0_zeta, S_1_zeta, t_zeta, z_poly_xomega_zeta;
+    plonk_prover_round_four<ppT>(
+				 a_zeta, b_zeta, c_zeta,
+				 S_0_zeta, S_1_zeta,
+				 z_poly_xomega_zeta,
+				 t_zeta,
+				 zeta,
+				 W_polys_blinded,
+				 z_poly_xomega_roots,
+				 t_poly_long,
+				 common_input
+				 );
+    // Prover Round 4 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
     printf("a_zeta ");
