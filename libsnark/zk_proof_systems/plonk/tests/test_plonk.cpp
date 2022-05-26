@@ -172,7 +172,9 @@ namespace libsnark
   {
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
+#ifdef DEBUG
     plonk_example<ppT> example;
+#endif // #ifdef DEBUG
     
     // compute permutation polynomial
 
@@ -242,8 +244,8 @@ namespace libsnark
 				const libff::Fr<ppT> gamma,
 				const libff::Fr<ppT> k1,
 				const libff::Fr<ppT> k2,
-				std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded,
-				polynomial<libff::Fr<ppT>> z_poly,
+				const std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded,
+				const polynomial<libff::Fr<ppT>> z_poly,
 				const std::vector<libff::Fr<ppT>> zh_poly,
 				const common_preprocessed_input<ppT> common_input,
 				const srs<ppT> srs
@@ -253,7 +255,9 @@ namespace libsnark
     int num_hgen = NUM_HGEN;
     
     // initialize hard-coded values from example circuit
-    //    plonk_example<ppT> example;
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
 
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
     // w=common_input.omega_roots is the base root of unity and z is z_poly. we do this
@@ -269,6 +273,9 @@ namespace libsnark
 #ifdef DEBUG
     printf("[%s:%d] z_poly_xomega_roots\n", __FILE__, __LINE__);
     print_vector(z_poly_xomega_roots);
+    for (size_t i = 0; i < z_poly.size(); ++i) {
+      assert(z_poly_xomega_roots[i] == example.z_poly_xomega_roots[i]);
+    }
 #endif // #ifdef DEBUG
 
     // start computation of polynomial t(X) in round 3. we break t
@@ -395,15 +402,15 @@ namespace libsnark
 #ifdef DEBUG
     printf("[%s:%d] t_poly_long\n", __FILE__, __LINE__);
     print_vector(t_poly_long);
-#endif // #ifdef DEBUG
-#ifdef DEBUG
+    assert(t_poly_long == example.t_poly_long);
     printf("[%s:%d] remainder\n", __FILE__, __LINE__);
     print_vector(remainder);
 #endif // #ifdef DEBUG
     assert(libfqfft::_is_zero(remainder));
 
-    // break t_poly_long into three parts: lo, mid, hi, each of degree 7
-    // note: (common_input.num_gates+3) is the length of the CRS = (common_input.num_gates+2) powers of G1 + 1 power of G2
+    // break t_poly_long into three parts: lo, mid, hi, each of degree
+    // 7. note: (common_input.num_gates+3) is the length of the CRS =
+    // (common_input.num_gates+2) powers of G1 + 1 power of G2
     t_poly.resize(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
       typename std::vector<Field>::iterator begin = t_poly_long.begin()+(i*(common_input.num_gates+2));
@@ -415,6 +422,7 @@ namespace libsnark
     for (int i = 0; i < num_hgen; ++i) {
       printf("[%s:%d] t_poly[%d]\n", __FILE__, __LINE__, i);
       print_vector(t_poly[i]);
+      assert(t_poly[i] == example.t_poly[i]);
     }
 #endif // #ifdef DEBUG
     // evaluate each part of t_poly in the secret input
@@ -424,7 +432,7 @@ namespace libsnark
     }
     
   }
-  
+
   template<typename ppT>
   plonk_proof<ppT> plonk_prover(
 				const srs<ppT> srs,
@@ -523,8 +531,8 @@ namespace libsnark
 #endif // #ifdef DEBUG
 #endif // #if 1 // prover round 2
     
-#if 1 // prover round 3
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
+#if 1 // prover round 3
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
     Field alpha = example.alpha;
