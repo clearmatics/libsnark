@@ -560,7 +560,7 @@ namespace libsnark
 #endif // #ifdef DEBUG
     
     // compute the permutation polynomials S_sigma_1, S_sigma_2,
-    // S_sigma_2 (see [GWC19], Sect. 8.1)
+    // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
     common_input.S_polys.resize(num_hgen, polynomial<Field>(common_input.num_gates));
     plonk_compute_permutation_polynomials<Field>(common_input.S_polys, common_input.H_gen_permute, common_input.L_basis, common_input.num_gates);
 #ifdef DEBUG
