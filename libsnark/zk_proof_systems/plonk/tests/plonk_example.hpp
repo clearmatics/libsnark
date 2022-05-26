@@ -172,8 +172,8 @@ public:
   // blinded accumulator poly z(x) evaluated at secret
   std::vector<BaseField> z_poly_at_secret_g1;  
   // Prover Round 3
-  // z_poly_xomega_roots: the polynomial z(x*w) i.e. z(x) shifted by w
-  std::vector<Field> z_poly_xomega_roots;
+  // z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by w
+  std::vector<Field> z_poly_xomega;
   // t_poly: the quotient polynomial t(x) (see Round 3, pp28 [GWC19])
   std::vector<polynomial<Field>> t_poly;
   // t_poly_long: t(x) divided in three parts t(x) = t_lo(x) +

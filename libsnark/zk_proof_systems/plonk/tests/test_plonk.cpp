@@ -231,14 +231,14 @@ namespace libsnark
   // - t_poly: t(x) divided in three parts t(x) = t_lo(x) +
   //   t_mid(x) x^n + t_hi(x) x^{2n}
   // - t_poly_at_secret_g1: t(x) evaluated at the secret input zeta i.e. t(zeta)
-  // - z_poly_xomega_roots: the polynomial z(x*w) i.e. z(x) shifted by w
+  // - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by w
   //
   template<typename ppT>
   void plonk_prover_round_three(
 				std::vector<polynomial<libff::Fr<ppT>>>& t_poly,
 				polynomial<libff::Fr<ppT>>& t_poly_long,
 				std::vector<libff::G1<ppT>>& t_poly_at_secret_g1,
-				std::vector<libff::Fr<ppT>>& z_poly_xomega_roots,
+				std::vector<libff::Fr<ppT>>& z_poly_xomega,
 				const libff::Fr<ppT> alpha,
 				const libff::Fr<ppT> beta,
 				const libff::Fr<ppT> gamma,
@@ -262,19 +262,19 @@ namespace libsnark
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
     // w=common_input.omega_roots is the base root of unity and z is z_poly. we do this
     // by multiplying the coefficients of z by w
-    z_poly_xomega_roots.resize(z_poly.size());
-    std::fill(z_poly_xomega_roots.begin(), z_poly_xomega_roots.end(), Field(0));    
+    z_poly_xomega.resize(z_poly.size());
+    std::fill(z_poly_xomega.begin(), z_poly_xomega.end(), Field(0));    
     for (size_t i = 0; i < z_poly.size(); ++i) {
       // omega_roots^i
       Field omega_roots_i = libff::power(common_input.omega_roots[base][1], libff::bigint<1>(i));
-      z_poly_xomega_roots[i] = z_poly[i] * omega_roots_i;
+      z_poly_xomega[i] = z_poly[i] * omega_roots_i;
     }
 
 #ifdef DEBUG
-    printf("[%s:%d] z_poly_xomega_roots\n", __FILE__, __LINE__);
-    print_vector(z_poly_xomega_roots);
+    printf("[%s:%d] z_poly_xomega\n", __FILE__, __LINE__);
+    print_vector(z_poly_xomega);
     for (size_t i = 0; i < z_poly.size(); ++i) {
-      assert(z_poly_xomega_roots[i] == example.z_poly_xomega_roots[i]);
+      assert(z_poly_xomega[i] == example.z_poly_xomega[i]);
     }
 #endif // #ifdef DEBUG
 
@@ -367,7 +367,7 @@ namespace libsnark
     // gamma)*z(x*common_input.omega_roots)*alpha
     libfqfft::_polynomial_multiplication<Field>(t_part[2], a_sbeta_gamma, b_sbeta_gamma_k1);
     libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], c_sbeta_gamma_k2);
-    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], z_poly_xomega_roots);
+    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], z_poly_xomega);
     libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], alpha_poly);
     // -t_part[2]
     polynomial<Field> neg_one_poly = {-Field("1")};
@@ -438,7 +438,7 @@ namespace libsnark
   // INPUT
   // - zeta: Hash of transcript (Fiat-Shamir heuristic)
   // - W_polys_blinded: blinded witness polynomials (output from Round 1)
-  // - z_poly_xomega_roots: the polynomial z(x*w) i.e. z(x) shifted by
+  // - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by
   //   w (output from Round 3)
   // - t_poly_long: the quotient polynomial t(x) (see Round 3, pp28
   //   [GWC19]) (output from Round 3)
@@ -451,7 +451,7 @@ namespace libsnark
   // - S_0_zeta, S_1_zeta: the permutation polynomials S_sigma_1(x),
   //   S_sigma_2(x) from the common preprocessed input (see [GWC19],
   //   Sect. 8.1) evaluated at x=zeta i.e. S_sigma_1(z), S_sigma_2(z)
-  // - z_poly_xomega_roots: the polynomial z(x*w) i.e. z(x) shifted by
+  // - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by
   //   w (output from Round 3)  
   // - t_zeta: the quotient polynomial t(x) output from Round 3, see
   //   pp28 [GWC19]) evaluated at x=zeta i.e. t(z). IMPORTANT! the
@@ -471,7 +471,7 @@ namespace libsnark
 			       libff::Fr<ppT>& t_zeta,
 			       const libff::Fr<ppT> zeta,
 			       const std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded,
-			       const std::vector<libff::Fr<ppT>> z_poly_xomega_roots,
+			       const std::vector<libff::Fr<ppT>> z_poly_xomega,
 			       const polynomial<libff::Fr<ppT>> t_poly_long,
 			       const common_preprocessed_input<ppT> common_input
 			      )
@@ -491,7 +491,7 @@ namespace libsnark
     S_0_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[0], zeta);
     S_1_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[1], zeta);
     t_zeta = libfqfft::evaluate_polynomial<Field>(t_poly_long.size(), t_poly_long, zeta);
-    z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega_roots.size(), z_poly_xomega_roots, zeta);       
+    z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega.size(), z_poly_xomega, zeta);       
   }  
   
   template<typename ppT>
@@ -600,12 +600,12 @@ namespace libsnark
     std::vector<polynomial<libff::Fr<ppT>>> t_poly;
     polynomial<libff::Fr<ppT>> t_poly_long;
     std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
-    std::vector<libff::Fr<ppT>> z_poly_xomega_roots;
+    std::vector<libff::Fr<ppT>> z_poly_xomega;
     plonk_prover_round_three<ppT>(
 				  t_poly,
 				  t_poly_long,
 				  t_poly_at_secret_g1,
-				  z_poly_xomega_roots,
+				  z_poly_xomega,
 				  alpha, beta, gamma, k1, k2,
 				  W_polys_blinded,
 				  z_poly,
@@ -643,7 +643,7 @@ namespace libsnark
 				 t_zeta,
 				 zeta,
 				 W_polys_blinded,
-				 z_poly_xomega_roots,
+				 z_poly_xomega,
 				 t_poly_long,
 				 common_input
 				 );
@@ -941,18 +941,15 @@ namespace libsnark
       plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, W_zeta_omega);
     
 #ifdef DEBUG
-    printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
-    
+    printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);    
     printf("r_zeta ");
-    r_zeta.print();
-    
+    r_zeta.print();    
     printf("[%s:%d] W_zeta_at_secret \n", __FILE__, __LINE__);
     W_zeta_at_secret.print();
     libff::G1<ppT> W_zeta_at_secret_aff(W_zeta_at_secret);
     W_zeta_at_secret_aff.to_affine_coordinates();
     assert(W_zeta_at_secret_aff.X == example.W_zeta_at_secret[0]);
-    assert(W_zeta_at_secret_aff.Y == example.W_zeta_at_secret[1]);
-    
+    assert(W_zeta_at_secret_aff.Y == example.W_zeta_at_secret[1]);    
     printf("[%s:%d] W_zeta_omega_at_secret \n", __FILE__, __LINE__);
     W_zeta_omega_at_secret.print();
     libff::G1<ppT> W_zeta_omega_at_secret_aff(W_zeta_omega_at_secret);
@@ -1169,17 +1166,17 @@ namespace libsnark
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
     // w=common_input.omega_roots is the base root of unity and z is z_poly. we do this
     // by multiplying the coefficients of z by w
-    std::vector<Field> z_poly_xomega_roots(z_poly.size(), Field(0));
+    std::vector<Field> z_poly_xomega(z_poly.size(), Field(0));
     for (size_t i = 0; i < z_poly.size(); ++i) {
       // common_input.omega_roots^i
-      //      z_poly_xomega_roots[i] = z_poly[i] * common_input.omega_roots[base][1]; // !!!! <----- (common_input.omega_roots[base][i]**i)
+      //      z_poly_xomega[i] = z_poly[i] * common_input.omega_roots[base][1]; // !!!! <----- (common_input.omega_roots[base][i]**i)
       Field omega_roots_i = libff::power(common_input.omega_roots[base][1], libff::bigint<1>(i));
-      z_poly_xomega_roots[i] = z_poly[i] * omega_roots_i;
+      z_poly_xomega[i] = z_poly[i] * omega_roots_i;
     }
 
 #ifdef DEBUG
-    printf("[%s:%d] z_poly_xomega_roots\n", __FILE__, __LINE__);
-    print_vector(z_poly_xomega_roots);
+    printf("[%s:%d] z_poly_xomega\n", __FILE__, __LINE__);
+    print_vector(z_poly_xomega);
 #endif // #ifdef DEBUG
 
     // start computation of polynomial t(X) in round 3. we break t
@@ -1285,7 +1282,7 @@ namespace libsnark
     // gamma)*z(x*common_input.omega_roots)*alpha
     libfqfft::_polynomial_multiplication<Field>(t_part[2], a_sbeta_gamma, b_sbeta_gamma_k1);
     libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], c_sbeta_gamma_k2);
-    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], z_poly_xomega_roots);
+    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], z_poly_xomega);
     libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], alpha_poly);
     // -t_part[2]
     polynomial<Field> neg_one_poly = {-Field("1")};
@@ -1378,7 +1375,7 @@ namespace libsnark
     Field S_0_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[0], zeta);
     Field S_1_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[1], zeta);
     Field t_zeta = libfqfft::evaluate_polynomial<Field>(t_poly_long.size(), t_poly_long, zeta);
-    Field z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega_roots.size(), z_poly_xomega_roots, zeta);
+    Field z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega.size(), z_poly_xomega, zeta);
     
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
