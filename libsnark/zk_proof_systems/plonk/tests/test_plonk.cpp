@@ -837,10 +837,10 @@ namespace libsnark
   }
   
   template<typename ppT>
-  plonk_proof<ppT> plonk_prover(
-				const srs<ppT> srs,
-				const common_preprocessed_input<ppT> common_input
-				)
+  plonk_proof<ppT> plonk_compute_proof(
+				       const srs<ppT> srs,
+				       const common_preprocessed_input<ppT> common_input
+				       )
   {    
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
@@ -1121,7 +1121,7 @@ namespace libsnark
     }
 #endif // #ifdef DEBUG
     
-    plonk_proof<ppT> proof = plonk_prover(srs, common_input);
+    plonk_proof<ppT> proof = plonk_compute_proof(srs, common_input);
 
     // --- PROVER ---
     
