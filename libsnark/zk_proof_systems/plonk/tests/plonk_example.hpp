@@ -190,12 +190,20 @@ public:
   Field t_zeta;
   Field z_poly_xomega_zeta;
   // Prover Round 5
+  // linearisation polynomial r(x)
+  polynomial<Field> r_poly; 
+  // linearisation polynomial evaluated at x=zeta ie. r(zeta)
   Field r_zeta;
+  // opening proof polynomial W_zeta(x)
   polynomial<Field> W_zeta;
+  // opening proof polynomial W_{zeta omega}(x)
   polynomial<Field> W_zeta_omega;
-  // point on the curve as a pair of X,Y coordinates (values in the
-  // base field)
+  // commitment to opening proof polynomial W_zeta(x) at secert input
+  // i.e. [W_zeta(secret)]_1 (represented as a point on the curve as a
+  // pair of X,Y coordinates (values in the base field))
   std::vector<BaseField> W_zeta_at_secret;
+  // commitment to opening proof polynomial W_{zeta omega}(x) at
+  // secert input i.e. [W_{zeta omega}(secret)]_1
   std::vector<BaseField> W_zeta_omega_at_secret;
   // Verifier precomputation
   std::vector<std::vector<BaseField>> Q_polys_at_secret_g1;

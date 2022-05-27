@@ -751,6 +751,7 @@ namespace libsnark
     // In the reference implementation, the missing term is added in
     // the computation of the W_zeta(x) polynomial
     //
+    // linearisation polynomial r(x)
     polynomial<Field> r_poly; 
     libfqfft::_polynomial_addition<Field>(r_poly, poly_null, r_part[0]);
     libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[1]);
@@ -770,6 +771,7 @@ namespace libsnark
     print_vector(r_part[3]);
     printf("[%s:%d] r_poly\n", __FILE__, __LINE__);
     print_vector(r_poly);
+    assert(r_poly == example.r_poly);
 #endif // #if DEBUG
 
     // Evaluate the r-polynomial at zeta. Note: in the reference
@@ -781,8 +783,8 @@ namespace libsnark
 #ifdef DEBUG
     printf("r_zeta ");
     r_zeta.print();
-#endif // #ifdef DEBUG    
     assert(r_zeta == example.r_zeta);
+#endif // #ifdef DEBUG    
 
     // W_zeta polynomial is of degree 6 in the random element nu and
     // hence has 7 terms
