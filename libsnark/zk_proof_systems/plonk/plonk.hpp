@@ -203,8 +203,36 @@ public:
   Field r_zeta;
 
   plonk_proof() {};
+  plonk_proof(
+	      std::vector<libff::G1<ppT>>& W_polys_blinded_at_secret_g1,
+	      libff::G1<ppT>& z_poly_at_secret_g1,
+	      std::vector<libff::G1<ppT>>& t_poly_at_secret_g1,
+	      Field& a_zeta,
+	      Field& b_zeta,
+	      Field& c_zeta,
+	      Field& S_0_zeta,
+	      Field& S_1_zeta,
+	      Field& z_poly_xomega_zeta,
+	      libff::G1<ppT>& W_zeta_at_secret,
+	      libff::G1<ppT>& W_zeta_omega_at_secret,
+	      Field& r_zeta
+	      ) : 
+    W_polys_blinded_at_secret_g1(W_polys_blinded_at_secret_g1),
+    z_poly_at_secret_g1(z_poly_at_secret_g1),
+    t_poly_at_secret_g1(t_poly_at_secret_g1),
+    a_zeta(a_zeta),
+    b_zeta(b_zeta),
+    c_zeta(c_zeta),
+    S_0_zeta(S_0_zeta),
+    S_1_zeta(S_1_zeta),
+    z_poly_xomega_zeta(z_poly_xomega_zeta),
+    W_zeta_at_secret(W_zeta_at_secret),
+    W_zeta_omega_at_secret(W_zeta_omega_at_secret),
+    r_zeta(r_zeta)
+  {
+  }
 };
-  
+
 /***************************** Main algorithms *******************************/
 
 //  template<typename FieldT> void print_vector(std::vector<FieldT> v);

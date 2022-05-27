@@ -1057,8 +1057,18 @@ namespace libsnark
 #endif // #ifdef DEBUG
     
     // construct proof
-    plonk_proof<ppT> proof;
-    
+    plonk_proof<ppT> proof(
+			   W_polys_blinded_at_secret_g1,
+			   z_poly_at_secret_g1,
+			   t_poly_at_secret_g1,
+			   a_zeta, b_zeta, c_zeta,
+			   S_0_zeta, S_1_zeta,
+			   z_poly_xomega_zeta,
+			   W_zeta_at_secret,
+			   W_zeta_omega_at_secret,
+			   r_zeta
+			   );
+    // return proof
     return proof;
   }
 
