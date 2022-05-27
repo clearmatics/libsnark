@@ -247,6 +247,7 @@ public:
   const libff::Fr<ppT> nu;
   const libff::Fr<ppT> k1;
   const libff::Fr<ppT> k2;
+  
   const libff::Fr<ppT> S_0_zeta;
   const libff::Fr<ppT> S_1_zeta;
   
@@ -267,9 +268,9 @@ public:
   std::vector<libff::Fr<ppT>> z_poly_xomega;
   const libff::Fr<ppT> z_poly_xomega_zeta;
   
-  libff::Fr<ppT> r_zeta; 
   libff::G1<ppT> W_zeta_at_secret;
   libff::G1<ppT> W_zeta_omega_at_secret;
+  libff::Fr<ppT> r_zeta; 
   
 };
 

@@ -1561,9 +1561,6 @@ namespace libsnark
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
   }
 
-  // output from plonk_compute_permutation_polynomials() compute the
-  // S polynomials
-  
   TEST(TestPlonk, BLS12_381)
   {
     test_plonk<libff::bls12_381_pp>();
