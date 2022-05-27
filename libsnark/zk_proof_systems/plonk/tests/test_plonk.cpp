@@ -451,11 +451,11 @@ namespace libsnark
   // - S_0_zeta, S_1_zeta: the permutation polynomials S_sigma_1(x),
   //   S_sigma_2(x) from the common preprocessed input (see [GWC19],
   //   Sect. 8.1) evaluated at x=zeta i.e. S_sigma_1(z), S_sigma_2(z)
-  // - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by
-  //   w (output from Round 3)  
+  // - z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x) shifted by
+  //   w (output from Round 3) evaluated at x=zeta i.e. z(zeta*w)
   // - t_zeta: the quotient polynomial t(x) output from Round 3, see
   //   pp28 [GWC19]) evaluated at x=zeta i.e. t(z). IMPORTANT! the
-  //   priginal Plonk proposal [GWC19] does not output this parameter
+  //   original Plonk proposal [GWC19] does not output this parameter
   //   t_zeta. The Python reference implementation does, so we do the
   //   same in order to match the test vectors. TODO can remove t_zeta
   //   in the future
@@ -493,16 +493,355 @@ namespace libsnark
     t_zeta = libfqfft::evaluate_polynomial<Field>(t_poly_long.size(), t_poly_long, zeta);
     z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega.size(), z_poly_xomega, zeta);       
   }  
+
+  // Prover Round 5
+  //
+  // INPUT  
+  // - alpha, beta, gamma, zeta, nu: Hashes of transcript (Fiat-Shamir
+  //   heuristic)
+  // - k1, k2: constants used to create quadratic-non-residues of the
+  //   set H (see Sect. 8.1 of [GWC19])
+  // - a_zeta, b_zeta, c_zeta: the blinded witness polynomials a(x),
+  //   b(x), c(x) (denoted by W_polys_blinded[] output from Round 1)
+  //   evaluated at x=zeta i.e. a(z), b(z), c(z)
+  // - S_0_zeta, S_1_zeta: the permutation polynomials S_sigma_1(x),
+  //   S_sigma_2(x) from the common preprocessed input (see [GWC19],
+  //   Sect. 8.1) evaluated at x=zeta i.e. S_sigma_1(z), S_sigma_2(z)
+  // - t_zeta: the quotient polynomial t(x) output from Round 3, see
+  //   pp28 [GWC19]) evaluated at x=zeta i.e. t(z). IMPORTANT! the
+  //   original Plonk proposal [GWC19] does not output this parameter
+  //   t_zeta. The Python reference implementation does, so we do the
+  //   same in order to match the test vectors. TODO can remove t_zeta
+  //   in the future
+  // - z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x) shifted by
+  //   w (output from Round 3) evaluated at x=zeta i.e. z(zeta*w)
+  // - W_polys_blinded: blinded witness polynomials (output from Round 1)
+  // - t_poly: t(x) divided in three parts t(x) = t_lo(x) +
+  //   t_mid(x) x^n + t_hi(x) x^{2n}
+  // - z_poly: blinded accumulator poly z(x) (output from Round 2)
+  // - common_input: common preprocessed input
+  // - srs: structured reference string
+  //
+  // OUTPUT
+  // - r_zeta: linearisation polynomial r(x) evaluated at x=zeta
+  //   ie. r(zeta)
+  // - W_zeta_at_secret: commitment to opening proof polynomial
+  //   W_zeta(x) at secert input i.e. [W_zeta(secret)]_1
+  // - W_zeta_omega_at_secret: commitment to opening proof polynomial
+  //   W_{zeta omega}(x) at secert input i.e. [W_{zeta
+  //   omega}(secret)]_1
+  //
+  template<typename ppT>
+  void plonk_prover_round_five(
+			       libff::Fr<ppT>& r_zeta, 
+			       libff::G1<ppT>& W_zeta_at_secret,
+			       libff::G1<ppT>& W_zeta_omega_at_secret,
+			       const libff::Fr<ppT> alpha,
+			       const libff::Fr<ppT> beta,
+			       const libff::Fr<ppT> gamma,
+			       const libff::Fr<ppT> zeta,
+			       const libff::Fr<ppT> nu,
+			       const libff::Fr<ppT> k1,
+			       const libff::Fr<ppT> k2,
+			       const libff::Fr<ppT> a_zeta,
+			       const libff::Fr<ppT> b_zeta,
+			       const libff::Fr<ppT> c_zeta,
+			       const libff::Fr<ppT> S_0_zeta,
+			       const libff::Fr<ppT> S_1_zeta,
+			       const libff::Fr<ppT> t_zeta,
+			       const libff::Fr<ppT> z_poly_xomega_zeta,
+			       const std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded,
+			       const std::vector<polynomial<libff::Fr<ppT>>> t_poly,
+			       const polynomial<libff::Fr<ppT>> z_poly,
+			       const common_preprocessed_input<ppT> common_input,
+			       const srs<ppT> srs
+			      )
+  {
+    using Field = libff::Fr<ppT>;
+    polynomial<Field> poly_null{Field(0)};
+    polynomial<Field> neg_one_poly = {-Field("1")};
+    polynomial<Field> remainder;
+    
+    // initialize hard-coded values from example circuit
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
+
+    // compute linerisation polynomial r in five parts
+    std::vector<polynomial<Field>> r_part(5);
+
+    // --- Computation of r_part[0]
+    
+    // represent values as constant term polynomials in orderto use
+    // the functions in the libfqfft library on polynomials
+    polynomial<Field> a_zeta_poly{a_zeta}; 
+    polynomial<Field> b_zeta_poly{b_zeta}; 
+    polynomial<Field> c_zeta_poly{c_zeta}; 
+    // a(z)b(z)q_M(x)
+    polynomial<Field> abqM_zeta;
+    libfqfft::_polynomial_multiplication<Field>(abqM_zeta, common_input.Q_polys[M], a_zeta_poly);
+    libfqfft::_polynomial_multiplication<Field>(abqM_zeta, abqM_zeta, b_zeta_poly);    
+    // a(z)q_L(x)
+    polynomial<Field> aqL_zeta;
+    libfqfft::_polynomial_multiplication<Field>(aqL_zeta, common_input.Q_polys[L], a_zeta_poly);
+    // b(z)q_R(x)
+    polynomial<Field> bqR_zeta;
+    libfqfft::_polynomial_multiplication<Field>(bqR_zeta, common_input.Q_polys[R], b_zeta_poly);
+    // c(z)q_O(x)
+    polynomial<Field> cqO_zeta;
+    libfqfft::_polynomial_multiplication<Field>(cqO_zeta, common_input.Q_polys[O], c_zeta_poly);
+    // a(z)b(z)q_M(x) + a(z)q_L(x) + b(z)q_R(x) + c(z)q_O(x) + q_C(x)
+    libfqfft::_polynomial_addition<Field>(r_part[0], poly_null, abqM_zeta);
+    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], aqL_zeta);
+    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], bqR_zeta);
+    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], cqO_zeta);
+    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], common_input.Q_polys[C]);
+
+    // --- Computation of r_part[1]
+
+    polynomial<Field> r1_const_poly
+      {
+       (a_zeta + (beta * zeta) + gamma) *
+       (b_zeta + (beta * k1 * zeta) + gamma) *
+       (c_zeta + (beta * k2 * zeta) + gamma) * alpha
+      };
+    libfqfft::_polynomial_multiplication<Field>(r_part[1], r1_const_poly, z_poly);
+
+    // --- Computation of r_part[2]
+    
+    polynomial<Field> r2_const_poly
+      {
+       (a_zeta + (beta * S_0_zeta) + gamma) *
+       (b_zeta + (beta * S_1_zeta) + gamma) *
+       (alpha * beta * z_poly_xomega_zeta)
+      };
+    libfqfft::_polynomial_multiplication<Field>(r_part[2], r2_const_poly, common_input.S_polys[2]);
+    // -r_part[2]
+    libfqfft::_polynomial_multiplication<Field>(r_part[2], r_part[2], neg_one_poly);
+    
+    // --- Computation of r_part[3]
+    
+    //     r3 = accumulator_poly_ext3 * eval_poly(L_1, [zeta])[0] * alpha ** 2
+    polynomial<Field> L_0_zeta_poly{libfqfft::evaluate_polynomial<Field>(common_input.L_basis[0].size(), common_input.L_basis[0], zeta)};
+    polynomial<Field> alpha_power2_poly{libff::power(alpha, libff::bigint<1>(2))};
+    libfqfft::_polynomial_multiplication<Field>(r_part[3], z_poly, L_0_zeta_poly);
+    libfqfft::_polynomial_multiplication<Field>(r_part[3], r_part[3], alpha_power2_poly);
+
+    // --- Computation of r_poly = (r0+r1-r2+r3)
+
+    //
+    // Note: here the reference Python implementation differs from the
+    // paper where:
+    //
+    // r(x) = r(x) - zh(zeta) (t_lo(x) + zeta^n t_mid(x) + zeta^2n t_hi(x))
+    //
+    // In the reference implementation, the missing term is added in
+    // the computation of the W_zeta(x) polynomial
+    //
+    // linearisation polynomial r(x)
+    polynomial<Field> r_poly; 
+    libfqfft::_polynomial_addition<Field>(r_poly, poly_null, r_part[0]);
+    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[1]);
+    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[2]);
+    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[3]);
+    
+#if DEBUG    
+    //    printf("abqM_zeta\n");
+    //    print_vector(abqM_zeta);
+    printf("[%s:%d] r_part[0]\n", __FILE__, __LINE__);
+    print_vector(r_part[0]);
+    printf("[%s:%d] r_part[1]\n", __FILE__, __LINE__);
+    print_vector(r_part[1]);
+    printf("[%s:%d] r_part[2]\n", __FILE__, __LINE__);
+    print_vector(r_part[2]);
+    printf("[%s:%d] r_part[3]\n", __FILE__, __LINE__);
+    print_vector(r_part[3]);
+    printf("[%s:%d] r_poly\n", __FILE__, __LINE__);
+    print_vector(r_poly);
+    assert(r_poly == example.r_poly);
+#endif // #if DEBUG
+
+    // Evaluate the r-polynomial at zeta. Note: in the reference
+    // implementation, r_zeta is added to the pi-SNARK proof. In the
+    // paper this is omitted, which makes the proof shorter at the
+    // epxense of a slightly heavier computation on the verifier's
+    // side 
+    r_zeta = libfqfft::evaluate_polynomial<Field>(r_poly.size(), r_poly, zeta);
+#ifdef DEBUG
+    printf("r_zeta ");
+    r_zeta.print();
+    assert(r_zeta == example.r_zeta);
+#endif // #ifdef DEBUG    
+
+    // W_zeta polynomial is of degree 6 in the random element nu and
+    // hence has 7 terms
+    std::vector<polynomial<Field>> W_zeta_part(7);
+
+    // --- compute W_zeta_part[0]
+    
+    // t_lo(x)
+    polynomial<Field> t_lo{t_poly[lo]};
+    // t_mid(x) * zeta^(n+2)
+    polynomial<Field> t_mid_zeta_n;
+    polynomial<Field> zeta_powern_poly{libff::power(zeta, libff::bigint<1>(common_input.num_gates+2))};
+    libfqfft::_polynomial_multiplication<Field>(t_mid_zeta_n, t_poly[mid], zeta_powern_poly);
+    // t_hi(x) * zeta^(2(n+1))
+    polynomial<Field> t_hi_zeta_2n;
+    polynomial<Field> zeta_power2n_poly{libff::power(zeta, libff::bigint<1>(2*(common_input.num_gates+2)))};
+    libfqfft::_polynomial_multiplication<Field>(t_hi_zeta_2n, t_poly[hi], zeta_power2n_poly);
+    // -t_zeta as constant term polynomial
+    polynomial<Field> t_zeta_poly{-t_zeta};
+    // t_lo(x) + (t_mid(x) * zeta^n) + (t_hi(x) * zeta^2n) + t_zeta_poly
+    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], poly_null, t_lo);
+    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_mid_zeta_n);
+    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_hi_zeta_2n);
+    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_zeta_poly);    
+    
+    // --- compute W_zeta_part[1]
+
+    // -r_zeta as constant term polynomial
+    polynomial<Field> r_zeta_poly{-r_zeta};
+    // r(x) - r_zeta
+    polynomial<Field> r_sub_rzeta;
+    libfqfft::_polynomial_addition<Field>(r_sub_rzeta, r_poly, r_zeta_poly);
+    // (r(x) - r_zeta) * nu
+    polynomial<Field> nu_poly{nu};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[1], r_sub_rzeta, nu_poly);
+    
+    // --- compute W_zeta_part[2]
+    
+    // -a_zeta as constant term polynomial
+    polynomial<Field> a_zeta_poly_neg;
+    libfqfft::_polynomial_multiplication<Field>(a_zeta_poly_neg, a_zeta_poly, neg_one_poly);
+    // a(x) - a_zeta
+    polynomial<Field> a_sub_azeta;
+    libfqfft::_polynomial_addition<Field>(a_sub_azeta, W_polys_blinded[a], a_zeta_poly_neg);
+    // (a(x) - a_zeta) * nu^2
+    Field nu2 = libff::power(nu, libff::bigint<1>(2));
+    polynomial<Field> nu2_poly{nu2};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[2], a_sub_azeta, nu2_poly);
+    
+    // -b_zeta as constant term polynomial
+    polynomial<Field> b_zeta_poly_neg;
+    libfqfft::_polynomial_multiplication<Field>(b_zeta_poly_neg, b_zeta_poly, neg_one_poly);
+    // (b(x) - b_zeta)
+    polynomial<Field> b_sub_bzeta;
+    libfqfft::_polynomial_addition<Field>(b_sub_bzeta, W_polys_blinded[b], b_zeta_poly_neg);
+    // (b(x) - b_zeta) * nu^3
+    Field nu3 = libff::power(nu, libff::bigint<1>(3));
+    polynomial<Field> nu3_poly{nu3};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[3], b_sub_bzeta, nu3_poly);
+
+    // -c_zeta as constant term polynomial
+    polynomial<Field> c_zeta_poly_neg;
+    libfqfft::_polynomial_multiplication<Field>(c_zeta_poly_neg, c_zeta_poly, neg_one_poly);
+    // (c(x) - c_zeta)
+    polynomial<Field> c_sub_czeta;
+    libfqfft::_polynomial_addition<Field>(c_sub_czeta, W_polys_blinded[c], c_zeta_poly_neg);
+    // (c(x) - c_zeta) * nu^4
+    Field nu4 = libff::power(nu, libff::bigint<1>(4));
+    polynomial<Field> nu4_poly{nu4};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[4], c_sub_czeta, nu4_poly);
+
+    // -S_0_zeta as constant term polynomial
+    polynomial<Field> S_0_zeta_poly_neg{-S_0_zeta};
+    //    libfqfft::_polynomial_multiplication<Field>(S_0_zeta_poly_neg, S_0_zeta_poly, neg_one_poly);
+    // (S0(x) - S_0_zeta)
+    polynomial<Field> S0_sub_szeta;
+    libfqfft::_polynomial_addition<Field>(S0_sub_szeta, common_input.S_polys[0], S_0_zeta_poly_neg);
+    // (S0(x) - S_0_zeta) * nu^5
+    Field nu5 = libff::power(nu, libff::bigint<1>(5));
+    polynomial<Field> nu5_poly{nu5};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[5], S0_sub_szeta, nu5_poly);
+
+    // -S_1_zeta as constant term polynomial
+    polynomial<Field> S_1_zeta_poly_neg{-S_1_zeta};
+    //    libfqfft::_polynomial_multiplication<Field>(S_1_zeta_poly_neg, S_1_zeta_poly, neg_one_poly);
+    // (S1(x) - S_1_zeta)
+    polynomial<Field> S1_sub_szeta;
+    libfqfft::_polynomial_addition<Field>(S1_sub_szeta, common_input.S_polys[1], S_1_zeta_poly_neg);
+    // (S1(x) - S_1_zeta) * nu^6
+    Field nu6 = libff::power(nu, libff::bigint<1>(6));
+    polynomial<Field> nu6_poly{nu6};
+    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[6], S1_sub_szeta, nu6_poly);
+
+    // compute full zeta polynomial W_zeta = \sum W_zeta_part[i]
+    int nzeta = 7;
+    polynomial<Field> W_zeta(poly_null);
+    for (int i = 0; i < nzeta; ++i) {
+      libfqfft::_polynomial_addition<Field>(W_zeta, W_zeta, W_zeta_part[i]);
+    }
+
+    // compute 1/(X-zeta) * W_zeta
+    polynomial<Field> x_sub_zeta_poly{-zeta, Field(1)};
+    libfqfft::_polynomial_division(W_zeta, remainder, W_zeta, x_sub_zeta_poly);
+#ifdef DEBUG
+    printf("W_zeta\n");
+    print_vector(W_zeta);
+#endif // #ifdef DEBUG
+    assert(libfqfft::_is_zero(remainder));
+
+    //    polynomial<Field> z_poly;
+    
+    // Compute opening proof:
+    // W_zeta_omega = z(X) - z(zeta*common_input.omega_roots) / X - (zeta*common_input.omega_roots)
+    polynomial<Field> W_zeta_omega{poly_null};
+    
+    // -z(zeta*common_input.omega_roots)
+    polynomial<Field> z_poly_xomega_zeta_neg{-z_poly_xomega_zeta};
+    // z(X) - z(zeta*common_input.omega_roots) 
+    libfqfft::_polynomial_addition<Field>(W_zeta_omega, z_poly, z_poly_xomega_zeta_neg);    
+    // -zeta*common_input.omega_roots; common_input.omega_roots[base][1] = common_input.omega_roots_base
+    polynomial<Field> x_sub_zeta_omega_roots{-(zeta*common_input.omega_roots[base][1]), Field(1)};
+    
+    // z(X) - z(zeta*common_input.omega_roots) / X - (zeta*common_input.omega_roots)
+    libfqfft::_polynomial_division(W_zeta_omega, remainder, W_zeta_omega, x_sub_zeta_omega_roots);
+    assert(libfqfft::_is_zero(remainder));
+
+#ifdef DEBUG
+    printf("W_zeta_part[0]\n");
+    print_vector(W_zeta_part[0]);
+    printf("W_zeta_part[1]\n");
+    print_vector(W_zeta_part[1]);
+    printf("W_zeta_part[2]\n");
+    print_vector(W_zeta_part[2]);
+    printf("W_zeta_part[3]\n");
+    print_vector(W_zeta_part[3]);
+    printf("W_zeta_part[4]\n");
+    print_vector(W_zeta_part[4]);
+    printf("W_zeta_part[5]\n");
+    print_vector(W_zeta_part[5]);
+    printf("W_zeta_part[6]\n");
+    print_vector(W_zeta_part[6]);
+    printf("W_zeta\n");
+    print_vector(W_zeta);
+    printf("W_zeta_omega\n");
+    print_vector(W_zeta_omega);
+#endif // #ifdef DEBUG
+      
+    assert(W_zeta == example.W_zeta);
+    assert(W_zeta_omega == example.W_zeta_omega);
+    
+    // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
+    // input
+    W_zeta_at_secret =
+      plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, W_zeta);    
+    W_zeta_omega_at_secret =
+      plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, W_zeta_omega);
+    
+    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
+    // the test vectors
+#if 0 // commented to avoid warnings    
+    Field u = example.u;
+#endif // #if 0    
+  }
   
   template<typename ppT>
   plonk_proof<ppT> plonk_prover(
 				const srs<ppT> srs,
 				const common_preprocessed_input<ppT> common_input
 				)
-  {
-    // return class
-    plonk_proof<ppT> proof;
-    
+  {    
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
     plonk_example<ppT> example;
@@ -679,270 +1018,27 @@ namespace libsnark
     // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
     // the test vectors
     Field nu = example.nu;
-    
-    // compute linerisation polynomial r in five parts
-    std::vector<polynomial<Field>> r_part(5);
-
-    // --- Computation of r_part[0]
-    
-    // represent values as constant term polynomials in orderto use
-    // the functions in the libfqfft library on polynomials
-    polynomial<Field> a_zeta_poly{a_zeta}; 
-    polynomial<Field> b_zeta_poly{b_zeta}; 
-    polynomial<Field> c_zeta_poly{c_zeta}; 
-    // a(z)b(z)q_M(x)
-    polynomial<Field> abqM_zeta;
-    libfqfft::_polynomial_multiplication<Field>(abqM_zeta, common_input.Q_polys[M], a_zeta_poly);
-    libfqfft::_polynomial_multiplication<Field>(abqM_zeta, abqM_zeta, b_zeta_poly);    
-    // a(z)q_L(x)
-    polynomial<Field> aqL_zeta;
-    libfqfft::_polynomial_multiplication<Field>(aqL_zeta, common_input.Q_polys[L], a_zeta_poly);
-    // b(z)q_R(x)
-    polynomial<Field> bqR_zeta;
-    libfqfft::_polynomial_multiplication<Field>(bqR_zeta, common_input.Q_polys[R], b_zeta_poly);
-    // c(z)q_O(x)
-    polynomial<Field> cqO_zeta;
-    libfqfft::_polynomial_multiplication<Field>(cqO_zeta, common_input.Q_polys[O], c_zeta_poly);
-    // a(z)b(z)q_M(x) + a(z)q_L(x) + b(z)q_R(x) + c(z)q_O(x) + q_C(x)
-    libfqfft::_polynomial_addition<Field>(r_part[0], poly_null, abqM_zeta);
-    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], aqL_zeta);
-    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], bqR_zeta);
-    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], cqO_zeta);
-    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], common_input.Q_polys[C]);
-
-    // --- Computation of r_part[1]
-
-    polynomial<Field> r1_const_poly
-      {
-       (a_zeta + (beta * zeta) + gamma) *
-       (b_zeta + (beta * k1 * zeta) + gamma) *
-       (c_zeta + (beta * k2 * zeta) + gamma) * alpha
-      };
-    libfqfft::_polynomial_multiplication<Field>(r_part[1], r1_const_poly, z_poly);
-
-    // --- Computation of r_part[2]
-    
-    polynomial<Field> r2_const_poly
-      {
-       (a_zeta + (beta * S_0_zeta) + gamma) *
-       (b_zeta + (beta * S_1_zeta) + gamma) *
-       (alpha * beta * z_poly_xomega_zeta)
-      };
-    libfqfft::_polynomial_multiplication<Field>(r_part[2], r2_const_poly, common_input.S_polys[2]);
-    // -r_part[2]
-    libfqfft::_polynomial_multiplication<Field>(r_part[2], r_part[2], neg_one_poly);
-    
-    // --- Computation of r_part[3]
-    
-    //     r3 = accumulator_poly_ext3 * eval_poly(L_1, [zeta])[0] * alpha ** 2
-    polynomial<Field> L_0_zeta_poly{libfqfft::evaluate_polynomial<Field>(common_input.L_basis[0].size(), common_input.L_basis[0], zeta)};
-    polynomial<Field> alpha_power2_poly{libff::power(alpha, libff::bigint<1>(2))};
-    libfqfft::_polynomial_multiplication<Field>(r_part[3], z_poly, L_0_zeta_poly);
-    libfqfft::_polynomial_multiplication<Field>(r_part[3], r_part[3], alpha_power2_poly);
-
-    // --- Computation of r_poly = (r0+r1-r2+r3)
-
-    //
-    // Note: here the reference Python implementation differs from the
-    // paper where:
-    //
-    // r(x) = r(x) - zh(zeta) (t_lo(x) + zeta^n t_mid(x) + zeta^2n t_hi(x))
-    //
-    // In the reference implementation, the missing term is added in
-    // the computation of the W_zeta(x) polynomial
-    //
-    // linearisation polynomial r(x)
-    polynomial<Field> r_poly; 
-    libfqfft::_polynomial_addition<Field>(r_poly, poly_null, r_part[0]);
-    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[1]);
-    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[2]);
-    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[3]);
-    
-#if DEBUG    
-    //    printf("abqM_zeta\n");
-    //    print_vector(abqM_zeta);
-    printf("[%s:%d] r_part[0]\n", __FILE__, __LINE__);
-    print_vector(r_part[0]);
-    printf("[%s:%d] r_part[1]\n", __FILE__, __LINE__);
-    print_vector(r_part[1]);
-    printf("[%s:%d] r_part[2]\n", __FILE__, __LINE__);
-    print_vector(r_part[2]);
-    printf("[%s:%d] r_part[3]\n", __FILE__, __LINE__);
-    print_vector(r_part[3]);
-    printf("[%s:%d] r_poly\n", __FILE__, __LINE__);
-    print_vector(r_poly);
-    assert(r_poly == example.r_poly);
-#endif // #if DEBUG
-
-    // Evaluate the r-polynomial at zeta. Note: in the reference
-    // implementation, r_zeta is added to the pi-SNARK proof. In the
-    // paper this is omitted, which makes the proof shorter at the
-    // epxense of a slightly heavier computation on the verifier's
-    // side 
-    Field r_zeta = libfqfft::evaluate_polynomial<Field>(r_poly.size(), r_poly, zeta);
+    libff::Fr<ppT> r_zeta;
+    libff::G1<ppT> W_zeta_at_secret;
+    libff::G1<ppT> W_zeta_omega_at_secret;
+    plonk_prover_round_five<ppT>(
+				 r_zeta, 
+				 W_zeta_at_secret,
+				 W_zeta_omega_at_secret,
+				 alpha, beta, gamma, zeta, nu,
+				 k1, k2,
+				 a_zeta, b_zeta, c_zeta,
+				 S_0_zeta, S_1_zeta,
+				 t_zeta, z_poly_xomega_zeta,
+				 W_polys_blinded, t_poly, z_poly,
+				 common_input,
+				 srs
+				 );
+#endif // #if 1 // prover round 5    
 #ifdef DEBUG
     printf("r_zeta ");
     r_zeta.print();
     assert(r_zeta == example.r_zeta);
-#endif // #ifdef DEBUG    
-
-    // W_zeta polynomial is of degree 6 in the random element nu and
-    // hence has 7 terms
-    std::vector<polynomial<Field>> W_zeta_part(7);
-
-    // --- compute W_zeta_part[0]
-    
-    // t_lo(x)
-    polynomial<Field> t_lo{t_poly[lo]};
-    // t_mid(x) * zeta^(n+2)
-    polynomial<Field> t_mid_zeta_n;
-    polynomial<Field> zeta_powern_poly{libff::power(zeta, libff::bigint<1>(common_input.num_gates+2))};
-    libfqfft::_polynomial_multiplication<Field>(t_mid_zeta_n, t_poly[mid], zeta_powern_poly);
-    // t_hi(x) * zeta^(2(n+1))
-    polynomial<Field> t_hi_zeta_2n;
-    polynomial<Field> zeta_power2n_poly{libff::power(zeta, libff::bigint<1>(2*(common_input.num_gates+2)))};
-    libfqfft::_polynomial_multiplication<Field>(t_hi_zeta_2n, t_poly[hi], zeta_power2n_poly);
-    // -t_zeta as constant term polynomial
-    polynomial<Field> t_zeta_poly{-t_zeta};
-    // t_lo(x) + (t_mid(x) * zeta^n) + (t_hi(x) * zeta^2n) + t_zeta_poly
-    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], poly_null, t_lo);
-    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_mid_zeta_n);
-    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_hi_zeta_2n);
-    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_zeta_poly);    
-    
-    // --- compute W_zeta_part[1]
-
-    // -r_zeta as constant term polynomial
-    polynomial<Field> r_zeta_poly{-r_zeta};
-    // r(x) - r_zeta
-    polynomial<Field> r_sub_rzeta;
-    libfqfft::_polynomial_addition<Field>(r_sub_rzeta, r_poly, r_zeta_poly);
-    // (r(x) - r_zeta) * nu
-    polynomial<Field> nu_poly{nu};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[1], r_sub_rzeta, nu_poly);
-    
-    // --- compute W_zeta_part[2]
-    
-    // -a_zeta as constant term polynomial
-    polynomial<Field> a_zeta_poly_neg;
-    libfqfft::_polynomial_multiplication<Field>(a_zeta_poly_neg, a_zeta_poly, neg_one_poly);
-    // a(x) - a_zeta
-    polynomial<Field> a_sub_azeta;
-    libfqfft::_polynomial_addition<Field>(a_sub_azeta, W_polys_blinded[a], a_zeta_poly_neg);
-    // (a(x) - a_zeta) * nu^2
-    Field nu2 = libff::power(nu, libff::bigint<1>(2));
-    polynomial<Field> nu2_poly{nu2};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[2], a_sub_azeta, nu2_poly);
-    
-    // -b_zeta as constant term polynomial
-    polynomial<Field> b_zeta_poly_neg;
-    libfqfft::_polynomial_multiplication<Field>(b_zeta_poly_neg, b_zeta_poly, neg_one_poly);
-    // (b(x) - b_zeta)
-    polynomial<Field> b_sub_bzeta;
-    libfqfft::_polynomial_addition<Field>(b_sub_bzeta, W_polys_blinded[b], b_zeta_poly_neg);
-    // (b(x) - b_zeta) * nu^3
-    Field nu3 = libff::power(nu, libff::bigint<1>(3));
-    polynomial<Field> nu3_poly{nu3};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[3], b_sub_bzeta, nu3_poly);
-
-    // -c_zeta as constant term polynomial
-    polynomial<Field> c_zeta_poly_neg;
-    libfqfft::_polynomial_multiplication<Field>(c_zeta_poly_neg, c_zeta_poly, neg_one_poly);
-    // (c(x) - c_zeta)
-    polynomial<Field> c_sub_czeta;
-    libfqfft::_polynomial_addition<Field>(c_sub_czeta, W_polys_blinded[c], c_zeta_poly_neg);
-    // (c(x) - c_zeta) * nu^4
-    Field nu4 = libff::power(nu, libff::bigint<1>(4));
-    polynomial<Field> nu4_poly{nu4};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[4], c_sub_czeta, nu4_poly);
-
-    // -S_0_zeta as constant term polynomial
-    polynomial<Field> S_0_zeta_poly_neg{-S_0_zeta};
-    //    libfqfft::_polynomial_multiplication<Field>(S_0_zeta_poly_neg, S_0_zeta_poly, neg_one_poly);
-    // (S0(x) - S_0_zeta)
-    polynomial<Field> S0_sub_szeta;
-    libfqfft::_polynomial_addition<Field>(S0_sub_szeta, common_input.S_polys[0], S_0_zeta_poly_neg);
-    // (S0(x) - S_0_zeta) * nu^5
-    Field nu5 = libff::power(nu, libff::bigint<1>(5));
-    polynomial<Field> nu5_poly{nu5};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[5], S0_sub_szeta, nu5_poly);
-
-    // -S_1_zeta as constant term polynomial
-    polynomial<Field> S_1_zeta_poly_neg{-S_1_zeta};
-    //    libfqfft::_polynomial_multiplication<Field>(S_1_zeta_poly_neg, S_1_zeta_poly, neg_one_poly);
-    // (S1(x) - S_1_zeta)
-    polynomial<Field> S1_sub_szeta;
-    libfqfft::_polynomial_addition<Field>(S1_sub_szeta, common_input.S_polys[1], S_1_zeta_poly_neg);
-    // (S1(x) - S_1_zeta) * nu^6
-    Field nu6 = libff::power(nu, libff::bigint<1>(6));
-    polynomial<Field> nu6_poly{nu6};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[6], S1_sub_szeta, nu6_poly);
-
-    // compute full zeta polynomial W_zeta = \sum W_zeta_part[i]
-    int nzeta = 7;
-    polynomial<Field> W_zeta(poly_null);
-    for (int i = 0; i < nzeta; ++i) {
-      libfqfft::_polynomial_addition<Field>(W_zeta, W_zeta, W_zeta_part[i]);
-    }
-
-    // compute 1/(X-zeta) * W_zeta
-    polynomial<Field> x_sub_zeta_poly{-zeta, Field(1)};
-    libfqfft::_polynomial_division(W_zeta, remainder, W_zeta, x_sub_zeta_poly);
-#ifdef DEBUG
-    printf("W_zeta\n");
-    print_vector(W_zeta);
-#endif // #ifdef DEBUG
-    assert(libfqfft::_is_zero(remainder));
-
-    //    polynomial<Field> z_poly;
-    
-    // Compute opening proof:
-    // W_zeta_omega = z(X) - z(zeta*common_input.omega_roots) / X - (zeta*common_input.omega_roots)
-    polynomial<Field> W_zeta_omega{poly_null};
-    
-    // -z(zeta*common_input.omega_roots)
-    polynomial<Field> z_poly_xomega_zeta_neg{-z_poly_xomega_zeta};
-    // z(X) - z(zeta*common_input.omega_roots) 
-    libfqfft::_polynomial_addition<Field>(W_zeta_omega, z_poly, z_poly_xomega_zeta_neg);    
-    // -zeta*common_input.omega_roots; common_input.omega_roots[base][1] = common_input.omega_roots_base
-    polynomial<Field> x_sub_zeta_omega_roots{-(zeta*common_input.omega_roots[base][1]), Field(1)};
-    
-    // z(X) - z(zeta*common_input.omega_roots) / X - (zeta*common_input.omega_roots)
-    libfqfft::_polynomial_division(W_zeta_omega, remainder, W_zeta_omega, x_sub_zeta_omega_roots);
-    assert(libfqfft::_is_zero(remainder));
-
-#ifdef DEBUG
-    printf("W_zeta_part[0]\n");
-    print_vector(W_zeta_part[0]);
-    printf("W_zeta_part[1]\n");
-    print_vector(W_zeta_part[1]);
-    printf("W_zeta_part[2]\n");
-    print_vector(W_zeta_part[2]);
-    printf("W_zeta_part[3]\n");
-    print_vector(W_zeta_part[3]);
-    printf("W_zeta_part[4]\n");
-    print_vector(W_zeta_part[4]);
-    printf("W_zeta_part[5]\n");
-    print_vector(W_zeta_part[5]);
-    printf("W_zeta_part[6]\n");
-    print_vector(W_zeta_part[6]);
-    printf("W_zeta\n");
-    print_vector(W_zeta);
-    printf("W_zeta_omega\n");
-    print_vector(W_zeta_omega);
-#endif // #ifdef DEBUG
-      
-    assert(W_zeta == example.W_zeta);
-    assert(W_zeta_omega == example.W_zeta_omega);
-    
-    // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
-    // input
-    libff::G1<ppT> W_zeta_at_secret =
-      plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, W_zeta);    
-    libff::G1<ppT> W_zeta_omega_at_secret =
-      plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, W_zeta_omega);
-    
-#ifdef DEBUG
     printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);    
     printf("r_zeta ");
     r_zeta.print();    
@@ -959,13 +1055,9 @@ namespace libsnark
     assert(W_zeta_omega_at_secret_aff.X == example.W_zeta_omega_at_secret[0]);
     assert(W_zeta_omega_at_secret_aff.Y == example.W_zeta_omega_at_secret[1]);
 #endif // #ifdef DEBUG
-
-    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
-    // the test vectors
-#if 0 // commented to avoid warnings    
-    Field u = example.u;
-#endif // #if 0    
-#endif // #if 1 // prover round 5
+    
+    // construct proof
+    plonk_proof<ppT> proof;
     
     return proof;
   }
@@ -1706,17 +1798,17 @@ namespace libsnark
     //     [t_lo]_1, [t_mi]_1, [t_hi]_1,
     //     \bar{a}, \bar{b}, \bar{c},
     //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
-    //     [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1
+    //     [W_zeta]_1, [W_{zeta omega}]_1
     //     r_zeta (*))
     //
     // (*) Note: in the reference Python implementation, r_zeta (the
-    // evaluation of the r(X) polynomial at zeta from Prover round 5)
-    // is added to the pi-SNARK proof. In the paper this is omitted,
-    // which seems to make the proof shorter by 1 element at the
-    // epxense of a slightly heavier computation on the verifier's
-    // side. Here we follow the reference implementation to make sure
-    // we match the test values. TODO: once all test vectors are
-    // verified, we may remove r_zeta from the proof to be fully
+    // evaluation of the linearlization polynomial r(X) at zeta from
+    // Prover round 5) is added to the pi-SNARK proof. In the paper
+    // this is omitted, which seems to make the proof shorter by 1
+    // element at the epxense of a slightly heavier computation on the
+    // verifier's side. Here we follow the reference implementation to
+    // make sure we match the test values. TODO: once all test vectors
+    // are verified, we may remove r_zeta from the proof to be fully
     // compliant with the paper.
     //
     // Mapping code-to-paper quantities
@@ -1725,7 +1817,7 @@ namespace libsnark
     // - z_poly_at_secret_g1: [z]_1 (from Round 2)
     // - t_poly_at_secret_g1[lo, mi, hi]: [t_lo]_1, [t_mi]_1, [t_hi]_1 (from Round 3)
     // - a_zeta, b_zeta, c_zeta, S_0_zeta, S_1_zeta, z_poly_xomega_zeta: \bar{a}, \bar{b}, \bar{c}, \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w} (from Round 4)
-    // - W_zeta_at_secret, W_zeta_omega_at_secret: [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1 (from Round 5)
+    // - W_zeta_at_secret, W_zeta_omega_at_secret: [W_zeta]_1, [W_{zeta omega}]_1 (from Round 5)
     //
     // Verifier preprocessed input
     //
