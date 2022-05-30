@@ -238,8 +238,7 @@ template<typename ppT> class plonk_prover
 public:
   using Field = libff::Fr<ppT>;
 
-  // round 0
-  const std::vector<libff::Fr<ppT>> blind_scalars;
+  // round 0 (initialization)
   const std::vector<libff::Fr<ppT>> zh_poly;
   const libff::Fr<ppT> alpha;
   const libff::Fr<ppT> beta;
@@ -250,6 +249,7 @@ public:
   const libff::Fr<ppT> k2;
  
   // round 1
+  const std::vector<libff::Fr<ppT>> blind_scalars;
   std::vector<polynomial<libff::Fr<ppT>>> W_polys;
   const std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded;
   std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
@@ -257,43 +257,56 @@ public:
   // round 2
   const polynomial<libff::Fr<ppT>> z_poly;
   libff::G1<ppT> z_poly_at_secret_g1;
-  
-  const libff::Fr<ppT> S_0_zeta;
-  const libff::Fr<ppT> S_1_zeta;
 
+  // round 3
+  std::vector<libff::Fr<ppT>> z_poly_xomega;
+  const std::vector<polynomial<libff::Fr<ppT>>> t_poly;
+  polynomial<libff::Fr<ppT>> t_poly_long;
+  std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
+
+  // round 4
   const libff::Fr<ppT> a_zeta;
   const libff::Fr<ppT> b_zeta;
   const libff::Fr<ppT> c_zeta;
-  
-  polynomial<libff::Fr<ppT>> t_poly_long;
-  const std::vector<polynomial<libff::Fr<ppT>>> t_poly;
-  std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
+  const libff::Fr<ppT> S_0_zeta;
+  const libff::Fr<ppT> S_1_zeta;  
+  const libff::Fr<ppT> z_poly_xomega_zeta;
   const libff::Fr<ppT> t_zeta;
 
-  std::vector<libff::Fr<ppT>> z_poly_xomega;
-  const libff::Fr<ppT> z_poly_xomega_zeta;
-  
+  // round 5
+  libff::Fr<ppT> r_zeta;
   libff::G1<ppT> W_zeta_at_secret;
   libff::G1<ppT> W_zeta_omega_at_secret;
-  libff::Fr<ppT> r_zeta;
+  libff::Fr<ppT> u;
+
+  // constructor: TODO initialize round 0 variables
+  plonk_prover() {};
 
   void compute_witness_polys(
 			     const std::vector<libff::Fr<ppT>> witness,
 			     const common_preprocessed_input<ppT> common_input
-			     );
-    
+			     );    
   void round_one(
 		 const std::vector<libff::Fr<ppT>> witness,
 		 const common_preprocessed_input<ppT> common_input,
 		 const srs<ppT> srs
 		 );
-
   void round_two(
 		 const std::vector<libff::Fr<ppT>> witness,
 		 const common_preprocessed_input<ppT> common_input,
 		 const srs<ppT> srs
 		 );
-  
+  void round_three(
+		   const common_preprocessed_input<ppT> common_input,
+		   const srs<ppT> srs
+		   );
+  void round_four(
+		  const common_preprocessed_input<ppT> common_input
+		  );  
+  void round_five(
+		  const common_preprocessed_input<ppT> common_input,
+		  const srs<ppT> srs
+		  );
 };
 
 
