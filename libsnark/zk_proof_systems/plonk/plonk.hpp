@@ -51,6 +51,10 @@ namespace libsnark
 template<typename FieldT> using polynomial = std::vector<FieldT>;
 
 /************************ Common Preprocessed Input ***********************/
+
+/**
+ * Plonk common preprocessed input
+ */
 template<typename ppT> class common_preprocessed_input
 {
 public:
@@ -91,9 +95,6 @@ public:
 template<typename ppT> class srs
 {
 public:
-  srs(std::vector<libff::G1<ppT>> &&secret_powers_g1,
-      std::vector<libff::G2<ppT>> &&secret_powers_g2);
-
   /// Array of powers of secret \alpha, encoded in G1:
   /// [1]_1, [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
   std::vector<libff::G1<ppT>> secret_powers_g1;
@@ -102,6 +103,16 @@ public:
   /// [1]_2, [\alpha]_2
   std::vector<libff::G2<ppT>> secret_powers_g2;
 
+  srs(){};
+  
+  srs(std::vector<libff::G1<ppT>> &&secret_powers_g1,
+      std::vector<libff::G2<ppT>> &&secret_powers_g2);
+
+  // for debug only
+  void derive_from_secret(
+			  const libff::Fr<ppT> secret,
+			  size_t num_gates
+			  );
 };
 
   
@@ -236,6 +247,9 @@ public:
   }
 };
 
+/**
+ * Plonk prover. Computes object of class plonk_proof.
+ */
 template<typename ppT> class plonk_prover
 {
 private:  
@@ -325,6 +339,9 @@ public:
 
 /***************************** Verifier *******************************/
 
+/**
+ * Plonk verifier. Verifies object of class plonk_proof.
+ */
 template<typename ppT> class plonk_verifier
 {
   using Field = libff::Fr<ppT>;
@@ -411,16 +428,6 @@ public:
 
 /***************************** Main algorithms *******************************/
 
-//  template<typename FieldT> void print_vector(std::vector<FieldT> v);
-
-  
-  // Generate SRS \see r1cs_gg_ppzksnark_generator_from_secrets, \see
-  // kzg10<ppT>::setup_from_secret(
-  template<typename ppT>
-  srs<ppT> plonk_setup_from_secret(
-				   const libff::Fr<ppT> secret,
-				   size_t num_gates
-				   );
 
   
 } // namespace libsnark

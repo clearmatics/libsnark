@@ -1591,11 +1591,13 @@ namespace libsnark
 #endif // #ifdef DEBUG
 
     // --- SRS ---
-    printf("[%s:%d] SRS...\n", __FILE__, __LINE__);    
-    // compute powers of secret times G1: 1*G1, secret^1*G1,
-    // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2    
-    srs<ppT> srs = plonk_derive_srs_from_secret<ppT>(secret, common_input.num_gates);    
-    // Compare against reference test values
+    printf("[%s:%d] SRS...\n", __FILE__, __LINE__);
+    // create SRS object
+    srs<ppT> srs;
+    // compute SRS = powers of secret times G1: 1*G1, secret^1*G1,
+    // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
+    srs.derive_from_secret(secret, common_input.num_gates);    
+    // sompare SRS against reference test values
 #ifdef DEBUG
     for (int i = 0; i < (int)common_input.num_gates + 3; ++i) {
       printf("secret_power_G1[%2d] ", i);
