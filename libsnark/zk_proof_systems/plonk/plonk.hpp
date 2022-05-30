@@ -34,6 +34,7 @@ Cryptology ePrint Archive, Report 2019/953, 2019,
 
 #include <libff/algebra/curves/public_params.hpp>
 #include <memory>
+#include <libsnark/zk_proof_systems/plonk/tests/plonk_example.hpp>
 
 #define DEBUG 1
 
@@ -86,6 +87,9 @@ public:
   libff::Fr<ppT> k2;
 
   common_preprocessed_input(){};
+
+  // for debug
+  void setup_from_example(plonk_example<ppT> example);
   
 };  
 

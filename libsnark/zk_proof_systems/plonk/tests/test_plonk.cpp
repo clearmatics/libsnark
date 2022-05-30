@@ -1571,16 +1571,16 @@ namespace libsnark
 
     using Field = libff::Fr<ppT>;
 
-    // --- TEST VECTORS ---
-    // test vector values from example circuit
+    // --- TEST VECTORS ---    
+    // load test vector values from example circuit
     plonk_example<ppT> example;
     
     // --- SETUP ---
-    printf("[%s:%d] Plonk setup...\n", __FILE__, __LINE__);
-
-    // common preprocessed input    
-    common_preprocessed_input<ppT> common_input; 
-    plonk_setup<ppT>(common_input);
+    printf("[%s:%d] Common preprocessed input...\n", __FILE__, __LINE__);
+    // common preprocessed input (CPI)
+    common_preprocessed_input<ppT> common_input;
+    // setup the CPI using an example circuit
+    common_input.setup_from_example(example);
 
     // random hidden element secret (toxic waste). we fix it to a
     // constant in order to match against the test vectors
@@ -1666,7 +1666,6 @@ namespace libsnark
     assert(W_zeta_omega_at_secret_aff.X == example.W_zeta_omega_at_secret[0]);
     assert(W_zeta_omega_at_secret_aff.Y == example.W_zeta_omega_at_secret[1]);
 #endif // #ifdef DEBUG
-
     
     // --- VERIFIER ---
     printf("[%s:%d] Verifier...\n", __FILE__, __LINE__);
