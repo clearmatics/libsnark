@@ -1570,13 +1570,13 @@ namespace libsnark
     ppT::init_public_params();
 
     using Field = libff::Fr<ppT>;
-    //    using BaseField = libff::Fq<ppT>;
 
-    // initialize hard-coded values from example circuit
+    // --- TEST VECTORS ---
+    // test vector values from example circuit
     plonk_example<ppT> example;
     
     // --- SETUP ---
-    printf("[%s:%d] Start setup...\n", __FILE__, __LINE__);
+    printf("[%s:%d] Plonk setup...\n", __FILE__, __LINE__);
 
     // common preprocessed input    
     common_preprocessed_input<ppT> common_input; 
@@ -1591,10 +1591,9 @@ namespace libsnark
 #endif // #ifdef DEBUG
 
     // --- SRS ---
-    printf("[%s:%d] Prepare SRS...\n", __FILE__, __LINE__);    
+    printf("[%s:%d] SRS...\n", __FILE__, __LINE__);    
     // compute powers of secret times G1: 1*G1, secret^1*G1,
-    // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
-    
+    // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2    
     srs<ppT> srs = plonk_derive_srs_from_secret<ppT>(secret, common_input.num_gates);    
     // Compare against reference test values
 #ifdef DEBUG
@@ -1614,32 +1613,65 @@ namespace libsnark
 #endif // #ifdef DEBUG
     
     // --- PROVER ---
+    printf("[%s:%d] Prover...\n", __FILE__, __LINE__);        
+    // initialize prover
     plonk_prover<ppT> prover(common_input);
-    
+    // compute proof
     plonk_proof<ppT> proof = prover.compute_proof(srs, common_input);
-    
+    // compare proof against test vector values (debug)
 #ifdef DEBUG
-    assert(example.a_zeta == proof.a_zeta);
-    assert(example.b_zeta == proof.b_zeta);
-    assert(example.c_zeta == proof.c_zeta);
-    assert(example.S_0_zeta == proof.S_0_zeta);
-    assert(example.S_1_zeta == proof.S_1_zeta);
-    assert(example.z_poly_xomega_zeta == proof.z_poly_xomega_zeta);
-    assert(example.r_zeta == proof.r_zeta);
-    //    assert(example.W_polys_blinded_at_secret_g1 == proof.W_polys_blinded_at_secret_g1);
-    //    assert(example.z_poly_at_secret_g1 == proof.z_poly_at_secret_g1);
-    //    assert(example.t_poly_at_secret_g1 == proof.t_poly_at_secret_g1);
-    //    assert(example.W_zeta_at_secret == proof.W_zeta_at_secret);
-    //    assert(example.W_zeta_omega_at_secret == proof.W_zeta_omega_at_secret);
+    assert(proof.a_zeta == example.a_zeta);
+    assert(proof.b_zeta == example.b_zeta);
+    assert(proof.c_zeta == example.c_zeta);
+    assert(proof.S_0_zeta == example.S_0_zeta);
+    assert(proof.S_1_zeta == example.S_1_zeta);
+    assert(proof.z_poly_xomega_zeta == example.z_poly_xomega_zeta);
+    assert(proof.r_zeta == example.r_zeta);
+    //    assert(proof.W_polys_blinded_at_secret_g1 == example.W_polys_blinded_at_secret_g1);
+    for (int i = 0; i < (int)NUM_HGEN; ++i) {
+      printf("W_polys_at_secret_g1[%d]\n", i);
+      proof.W_polys_blinded_at_secret_g1[i].print();
+      libff::G1<ppT> W_polys_blinded_at_secret_g1_i(proof.W_polys_blinded_at_secret_g1[i]);
+      W_polys_blinded_at_secret_g1_i.to_affine_coordinates();
+      assert(W_polys_blinded_at_secret_g1_i.X == example.W_polys_blinded_at_secret_g1[i][0]);
+      assert(W_polys_blinded_at_secret_g1_i.Y == example.W_polys_blinded_at_secret_g1[i][1]);
+    }
+    //    assert(proof.z_poly_at_secret_g1 == example.z_poly_at_secret_g1);
+    proof.z_poly_at_secret_g1.print();
+    libff::G1<ppT> z_poly_at_secret_g1_aff(proof.z_poly_at_secret_g1);
+    z_poly_at_secret_g1_aff.to_affine_coordinates();
+    assert(z_poly_at_secret_g1_aff.X == example.z_poly_at_secret_g1[0]);
+    assert(z_poly_at_secret_g1_aff.Y == example.z_poly_at_secret_g1[1]);
+    //    assert(proof.t_poly_at_secret_g1 == example.t_poly_at_secret_g1);
+    for (int i = 0; i < (int)NUM_HGEN; ++i) {
+      printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
+      proof.t_poly_at_secret_g1[i].print();
+      libff::G1<ppT> t_poly_at_secret_g1_i(proof.t_poly_at_secret_g1[i]);
+      t_poly_at_secret_g1_i.to_affine_coordinates();
+      assert(t_poly_at_secret_g1_i.X == example.t_poly_at_secret_g1[i][0]);
+      assert(t_poly_at_secret_g1_i.Y == example.t_poly_at_secret_g1[i][1]);
+    }
+    //    assert(proof.W_zeta_at_secret == example.W_zeta_at_secret);
+    proof.W_zeta_at_secret.print();
+    libff::G1<ppT> W_zeta_at_secret_aff(proof.W_zeta_at_secret);
+    W_zeta_at_secret_aff.to_affine_coordinates();
+    assert(W_zeta_at_secret_aff.X == example.W_zeta_at_secret[0]);
+    assert(W_zeta_at_secret_aff.Y == example.W_zeta_at_secret[1]);    
+    //    assert(proof.W_zeta_omega_at_secret == example.W_zeta_omega_at_secret);
+    proof.W_zeta_omega_at_secret.print();
+    libff::G1<ppT> W_zeta_omega_at_secret_aff(proof.W_zeta_omega_at_secret);
+    W_zeta_omega_at_secret_aff.to_affine_coordinates();
+    assert(W_zeta_omega_at_secret_aff.X == example.W_zeta_omega_at_secret[0]);
+    assert(W_zeta_omega_at_secret_aff.Y == example.W_zeta_omega_at_secret[1]);
 #endif // #ifdef DEBUG
 
     
     // --- VERIFIER ---
-
+    printf("[%s:%d] Verifier...\n", __FILE__, __LINE__);
+    // initialize verifier
     plonk_verifier<ppT> verifier;
-
+    // verify proof
     bool b_valid_proof = verifier.verify_proof(proof, srs, common_input);
-
     assert(b_valid_proof);
     
     // end 
