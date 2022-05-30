@@ -28,7 +28,7 @@
 #include <libsnark/zk_proof_systems/plonk/verifier.hpp>
 
 // maximum polynomial degree (resp. maximum number of gates)
-const size_t MAX_DEGREE = 254;
+//const size_t MAX_DEGREE = 254;
 
 namespace libsnark
 {
