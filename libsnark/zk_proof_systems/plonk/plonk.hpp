@@ -23,8 +23,8 @@ J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive, Report
 #define PLONK_PPZKSNARK_HPP_
 
 #include <libff/algebra/curves/public_params.hpp>
-#include <memory>
 #include <libsnark/zk_proof_systems/plonk/tests/example.hpp>
+#include <memory>
 
 // enable debug checks. in particular enable comparisons to test
 // vector values.
@@ -36,17 +36,15 @@ const size_t NUM_HGEN = 3;
 namespace libsnark
 {
 
-  enum W_polys_id{a, b, c};
-  enum Q_polys_id{L, R, M, O, C};
-  enum t_polys_id{lo, mid, hi};
-  enum omega_id{base, base_k1, base_k2};
+enum W_polys_id { a, b, c };
+enum Q_polys_id { L, R, M, O, C };
+enum t_polys_id { lo, mid, hi };
+enum omega_id { base, base_k1, base_k2 };
 
 template<typename FieldT> using polynomial = std::vector<FieldT>;
 
 /***************************** Main algorithms *******************************/
 
-
-  
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/plonk.tcc"

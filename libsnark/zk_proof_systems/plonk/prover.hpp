@@ -9,10 +9,10 @@ This includes:
 
 References:
 
-\[GWC19]: 
-"Plonk: Permutations over lagrange-bases for oecumenical noninteractive arguments of knowledge",
-Ariel Gabizon, Zachary J. Williamson, and Oana Ciobotaru,
-Cryptology ePrint Archive, Report 2019/953, 2019,
+\[GWC19]:
+"Plonk: Permutations over lagrange-bases for oecumenical noninteractive
+arguments of knowledge", Ariel Gabizon, Zachary J. Williamson, and Oana
+Ciobotaru, Cryptology ePrint Archive, Report 2019/953, 2019,
 <https://eprint.iacr.org/2019/953>
 
 *****************************************************************************
@@ -26,14 +26,14 @@ Cryptology ePrint Archive, Report 2019/953, 2019,
 
 namespace libsnark
 {
-  /**
-   * A proof for the Plonk GG-ppzkSNARK.
-   */
-  template<typename ppT> class plonk_proof
-  {
-  public:
+/**
+ * A proof for the Plonk GG-ppzkSNARK.
+ */
+template<typename ppT> class plonk_proof
+{
+public:
     using Field = libff::Fr<ppT>;
-  
+
     // Plonk proof Pi
     //
     // Pi ([a]_1, [b]_1, [c]_1, [z]_1,
@@ -42,7 +42,7 @@ namespace libsnark
     //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
     //     [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1
     //     r_zeta (*))
-  
+
     // [a]_1, [b]_1, [c]_1
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
     // [z]_1,
@@ -58,49 +58,48 @@ namespace libsnark
     Field S_1_zeta;
     // \bar{z_w}
     Field z_poly_xomega_zeta;
-    // [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1  
+    // [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1
     libff::G1<ppT> W_zeta_at_secret;
     libff::G1<ppT> W_zeta_omega_at_secret;
     // r_zeta (*)
     Field r_zeta;
 
-    plonk_proof() {};
+    plonk_proof(){};
     plonk_proof(
-		std::vector<libff::G1<ppT>>& W_polys_blinded_at_secret_g1,
-		libff::G1<ppT>& z_poly_at_secret_g1,
-		std::vector<libff::G1<ppT>>& t_poly_at_secret_g1,
-		Field& a_zeta,
-		Field& b_zeta,
-		Field& c_zeta,
-		Field& S_0_zeta,
-		Field& S_1_zeta,
-		Field& z_poly_xomega_zeta,
-		libff::G1<ppT>& W_zeta_at_secret,
-		libff::G1<ppT>& W_zeta_omega_at_secret,
-		Field& r_zeta
-		) : 
-      W_polys_blinded_at_secret_g1(W_polys_blinded_at_secret_g1),
-      z_poly_at_secret_g1(z_poly_at_secret_g1),
-      t_poly_at_secret_g1(t_poly_at_secret_g1),
-      a_zeta(a_zeta),
-      b_zeta(b_zeta),
-      c_zeta(c_zeta),
-      S_0_zeta(S_0_zeta),
-      S_1_zeta(S_1_zeta),
-      z_poly_xomega_zeta(z_poly_xomega_zeta),
-      W_zeta_at_secret(W_zeta_at_secret),
-      W_zeta_omega_at_secret(W_zeta_omega_at_secret),
-      r_zeta(r_zeta)
+        std::vector<libff::G1<ppT>> &W_polys_blinded_at_secret_g1,
+        libff::G1<ppT> &z_poly_at_secret_g1,
+        std::vector<libff::G1<ppT>> &t_poly_at_secret_g1,
+        Field &a_zeta,
+        Field &b_zeta,
+        Field &c_zeta,
+        Field &S_0_zeta,
+        Field &S_1_zeta,
+        Field &z_poly_xomega_zeta,
+        libff::G1<ppT> &W_zeta_at_secret,
+        libff::G1<ppT> &W_zeta_omega_at_secret,
+        Field &r_zeta)
+        : W_polys_blinded_at_secret_g1(W_polys_blinded_at_secret_g1)
+        , z_poly_at_secret_g1(z_poly_at_secret_g1)
+        , t_poly_at_secret_g1(t_poly_at_secret_g1)
+        , a_zeta(a_zeta)
+        , b_zeta(b_zeta)
+        , c_zeta(c_zeta)
+        , S_0_zeta(S_0_zeta)
+        , S_1_zeta(S_1_zeta)
+        , z_poly_xomega_zeta(z_poly_xomega_zeta)
+        , W_zeta_at_secret(W_zeta_at_secret)
+        , W_zeta_omega_at_secret(W_zeta_omega_at_secret)
+        , r_zeta(r_zeta)
     {
     }
-  };
+};
 
-  /**
-   * Plonk prover. Computes object of class plonk_proof.
-   */
-  template<typename ppT> class plonk_prover
-  {
-  private:  
+/**
+ * Plonk prover. Computes object of class plonk_proof.
+ */
+template<typename ppT> class plonk_prover
+{
+private:
     using Field = libff::Fr<ppT>;
 
     // round 0 (initialization)
@@ -108,14 +107,14 @@ namespace libsnark
     //  libff::Fr<ppT> k1;
     //  libff::Fr<ppT> k2;
     polynomial<libff::Fr<ppT>> null_poly;
-    polynomial<libff::Fr<ppT>> neg_one_poly; 
- 
+    polynomial<libff::Fr<ppT>> neg_one_poly;
+
     // round 1
     std::vector<libff::Fr<ppT>> blind_scalars;
     std::vector<polynomial<libff::Fr<ppT>>> W_polys;
     std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded;
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
-  
+
     // round 2
     libff::Fr<ppT> beta;
     libff::Fr<ppT> gamma;
@@ -135,7 +134,7 @@ namespace libsnark
     libff::Fr<ppT> b_zeta;
     libff::Fr<ppT> c_zeta;
     libff::Fr<ppT> S_0_zeta;
-    libff::Fr<ppT> S_1_zeta;  
+    libff::Fr<ppT> S_1_zeta;
     libff::Fr<ppT> z_poly_xomega_zeta;
     libff::Fr<ppT> t_zeta;
 
@@ -146,44 +145,31 @@ namespace libsnark
     libff::G1<ppT> W_zeta_omega_at_secret;
     libff::Fr<ppT> u;
 
-  public:  
+public:
     // constructors: initialize round 0 variables
-    plonk_prover() {};
-  
-    plonk_prover(
-		 const common_preprocessed_input<ppT> common_input
-		 );
+    plonk_prover(){};
+
+    plonk_prover(const common_preprocessed_input<ppT> common_input);
 
     void compute_witness_polys(
-			       const std::vector<libff::Fr<ppT>> witness,
-			       const common_preprocessed_input<ppT> common_input
-			       );    
+        const std::vector<libff::Fr<ppT>> witness,
+        const common_preprocessed_input<ppT> common_input);
     void round_one(
-		   const std::vector<libff::Fr<ppT>> witness,
-		   const common_preprocessed_input<ppT> common_input,
-		   const srs<ppT> srs
-		   );
+        const std::vector<libff::Fr<ppT>> witness,
+        const common_preprocessed_input<ppT> common_input,
+        const srs<ppT> srs);
     void round_two(
-		   const std::vector<libff::Fr<ppT>> witness,
-		   const common_preprocessed_input<ppT> common_input,
-		   const srs<ppT> srs
-		   );
+        const std::vector<libff::Fr<ppT>> witness,
+        const common_preprocessed_input<ppT> common_input,
+        const srs<ppT> srs);
     void round_three(
-		     const common_preprocessed_input<ppT> common_input,
-		     const srs<ppT> srs
-		     );
-    void round_four(
-		    const common_preprocessed_input<ppT> common_input
-		    );  
+        const common_preprocessed_input<ppT> common_input, const srs<ppT> srs);
+    void round_four(const common_preprocessed_input<ppT> common_input);
     void round_five(
-		    const common_preprocessed_input<ppT> common_input,
-		    const srs<ppT> srs
-		    );
+        const common_preprocessed_input<ppT> common_input, const srs<ppT> srs);
     plonk_proof<ppT> compute_proof(
-				   const srs<ppT> srs,
-				   const common_preprocessed_input<ppT> common_input
-				   );
-  };
+        const srs<ppT> srs, const common_preprocessed_input<ppT> common_input);
+};
 
 } // namespace libsnark
 

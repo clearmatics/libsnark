@@ -25,12 +25,12 @@ J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive, Report
 
 namespace libsnark
 {
-  /**
-   * Plonk common preprocessed input
-   */
-  template<typename ppT> class common_preprocessed_input
-  {
-  public:
+/**
+ * Plonk common preprocessed input
+ */
+template<typename ppT> class common_preprocessed_input
+{
+public:
     using Field = libff::Fr<ppT>;
     // number of gates / constraints
     size_t num_gates;
@@ -62,8 +62,7 @@ namespace libsnark
 
     // for debug
     void setup_from_example(plonk_example<ppT> example);
-  
-  };  
+};
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/common_input.tcc"

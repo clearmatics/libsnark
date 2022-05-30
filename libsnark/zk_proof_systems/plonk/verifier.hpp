@@ -8,10 +8,10 @@ This includes:
 
 References:
 
-\[GWC19]: 
-"Plonk: Permutations over lagrange-bases for oecumenical noninteractive arguments of knowledge",
-Ariel Gabizon, Zachary J. Williamson, and Oana Ciobotaru,
-Cryptology ePrint Archive, Report 2019/953, 2019,
+\[GWC19]:
+"Plonk: Permutations over lagrange-bases for oecumenical noninteractive
+arguments of knowledge", Ariel Gabizon, Zachary J. Williamson, and Oana
+Ciobotaru, Cryptology ePrint Archive, Report 2019/953, 2019,
 <https://eprint.iacr.org/2019/953>
 
 *****************************************************************************
@@ -25,14 +25,14 @@ Cryptology ePrint Archive, Report 2019/953, 2019,
 
 namespace libsnark
 {
-  /**
-   * Plonk verifier. Verifies object of class plonk_proof.
-   */
-  template<typename ppT> class plonk_verifier
-  {
+/**
+ * Plonk verifier. Verifies object of class plonk_proof.
+ */
+template<typename ppT> class plonk_verifier
+{
     using Field = libff::Fr<ppT>;
-  
-  private:
+
+private:
     // verifier preprocessed input
     std::vector<libff::G1<ppT>> Q_polys_at_secret_g1;
     std::vector<libff::G1<ppT>> S_polys_at_secret_g1;
@@ -63,54 +63,36 @@ namespace libsnark
     libff::Fr<ppT> nu;
     libff::Fr<ppT> u;
 
-  public:
-    plonk_verifier() {};
-  
+public:
+    plonk_verifier(){};
+
     void preprocessed_input(
-			    const srs<ppT> srs,
-			    const common_preprocessed_input<ppT> common_input
-			    );
+        const srs<ppT> srs, const common_preprocessed_input<ppT> common_input);
 
     void step_one(const plonk_proof<ppT> proof);
     void step_two(const plonk_proof<ppT> proof);
-    void step_three(
-		    const common_preprocessed_input<ppT> common_input
-		    );
+    void step_three(const common_preprocessed_input<ppT> common_input);
     void step_four();
-    void step_five(
-		   const common_preprocessed_input<ppT> common_input
-		   );
-    void step_six(
-		  const common_preprocessed_input<ppT> common_input
-		  );
-    void step_seven(
-		    const common_preprocessed_input<ppT> common_input
-		    );
-    void step_eight(
-		    const plonk_proof<ppT> proof
-		    );
+    void step_five(const common_preprocessed_input<ppT> common_input);
+    void step_six(const common_preprocessed_input<ppT> common_input);
+    void step_seven(const common_preprocessed_input<ppT> common_input);
+    void step_eight(const plonk_proof<ppT> proof);
     void step_nine(
-		   const plonk_proof<ppT> proof,
-		   const common_preprocessed_input<ppT> common_input
-		   );
+        const plonk_proof<ppT> proof,
+        const common_preprocessed_input<ppT> common_input);
     void step_ten(
-		  const plonk_proof<ppT> proof,
-		  const common_preprocessed_input<ppT> common_input
-		  );
-    void step_eleven(
-		     const plonk_proof<ppT> proof
-		     );
+        const plonk_proof<ppT> proof,
+        const common_preprocessed_input<ppT> common_input);
+    void step_eleven(const plonk_proof<ppT> proof);
     bool step_twelve(
-		     const plonk_proof<ppT> proof,
-		     const srs<ppT> srs,
-		     const common_preprocessed_input<ppT> common_input
-		     );  
+        const plonk_proof<ppT> proof,
+        const srs<ppT> srs,
+        const common_preprocessed_input<ppT> common_input);
     bool verify_proof(
-		      const plonk_proof<ppT> proof,
-		      const srs<ppT> srs,
-		      const common_preprocessed_input<ppT> common_input
-		      );
-  };
+        const plonk_proof<ppT> proof,
+        const srs<ppT> srs,
+        const common_preprocessed_input<ppT> common_input);
+};
 
 } // namespace libsnark
 
