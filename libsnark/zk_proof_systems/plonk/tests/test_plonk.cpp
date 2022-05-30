@@ -37,12 +37,185 @@ const size_t MAX_DEGREE = 254;
 namespace libsnark
 {
 
+  // {--------------------- PROVER CLASS ------------------------
+#if 1  // prover class
+
+  // Prover (class)
+  //
   // Compute the Lagrange interpolation of the witness
   // points w_i. The result is the W_polys polynomials.
   //
   // INPUT
   // - witness: witness values
-  // - common preprocessed input
+  // - common_input: common preprocessed input
+  //
+  // OUTPUT
+  // - W_polys: Lagrange interpolation of the witness values
+  template<typename ppT>
+  void plonk_prover<ppT>::compute_witness_polys(
+						const std::vector<libff::Fr<ppT>> witness,
+						const common_preprocessed_input<ppT> common_input
+						)
+  {
+    using Field = libff::Fr<ppT>;
+    
+    int nwitness = 3;
+    for (int i = 0; i < nwitness; ++i) {
+      typename std::vector<Field>::const_iterator begin = witness.begin()+(i*common_input.num_gates);
+      typename std::vector<Field>::const_iterator end = witness.begin()+(i*common_input.num_gates)+(common_input.num_gates);
+      std::vector<Field> W_points(begin, end);
+      plonk_interpolate_over_lagrange_basis<Field>(W_points, this->W_polys[i], common_input.L_basis);
+    }
+
+  };
+  
+  // Prover Round 1 (class)
+  //
+  // INPUT 
+  // - witness: witness values
+  // - common_input: common preprocessed input
+  // - srs: structured reference string
+  // - this->blind_scalats: blinding scalars b1, b2, ..., b9 (only
+  //   b1-b6 used in round 1)
+  // - this->zh_poly: vanishing polynomial Zh
+  //
+  // OUTPUT
+  // - this->W_polys_blinded: blinded witness polynomials
+  // - this->W_polys_blinded_at_secret_g1: the blinded witness polynomials
+  //   evaluated at the secret input [a]_1, [b]_1, [c]_1 in [GWC19]
+  template<typename ppT>
+  void plonk_prover<ppT>::round_one(
+				    const std::vector<libff::Fr<ppT>> witness,
+				    const common_preprocessed_input<ppT> common_input,
+				    const srs<ppT> srs
+				    )
+{
+    using Field = libff::Fr<ppT>;
+    int nwitness = 3;
+    
+    // initialize hard-coded values from example circuit
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
+    
+    this->W_polys(nwitness, polynomial<Field>(common_input.num_gates));
+    this->compute_witness_polys(this->W_polys, witness, common_input);
+    
+#ifdef DEBUG
+    for (int i = 0; i < nwitness; ++i) {
+      printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, i);
+      print_vector(this->W_polys[i]);
+      assert(this->W_polys[i] == example.W_polys[i]);
+    }
+#endif // #ifdef DEBUG
+  
+
+    // represent the blinding scalars b1, b2, ..., b9 as polynomials
+#ifdef DEBUG
+    printf("[%s:%d] blind_scalars\n", __FILE__, __LINE__);
+    print_vector(this->blind_scalars);
+    assert(this->blind_scalars == example.prover_blind_scalars);
+#endif // #ifdef DEBUG
+
+    std::vector<std::vector<Field>> blind_polys
+      {
+       {this->blind_scalars[1], this->blind_scalars[0]}, // b1 + b0 X
+       {this->blind_scalars[3], this->blind_scalars[2]}, // b3 + b2 X
+       {this->blind_scalars[5], this->blind_scalars[4]}  // b5 + b4 X
+      };
+    
+    // compute blinded witness polynomials e.g. a_poly =
+    // blind_polys[0] * zh_poly + W_polys[0]
+    this->W_polys_blinded.resize(nwitness);
+    for (int i = 0; i < nwitness; ++i) {
+      libfqfft::_polynomial_multiplication<Field>(this->W_polys_blinded[i], blind_polys[i], zh_poly);
+      libfqfft::_polynomial_addition<Field>(this->W_polys_blinded[i], this->W_polys_blinded[i], W_polys[i]);
+    }
+    // evaluate blinded witness polynomials at the secret input
+    this->W_polys_blinded_at_secret_g1.resize(this->W_polys_blinded.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, this->W_polys_blinded, this->W_polys_blinded_at_secret_g1);
+    
+#ifdef DEBUG
+    printf("[%s:%d] poly %d %d %d secret %d\n", __FILE__, __LINE__,
+	   (int)this->W_polys_blinded[0].size(),
+	   (int)this->W_polys_blinded[1].size(),
+	   (int)this->W_polys_blinded[2].size(),
+	   (int)srs.secret_powers_g1.size());
+#endif // #ifdef DEBUG
+  }
+
+  // Prover Round 2 (class)
+  //
+  // INPUT  
+  // - this->beta, gamma: Hashes of transcript (Fiat-Shamir heuristic)
+  // - this->blind_scalars: blinding scalars b1, b2, ..., b9 (only
+  //   b7,b8,b9 used in round 2)
+  // - this->zh_poly: vanishing polynomial Zh
+  // - common_input: common preprocessed input
+  // - witness: witness values
+  // - srs: structured reference string
+  //
+  // OUTPUT
+  // - this->z_poly: blinded accumulator poly z(x)
+  // - this->z_poly_at_secret_g1: blinded accumulator poly z(x) evaluated at secret
+  //
+  template<typename ppT>
+  void plonk_prover<ppT>::round_two(
+				    const std::vector<libff::Fr<ppT>> witness,
+				    const common_preprocessed_input<ppT> common_input,
+				    const srs<ppT> srs
+				    )
+  {
+    using Field = libff::Fr<ppT>;
+    // initialize hard-coded values from example circuit
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
+    
+    // compute permutation polynomial
+
+    // blinding polynomial
+    std::vector<Field> z1_blind_poly{blind_scalars[8], blind_scalars[7], blind_scalars[6]}; // b8 + b7 X + b6 X^2
+    // multiply by the vanishing polynomial: z1 = z1 * this->zh_poly
+    libfqfft::_polynomial_multiplication<Field>(z1_blind_poly, z1_blind_poly, this->zh_poly);
+#ifdef DEBUG
+    printf("[%s:%d] z1_blind_poly * zh_poly\n", __FILE__, __LINE__);
+    print_vector(z1_blind_poly);
+#endif // #ifdef DEBUG
+
+    // A[0] = 1; ... A[i] = computed from (i-1)
+    std::vector<Field> A_vector(common_input.num_gates, Field(0));
+    plonk_compute_accumulator(common_input.num_gates, beta, gamma, witness, common_input.H_gen, common_input.H_gen_permute, A_vector);
+#ifdef DEBUG
+    for (int i = 0; i < (int)common_input.num_gates; ++i) {
+      printf("A[%d] ", i);
+      A_vector[i].print();
+    }
+#endif // #ifdef DEBUG
+
+    polynomial<Field> A_poly(common_input.num_gates);
+    plonk_interpolate_over_lagrange_basis<Field>(A_vector, A_poly, common_input.L_basis);
+#ifdef DEBUG
+    printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
+    print_vector(A_poly);
+    assert(A_poly == example.A_poly);
+#endif // #ifdef DEBUG
+
+    // add blinding polynomial z_1 to the accumulator polynomial A_poly
+    libfqfft::_polynomial_addition<Field>(this->z_poly, z1_blind_poly, A_poly);
+    this->z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, z_poly);
+  }
+  
+#endif // #if 1  // prover class
+  // --------------------- PROVER CLASS ------------------------}
+  
+
+  // Compute the Lagrange interpolation of the witness
+  // points w_i. The result is the W_polys polynomials.
+  //
+  // INPUT
+  // - witness: witness values
+  // - common_input: common preprocessed input
   //
   // OUTPUT
   // - W_polys: Lagrange interpolation of the witness values
@@ -63,14 +236,14 @@ namespace libsnark
       plonk_interpolate_over_lagrange_basis<Field>(W_points, W_polys[i], common_input.L_basis);
     }
 
-  };
+  };  
 
   // Prover Round 1
   //
   // INPUT
-  // - witness: witness values
   // - blinding scalars b1, b2, ..., b9 (only b1-b6 used in round 1)
   // - zh_poly: vanishing polynomial Zh
+  // - witness: witness values
   // - common_input: common preprocessed input
   // - srs: structured reference string
   //
