@@ -71,67 +71,36 @@ namespace libsnark
   }
   
   // Verifier Step 1: validate that elements belong to group G1
+  //
+  // WARNING! This validation MUST be done by the caller. Empty
+  // function here for consistency with the description in [GWC19]
   template<typename ppT>
   void plonk_verifier<ppT>::step_one(
 				     plonk_proof<ppT> proof
 				     )
   {
-    bool b_valid = false;
-    b_valid = check_curve_equation<libff::G1<ppT>>(proof.W_polys_blinded_at_secret_g1[a]);
-    assert(b_valid);
-    b_valid = check_curve_equation<libff::G1<ppT>>(proof.W_polys_blinded_at_secret_g1[b]);
-    assert(b_valid);
-    b_valid = check_curve_equation<libff::G1<ppT>>(proof.W_polys_blinded_at_secret_g1[c]);
-    assert(b_valid);
-    b_valid = check_curve_equation<libff::G1<ppT>>(proof.z_poly_at_secret_g1);
-    assert(b_valid);
-    b_valid = check_curve_equation<libff::G1<ppT>>(proof.t_poly_at_secret_g1[lo]);
-    assert(b_valid);
-    b_valid = check_curve_equation<libff::G1<ppT>>(proof.t_poly_at_secret_g1[mid]);
-    assert(b_valid);
-    b_valid = check_curve_equation<libff::G1<ppT>>(proof.t_poly_at_secret_g1[hi]);
-    assert(b_valid);
-    b_valid = check_curve_equation<libff::G1<ppT>>(proof.W_zeta_at_secret);
-    assert(b_valid);
-    b_valid = check_curve_equation<libff::G1<ppT>>(proof.W_zeta_omega_at_secret);
-    assert(b_valid);
   }
   
   // Verifier Step 2: validate that elements belong to scalar field Fr
+  //
+  // WARNING! This validation MUST be done by the caller. Empty
+  // function here for consistency with the description in [GWC19]
   template<typename ppT>
   void plonk_verifier<ppT>::step_two(
 				     plonk_proof<ppT> proof
 				     )
   {
-    bool b_valid = false;
-    b_valid = check_field_element<Field>(proof.a_zeta);    
-    assert(b_valid);
-    b_valid = check_field_element<Field>(proof.b_zeta);    
-    assert(b_valid);
-    b_valid = check_field_element<Field>(proof.c_zeta);    
-    assert(b_valid);
-    b_valid = check_field_element<Field>(proof.S_0_zeta);    
-    assert(b_valid);
-    b_valid = check_field_element<Field>(proof.S_1_zeta);    
-    assert(b_valid);
-    b_valid = check_field_element<Field>(proof.z_poly_xomega_zeta);    
-    assert(b_valid);
-    b_valid = check_field_element<Field>(proof.r_zeta);    
-    assert(b_valid);
   }
   
   // Verifier Step 3: validate that the public input belongs to scalar field Fr
+  //
+  // WARNING! This validation MUST be done by the caller. Empty
+  // function here for consistency with the description in [GWC19]
   template<typename ppT>
   void plonk_verifier<ppT>::step_three(
 				       const common_preprocessed_input<ppT> common_input
 				       )
   {
-    bool b_valid = false;
-    assert(common_input.PI_poly.size() <= common_input.num_gates);
-    for (int i = 0; i < (int)common_input.PI_poly.size(); ++i) {
-      b_valid = check_field_element<Field>(common_input.PI_poly[i]);    
-      assert(b_valid);      
-    }    
   }
   
   // Verifier Step 4: compute challenges hashed transcript as in
@@ -454,6 +423,12 @@ namespace libsnark
     return b_accept;
   }
   
+  // WARNING! The first three steps (as given in [GWC19] -- see
+  // below) MUST be executed by the caller:
+  //
+  // Verifier Step 1: validate that elements belong to group G1
+  // Verifier Step 2: validate that elements belong to scalar field Fr
+  // Verifier Step 3: validate that the public input belongs to scalar field Fr        
   template<typename ppT>
   bool plonk_verifier<ppT>::verify_proof(
 					 const plonk_proof<ppT> proof,
@@ -487,15 +462,14 @@ namespace libsnark
       assert(S_poly_at_secret_g1_i.Y == example.S_polys_at_secret_g1[i][1]);
     }
 #endif // #ifdef DEBUG
-
     // Verifier Step 1: validate that elements belong to group G1
-    this->step_one(proof);
+    // Executed by the caller
     
     // Verifier Step 2: validate that elements belong to scalar field Fr
-    this->step_two(proof);
+    // Executed by the caller
     
     // Verifier Step 3: validate that the public input belongs to scalar field Fr
-    this->step_three(common_input);
+    // Executed by the caller
 
     // Verifier Step 4: compute challenges hashed transcript as in
     // prover description, from the common inputs, public input, and
