@@ -37,18 +37,43 @@ const size_t MAX_DEGREE = 254;
 namespace libsnark
 {
 
-  // Prover Round 0 (initialization)
-  // 
-  //  template<typename ppT>
-  //  plonk_prover<ppT>::plonk_prover()
-  //  {
-  //    
-  //  }
-
-      
   // {--------------------- PROVER CLASS ------------------------
 #if 1  // prover class
 
+  // Prover class constructor (Round 0  = initialization)
+  // 
+  template<typename ppT>
+  plonk_prover<ppT>::plonk_prover(
+				  const common_preprocessed_input<ppT> common_input
+				  )
+  {
+    using Field = libff::Fr<ppT>;
+    
+    // initialize hard-coded values from example circuit
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
+    
+    this->k1 = example.k1;
+    this->k2 = example.k2;
+    
+    // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
+    // unity common_input.omega_roots
+    this->zh_poly.resize(common_input.num_gates+1, Field(0));
+    zh_poly[0] = Field(-1);
+    zh_poly[common_input.num_gates] = Field(1);
+#ifdef DEBUG
+    printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
+    print_vector(this->zh_poly);
+    assert(this->zh_poly == example.zh_poly);
+#endif // #ifdef DEBUG
+    
+    this->null_poly = {Field(0)};
+    this->neg_one_poly = {-Field("1")};
+
+  }
+
+      
   // Prover (class)
   //
   // Compute the Lagrange interpolation of the witness
@@ -111,8 +136,8 @@ namespace libsnark
     // example circuit
     this->blind_scalars = example.prover_blind_scalars;
     
-    this->W_polys(nwitness, polynomial<Field>(common_input.num_gates));
-    this->compute_witness_polys(this->W_polys, witness, common_input);
+    this->W_polys.resize(nwitness, polynomial<Field>(common_input.num_gates));
+    this->compute_witness_polys(witness, common_input);
     
 #ifdef DEBUG
     for (int i = 0; i < nwitness; ++i) {
@@ -184,7 +209,12 @@ namespace libsnark
 #ifdef DEBUG
     plonk_example<ppT> example;
 #endif // #ifdef DEBUG
-    
+
+    // permutation challenges (hashes of transcript); fixed to test
+    // values
+    this->beta = example.beta;
+    this->gamma = example.gamma;
+
     // compute permutation polynomial
 
     // blinding polynomial
@@ -259,6 +289,9 @@ namespace libsnark
 #ifdef DEBUG
     plonk_example<ppT> example;
 #endif // #ifdef DEBUG
+
+    // quotient challenge (hash of transcript); fixed to test value
+    this->alpha = example.alpha;
 
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
     // w=common_input.omega_roots is the base root of unity and z is
@@ -471,9 +504,13 @@ namespace libsnark
   {
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
-    //#ifdef NDEBUG
-    //    plonk_example<ppT> example;
-    //#endif // #ifdef DEBUG
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
+
+    // evaluation challenge (hash of transcript); fixed to test value
+    this->zeta = example.zeta;
+    
 #ifdef DEBUG
     printf("[%s:%d] zeta\n", __FILE__, __LINE__);
     this->zeta.print();
@@ -544,6 +581,10 @@ namespace libsnark
     plonk_example<ppT> example;
 #endif // #ifdef DEBUG
 
+    // openinig challenge (hash of transcript); fixed to test value
+    // (note: denoted v in [GWZ19])
+    this->nu = example.nu;
+    
     // compute linerisation polynomial r in five parts
     std::vector<polynomial<Field>> r_part(5);
 
@@ -811,869 +852,41 @@ namespace libsnark
     this->u = example.u;
   }
 
-#endif // #if 1  // prover class
-  
-  // --------------------- PROVER CLASS ------------------------}
-
-#if 1 // OLD prover (non-class)  
-
-  // Compute the Lagrange interpolation of the witness
-  // points w_i. The result is the W_polys polynomials.
-  //
-  // INPUT
-  // - witness: witness values
-  // - common_input: common preprocessed input
-  //
-  // OUTPUT
-  // - W_polys: Lagrange interpolation of the witness values
   template<typename ppT>
-  void plonk_prover_compute_witness_polys(
-					  std::vector<polynomial<libff::Fr<ppT>>>& W_polys,
-					  const std::vector<libff::Fr<ppT>> witness,
-					  const common_preprocessed_input<ppT> common_input
-					  )
-  {
-    using Field = libff::Fr<ppT>;
-    
-    int nwitness = 3;
-    for (int i = 0; i < nwitness; ++i) {
-      typename std::vector<Field>::const_iterator begin = witness.begin()+(i*common_input.num_gates);
-      typename std::vector<Field>::const_iterator end = witness.begin()+(i*common_input.num_gates)+(common_input.num_gates);
-      std::vector<Field> W_points(begin, end);
-      plonk_interpolate_over_lagrange_basis<Field>(W_points, W_polys[i], common_input.L_basis);
-    }
-
-  };  
-
-  // Prover Round 1
-  //
-  // INPUT
-  // - blinding scalars b1, b2, ..., b9 (only b1-b6 used in round 1)
-  // - zh_poly: vanishing polynomial Zh
-  // - witness: witness values
-  // - common_input: common preprocessed input
-  // - srs: structured reference string
-  //
-  // OUTPUT
-  // - W_polys_blinded: blinded witness polynomials
-  // - W_polys_blinded_at_secret_g1: the blinded witness polynomials
-  //   evaluated at the secret input [a]_1, [b]_1, [c]_1 in [GWC19]
-  template<typename ppT>
-  void plonk_prover_round_one(
-			      std::vector<std::vector<libff::Fr<ppT>>>& W_polys_blinded,
-			      std::vector<libff::G1<ppT>>& W_polys_blinded_at_secret_g1,
-			      const std::vector<libff::Fr<ppT>> witness,
-			      const std::vector<libff::Fr<ppT>> blind_scalars,
-			      const std::vector<libff::Fr<ppT>> zh_poly,
-			      const common_preprocessed_input<ppT> common_input,
-			      const srs<ppT> srs
-			      )
-  {
-    using Field = libff::Fr<ppT>;
-    int nwitness = 3;
-    
-    // initialize hard-coded values from example circuit
-#ifdef DEBUG
-    plonk_example<ppT> example;
-#endif // #ifdef DEBUG
-    
-    std::vector<polynomial<Field>> W_polys(nwitness, polynomial<Field>(common_input.num_gates));
-    plonk_prover_compute_witness_polys<ppT>(W_polys, witness, common_input);
-    
-#ifdef DEBUG
-    for (int i = 0; i < nwitness; ++i) {
-      printf("[%s:%d] W_polys[%d]\n", __FILE__, __LINE__, i);
-      print_vector(W_polys[i]);
-      assert(W_polys[i] == example.W_polys[i]);
-    }
-#endif // #ifdef DEBUG
-  
-
-    // represent the blinding scalars b1, b2, ..., b9 as polynomials
-#ifdef DEBUG
-    printf("[%s:%d] blind_scalars\n", __FILE__, __LINE__);
-    print_vector(blind_scalars);
-    assert(blind_scalars == example.prover_blind_scalars);
-#endif // #ifdef DEBUG
-
-    std::vector<std::vector<Field>> blind_polys
-      {
-       {blind_scalars[1], blind_scalars[0]}, // b1 + b0 X
-       {blind_scalars[3], blind_scalars[2]}, // b3 + b2 X
-       {blind_scalars[5], blind_scalars[4]}  // b5 + b4 X
-      };
-    
-    // compute blinded witness polynomials e.g. a_poly =
-    // blind_polys[0] * zh_poly + W_polys[0]
-    W_polys_blinded.resize(nwitness);
-    for (int i = 0; i < nwitness; ++i) {
-      libfqfft::_polynomial_multiplication<Field>(W_polys_blinded[i], blind_polys[i], zh_poly);
-      libfqfft::_polynomial_addition<Field>(W_polys_blinded[i], W_polys_blinded[i], W_polys[i]);
-    }
-    // evaluate blinded witness polynomials at the secret input
-    W_polys_blinded_at_secret_g1.resize(W_polys_blinded.size());
-    plonk_evaluate_polys_at_secret_G1<ppT>(srs.secret_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
-    
-#ifdef DEBUG
-    printf("[%s:%d] poly %d %d %d secret %d\n", __FILE__, __LINE__,
-	   (int)W_polys_blinded[0].size(),
-	   (int)W_polys_blinded[1].size(),
-	   (int)W_polys_blinded[2].size(),
-	   (int)srs.secret_powers_g1.size());
-#endif // #ifdef DEBUG
-  }
-  
-  // Prover Round 2
-  //
-  // INPUT
-  // - beta, gamma: Hashes of transcript (Fiat-Shamir heuristic)
-  // - witness: witness values
-  // - blinding scalars b1, b2, ..., b9 (only b7,b8,b9 used in round 2)
-  // - zh_poly: vanishing polynomial Zh
-  // - common_input: common preprocessed input
-  // - srs: structured reference string
-  //
-  // OUTPUT
-  // - z_poly: blinded accumulator poly z(x)
-  // - z_poly_at_secret_g1: blinded accumulator poly z(x) evaluated at secret
-  //
-  template<typename ppT>
-  void plonk_prover_round_two(
-			      polynomial<libff::Fr<ppT>>& z_poly,
-			      libff::G1<ppT>& z_poly_at_secret_g1,
-			      const libff::Fr<ppT> beta,
-			      const libff::Fr<ppT> gamma,
-			      const std::vector<libff::Fr<ppT>> witness,
-			      const std::vector<libff::Fr<ppT>> blind_scalars,
-			      const std::vector<libff::Fr<ppT>> zh_poly,
-			      const common_preprocessed_input<ppT> common_input,
-			      const srs<ppT> srs
-			      )
+  plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
+						    const srs<ppT> srs,
+						    const common_preprocessed_input<ppT> common_input
+						    )
   {
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
-#ifdef DEBUG
-    plonk_example<ppT> example;
-#endif // #ifdef DEBUG
-    
-    // compute permutation polynomial
-
-    // blinding polynomial
-    std::vector<Field> z1_blind_poly{blind_scalars[8], blind_scalars[7], blind_scalars[6]}; // b8 + b7 X + b6 X^2
-    // multiply by the vanishing polynomial: z1 = z1 * zh_poly
-    libfqfft::_polynomial_multiplication<Field>(z1_blind_poly, z1_blind_poly, zh_poly);
-#ifdef DEBUG
-    printf("[%s:%d] z1_blind_poly * zh_poly\n", __FILE__, __LINE__);
-    print_vector(z1_blind_poly);
-#endif // #ifdef DEBUG
-
-    // A[0] = 1; ... A[i] = computed from (i-1)
-    std::vector<Field> A_vector(common_input.num_gates, Field(0));
-    plonk_compute_accumulator(common_input.num_gates, beta, gamma, witness, common_input.H_gen, common_input.H_gen_permute, A_vector);
-#ifdef DEBUG
-    for (int i = 0; i < (int)common_input.num_gates; ++i) {
-      printf("A[%d] ", i);
-      A_vector[i].print();
-    }
-#endif // #ifdef DEBUG
-
-    polynomial<Field> A_poly(common_input.num_gates);
-    plonk_interpolate_over_lagrange_basis<Field>(A_vector, A_poly, common_input.L_basis);
-#ifdef DEBUG
-    printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
-    print_vector(A_poly);
-    assert(A_poly == example.A_poly);
-#endif // #ifdef DEBUG
-
-    // add blinding polynomial z_1 to the accumulator polynomial A_poly
-    //    polynomial<Field> z_poly;
-    libfqfft::_polynomial_addition<Field>(z_poly, z1_blind_poly, A_poly);
-    z_poly_at_secret_g1 = plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, z_poly);
-  }
-
-  // Prover Round 3
-  //
-  // Warning! The most computationally intensive part of the prover
-  //
-  // INPUT
-  // - alpha, beta, gamma: Hashes of transcript (Fiat-Shamir heuristic)
-  // - k1, k2: constants used to create quadratic-non-residues of the
-  //   set H (see Sect. 8.1 of [GWC19])
-  // - W_polys_blinded: blinded witness polynomials (output from Round 1)
-  // - z_poly: blinded accumulator poly z(x) (output from Round 2)
-  // - zh_poly: vanishing polynomial Zh
-  // - common_input: common preprocessed input
-  // - srs: structured reference string
-  //
-  //
-  // OUTPUT
-  // - t_poly_long: the quotient polynomial t(x) (see Round 3, pp28 [GWC19])
-  // - t_poly: t(x) divided in three parts t(x) = t_lo(x) +
-  //   t_mid(x) x^n + t_hi(x) x^{2n}
-  // - t_poly_at_secret_g1: t(x) evaluated at the secret input zeta i.e. t(zeta)
-  // - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by w
-  //
-  template<typename ppT>
-  void plonk_prover_round_three(
-				std::vector<polynomial<libff::Fr<ppT>>>& t_poly,
-				polynomial<libff::Fr<ppT>>& t_poly_long,
-				std::vector<libff::G1<ppT>>& t_poly_at_secret_g1,
-				std::vector<libff::Fr<ppT>>& z_poly_xomega,
-				const libff::Fr<ppT> alpha,
-				const libff::Fr<ppT> beta,
-				const libff::Fr<ppT> gamma,
-				const libff::Fr<ppT> k1,
-				const libff::Fr<ppT> k2,
-				const std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded,
-				const polynomial<libff::Fr<ppT>> z_poly,
-				const std::vector<libff::Fr<ppT>> zh_poly,
-				const common_preprocessed_input<ppT> common_input,
-				const srs<ppT> srs
-				)
-  {
-    using Field = libff::Fr<ppT>;
-    int num_hgen = NUM_HGEN;
-    
-    // initialize hard-coded values from example circuit
-#ifdef DEBUG
-    plonk_example<ppT> example;
-#endif // #ifdef DEBUG
-
-    // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
-    // w=common_input.omega_roots is the base root of unity and z is z_poly. we do this
-    // by multiplying the coefficients of z by w
-    z_poly_xomega.resize(z_poly.size());
-    std::fill(z_poly_xomega.begin(), z_poly_xomega.end(), Field(0));    
-    for (size_t i = 0; i < z_poly.size(); ++i) {
-      // omega_roots^i
-      Field omega_roots_i = libff::power(common_input.omega_roots[base][1], libff::bigint<1>(i));
-      z_poly_xomega[i] = z_poly[i] * omega_roots_i;
-    }
-
-#ifdef DEBUG
-    printf("[%s:%d] z_poly_xomega\n", __FILE__, __LINE__);
-    print_vector(z_poly_xomega);
-    for (size_t i = 0; i < z_poly.size(); ++i) {
-      assert(z_poly_xomega[i] == example.z_poly_xomega[i]);
-    }
-#endif // #ifdef DEBUG
-
-    // start computation of polynomial t(X) in round 3. we break t
-    // into 4 parts which we compute separately. each of the 4 parts
-    // is multiplied by 1/zh_poly in the paper
-    std::vector<polynomial<Field>> t_part(4);
-
-    // --- Computation of t_part[0]
-
-    // a(x)b(x)q_M(x)
-    polynomial<Field> abqM;
-    libfqfft::_polynomial_multiplication<Field>(abqM, W_polys_blinded[a], W_polys_blinded[b]);
-    libfqfft::_polynomial_multiplication<Field>(abqM, abqM, common_input.Q_polys[M]);    
-    // a(x)q_L(x)
-    polynomial<Field> aqL;
-    libfqfft::_polynomial_multiplication<Field>(aqL, W_polys_blinded[a], common_input.Q_polys[L]);
-    // b(x)q_R(x)
-    polynomial<Field> bqR;
-    libfqfft::_polynomial_multiplication<Field>(bqR, W_polys_blinded[b], common_input.Q_polys[R]);
-    // c(x)q_O(x)
-    polynomial<Field> cqO;
-    libfqfft::_polynomial_multiplication<Field>(cqO, W_polys_blinded[c], common_input.Q_polys[O]);
-    // t_part[0](x) = a(x)b(x)q_M(x) + a(x)q_L(x) + b(x)q_R(x) + c(x)q_O(x) + PI(x) + q_C(x)
-    polynomial<Field> poly_null{Field(0)};
-    libfqfft::_polynomial_addition<Field>(t_part[0], poly_null, abqM);
-    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], aqL);
-    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], bqR);
-    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], cqO);
-    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], common_input.PI_poly);
-    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], common_input.Q_polys[C]);
-    
-    // --- Computation of t_part[1]
-    
-    // X*beta as polynomial in X
-    std::vector<polynomial<Field>> xbeta_poly
-      {
-       {Field(0), beta}, // X*beta
-       {Field(0), beta*k1}, // X*beta*k1
-       {Field(0), beta*k2} // X*beta*k2
-      };    
-    // represent gamma as polynomial in X, needed for prover Round 3
-    polynomial<Field> gamma_poly{gamma}; // gamma
-    // represent alpha as polynomial in X, needed for prover Round 3
-    polynomial<Field> alpha_poly{alpha}; // alpha
-
-    // a(x) + beta*x + gamma 
-    polynomial<Field> a_xbeta_gamma;
-    libfqfft::_polynomial_addition<Field>(a_xbeta_gamma, W_polys_blinded[a], xbeta_poly[base]);    
-    libfqfft::_polynomial_addition<Field>(a_xbeta_gamma, a_xbeta_gamma, gamma_poly);    
-    // b(x) + beta_k1*x + gamma 
-    polynomial<Field> b_xbeta_gamma_k1;
-    libfqfft::_polynomial_addition<Field>(b_xbeta_gamma_k1, W_polys_blinded[b], xbeta_poly[base_k1]);
-    libfqfft::_polynomial_addition<Field>(b_xbeta_gamma_k1, b_xbeta_gamma_k1, gamma_poly);
-    // c(x) + beta_k1*x + gamma 
-    polynomial<Field> c_xbeta_gamma_k2;
-    libfqfft::_polynomial_addition<Field>(c_xbeta_gamma_k2, W_polys_blinded[c], xbeta_poly[base_k2]);
-    libfqfft::_polynomial_addition<Field>(c_xbeta_gamma_k2, c_xbeta_gamma_k2, gamma_poly);
-    // t_part[1] = (a(x) + beta*x + gamma)*(b(x) + beta_k1*x +
-    // gamma)*(c(x) + beta_k1*x + gamma)*z(x)*alpha
-    libfqfft::_polynomial_multiplication<Field>(t_part[1], a_xbeta_gamma, b_xbeta_gamma_k1);
-    libfqfft::_polynomial_multiplication<Field>(t_part[1], t_part[1], c_xbeta_gamma_k2);
-    libfqfft::_polynomial_multiplication<Field>(t_part[1], t_part[1], z_poly);
-    libfqfft::_polynomial_multiplication<Field>(t_part[1], t_part[1], alpha_poly);
-
-    // --- Computation of t_part[2]
-    
-    // represent beta as polynomial in X, needed for prover Round 3
-    polynomial<Field> beta_poly{beta};
-    // S*beta as polynomial
-    // S_sigma1(x)*beta, S_sigma2(x)*beta, S_sigma3(x)*beta
-    std::vector<polynomial<Field>> sbeta_poly(num_hgen);
-    for (int i = 0; i < num_hgen; ++i) {
-      libfqfft::_polynomial_multiplication<Field>(sbeta_poly[i], common_input.S_polys[i], beta_poly);
-    }
-    // a(x) + S_sigma1(x)*beta + gamma
-    polynomial<Field> a_sbeta_gamma;
-    libfqfft::_polynomial_addition<Field>(a_sbeta_gamma, W_polys_blinded[a], sbeta_poly[base]);    
-    libfqfft::_polynomial_addition<Field>(a_sbeta_gamma, a_sbeta_gamma, gamma_poly);    
-    // b(x) + S_sigma2(x)*beta + gamma
-    polynomial<Field> b_sbeta_gamma_k1;
-    libfqfft::_polynomial_addition<Field>(b_sbeta_gamma_k1, W_polys_blinded[b], sbeta_poly[base_k1]);    
-    libfqfft::_polynomial_addition<Field>(b_sbeta_gamma_k1, b_sbeta_gamma_k1, gamma_poly);    
-    // b(x) + S_sigma2(x)*beta + gamma
-    polynomial<Field> c_sbeta_gamma_k2;
-    libfqfft::_polynomial_addition<Field>(c_sbeta_gamma_k2, W_polys_blinded[c], sbeta_poly[base_k2]);    
-    libfqfft::_polynomial_addition<Field>(c_sbeta_gamma_k2, c_sbeta_gamma_k2, gamma_poly);    
-    // t_part[2] = (a(x) + S_sigma1(x)*beta + gamma)*(b(x) +
-    // S_sigma2(x)*beta + gamma)*(b(x) + S_sigma2(x)*beta +
-    // gamma)*z(x*common_input.omega_roots)*alpha
-    libfqfft::_polynomial_multiplication<Field>(t_part[2], a_sbeta_gamma, b_sbeta_gamma_k1);
-    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], c_sbeta_gamma_k2);
-    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], z_poly_xomega);
-    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], alpha_poly);
-    // -t_part[2]
-    polynomial<Field> neg_one_poly = {-Field("1")};
-    libfqfft::_polynomial_multiplication<Field>(t_part[2], t_part[2], neg_one_poly);
-    
-    // --- Computation of t_part[3]
-
-    // z(x) - 1
-    polynomial<Field> z_neg_one;
-    libfqfft::_polynomial_addition<Field>(z_neg_one, z_poly, neg_one_poly);
-    // (z(x)-1) * L_1(x)
-    libfqfft::_polynomial_multiplication<Field>(t_part[3], z_neg_one, common_input.L_basis[0]);
-    // (z(x)-1) * L_1(x) * alpha
-    libfqfft::_polynomial_multiplication<Field>(t_part[3], t_part[3], alpha_poly);
-    // (z(x)-1) * L_1(x) * alpha * alpha
-    libfqfft::_polynomial_multiplication<Field>(t_part[3], t_part[3], alpha_poly);
-
-
-    // --- computation of t(x)
-
-    // t(x) = (t[0] + t[1] + (-t[2]) + t[3]) / zh(x)
-    t_poly_long = {Field(0)};
-    libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[0]);
-#if 1 // DEBUG   
-    libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[1]);
-    libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[2]);
-    libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[3]);
-#endif // #if 0 // DEBUG   
-    //    t(x) = t(x) / zh(x): A/B = (Q, R) st. A = (Q * B) + R.
-    polynomial<Field> remainder;
-    libfqfft::_polynomial_division(t_poly_long, remainder, t_poly_long, zh_poly);
-#ifdef DEBUG
-    printf("[%s:%d] t_poly_long\n", __FILE__, __LINE__);
-    print_vector(t_poly_long);
-    assert(t_poly_long == example.t_poly_long);
-    printf("[%s:%d] remainder\n", __FILE__, __LINE__);
-    print_vector(remainder);
-#endif // #ifdef DEBUG
-    assert(libfqfft::_is_zero(remainder));
-
-    // break t_poly_long into three parts: lo, mid, hi, each of degree
-    // 7. note: (common_input.num_gates+3) is the length of the CRS =
-    // (common_input.num_gates+2) powers of G1 + 1 power of G2
-    t_poly.resize(num_hgen);
-    for (int i = 0; i < num_hgen; ++i) {
-      typename std::vector<Field>::iterator begin = t_poly_long.begin()+(i*(common_input.num_gates+2));
-      typename std::vector<Field>::iterator end = t_poly_long.begin()+(i*(common_input.num_gates+2))+(common_input.num_gates+2);
-      std::vector<Field> tmp(begin, end);
-      t_poly[i] = tmp;
-    }
-#ifdef DEBUG
-    for (int i = 0; i < num_hgen; ++i) {
-      printf("[%s:%d] t_poly[%d]\n", __FILE__, __LINE__, i);
-      print_vector(t_poly[i]);
-      assert(t_poly[i] == example.t_poly[i]);
-    }
-#endif // #ifdef DEBUG
-    // evaluate each part of t_poly in the secret input
-    t_poly_at_secret_g1.resize(num_hgen);
-    for (int i = 0; i < num_hgen; ++i) {
-      t_poly_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, t_poly[i]);
-    }
-    
-  }
-
-  // Prover Round 4
-  //
-  // INPUT
-  // - zeta: Hash of transcript (Fiat-Shamir heuristic)
-  // - W_polys_blinded: blinded witness polynomials (output from Round 1)
-  // - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by
-  //   w (output from Round 3)
-  // - t_poly_long: the quotient polynomial t(x) (see Round 3, pp28
-  //   [GWC19]) (output from Round 3)
-  // - common_input: common preprocessed input
-  //
-  // OUTPUT  
-  // - a_zeta, b_zeta, c_zeta: the blinded witness polynomials a(x),
-  //   b(x), c(x) (denoted by W_polys_blinded[] output from Round 1)
-  //   evaluated at x=zeta i.e. a(z), b(z), c(z)
-  // - S_0_zeta, S_1_zeta: the permutation polynomials S_sigma_1(x),
-  //   S_sigma_2(x) from the common preprocessed input (see [GWC19],
-  //   Sect. 8.1) evaluated at x=zeta i.e. S_sigma_1(z), S_sigma_2(z)
-  // - z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x) shifted by
-  //   w (output from Round 3) evaluated at x=zeta i.e. z(zeta*w)
-  // - t_zeta: the quotient polynomial t(x) output from Round 3, see
-  //   pp28 [GWC19]) evaluated at x=zeta i.e. t(z). IMPORTANT! the
-  //   original Plonk proposal [GWC19] does not output this parameter
-  //   t_zeta. The Python reference implementation does, so we do the
-  //   same in order to match the test vectors. TODO can remove t_zeta
-  //   in the future
-  //
-  template<typename ppT>
-  void plonk_prover_round_four(
-			       libff::Fr<ppT>& a_zeta,
-			       libff::Fr<ppT>& b_zeta,
-			       libff::Fr<ppT>& c_zeta,
-			       libff::Fr<ppT>& S_0_zeta,
-			       libff::Fr<ppT>& S_1_zeta,
-			       libff::Fr<ppT>& z_poly_xomega_zeta,
-			       libff::Fr<ppT>& t_zeta,
-			       const libff::Fr<ppT> zeta,
-			       const std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded,
-			       const std::vector<libff::Fr<ppT>> z_poly_xomega,
-			       const polynomial<libff::Fr<ppT>> t_poly_long,
-			       const common_preprocessed_input<ppT> common_input
-			      )
-  {
-    using Field = libff::Fr<ppT>;
-    // initialize hard-coded values from example circuit
-    //#ifdef NDEBUG
-    //    plonk_example<ppT> example;
-    //#endif // #ifdef DEBUG
-#ifdef DEBUG
-    printf("[%s:%d] zeta\n", __FILE__, __LINE__);
-    zeta.print();
-#endif // #ifdef DEBUG
-    a_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[a], zeta);
-    b_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[b], zeta);
-    c_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates + 2, W_polys_blinded[c], zeta);
-    S_0_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[0], zeta);
-    S_1_zeta = libfqfft::evaluate_polynomial<Field>(common_input.num_gates, common_input.S_polys[1], zeta);
-    t_zeta = libfqfft::evaluate_polynomial<Field>(t_poly_long.size(), t_poly_long, zeta);
-    z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(z_poly_xomega.size(), z_poly_xomega, zeta);       
-  }  
-
-  // Prover Round 5
-  //
-  // INPUT  
-  // - alpha, beta, gamma, zeta, nu: Hashes of transcript (Fiat-Shamir
-  //   heuristic)
-  // - k1, k2: constants used to create quadratic-non-residues of the
-  //   set H (see Sect. 8.1 of [GWC19])
-  // - a_zeta, b_zeta, c_zeta: the blinded witness polynomials a(x),
-  //   b(x), c(x) (denoted by W_polys_blinded[] output from Round 1)
-  //   evaluated at x=zeta i.e. a(z), b(z), c(z)
-  // - S_0_zeta, S_1_zeta: the permutation polynomials S_sigma_1(x),
-  //   S_sigma_2(x) from the common preprocessed input (see [GWC19],
-  //   Sect. 8.1) evaluated at x=zeta i.e. S_sigma_1(z), S_sigma_2(z)
-  // - t_zeta: the quotient polynomial t(x) output from Round 3, see
-  //   pp28 [GWC19]) evaluated at x=zeta i.e. t(z). IMPORTANT! the
-  //   original Plonk proposal [GWC19] does not output this parameter
-  //   t_zeta. The Python reference implementation does, so we do the
-  //   same in order to match the test vectors. TODO can remove t_zeta
-  //   in the future
-  // - z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x) shifted by
-  //   w (output from Round 3) evaluated at x=zeta i.e. z(zeta*w)
-  // - W_polys_blinded: blinded witness polynomials (output from Round 1)
-  // - t_poly: t(x) divided in three parts t(x) = t_lo(x) +
-  //   t_mid(x) x^n + t_hi(x) x^{2n}
-  // - z_poly: blinded accumulator poly z(x) (output from Round 2)
-  // - common_input: common preprocessed input
-  // - srs: structured reference string
-  //
-  // OUTPUT
-  // - r_zeta: linearisation polynomial r(x) evaluated at x=zeta
-  //   ie. r(zeta)
-  // - W_zeta_at_secret: commitment to opening proof polynomial
-  //   W_zeta(x) at secert input i.e. [W_zeta(secret)]_1
-  // - W_zeta_omega_at_secret: commitment to opening proof polynomial
-  //   W_{zeta omega}(x) at secert input i.e. [W_{zeta
-  //   omega}(secret)]_1
-  //
-  template<typename ppT>
-  void plonk_prover_round_five(
-			       libff::Fr<ppT>& r_zeta, 
-			       libff::G1<ppT>& W_zeta_at_secret,
-			       libff::G1<ppT>& W_zeta_omega_at_secret,
-			       const libff::Fr<ppT> alpha,
-			       const libff::Fr<ppT> beta,
-			       const libff::Fr<ppT> gamma,
-			       const libff::Fr<ppT> zeta,
-			       const libff::Fr<ppT> nu,
-			       const libff::Fr<ppT> k1,
-			       const libff::Fr<ppT> k2,
-			       const libff::Fr<ppT> a_zeta,
-			       const libff::Fr<ppT> b_zeta,
-			       const libff::Fr<ppT> c_zeta,
-			       const libff::Fr<ppT> S_0_zeta,
-			       const libff::Fr<ppT> S_1_zeta,
-			       const libff::Fr<ppT> t_zeta,
-			       const libff::Fr<ppT> z_poly_xomega_zeta,
-			       const std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded,
-			       const std::vector<polynomial<libff::Fr<ppT>>> t_poly,
-			       const polynomial<libff::Fr<ppT>> z_poly,
-			       const common_preprocessed_input<ppT> common_input,
-			       const srs<ppT> srs
-			      )
-  {
-    using Field = libff::Fr<ppT>;
-    polynomial<Field> poly_null{Field(0)};
-    polynomial<Field> neg_one_poly = {-Field("1")};
-    polynomial<Field> remainder;
-    
-    // initialize hard-coded values from example circuit
-#ifdef DEBUG
-    plonk_example<ppT> example;
-#endif // #ifdef DEBUG
-
-    // compute linerisation polynomial r in five parts
-    std::vector<polynomial<Field>> r_part(5);
-
-    // --- Computation of r_part[0]
-    
-    // represent values as constant term polynomials in orderto use
-    // the functions in the libfqfft library on polynomials
-    polynomial<Field> a_zeta_poly{a_zeta}; 
-    polynomial<Field> b_zeta_poly{b_zeta}; 
-    polynomial<Field> c_zeta_poly{c_zeta}; 
-    // a(z)b(z)q_M(x)
-    polynomial<Field> abqM_zeta;
-    libfqfft::_polynomial_multiplication<Field>(abqM_zeta, common_input.Q_polys[M], a_zeta_poly);
-    libfqfft::_polynomial_multiplication<Field>(abqM_zeta, abqM_zeta, b_zeta_poly);    
-    // a(z)q_L(x)
-    polynomial<Field> aqL_zeta;
-    libfqfft::_polynomial_multiplication<Field>(aqL_zeta, common_input.Q_polys[L], a_zeta_poly);
-    // b(z)q_R(x)
-    polynomial<Field> bqR_zeta;
-    libfqfft::_polynomial_multiplication<Field>(bqR_zeta, common_input.Q_polys[R], b_zeta_poly);
-    // c(z)q_O(x)
-    polynomial<Field> cqO_zeta;
-    libfqfft::_polynomial_multiplication<Field>(cqO_zeta, common_input.Q_polys[O], c_zeta_poly);
-    // a(z)b(z)q_M(x) + a(z)q_L(x) + b(z)q_R(x) + c(z)q_O(x) + q_C(x)
-    libfqfft::_polynomial_addition<Field>(r_part[0], poly_null, abqM_zeta);
-    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], aqL_zeta);
-    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], bqR_zeta);
-    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], cqO_zeta);
-    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], common_input.Q_polys[C]);
-
-    // --- Computation of r_part[1]
-
-    polynomial<Field> r1_const_poly
-      {
-       (a_zeta + (beta * zeta) + gamma) *
-       (b_zeta + (beta * k1 * zeta) + gamma) *
-       (c_zeta + (beta * k2 * zeta) + gamma) * alpha
-      };
-    libfqfft::_polynomial_multiplication<Field>(r_part[1], r1_const_poly, z_poly);
-
-    // --- Computation of r_part[2]
-    
-    polynomial<Field> r2_const_poly
-      {
-       (a_zeta + (beta * S_0_zeta) + gamma) *
-       (b_zeta + (beta * S_1_zeta) + gamma) *
-       (alpha * beta * z_poly_xomega_zeta)
-      };
-    libfqfft::_polynomial_multiplication<Field>(r_part[2], r2_const_poly, common_input.S_polys[2]);
-    // -r_part[2]
-    libfqfft::_polynomial_multiplication<Field>(r_part[2], r_part[2], neg_one_poly);
-    
-    // --- Computation of r_part[3]
-    
-    //     r3 = accumulator_poly_ext3 * eval_poly(L_1, [zeta])[0] * alpha ** 2
-    polynomial<Field> L_0_zeta_poly{libfqfft::evaluate_polynomial<Field>(common_input.L_basis[0].size(), common_input.L_basis[0], zeta)};
-    polynomial<Field> alpha_power2_poly{libff::power(alpha, libff::bigint<1>(2))};
-    libfqfft::_polynomial_multiplication<Field>(r_part[3], z_poly, L_0_zeta_poly);
-    libfqfft::_polynomial_multiplication<Field>(r_part[3], r_part[3], alpha_power2_poly);
-
-    // --- Computation of r_poly = (r0+r1-r2+r3)
-
-    //
-    // Note: here the reference Python implementation differs from the
-    // paper where:
-    //
-    // r(x) = r(x) - zh(zeta) (t_lo(x) + zeta^n t_mid(x) + zeta^2n t_hi(x))
-    //
-    // In the reference implementation, the missing term is added in
-    // the computation of the W_zeta(x) polynomial
-    //
-    // linearisation polynomial r(x)
-    polynomial<Field> r_poly; 
-    libfqfft::_polynomial_addition<Field>(r_poly, poly_null, r_part[0]);
-    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[1]);
-    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[2]);
-    libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[3]);
-    
-#if DEBUG    
-    //    printf("abqM_zeta\n");
-    //    print_vector(abqM_zeta);
-    printf("[%s:%d] r_part[0]\n", __FILE__, __LINE__);
-    print_vector(r_part[0]);
-    printf("[%s:%d] r_part[1]\n", __FILE__, __LINE__);
-    print_vector(r_part[1]);
-    printf("[%s:%d] r_part[2]\n", __FILE__, __LINE__);
-    print_vector(r_part[2]);
-    printf("[%s:%d] r_part[3]\n", __FILE__, __LINE__);
-    print_vector(r_part[3]);
-    printf("[%s:%d] r_poly\n", __FILE__, __LINE__);
-    print_vector(r_poly);
-    assert(r_poly == example.r_poly);
-#endif // #if DEBUG
-
-    // Evaluate the r-polynomial at zeta. Note: in the reference
-    // implementation, r_zeta is added to the pi-SNARK proof. In the
-    // paper this is omitted, which makes the proof shorter at the
-    // epxense of a slightly heavier computation on the verifier's
-    // side 
-    r_zeta = libfqfft::evaluate_polynomial<Field>(r_poly.size(), r_poly, zeta);
-#ifdef DEBUG
-    printf("r_zeta ");
-    r_zeta.print();
-    assert(r_zeta == example.r_zeta);
-#endif // #ifdef DEBUG    
-
-    // W_zeta polynomial is of degree 6 in the random element nu and
-    // hence has 7 terms
-    std::vector<polynomial<Field>> W_zeta_part(7);
-
-    // --- compute W_zeta_part[0]
-    
-    // t_lo(x)
-    polynomial<Field> t_lo{t_poly[lo]};
-    // t_mid(x) * zeta^(n+2)
-    polynomial<Field> t_mid_zeta_n;
-    polynomial<Field> zeta_powern_poly{libff::power(zeta, libff::bigint<1>(common_input.num_gates+2))};
-    libfqfft::_polynomial_multiplication<Field>(t_mid_zeta_n, t_poly[mid], zeta_powern_poly);
-    // t_hi(x) * zeta^(2(n+1))
-    polynomial<Field> t_hi_zeta_2n;
-    polynomial<Field> zeta_power2n_poly{libff::power(zeta, libff::bigint<1>(2*(common_input.num_gates+2)))};
-    libfqfft::_polynomial_multiplication<Field>(t_hi_zeta_2n, t_poly[hi], zeta_power2n_poly);
-    // -t_zeta as constant term polynomial
-    polynomial<Field> t_zeta_poly{-t_zeta};
-    // t_lo(x) + (t_mid(x) * zeta^n) + (t_hi(x) * zeta^2n) + t_zeta_poly
-    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], poly_null, t_lo);
-    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_mid_zeta_n);
-    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_hi_zeta_2n);
-    libfqfft::_polynomial_addition<Field>(W_zeta_part[0], W_zeta_part[0], t_zeta_poly);    
-    
-    // --- compute W_zeta_part[1]
-
-    // -r_zeta as constant term polynomial
-    polynomial<Field> r_zeta_poly{-r_zeta};
-    // r(x) - r_zeta
-    polynomial<Field> r_sub_rzeta;
-    libfqfft::_polynomial_addition<Field>(r_sub_rzeta, r_poly, r_zeta_poly);
-    // (r(x) - r_zeta) * nu
-    polynomial<Field> nu_poly{nu};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[1], r_sub_rzeta, nu_poly);
-    
-    // --- compute W_zeta_part[2]
-    
-    // -a_zeta as constant term polynomial
-    polynomial<Field> a_zeta_poly_neg;
-    libfqfft::_polynomial_multiplication<Field>(a_zeta_poly_neg, a_zeta_poly, neg_one_poly);
-    // a(x) - a_zeta
-    polynomial<Field> a_sub_azeta;
-    libfqfft::_polynomial_addition<Field>(a_sub_azeta, W_polys_blinded[a], a_zeta_poly_neg);
-    // (a(x) - a_zeta) * nu^2
-    Field nu2 = libff::power(nu, libff::bigint<1>(2));
-    polynomial<Field> nu2_poly{nu2};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[2], a_sub_azeta, nu2_poly);
-    
-    // -b_zeta as constant term polynomial
-    polynomial<Field> b_zeta_poly_neg;
-    libfqfft::_polynomial_multiplication<Field>(b_zeta_poly_neg, b_zeta_poly, neg_one_poly);
-    // (b(x) - b_zeta)
-    polynomial<Field> b_sub_bzeta;
-    libfqfft::_polynomial_addition<Field>(b_sub_bzeta, W_polys_blinded[b], b_zeta_poly_neg);
-    // (b(x) - b_zeta) * nu^3
-    Field nu3 = libff::power(nu, libff::bigint<1>(3));
-    polynomial<Field> nu3_poly{nu3};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[3], b_sub_bzeta, nu3_poly);
-
-    // -c_zeta as constant term polynomial
-    polynomial<Field> c_zeta_poly_neg;
-    libfqfft::_polynomial_multiplication<Field>(c_zeta_poly_neg, c_zeta_poly, neg_one_poly);
-    // (c(x) - c_zeta)
-    polynomial<Field> c_sub_czeta;
-    libfqfft::_polynomial_addition<Field>(c_sub_czeta, W_polys_blinded[c], c_zeta_poly_neg);
-    // (c(x) - c_zeta) * nu^4
-    Field nu4 = libff::power(nu, libff::bigint<1>(4));
-    polynomial<Field> nu4_poly{nu4};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[4], c_sub_czeta, nu4_poly);
-
-    // -S_0_zeta as constant term polynomial
-    polynomial<Field> S_0_zeta_poly_neg{-S_0_zeta};
-    //    libfqfft::_polynomial_multiplication<Field>(S_0_zeta_poly_neg, S_0_zeta_poly, neg_one_poly);
-    // (S0(x) - S_0_zeta)
-    polynomial<Field> S0_sub_szeta;
-    libfqfft::_polynomial_addition<Field>(S0_sub_szeta, common_input.S_polys[0], S_0_zeta_poly_neg);
-    // (S0(x) - S_0_zeta) * nu^5
-    Field nu5 = libff::power(nu, libff::bigint<1>(5));
-    polynomial<Field> nu5_poly{nu5};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[5], S0_sub_szeta, nu5_poly);
-
-    // -S_1_zeta as constant term polynomial
-    polynomial<Field> S_1_zeta_poly_neg{-S_1_zeta};
-    //    libfqfft::_polynomial_multiplication<Field>(S_1_zeta_poly_neg, S_1_zeta_poly, neg_one_poly);
-    // (S1(x) - S_1_zeta)
-    polynomial<Field> S1_sub_szeta;
-    libfqfft::_polynomial_addition<Field>(S1_sub_szeta, common_input.S_polys[1], S_1_zeta_poly_neg);
-    // (S1(x) - S_1_zeta) * nu^6
-    Field nu6 = libff::power(nu, libff::bigint<1>(6));
-    polynomial<Field> nu6_poly{nu6};
-    libfqfft::_polynomial_multiplication<Field>(W_zeta_part[6], S1_sub_szeta, nu6_poly);
-
-    // compute full zeta polynomial W_zeta = \sum W_zeta_part[i]
-    int nzeta = 7;
-    polynomial<Field> W_zeta(poly_null);
-    for (int i = 0; i < nzeta; ++i) {
-      libfqfft::_polynomial_addition<Field>(W_zeta, W_zeta, W_zeta_part[i]);
-    }
-
-    // compute 1/(X-zeta) * W_zeta
-    polynomial<Field> x_sub_zeta_poly{-zeta, Field(1)};
-    libfqfft::_polynomial_division(W_zeta, remainder, W_zeta, x_sub_zeta_poly);
-#ifdef DEBUG
-    printf("W_zeta\n");
-    print_vector(W_zeta);
-#endif // #ifdef DEBUG
-    assert(libfqfft::_is_zero(remainder));
-
-    //    polynomial<Field> z_poly;
-    
-    // Compute opening proof:
-    // W_zeta_omega = z(X) - z(zeta*common_input.omega_roots) / X - (zeta*common_input.omega_roots)
-    polynomial<Field> W_zeta_omega{poly_null};
-    
-    // -z(zeta*common_input.omega_roots)
-    polynomial<Field> z_poly_xomega_zeta_neg{-z_poly_xomega_zeta};
-    // z(X) - z(zeta*common_input.omega_roots) 
-    libfqfft::_polynomial_addition<Field>(W_zeta_omega, z_poly, z_poly_xomega_zeta_neg);    
-    // -zeta*common_input.omega_roots; common_input.omega_roots[base][1] = common_input.omega_roots_base
-    polynomial<Field> x_sub_zeta_omega_roots{-(zeta*common_input.omega_roots[base][1]), Field(1)};
-    
-    // z(X) - z(zeta*common_input.omega_roots) / X - (zeta*common_input.omega_roots)
-    libfqfft::_polynomial_division(W_zeta_omega, remainder, W_zeta_omega, x_sub_zeta_omega_roots);
-    assert(libfqfft::_is_zero(remainder));
-
-#ifdef DEBUG
-    printf("W_zeta_part[0]\n");
-    print_vector(W_zeta_part[0]);
-    printf("W_zeta_part[1]\n");
-    print_vector(W_zeta_part[1]);
-    printf("W_zeta_part[2]\n");
-    print_vector(W_zeta_part[2]);
-    printf("W_zeta_part[3]\n");
-    print_vector(W_zeta_part[3]);
-    printf("W_zeta_part[4]\n");
-    print_vector(W_zeta_part[4]);
-    printf("W_zeta_part[5]\n");
-    print_vector(W_zeta_part[5]);
-    printf("W_zeta_part[6]\n");
-    print_vector(W_zeta_part[6]);
-    printf("W_zeta\n");
-    print_vector(W_zeta);
-    printf("W_zeta_omega\n");
-    print_vector(W_zeta_omega);
-#endif // #ifdef DEBUG
-      
-    assert(W_zeta == example.W_zeta);
-    assert(W_zeta_omega == example.W_zeta_omega);
-    
-    // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
-    // input
-    W_zeta_at_secret =
-      plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, W_zeta);    
-    W_zeta_omega_at_secret =
-      plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, W_zeta_omega);
-    
-    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
-    // the test vectors
-#if 0 // commented to avoid warnings    
-    Field u = example.u;
-#endif // #if 0    
-  }
-
-#endif // #if 0 // OLD prover (non-class)  
-  
-  template<typename ppT>
-  plonk_proof<ppT> plonk_compute_proof(
-				       const srs<ppT> srs,
-				       const common_preprocessed_input<ppT> common_input
-				       )
-  {    
-    using Field = libff::Fr<ppT>;
-    // initialize hard-coded values from example circuit
-    plonk_example<ppT> example;
-    
+    plonk_example<ppT> example;    
     std::vector<Field> witness = example.witness;
-    Field k1 = example.k1;
-    Field k2 = example.k2;
-    std::vector<Field> blind_scalars = example.prover_blind_scalars;
-    int num_hgen = NUM_HGEN;
-    int nwitness = 3;
-    polynomial<Field> poly_null{Field(0)};
-    polynomial<Field> neg_one_poly = {-Field("1")};
-    polynomial<Field> remainder;
     
-    // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
-    // unity common_input.omega_roots
-    std::vector<Field> zh_poly(common_input.num_gates+1, Field(0));
-    zh_poly[0] = Field(-1);
-    zh_poly[common_input.num_gates] = Field(1);
 #ifdef DEBUG
     printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
-    print_vector(zh_poly);
-    assert(zh_poly == example.zh_poly);
+    print_vector(this->zh_poly);
+    assert(this->zh_poly == example.zh_poly);
+    assert(this->k1 == example.k1);
+    assert(this->k2 == example.k2);
 #endif // #ifdef DEBUG
-
+    
     // Prover Round 1
 #if 1 // prover round 1
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
-    std::vector<std::vector<Field>> W_polys_blinded;
-    std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;    
-    plonk_prover_round_one<ppT>(
-				W_polys_blinded,
-				W_polys_blinded_at_secret_g1,
-				example.witness,
-				example.prover_blind_scalars,
-				zh_poly,
-				common_input,
-				srs);
+    this->round_one(witness, common_input, srs);    
     // Prover Round 1 output check against test vectors
 #ifdef DEBUG
-    for (int i = 0; i < nwitness; ++i) {
+    for (int i = 0; i < (int)NUM_HGEN; ++i) {
       printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
-      print_vector(W_polys_blinded[i]);
-      assert(W_polys_blinded[i] == example.W_polys_blinded[i]);
+      print_vector(this->W_polys_blinded[i]);
+      assert(this->W_polys_blinded[i] == example.W_polys_blinded[i]);
     }
     printf("[%s:%d] Output from Round 1\n", __FILE__, __LINE__);
-    for (int i = 0; i < nwitness; ++i) {
+    for (int i = 0; i < (int)NUM_HGEN; ++i) {
       printf("W_polys_at_secret_g1[%d]\n", i);
-      W_polys_blinded_at_secret_g1[i].print();
-      libff::G1<ppT> W_polys_blinded_at_secret_g1_i(W_polys_blinded_at_secret_g1[i]);
+      this->W_polys_blinded_at_secret_g1[i].print();
+      libff::G1<ppT> W_polys_blinded_at_secret_g1_i(this->W_polys_blinded_at_secret_g1[i]);
       W_polys_blinded_at_secret_g1_i.to_affine_coordinates();
       assert(W_polys_blinded_at_secret_g1_i.X == example.W_polys_blinded_at_secret_g1[i][0]);
       assert(W_polys_blinded_at_secret_g1_i.Y == example.W_polys_blinded_at_secret_g1[i][1]);
@@ -1683,30 +896,16 @@ namespace libsnark
 
     printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
 #if 1 // prover round 2
-    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
-    // the test vectors
-    Field beta = example.beta;
-    Field gamma = example.gamma;
-    polynomial<Field> z_poly;
-    libff::G1<ppT> z_poly_at_secret_g1;
-    plonk_prover_round_two<ppT>(
-				z_poly,
-				z_poly_at_secret_g1,
-				beta, gamma,
-				example.witness,
-				blind_scalars,
-				zh_poly,
-				common_input, srs
-				);
+    this->round_two(witness, common_input, srs);
     // Prover Round 2 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
-    print_vector(z_poly);
-    assert(z_poly == example.z_poly);
+    print_vector(this->z_poly);
+    assert(this->z_poly == example.z_poly);
     printf("[%s:%d] Output from Round 2\n", __FILE__, __LINE__);
     printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
-    z_poly_at_secret_g1.print();
-    libff::G1<ppT> z_poly_at_secret_g1_aff(z_poly_at_secret_g1);
+    this->z_poly_at_secret_g1.print();
+    libff::G1<ppT> z_poly_at_secret_g1_aff(this->z_poly_at_secret_g1);
     z_poly_at_secret_g1_aff.to_affine_coordinates();
     assert(z_poly_at_secret_g1_aff.X == example.z_poly_at_secret_g1[0]);
     assert(z_poly_at_secret_g1_aff.Y == example.z_poly_at_secret_g1[1]);
@@ -1715,35 +914,14 @@ namespace libsnark
     
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
 #if 1 // prover round 3
-    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
-    // the test vectors
-    Field alpha = example.alpha;
-    std::vector<polynomial<libff::Fr<ppT>>> t_poly;
-    polynomial<libff::Fr<ppT>> t_poly_long;
-    std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
-    std::vector<libff::Fr<ppT>> z_poly_xomega;
-    plonk_prover_round_three<ppT>(
-				  t_poly,
-				  t_poly_long,
-				  t_poly_at_secret_g1,
-				  z_poly_xomega,
-				  alpha, beta, gamma, k1, k2,
-				  W_polys_blinded,
-				  z_poly,
-				  zh_poly,
-				  common_input,
-				  srs
-				  );
+    this->round_three(common_input, srs);    
     // Prover Round 3 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
-    // verify the output from Round 3 to the test vectors. test
-    // vectors obtained from the Plonk Python reference implementation
-    // (used for debug)
-    for (int i = 0; i < num_hgen; ++i) {
+    for (int i = 0; i < (int)NUM_HGEN; ++i) {
       printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
-      t_poly_at_secret_g1[i].print();
-      libff::G1<ppT> t_poly_at_secret_g1_i(t_poly_at_secret_g1[i]);
+      this->t_poly_at_secret_g1[i].print();
+      libff::G1<ppT> t_poly_at_secret_g1_i(this->t_poly_at_secret_g1[i]);
       t_poly_at_secret_g1_i.to_affine_coordinates();
       assert(t_poly_at_secret_g1_i.X == example.t_poly_at_secret_g1[i][0]);
       assert(t_poly_at_secret_g1_i.Y == example.t_poly_at_secret_g1[i][1]);
@@ -1753,86 +931,52 @@ namespace libsnark
     
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
 #if 1 // prover round 4
-    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
-    // the test vectors
-    Field zeta = example.zeta;
-    Field a_zeta, b_zeta, c_zeta, S_0_zeta, S_1_zeta, t_zeta, z_poly_xomega_zeta;
-    plonk_prover_round_four<ppT>(
-				 a_zeta, b_zeta, c_zeta,
-				 S_0_zeta, S_1_zeta,
-				 z_poly_xomega_zeta,
-				 t_zeta,
-				 zeta,
-				 W_polys_blinded,
-				 z_poly_xomega,
-				 t_poly_long,
-				 common_input
-				 );
+    this->round_four(common_input);    
     // Prover Round 4 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
     printf("a_zeta ");
-    a_zeta.print();
-    assert(a_zeta == example.a_zeta);
+    this->a_zeta.print();
+    assert(this->a_zeta == example.a_zeta);
     printf("b_zeta ");
-    b_zeta.print();
-    assert(b_zeta == example.b_zeta);
+    this->b_zeta.print();
+    assert(this->b_zeta == example.b_zeta);
     printf("c_zeta ");
-    c_zeta.print();
-    assert(c_zeta == example.c_zeta);
+    this->c_zeta.print();
+    assert(this->c_zeta == example.c_zeta);
     printf("S_0_zeta ");
-    S_0_zeta.print();
-    assert(S_0_zeta == example.S_0_zeta);
+    this->S_0_zeta.print();
+    assert(this->S_0_zeta == example.S_0_zeta);
     printf("S_1_zeta ");
-    S_1_zeta.print();
-    assert(S_1_zeta == example.S_1_zeta);
+    this->S_1_zeta.print();
+    assert(this->S_1_zeta == example.S_1_zeta);
     printf("t_zeta ");
-    t_zeta.print();
-    assert(t_zeta == example.t_zeta);
+    this->t_zeta.print();
+    assert(this->t_zeta == example.t_zeta);
     printf("z_poly_xomega_zeta ");
-    z_poly_xomega_zeta.print();
-    assert(z_poly_xomega_zeta == example.z_poly_xomega_zeta);
+    this->z_poly_xomega_zeta.print();
+    assert(this->z_poly_xomega_zeta == example.z_poly_xomega_zeta);
 #endif // #ifdef DEBUG
 #endif // #if 1 // prover round 4
     
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
 #if 1 // prover round 5
-    // Hashes of transcript (Fiat-Shamir heuristic) -- fixed to match
-    // the test vectors
-    Field nu = example.nu;
-    libff::Fr<ppT> r_zeta;
-    libff::G1<ppT> W_zeta_at_secret;
-    libff::G1<ppT> W_zeta_omega_at_secret;
-    plonk_prover_round_five<ppT>(
-				 r_zeta, 
-				 W_zeta_at_secret,
-				 W_zeta_omega_at_secret,
-				 alpha, beta, gamma, zeta, nu,
-				 k1, k2,
-				 a_zeta, b_zeta, c_zeta,
-				 S_0_zeta, S_1_zeta,
-				 t_zeta, z_poly_xomega_zeta,
-				 W_polys_blinded, t_poly, z_poly,
-				 common_input,
-				 srs
-				 );
+    this->round_five(common_input, srs);
 #endif // #if 1 // prover round 5    
 #ifdef DEBUG
-    printf("r_zeta ");
-    r_zeta.print();
-    assert(r_zeta == example.r_zeta);
     printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);    
     printf("r_zeta ");
-    r_zeta.print();    
+    this->r_zeta.print();    
+    assert(this->r_zeta == example.r_zeta);
     printf("[%s:%d] W_zeta_at_secret \n", __FILE__, __LINE__);
-    W_zeta_at_secret.print();
-    libff::G1<ppT> W_zeta_at_secret_aff(W_zeta_at_secret);
+    this->W_zeta_at_secret.print();
+    libff::G1<ppT> W_zeta_at_secret_aff(this->W_zeta_at_secret);
     W_zeta_at_secret_aff.to_affine_coordinates();
     assert(W_zeta_at_secret_aff.X == example.W_zeta_at_secret[0]);
     assert(W_zeta_at_secret_aff.Y == example.W_zeta_at_secret[1]);    
     printf("[%s:%d] W_zeta_omega_at_secret \n", __FILE__, __LINE__);
-    W_zeta_omega_at_secret.print();
-    libff::G1<ppT> W_zeta_omega_at_secret_aff(W_zeta_omega_at_secret);
+    this->W_zeta_omega_at_secret.print();
+    libff::G1<ppT> W_zeta_omega_at_secret_aff(this->W_zeta_omega_at_secret);
     W_zeta_omega_at_secret_aff.to_affine_coordinates();
     assert(W_zeta_omega_at_secret_aff.X == example.W_zeta_omega_at_secret[0]);
     assert(W_zeta_omega_at_secret_aff.Y == example.W_zeta_omega_at_secret[1]);
@@ -1840,21 +984,23 @@ namespace libsnark
     
     // construct proof
     plonk_proof<ppT> proof(
-			   W_polys_blinded_at_secret_g1,
-			   z_poly_at_secret_g1,
-			   t_poly_at_secret_g1,
-			   a_zeta, b_zeta, c_zeta,
-			   S_0_zeta, S_1_zeta,
-			   z_poly_xomega_zeta,
-			   W_zeta_at_secret,
-			   W_zeta_omega_at_secret,
-			   r_zeta
+			   this->W_polys_blinded_at_secret_g1,
+			   this->z_poly_at_secret_g1,
+			   this->t_poly_at_secret_g1,
+			   this->a_zeta, this->b_zeta, this->c_zeta,
+			   this->S_0_zeta, this->S_1_zeta,
+			   this->z_poly_xomega_zeta,
+			   this->W_zeta_at_secret,
+			   this->W_zeta_omega_at_secret,
+			   this->r_zeta
 			   );
     // return proof
     return proof;
   }
-
   
+#endif // #if 1  // prover class  
+  // --------------------- PROVER CLASS ------------------------}
+
   template<typename ppT> void test_plonk()
   {
     // Execute all tests for the given curve.
@@ -1904,8 +1050,13 @@ namespace libsnark
 #endif // #ifdef DEBUG
     
     // --- PROVER ---
-    plonk_proof<ppT> proof = plonk_compute_proof(srs, common_input);
+    //    plonk_proof<ppT> proof_old = plonk_compute_proof(srs, common_input);
 
+
+    plonk_prover<ppT> prover(common_input);
+    
+    plonk_proof<ppT> proof = prover.compute_proof(srs, common_input);
+    
     assert(example.a_zeta == proof.a_zeta);
     assert(example.b_zeta == proof.b_zeta);
     assert(example.c_zeta == proof.c_zeta);
@@ -1919,6 +1070,7 @@ namespace libsnark
     //    assert(example.W_zeta_at_secret == proof.W_zeta_at_secret);
     //    assert(example.W_zeta_omega_at_secret == proof.W_zeta_omega_at_secret);
 
+    
     // --- VERIFIER ---
 
     //
