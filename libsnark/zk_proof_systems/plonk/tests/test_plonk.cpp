@@ -15,13 +15,8 @@
 #include <cstdio>
 #include <gtest/gtest.h>
 
-//#include <libff/common/profiling.hpp>
-//#include <libff/common/utils.hpp>
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
-//#include <libff/algebra/curves/bls12_381/bls12_381_init.hpp>
 #include <libff/algebra/scalar_multiplication/multiexp.hpp>
-//#include <libff/algebra/scalar_multiplication/wnaf.hpp>
-//#include <libff/algebra/curves/curve_serialization.hpp>
 
 #include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
 #include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
