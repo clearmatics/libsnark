@@ -77,6 +77,9 @@ public:
   std::vector<Field> H_gen;
   // H_gen permuted according to the wire permutation
   std::vector<Field> H_gen_permute;
+  // constants for H, k1 H, k2 H
+  libff::Fr<ppT> k1;
+  libff::Fr<ppT> k2;
 
   common_preprocessed_input(){};
   
@@ -240,8 +243,8 @@ private:
 
   // round 0 (initialization)
   std::vector<libff::Fr<ppT>> zh_poly;
-  libff::Fr<ppT> k1;
-  libff::Fr<ppT> k2;
+  //  libff::Fr<ppT> k1;
+  //  libff::Fr<ppT> k2;
   polynomial<libff::Fr<ppT>> null_poly;
   polynomial<libff::Fr<ppT>> neg_one_poly; 
  
@@ -324,13 +327,30 @@ public:
 
 template<typename ppT> class plonk_verifier
 {
-private:
   using Field = libff::Fr<ppT>;
-
+  
+private:
   // verifier preprocessed input
   std::vector<libff::G1<ppT>> Q_polys_at_secret_g1;
   std::vector<libff::G1<ppT>> S_polys_at_secret_g1;
   // secret * G2
+  // evaluation of vanishing polynomial Zh at x=zeta i.e. Zh(zeta)
+  Field zh_zeta;
+  // Lagrange polynomial evaluation of polynomial L1 at x=zeta
+  // i.e. L1(zeta)
+  Field L_0_zeta;
+  // Public input polynomial PI evaluated at x=zeta .e. PI(zeta)
+  Field PI_zeta;
+  // compute quotient polynomial evaluation r'(zeta) = r(zeta) - r0,
+  // where r0 is a constant term Note:
+  Field r_prime_zeta;
+  // first part of batched polynomial commitment [D]_1
+  libff::G1<ppT> D1;
+  // full batched polynomial commitment [F]_1 = [D]_1 + v [a]_1 + v^2
+  // [b]_1 + v^3 [c]_1 + v^4 [s_sigma_1]_1 + v^5 [s_sigma_2]_1
+  libff::G1<ppT> F1;
+  // group-encoded batch evaluation [E]_1
+  libff::G1<ppT> E1;
 
   // challenges hashed transcript
   libff::Fr<ppT> beta;
@@ -351,13 +371,9 @@ public:
   void step_one(const plonk_proof<ppT> proof);
   void step_two(const plonk_proof<ppT> proof);
   void step_three(
-		  const plonk_proof<ppT> proof,
 		  const common_preprocessed_input<ppT> common_input
 		  );
-  void step_four(
-		  const plonk_proof<ppT> proof,
-		  const common_preprocessed_input<ppT> common_input
-		  );
+  void step_four();
   void step_five(
 		 const common_preprocessed_input<ppT> common_input
 		 );
@@ -371,7 +387,8 @@ public:
 		  const plonk_proof<ppT> proof
 		  );
   void step_nine(
-		 const plonk_proof<ppT> proof
+		 const plonk_proof<ppT> proof,
+		 const common_preprocessed_input<ppT> common_input
 		 );
   void step_ten(
 		const plonk_proof<ppT> proof,
@@ -380,14 +397,16 @@ public:
   void step_eleven(
 		   const plonk_proof<ppT> proof
 		   );
-  void step_twelve(
+  bool step_twelve(
 		   const plonk_proof<ppT> proof,
+		   const srs<ppT> srs,
 		   const common_preprocessed_input<ppT> common_input
-		   );
-  
-  
-  
-  
+		   );  
+  bool verify_proof(
+		    const plonk_proof<ppT> proof,
+		    const srs<ppT> srs,
+		    const common_preprocessed_input<ppT> common_input
+		    );
 };
 
 /***************************** Main algorithms *******************************/

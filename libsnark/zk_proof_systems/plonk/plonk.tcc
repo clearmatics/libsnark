@@ -481,6 +481,8 @@ namespace libsnark
     // match against the test vector values
     Field k1 = example.k1;
     Field k2 = example.k2;
+    common_input.k1 = example.k1;
+    common_input.k2 = example.k2;
 #ifdef DEBUG
     printf("[%s:%d] k1 ", __FILE__, __LINE__);
     k1.print();    
