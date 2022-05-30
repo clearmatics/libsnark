@@ -25,7 +25,6 @@
 #include <libsnark/zk_proof_systems/plonk/prover.hpp>
 #include <libsnark/zk_proof_systems/plonk/verifier.hpp>
 
-//#define DEBUG
 // maximum polynomial degree (resp. maximum number of gates)
 const size_t MAX_DEGREE = 254;
 

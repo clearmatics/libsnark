@@ -8,10 +8,7 @@ This includes:
 - class for proving key
 - class for verification key
 - class for key pair (proving key & verification key)
-- class for proof
-- generator algorithm / setup
-- prover algorithm
-- verifier algorithm 
+- class for common preprocessed input
 
 The implementation instantiates the protocol of PlonK \[GWC19],
 
@@ -34,8 +31,7 @@ Cryptology ePrint Archive, Report 2019/953, 2019,
 
 #include <libff/algebra/curves/public_params.hpp>
 #include <memory>
-#include <libsnark/zk_proof_systems/plonk/tests/plonk_example.hpp>
-//#include <libsnark/zk_proof_systems/plonk/prover.hpp>
+#include <libsnark/zk_proof_systems/plonk/tests/example.hpp>
 
 // enable debug checks. in particular enable comparisons to test
 // vector values.
@@ -183,10 +179,6 @@ public:
     plonk_keypair(plonk_keypair<ppT> &&other) = default;
 };
   
-/*********************************** Proof ***********************************/
-
-/***************************** Verifier *******************************/
-
 /***************************** Main algorithms *******************************/
 
 

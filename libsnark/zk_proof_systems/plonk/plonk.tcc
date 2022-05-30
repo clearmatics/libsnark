@@ -14,9 +14,6 @@ See plonk.hpp .
 #ifndef PLONK_PPZKSNARK_TCC_
 #define PLONK_PPZKSNARK_TCC_
 
-#include "libsnark/zk_proof_systems/plonk/plonk.hpp"
-#include "libsnark/zk_proof_systems/plonk/tests/plonk_example.hpp"
-
 namespace libsnark
 {
 

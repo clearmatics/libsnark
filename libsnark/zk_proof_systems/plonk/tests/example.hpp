@@ -233,6 +233,6 @@ public:
 
 } // namespace libsnark
   
-#include <libsnark/zk_proof_systems/plonk/tests/plonk_example.cpp>
+#include <libsnark/zk_proof_systems/plonk/tests/example.tcc>
 
 #endif // __PLONK_EXAMPLE_HPP__
