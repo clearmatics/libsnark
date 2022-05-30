@@ -235,7 +235,7 @@ public:
 
 template<typename ppT> class plonk_prover
 {
-public:
+private:  
   using Field = libff::Fr<ppT>;
 
   // round 0 (initialization)
@@ -281,8 +281,10 @@ public:
   libff::G1<ppT> W_zeta_omega_at_secret;
   libff::Fr<ppT> u;
 
-  // constructor: initialize round 0 variables
+public:  
+  // constructors: initialize round 0 variables
   plonk_prover() {};
+  
   plonk_prover(
 	       const common_preprocessed_input<ppT> common_input
 	       );
@@ -318,6 +320,75 @@ public:
 				 );
 };
 
+/***************************** Verifier *******************************/
+
+template<typename ppT> class plonk_verifier
+{
+private:
+  using Field = libff::Fr<ppT>;
+
+  // verifier preprocessed input
+  std::vector<libff::G1<ppT>> Q_polys_at_secret_g1;
+  std::vector<libff::G1<ppT>> S_polys_at_secret_g1;
+  // secret * G2
+
+  // challenges hashed transcript
+  libff::Fr<ppT> beta;
+  libff::Fr<ppT> gamma;
+  libff::Fr<ppT> alpha;
+  libff::Fr<ppT> zeta;
+  libff::Fr<ppT> nu;
+  libff::Fr<ppT> u;
+
+public:
+  plonk_verifier() {};
+  
+  void preprocessed_input(
+			  const srs<ppT> srs,
+			  const common_preprocessed_input<ppT> common_input
+			  );
+
+  void step_one(const plonk_proof<ppT> proof);
+  void step_two(const plonk_proof<ppT> proof);
+  void step_three(
+		  const plonk_proof<ppT> proof,
+		  const common_preprocessed_input<ppT> common_input
+		  );
+  void step_four(
+		  const plonk_proof<ppT> proof,
+		  const common_preprocessed_input<ppT> common_input
+		  );
+  void step_five(
+		 const common_preprocessed_input<ppT> common_input
+		 );
+  void step_six(
+		const common_preprocessed_input<ppT> common_input
+		);
+  void step_seven(
+		  const common_preprocessed_input<ppT> common_input
+		  );
+  void step_eight(
+		  const plonk_proof<ppT> proof
+		  );
+  void step_nine(
+		 const plonk_proof<ppT> proof
+		 );
+  void step_ten(
+		const plonk_proof<ppT> proof,
+		const common_preprocessed_input<ppT> common_input
+		);
+  void step_eleven(
+		   const plonk_proof<ppT> proof
+		   );
+  void step_twelve(
+		   const plonk_proof<ppT> proof,
+		   const common_preprocessed_input<ppT> common_input
+		   );
+  
+  
+  
+  
+};
 
 /***************************** Main algorithms *******************************/
 
