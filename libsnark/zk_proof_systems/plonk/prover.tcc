@@ -84,11 +84,11 @@ void plonk_prover<ppT>::compute_witness_polys(
 // - witness: witness values
 // - common_input: common preprocessed input
 // - srs: structured reference string
-// - this->blind_scalats: blinding scalars b1, b2, ..., b9 (only
-//   b1-b6 used in round 1)
 // - this->zh_poly: vanishing polynomial Zh
 //
 // OUTPUT
+// - this->blind_scalars: blinding scalars b1, b2, ..., b9 (only
+//   b1-b6 used in round 1)
 // - this->W_polys_blinded: blinded witness polynomials
 // - this->W_polys_blinded_at_secret_g1: the blinded witness polynomials
 //   evaluated at the secret input [a]_1, [b]_1, [c]_1 in [GWC19]
@@ -1079,6 +1079,63 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     // return proof
     return proof;
 }
+
+// --- new prover class --- 
+
+// Prover class constructor (Round 0  = initialization)
+//
+template<typename ppT>
+round_zero_out_t<ppT> plonk_prover_new<ppT>::round_zero(
+    const common_preprocessed_input<ppT> common_input)
+{
+    using Field = libff::Fr<ppT>;
+
+    // initialize hard-coded values from example circuit
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
+
+    round_zero_out_t<ppT> round_zero_out;
+      
+    // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
+    // unity common_input.omega_roots
+    round_zero_out.zh_poly.resize(common_input.num_gates + 1, Field(0));
+    round_zero_out.zh_poly[0] = Field(-1);
+    round_zero_out.zh_poly[common_input.num_gates] = Field(1);
+#ifdef DEBUG
+    printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
+    print_vector(round_zero_out.zh_poly);
+    assert(round_zero_out.zh_poly == example.zh_poly);
+#endif // #ifdef DEBUG
+
+    round_zero_out.null_poly = {Field(0)};
+    round_zero_out.neg_one_poly = {-Field("1")};
+    
+    return round_zero_out;
+}
+
+template<typename ppT>
+plonk_proof<ppT> plonk_prover_new<ppT>::compute_proof(
+    const srs<ppT> srs, const common_preprocessed_input<ppT> common_input)
+{
+    using Field = libff::Fr<ppT>;
+    // initialize hard-coded values from example circuit
+    plonk_example<ppT> example;
+    std::vector<Field> witness = example.witness;
+
+#ifdef NDEBUG
+    printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
+    print_vector(this->zh_poly);
+    assert(this->zh_poly == example.zh_poly);
+#endif // #ifdef DEBUG
+
+    // construct proof
+    plonk_proof<ppT> proof();
+    
+    // return proof
+    return proof;
+}
+
 
 } // namespace libsnark
 

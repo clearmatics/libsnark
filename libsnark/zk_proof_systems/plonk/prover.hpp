@@ -104,8 +104,6 @@ private:
 
     // round 0 (initialization)
     std::vector<libff::Fr<ppT>> zh_poly;
-    //  libff::Fr<ppT> k1;
-    //  libff::Fr<ppT> k2;
     polynomial<libff::Fr<ppT>> null_poly;
     polynomial<libff::Fr<ppT>> neg_one_poly;
 
@@ -169,8 +167,60 @@ public:
         const common_preprocessed_input<ppT> common_input, const srs<ppT> srs);
     plonk_proof<ppT> compute_proof(
         const srs<ppT> srs, const common_preprocessed_input<ppT> common_input);
+
 };
 
+// round 0 output
+template<typename ppT>
+struct round_zero_out_t {
+  std::vector<libff::Fr<ppT>> zh_poly;
+  polynomial<libff::Fr<ppT>> null_poly;
+  polynomial<libff::Fr<ppT>> neg_one_poly;
+};
+  
+// round 1 output
+template<typename ppT>
+struct round_one_out_t {
+  std::vector<libff::Fr<ppT>> blind_scalars;
+  std::vector<polynomial<libff::Fr<ppT>>> W_polys;
+  std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded;
+  std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
+};
+
+/**
+ * Plonk prover. Computes object of class plonk_proof.
+ */
+template<typename ppT> class plonk_prover_new
+{
+  using Field = libff::Fr<ppT>;
+  
+private:
+
+  const round_zero_out_t<ppT> round_zero_out;
+  
+public:
+  
+  // constructors: initialize round 0 variables
+  plonk_prover_new(){};
+
+  // --- new ---
+
+  static void compute_witness_polys(
+				    const std::vector<libff::Fr<ppT>> witness,
+				    const common_preprocessed_input<ppT> common_input);
+  
+  static round_zero_out_t<ppT> round_zero(const common_preprocessed_input<ppT> common_input);
+  
+  static round_one_out_t<ppT> round_one(const round_zero_out_t<ppT> round_zero_out,
+				 const std::vector<libff::Fr<ppT>> witness,
+				 const common_preprocessed_input<ppT> common_input,
+				 const srs<ppT> srs);
+  
+  static plonk_proof<ppT> compute_proof(
+					const srs<ppT> srs, const common_preprocessed_input<ppT> common_input);
+  
+};
+  
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/prover.tcc"
