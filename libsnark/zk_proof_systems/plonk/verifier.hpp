@@ -25,56 +25,67 @@ Ciobotaru, Cryptology ePrint Archive, Report 2019/953, 2019,
 
 namespace libsnark
 {
-
-/*
- Verifier preprocessed input
+  
+// Verifier preprocessed input 
+template<typename ppT> struct verifier_preprocessed_input_t {
     std::vector<libff::G1<ppT>> Q_polys_at_secret_g1;
     std::vector<libff::G1<ppT>> S_polys_at_secret_g1;
+};
 
- Verifier step 4
-    this->beta = example.beta;
-    this->gamma = example.gamma;
-    this->alpha = example.alpha;
-    this->zeta = example.zeta;
-    this->nu = example.nu;
-    this->u = example.u;
+// Verifier step 4 output
+template<typename ppT> struct step_four_out_t {
+    libff::Fr<ppT> beta;
+    libff::Fr<ppT> gamma;
+    libff::Fr<ppT> alpha;
+    libff::Fr<ppT> zeta;
+    libff::Fr<ppT> nu;
+    libff::Fr<ppT> u;
+};
 
- Verifier step 5
+// Verifier step 5 output
+template<typename ppT> struct step_five_out_t {
     // evaluation of vanishing polynomial Zh at x=zeta i.e. Zh(zeta)
-    Field zh_zeta;
-
- Verifier step 6
+    libff::Fr<ppT> zh_zeta;
+};
+  
+// Verifier step 6 output
+template<typename ppT> struct step_six_out_t {
     // Lagrange polynomial evaluation of polynomial L1 at x=zeta
     // i.e. L1(zeta)
-    Field L_0_zeta;
-
- Verifier step 7
+    libff::Fr<ppT> L_0_zeta;
+};
+  
+// Verifier step 7 output
+template<typename ppT> struct step_seven_out_t {
     // Public input polynomial PI evaluated at x=zeta .e. PI(zeta)
-    Field PI_zeta;
-
- Verifier step 8
+    libff::Fr<ppT> PI_zeta;
+};
+  
+// Verifier step 8 output
+template<typename ppT> struct step_eight_out_t {
     // compute quotient polynomial evaluation r'(zeta) = r(zeta) - r0,
     // where r0 is a constant term Note:
-    Field r_prime_zeta;
-
- Verifier step 9
+    libff::Fr<ppT> r_prime_zeta;
+};
+  
+// Verifier step 9 output
+template<typename ppT> struct step_nine_out_t {
     // first part of batched polynomial commitment [D]_1
     libff::G1<ppT> D1;
-
- Verifier step 10
+};
+  
+// Verifier step 10 output
+template<typename ppT> struct step_ten_out_t {
     // full batched polynomial commitment [F]_1 = [D]_1 + v [a]_1 + v^2
     // [b]_1 + v^3 [c]_1 + v^4 [s_sigma_1]_1 + v^5 [s_sigma_2]_1
     libff::G1<ppT> F1;
-
- Verifier step 11
+};
+  
+// Verifier step 11 output
+template<typename ppT> struct step_eleven_out_t {
     // group-encoded batch evaluation [E]_1
     libff::G1<ppT> E1;
-
- Verifier step 12
-
-
- 
-*/
+};
   
 /**
  * Plonk verifier. Verifies object of class plonk_proof.
@@ -117,8 +128,10 @@ private:
 public:
     plonk_verifier(){};
 
-    void preprocessed_input(
-        const srs<ppT> srs, const common_preprocessed_input<ppT> common_input);
+  static verifier_preprocessed_input_t<ppT>
+  preprocessed_input(
+		     const srs<ppT> srs,
+		     const common_preprocessed_input<ppT> common_input);
 
     void step_one(const plonk_proof<ppT> proof);
     void step_two(const plonk_proof<ppT> proof);
