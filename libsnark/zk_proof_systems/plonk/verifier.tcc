@@ -19,22 +19,14 @@ namespace libsnark
 //
 // SNARK proof
 //
+// (\see plonk_prover::compute_proof)
+//
 // Pi ([a]_1, [b]_1, [c]_1, [z]_1,
 //     [t_lo]_1, [t_mi]_1, [t_hi]_1,
 //     \bar{a}, \bar{b}, \bar{c},
 //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
 //     [W_zeta]_1, [W_{zeta omega}]_1
 //     r_zeta (*))
-//
-// (*) Note: in the reference Python implementation, r_zeta (the
-// evaluation of the linearlization polynomial r(X) at zeta from
-// Prover round 5) is added to the pi-SNARK proof. In the paper
-// this is omitted, which seems to make the proof shorter by 1
-// element at the epxense of a slightly heavier computation on the
-// verifier's side. Here we follow the reference implementation to
-// make sure we match the test values. TODO: once all test vectors
-// are verified, we may remove r_zeta from the proof to be fully
-// compliant with the paper.
 //
 // Mapping code-to-paper quantities
 //
