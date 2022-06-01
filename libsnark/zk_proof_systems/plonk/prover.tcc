@@ -1575,6 +1575,71 @@ plonk_prover_new<ppT>::round_three(
     return round_three_out;
 }
 
+// Prover Round 4 (NEW class)
+//
+// INPUT
+// - W_polys_blinded: blinded witness polynomials (from Round 1)
+// - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by w (from Round 3)
+// - t_poly_long: the quotient polynomial t(x) (see Round 3, pp28
+//   [GWC19]) (from Round 3)
+// - common_input: common preprocessed input
+//
+// OUTPUT
+// - zeta: evaluation challenge -- hash of transcript
+// - a_zeta, b_zeta, c_zeta: the blinded witness polynomials a(x),
+//   b(x), c(x) (denoted by W_polys_blinded[] output from Round 1)
+//   evaluated at x=zeta i.e. a(z), b(z), c(z)
+// - S_0_zeta, S_1_zeta: the permutation polynomials S_sigma_1(x),
+//   S_sigma_2(x) from the common preprocessed input (see [GWC19],
+//   Sect. 8.1) evaluated at x=zeta i.e. S_sigma_1(z), S_sigma_2(z)
+// - z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x) shifted by w
+//   (output from Round 3) evaluated at x=zeta i.e. z(zeta*w)
+// - t_zeta: the quotient polynomial t(x) output from Round 3, see
+//   pp28 [GWC19]) evaluated at x=zeta i.e. t(z). IMPORTANT! the
+//   original Plonk proposal [GWC19] does not output this parameter
+//   t_zeta. The Python reference implementation does, so we do the
+//   same in order to match the test vectors. TODO can remove t_zeta
+//   in the future
+//
+template<typename ppT> round_four_out_t<ppT>
+plonk_prover_new<ppT>::round_four(
+				  const round_one_out_t<ppT> round_one_out,
+				  const round_three_out_t<ppT> round_three_out,
+				  const common_preprocessed_input<ppT> common_input)
+{
+    using Field = libff::Fr<ppT>;
+    // initialize hard-coded values from example circuit
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
+    
+    // output from round 4
+    round_four_out_t<ppT> round_four_out;
+
+    // evaluation challenge (hash of transcript); fixed to test value
+    round_four_out.zeta = example.zeta;
+
+#ifdef DEBUG
+    printf("[%s:%d] zeta\n", __FILE__, __LINE__);
+    round_four_out.zeta.print();
+#endif // #ifdef DEBUG
+    round_four_out.a_zeta = libfqfft::evaluate_polynomial<Field>(
+        common_input.num_gates + 2, round_one_out.W_polys_blinded[a], round_four_out.zeta);
+    round_four_out.b_zeta = libfqfft::evaluate_polynomial<Field>(
+        common_input.num_gates + 2, round_one_out.W_polys_blinded[b], round_four_out.zeta);
+    round_four_out.c_zeta = libfqfft::evaluate_polynomial<Field>(
+        common_input.num_gates + 2, round_one_out.W_polys_blinded[c], round_four_out.zeta);
+    round_four_out.S_0_zeta = libfqfft::evaluate_polynomial<Field>(
+        common_input.num_gates, common_input.S_polys[0], round_four_out.zeta);
+    round_four_out.S_1_zeta = libfqfft::evaluate_polynomial<Field>(
+        common_input.num_gates, common_input.S_polys[1], round_four_out.zeta);
+    round_four_out.t_zeta = libfqfft::evaluate_polynomial<Field>(
+        round_three_out.t_poly_long.size(), round_three_out.t_poly_long, round_four_out.zeta);
+    round_four_out.z_poly_xomega_zeta = libfqfft::evaluate_polynomial<Field>(
+        round_three_out.z_poly_xomega.size(), round_three_out.z_poly_xomega, round_four_out.zeta);
+    return round_four_out;
+}
+
 // Prover compute SNARK proof
 //
 // Pi ([a]_1, [b]_1, [c]_1, [z]_1,
@@ -1708,40 +1773,43 @@ plonk_prover_new<ppT>::compute_proof(
 #endif // #ifdef DEBUG
 #endif // #if 1 // prover round 3
 
-
-    // ------
-    
-#if 0    
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
 #if 1 // prover round 4
-    this->round_four(common_input);
+    const round_four_out_t<ppT> round_four_out =
+      plonk_prover_new::round_four(round_one_out,
+				   round_three_out,
+				   common_input);
     // Prover Round 4 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
     printf("a_zeta ");
-    this->a_zeta.print();
-    assert(this->a_zeta == example.a_zeta);
+    round_four_out.a_zeta.print();
+    assert(round_four_out.a_zeta == example.a_zeta);
     printf("b_zeta ");
-    this->b_zeta.print();
-    assert(this->b_zeta == example.b_zeta);
+    round_four_out.b_zeta.print();
+    assert(round_four_out.b_zeta == example.b_zeta);
     printf("c_zeta ");
-    this->c_zeta.print();
-    assert(this->c_zeta == example.c_zeta);
+    round_four_out.c_zeta.print();
+    assert(round_four_out.c_zeta == example.c_zeta);
     printf("S_0_zeta ");
-    this->S_0_zeta.print();
-    assert(this->S_0_zeta == example.S_0_zeta);
+    round_four_out.S_0_zeta.print();
+    assert(round_four_out.S_0_zeta == example.S_0_zeta);
     printf("S_1_zeta ");
-    this->S_1_zeta.print();
-    assert(this->S_1_zeta == example.S_1_zeta);
+    round_four_out.S_1_zeta.print();
+    assert(round_four_out.S_1_zeta == example.S_1_zeta);
     printf("t_zeta ");
-    this->t_zeta.print();
-    assert(this->t_zeta == example.t_zeta);
+    round_four_out.t_zeta.print();
+    assert(round_four_out.t_zeta == example.t_zeta);
     printf("z_poly_xomega_zeta ");
-    this->z_poly_xomega_zeta.print();
-    assert(this->z_poly_xomega_zeta == example.z_poly_xomega_zeta);
+    round_four_out.z_poly_xomega_zeta.print();
+    assert(round_four_out.z_poly_xomega_zeta == example.z_poly_xomega_zeta);
 #endif // #ifdef DEBUG
 #endif // #if 1 // prover round 4
 
+
+    // ------
+    
+#if 0    
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
 #if 1 // prover round 5
     this->round_five(common_input, srs);
