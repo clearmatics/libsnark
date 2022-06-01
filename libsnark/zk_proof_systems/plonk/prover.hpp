@@ -187,6 +187,16 @@ struct round_one_out_t {
   std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
 };
 
+// round 2 output
+template<typename ppT>
+struct round_two_out_t {
+  libff::Fr<ppT> beta;
+  libff::Fr<ppT> gamma;
+  polynomial<libff::Fr<ppT>> z_poly;
+  libff::G1<ppT> z_poly_at_secret_g1;
+};
+
+  
 /**
  * Plonk prover. Computes object of class plonk_proof.
  */
@@ -205,17 +215,29 @@ public:
 
   // --- new ---
 
-  static round_zero_out_t<ppT> round_zero(
-					  const common_preprocessed_input<ppT> common_input);
+  static round_zero_out_t<ppT>
+  round_zero(
+	     const common_preprocessed_input<ppT> common_input);
   
-  static round_one_out_t<ppT> round_one(
-					const round_zero_out_t<ppT> round_zero_out,
-					const std::vector<libff::Fr<ppT>> witness,
-					const common_preprocessed_input<ppT> common_input,
-					const srs<ppT> srs);
+  static round_one_out_t<ppT>
+  round_one(
+	    const round_zero_out_t<ppT> round_zero_out,
+	    const std::vector<libff::Fr<ppT>> witness,
+	    const common_preprocessed_input<ppT> common_input,
+	    const srs<ppT> srs);
   
-  static plonk_proof<ppT> compute_proof(
-					const srs<ppT> srs, const common_preprocessed_input<ppT> common_input);
+  static round_two_out_t<ppT>
+  round_two(
+	    const round_zero_out_t<ppT> round_zero_out,
+	    const round_one_out_t<ppT> round_one_out,
+	    const std::vector<libff::Fr<ppT>> witness,
+	    const common_preprocessed_input<ppT> common_input,
+	    const srs<ppT> srs);
+  
+  static plonk_proof<ppT>
+  compute_proof(
+		const srs<ppT> srs,
+		const common_preprocessed_input<ppT> common_input);
   
 };
   

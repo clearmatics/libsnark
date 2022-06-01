@@ -1227,6 +1227,93 @@ plonk_prover_new<ppT>::round_one(
     return round_one_out;
 }
 
+// Prover Round 2 (NEW class)
+//
+// INPUT
+// - blind_scalars: blinding scalars b1, b2, ..., b9 (only
+//   b7,b8,b9 used in round 2) (from round 1)
+// - zh_poly: vanishing polynomial Zh (from round 0)
+// - common_input: common preprocessed input
+// - witness: witness values
+// - srs: structured reference string
+//
+// OUTPUT
+// - beta, gamma: permutation challenges -- hashes of transcript
+//   (Fiat-Shamir heuristic)
+// - z_poly: blinded accumulator poly z(x)
+// - z_poly_at_secret_g1: blinded accumulator poly z(x) evaluated at
+// secret
+//
+template<typename ppT> round_two_out_t<ppT>
+plonk_prover_new<ppT>::round_two(
+				 const round_zero_out_t<ppT> round_zero_out,
+				 const round_one_out_t<ppT> round_one_out,
+				 const std::vector<libff::Fr<ppT>> witness,
+				 const common_preprocessed_input<ppT> common_input,
+				 const srs<ppT> srs)
+{
+    using Field = libff::Fr<ppT>;
+    // initialize hard-coded values from example circuit
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
+    
+    // output from round 2
+    round_two_out_t<ppT> round_two_out;
+
+    // permutation challenges (hashes of transcript); fixed to test
+    // values
+    round_two_out.beta = example.beta;
+    round_two_out.gamma = example.gamma;
+
+    // compute permutation polynomial
+
+    // blinding polynomial: b8 + b7 X + b6 X^2
+    std::vector<Field> z1_blind_poly{round_one_out.blind_scalars[8],
+                                     round_one_out.blind_scalars[7],
+                                     round_one_out.blind_scalars[6]};
+    // multiply by the vanishing polynomial: z1 = z1 * this->zh_poly
+    libfqfft::_polynomial_multiplication<Field>(
+        z1_blind_poly, z1_blind_poly, round_zero_out.zh_poly);
+#ifdef DEBUG
+    printf("[%s:%d] z1_blind_poly * zh_poly\n", __FILE__, __LINE__);
+    print_vector(z1_blind_poly);
+#endif // #ifdef DEBUG
+
+    // A[0] = 1; ... A[i] = computed from (i-1)
+    std::vector<Field> A_vector(common_input.num_gates, Field(0));
+    plonk_compute_accumulator(
+        common_input.num_gates,
+        round_two_out.beta,
+        round_two_out.gamma,
+        witness,
+        common_input.H_gen,
+        common_input.H_gen_permute,
+        A_vector);
+#ifdef DEBUG
+    for (int i = 0; i < (int)common_input.num_gates; ++i) {
+        printf("A[%d] ", i);
+        A_vector[i].print();
+    }
+#endif // #ifdef DEBUG
+
+    polynomial<Field> A_poly(common_input.num_gates);
+    plonk_interpolate_over_lagrange_basis<Field>(
+        A_vector, A_poly, common_input.L_basis);
+#ifdef DEBUG
+    printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
+    print_vector(A_poly);
+    assert(A_poly == example.A_poly);
+#endif // #ifdef DEBUG
+
+    // add blinding polynomial z_1 to the accumulator polynomial A_poly
+    libfqfft::_polynomial_addition<Field>(round_two_out.z_poly, z1_blind_poly, A_poly);
+    round_two_out.z_poly_at_secret_g1 =
+        plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, round_two_out.z_poly);
+    
+    return round_two_out;
+}
+
 // Prover compute SNARK proof
 //
 // Pi ([a]_1, [b]_1, [c]_1, [z]_1,
@@ -1281,6 +1368,7 @@ plonk_prover_new<ppT>::compute_proof(
     
     // Prover Round 0 (initialization)
 #if 1 // prover round 0
+    printf("[%s:%d] Prover Round 0...\n", __FILE__, __LINE__);
     const round_zero_out_t<ppT> round_zero_out =
       plonk_prover_new::round_zero(common_input);    
 #ifdef DEBUG
@@ -1319,28 +1407,29 @@ plonk_prover_new<ppT>::compute_proof(
 #endif // #ifdef DEBUG
 #endif // #if 1 // prover round 1
 
-
-    // ------
-    
-#if 0    
     printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
 #if 1 // prover round 2
-    this->round_two(witness, common_input, srs);
+    const round_two_out_t<ppT> round_two_out =
+      plonk_prover_new::round_two(round_zero_out, round_one_out, witness, common_input, srs);
     // Prover Round 2 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
-    print_vector(this->z_poly);
-    assert(this->z_poly == example.z_poly);
+    print_vector(round_two_out.z_poly);
+    assert(round_two_out.z_poly == example.z_poly);
     printf("[%s:%d] Output from Round 2\n", __FILE__, __LINE__);
     printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
-    this->z_poly_at_secret_g1.print();
-    libff::G1<ppT> z_poly_at_secret_g1_aff(this->z_poly_at_secret_g1);
+    round_two_out.z_poly_at_secret_g1.print();
+    libff::G1<ppT> z_poly_at_secret_g1_aff(round_two_out.z_poly_at_secret_g1);
     z_poly_at_secret_g1_aff.to_affine_coordinates();
     assert(z_poly_at_secret_g1_aff.X == example.z_poly_at_secret_g1[0]);
     assert(z_poly_at_secret_g1_aff.Y == example.z_poly_at_secret_g1[1]);
 #endif // #ifdef DEBUG
 #endif // #if 1 // prover round 2
 
+
+    // ------
+    
+#if 0    
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
 #if 1 // prover round 3
     this->round_three(common_input, srs);
