@@ -87,6 +87,13 @@ template<typename ppT> void test_plonk()
 
     // --- PROVER ---
     printf("[%s:%d] Prover...\n", __FILE__, __LINE__);
+
+    // initialize NEW prover
+    plonk_prover_new<ppT> prover_new;
+    // compute proof
+    plonk_proof<ppT> proof_new = prover_new.compute_proof(srs, common_input);
+
+    
     // initialize prover
     plonk_prover<ppT> prover(common_input);
     // compute proof
@@ -136,7 +143,7 @@ template<typename ppT> void test_plonk()
     W_zeta_omega_at_secret_aff.to_affine_coordinates();
     assert(W_zeta_omega_at_secret_aff.X == example.W_zeta_omega_at_secret[0]);
     assert(W_zeta_omega_at_secret_aff.Y == example.W_zeta_omega_at_secret[1]);
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG    
 
     // --- VERIFIER ---
     printf("[%s:%d] Verifier...\n", __FILE__, __LINE__);

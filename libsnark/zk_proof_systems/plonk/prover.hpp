@@ -196,7 +196,7 @@ template<typename ppT> class plonk_prover_new
   
 private:
 
-  const round_zero_out_t<ppT> round_zero_out;
+  //  const round_zero_out_t<ppT> round_zero_out;
   
 public:
   
@@ -205,16 +205,14 @@ public:
 
   // --- new ---
 
-  static void compute_witness_polys(
-				    const std::vector<libff::Fr<ppT>> witness,
-				    const common_preprocessed_input<ppT> common_input);
+  static round_zero_out_t<ppT> round_zero(
+					  const common_preprocessed_input<ppT> common_input);
   
-  static round_zero_out_t<ppT> round_zero(const common_preprocessed_input<ppT> common_input);
-  
-  static round_one_out_t<ppT> round_one(const round_zero_out_t<ppT> round_zero_out,
-				 const std::vector<libff::Fr<ppT>> witness,
-				 const common_preprocessed_input<ppT> common_input,
-				 const srs<ppT> srs);
+  static round_one_out_t<ppT> round_one(
+					const round_zero_out_t<ppT> round_zero_out,
+					const std::vector<libff::Fr<ppT>> witness,
+					const common_preprocessed_input<ppT> common_input,
+					const srs<ppT> srs);
   
   static plonk_proof<ppT> compute_proof(
 					const srs<ppT> srs, const common_preprocessed_input<ppT> common_input);

@@ -1080,13 +1080,23 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     return proof;
 }
 
-// --- new prover class --- 
+// --- NEW prover class --- 
 
-// Prover class constructor (Round 0  = initialization)
+// Prover Round 0 initialization (NEW class)
 //
-template<typename ppT>
-round_zero_out_t<ppT> plonk_prover_new<ppT>::round_zero(
-    const common_preprocessed_input<ppT> common_input)
+// Initialization
+//
+// INPUT
+// - common_input: common preprocessed input
+//
+// OUTPUT
+// - W_polys: Lagrange interpolation of the witness values
+// - zh_poly: vanishing polynomial
+// - null_poly: 0 polynomial
+// - neg_one_poly: -1 polynomial
+template<typename ppT> round_zero_out_t<ppT>
+plonk_prover_new<ppT>::round_zero(
+				  const common_preprocessed_input<ppT> common_input)
 {
     using Field = libff::Fr<ppT>;
 
@@ -1095,6 +1105,7 @@ round_zero_out_t<ppT> plonk_prover_new<ppT>::round_zero(
     plonk_example<ppT> example;
 #endif // #ifdef DEBUG
 
+    // output from round 0
     round_zero_out_t<ppT> round_zero_out;
       
     // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
@@ -1114,25 +1125,311 @@ round_zero_out_t<ppT> plonk_prover_new<ppT>::round_zero(
     return round_zero_out;
 }
 
-template<typename ppT>
-plonk_proof<ppT> plonk_prover_new<ppT>::compute_proof(
-    const srs<ppT> srs, const common_preprocessed_input<ppT> common_input)
+// Prover Round 1 (NEW class)
+//
+// INPUT
+// - zh_poly: vanishing polynomial Zh (from round 0)
+// - null_poly: 0 polynomial (from round 0)
+// - neg_one_poly: -1 polynomial (from round 0)
+// - witness: witness values
+// - common_input: common preprocessed input
+// - srs: structured reference string
+//
+// OUTPUT
+// - blind_scalars: blinding scalars b1, b2, ..., b9 (only
+//   b1-b6 used in round 1)
+// - W_polys: witness polynomials (Lagrange interpolation of the
+//   witness values)
+// - W_polys_blinded: blinded witness polynomials
+// - W_polys_blinded_at_secret_g1: the blinded witness polynomials
+//   evaluated at the secret input denoted [a]_1, [b]_1, [c]_1 in
+//   [GWC19]
+template<typename ppT> round_one_out_t<ppT>
+plonk_prover_new<ppT>::round_one(
+				 const round_zero_out_t<ppT> round_zero_out,
+				 const std::vector<libff::Fr<ppT>> witness,
+				 const common_preprocessed_input<ppT> common_input,
+				 const srs<ppT> srs)
 {
     using Field = libff::Fr<ppT>;
+    int nwitness = 3;
+
+    // initialize hard-coded values from example circuit
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
+
+    // output from round 1
+    round_one_out_t<ppT> round_one_out;
+    
+    // compute witness polynomials via Lagrange interpolation
+    round_one_out.W_polys.resize(nwitness, polynomial<Field>(common_input.num_gates));
+    for (int i = 0; i < nwitness; ++i) {
+        typename std::vector<Field>::const_iterator begin =
+            witness.begin() + (i * common_input.num_gates);
+        typename std::vector<Field>::const_iterator end =
+            witness.begin() + (i * common_input.num_gates) +
+            (common_input.num_gates);
+        std::vector<Field> W_points(begin, end);
+        plonk_interpolate_over_lagrange_basis<Field>(
+            W_points, round_one_out.W_polys[i], common_input.L_basis);
+    }
+#ifdef DEBUG
+    for (int i = 0; i < nwitness; ++i) {
+        printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, i);
+        print_vector(round_one_out.W_polys[i]);
+        assert(round_one_out.W_polys[i] == example.W_polys[i]);
+    }
+#endif // #ifdef DEBUG
+
+    // hard-coded values for the "random" blinding constants from
+    // example circuit
+    round_one_out.blind_scalars = example.prover_blind_scalars;
+    // represent the blinding scalars b1, b2, ..., b9 as polynomials
+#ifdef DEBUG
+    printf("[%s:%d] blind_scalars\n", __FILE__, __LINE__);
+    print_vector(round_one_out.blind_scalars);
+    assert(round_one_out.blind_scalars == example.prover_blind_scalars);
+#endif // #ifdef DEBUG
+    std::vector<std::vector<Field>> blind_polys{
+        {round_one_out.blind_scalars[1], round_one_out.blind_scalars[0]}, // b1 + b0 X
+        {round_one_out.blind_scalars[3], round_one_out.blind_scalars[2]}, // b3 + b2 X
+        {round_one_out.blind_scalars[5], round_one_out.blind_scalars[4]}  // b5 + b4 X
+    };
+    
+    // compute blinded witness polynomials e.g. a_poly =
+    // blind_polys[0] * zh_poly + W_polys[0]
+    round_one_out.W_polys_blinded.resize(nwitness);
+    for (int i = 0; i < nwitness; ++i) {
+        libfqfft::_polynomial_multiplication<Field>(
+            round_one_out.W_polys_blinded[i], blind_polys[i], round_zero_out.zh_poly);
+        libfqfft::_polynomial_addition<Field>(
+            round_one_out.W_polys_blinded[i], round_one_out.W_polys_blinded[i], round_one_out.W_polys[i]);
+    }
+    // evaluate blinded witness polynomials at the secret input
+    round_one_out.W_polys_blinded_at_secret_g1.resize(round_one_out.W_polys_blinded.size());
+    plonk_evaluate_polys_at_secret_G1<ppT>(
+        srs.secret_powers_g1,
+        round_one_out.W_polys_blinded,
+        round_one_out.W_polys_blinded_at_secret_g1);
+
+#ifdef DEBUG
+    printf(
+        "[%s:%d] poly %d %d %d secret %d\n",
+        __FILE__,
+        __LINE__,
+        (int)round_one_out.W_polys_blinded[0].size(),
+        (int)round_one_out.W_polys_blinded[1].size(),
+        (int)round_one_out.W_polys_blinded[2].size(),
+        (int)srs.secret_powers_g1.size());
+#endif // #ifdef DEBUG
+    
+    return round_one_out;
+}
+
+// Prover compute SNARK proof
+//
+// Pi ([a]_1, [b]_1, [c]_1, [z]_1,
+//     [t_lo]_1, [t_mi]_1, [t_hi]_1,
+//     \bar{a}, \bar{b}, \bar{c},
+//     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
+//     [W_zeta]_1, [W_{zeta omega}]_1
+//     r_zeta (*))
+//
+// (*) Note: in the reference Python implementation, r_zeta (the
+// evaluation of the linearlization polynomial r(X) at zeta from
+// Prover round 5) is added to the pi-SNARK proof. In the paper
+// this is omitted, which seems to make the proof shorter by 1
+// element at the epxense of a slightly heavier computation on the
+// verifier's side. Here we follow the reference implementation to
+// make sure we match the test values. TODO: once all test vectors
+// are verified, we may remove r_zeta from the proof to be fully
+// compliant with the paper.
+//
+// Mapping code-to-paper quantities
+//
+// - W_polys_blinded_at_secret_g1[a, b, c]: [a]_1, [b]_1, [c]_1 (from Round 1)
+// - z_poly_at_secret_g1: [z]_1 (from Round 2)
+// - t_poly_at_secret_g1[lo, mi, hi]: [t_lo]_1, [t_mi]_1, [t_hi]_1 (from Round
+// 3)
+// - a_zeta, b_zeta, c_zeta, S_0_zeta, S_1_zeta, z_poly_xomega_zeta: \bar{a},
+// \bar{b}, \bar{c}, \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w} (from Round 4)
+// - W_zeta_at_secret, W_zeta_omega_at_secret: [W_zeta]_1, [W_{zeta omega}]_1
+// (from Round 5)
+//
+// INPUT
+// - common_input: common preprocessed input
+// - srs: structured reference string
+//
+// OUTPUT
+// - proof: SNARK proof Pi (see above)
+//
+template<typename ppT> plonk_proof<ppT>
+plonk_prover_new<ppT>::compute_proof(
+				     const srs<ppT> srs,
+				     const common_preprocessed_input<ppT> common_input)
+{
+    using Field = libff::Fr<ppT>;
+
     // initialize hard-coded values from example circuit
     plonk_example<ppT> example;
     std::vector<Field> witness = example.witness;
-
-#ifdef NDEBUG
+#ifdef DEBUG
+    assert(common_input.k1 == example.k1);
+    assert(common_input.k2 == example.k2);
+#endif // #ifdef DEBUG
+    
+    // Prover Round 0 (initialization)
+#if 1 // prover round 0
+    const round_zero_out_t<ppT> round_zero_out =
+      plonk_prover_new::round_zero(common_input);    
+#ifdef DEBUG
     printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
-    print_vector(this->zh_poly);
-    assert(this->zh_poly == example.zh_poly);
+    print_vector(round_zero_out.zh_poly);
+    assert(round_zero_out.zh_poly == example.zh_poly);
+#endif // #ifdef DEBUG
+#endif // #if 1 // prover round 0
+
+    // Prover Round 1
+#if 1 // prover round 1
+    printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
+    const round_one_out_t<ppT> round_one_out =
+      plonk_prover_new::round_one(round_zero_out, witness, common_input, srs);
+    // Prover Round 1 output check against test vectors
+#ifdef DEBUG
+    for (int i = 0; i < (int)NUM_HGEN; ++i) {
+        printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
+        print_vector(round_one_out.W_polys_blinded[i]);
+        assert(round_one_out.W_polys_blinded[i] == example.W_polys_blinded[i]);
+    }
+    printf("[%s:%d] Output from Round 1\n", __FILE__, __LINE__);
+    for (int i = 0; i < (int)NUM_HGEN; ++i) {
+        printf("W_polys_at_secret_g1[%d]\n", i);
+        round_one_out.W_polys_blinded_at_secret_g1[i].print();
+        libff::G1<ppT> W_polys_blinded_at_secret_g1_i(
+            round_one_out.W_polys_blinded_at_secret_g1[i]);
+        W_polys_blinded_at_secret_g1_i.to_affine_coordinates();
+        assert(
+            W_polys_blinded_at_secret_g1_i.X ==
+            example.W_polys_blinded_at_secret_g1[i][0]);
+        assert(
+            W_polys_blinded_at_secret_g1_i.Y ==
+            example.W_polys_blinded_at_secret_g1[i][1]);
+    }
+#endif // #ifdef DEBUG
+#endif // #if 1 // prover round 1
+
+
+    // ------
+    
+#if 0    
+    printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
+#if 1 // prover round 2
+    this->round_two(witness, common_input, srs);
+    // Prover Round 2 output check against test vectors
+#ifdef DEBUG
+    printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
+    print_vector(this->z_poly);
+    assert(this->z_poly == example.z_poly);
+    printf("[%s:%d] Output from Round 2\n", __FILE__, __LINE__);
+    printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
+    this->z_poly_at_secret_g1.print();
+    libff::G1<ppT> z_poly_at_secret_g1_aff(this->z_poly_at_secret_g1);
+    z_poly_at_secret_g1_aff.to_affine_coordinates();
+    assert(z_poly_at_secret_g1_aff.X == example.z_poly_at_secret_g1[0]);
+    assert(z_poly_at_secret_g1_aff.Y == example.z_poly_at_secret_g1[1]);
+#endif // #ifdef DEBUG
+#endif // #if 1 // prover round 2
+
+    printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
+#if 1 // prover round 3
+    this->round_three(common_input, srs);
+    // Prover Round 3 output check against test vectors
+#ifdef DEBUG
+    printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
+    for (int i = 0; i < (int)NUM_HGEN; ++i) {
+        printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
+        this->t_poly_at_secret_g1[i].print();
+        libff::G1<ppT> t_poly_at_secret_g1_i(this->t_poly_at_secret_g1[i]);
+        t_poly_at_secret_g1_i.to_affine_coordinates();
+        assert(t_poly_at_secret_g1_i.X == example.t_poly_at_secret_g1[i][0]);
+        assert(t_poly_at_secret_g1_i.Y == example.t_poly_at_secret_g1[i][1]);
+    }
+#endif // #ifdef DEBUG
+#endif // #if 1 // prover round 3
+
+    printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
+#if 1 // prover round 4
+    this->round_four(common_input);
+    // Prover Round 4 output check against test vectors
+#ifdef DEBUG
+    printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
+    printf("a_zeta ");
+    this->a_zeta.print();
+    assert(this->a_zeta == example.a_zeta);
+    printf("b_zeta ");
+    this->b_zeta.print();
+    assert(this->b_zeta == example.b_zeta);
+    printf("c_zeta ");
+    this->c_zeta.print();
+    assert(this->c_zeta == example.c_zeta);
+    printf("S_0_zeta ");
+    this->S_0_zeta.print();
+    assert(this->S_0_zeta == example.S_0_zeta);
+    printf("S_1_zeta ");
+    this->S_1_zeta.print();
+    assert(this->S_1_zeta == example.S_1_zeta);
+    printf("t_zeta ");
+    this->t_zeta.print();
+    assert(this->t_zeta == example.t_zeta);
+    printf("z_poly_xomega_zeta ");
+    this->z_poly_xomega_zeta.print();
+    assert(this->z_poly_xomega_zeta == example.z_poly_xomega_zeta);
+#endif // #ifdef DEBUG
+#endif // #if 1 // prover round 4
+
+    printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
+#if 1 // prover round 5
+    this->round_five(common_input, srs);
+#endif // #if 1 // prover round 5
+#ifdef DEBUG
+    printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
+    printf("r_zeta ");
+    this->r_zeta.print();
+    assert(this->r_zeta == example.r_zeta);
+    printf("[%s:%d] W_zeta_at_secret \n", __FILE__, __LINE__);
+    this->W_zeta_at_secret.print();
+    libff::G1<ppT> W_zeta_at_secret_aff(this->W_zeta_at_secret);
+    W_zeta_at_secret_aff.to_affine_coordinates();
+    assert(W_zeta_at_secret_aff.X == example.W_zeta_at_secret[0]);
+    assert(W_zeta_at_secret_aff.Y == example.W_zeta_at_secret[1]);
+    printf("[%s:%d] W_zeta_omega_at_secret \n", __FILE__, __LINE__);
+    this->W_zeta_omega_at_secret.print();
+    libff::G1<ppT> W_zeta_omega_at_secret_aff(this->W_zeta_omega_at_secret);
+    W_zeta_omega_at_secret_aff.to_affine_coordinates();
+    assert(W_zeta_omega_at_secret_aff.X == example.W_zeta_omega_at_secret[0]);
+    assert(W_zeta_omega_at_secret_aff.Y == example.W_zeta_omega_at_secret[1]);
 #endif // #ifdef DEBUG
 
     // construct proof
-    plonk_proof<ppT> proof();
-    
+    plonk_proof<ppT> proof(
+        this->W_polys_blinded_at_secret_g1,
+        this->z_poly_at_secret_g1,
+        this->t_poly_at_secret_g1,
+        this->a_zeta,
+        this->b_zeta,
+        this->c_zeta,
+        this->S_0_zeta,
+        this->S_1_zeta,
+        this->z_poly_xomega_zeta,
+        this->W_zeta_at_secret,
+        this->W_zeta_omega_at_secret,
+        this->r_zeta);
     // return proof
+    return proof;
+#endif // #if 0
+    
+    plonk_proof<ppT> proof;
     return proof;
 }
 
