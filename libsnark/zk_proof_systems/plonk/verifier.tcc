@@ -126,37 +126,43 @@ void plonk_verifier<ppT>::step_three(
 //   [GWC19])
 // - u: multipoint evaluation challenge -- hash of transcript
 //  
-template<typename ppT> void plonk_verifier<ppT>::step_four()
+template<typename ppT>
+step_four_out_t<ppT> plonk_verifier<ppT>::step_four()
 {
-    // load challenges from example for debug
+  // load challenges from example for debug
 #ifdef DEBUG
-    plonk_example<ppT> example;
+  plonk_example<ppT> example;
 #endif // #ifdef DEBUG
-    this->beta = example.beta;
-    this->gamma = example.gamma;
-    this->alpha = example.alpha;
-    this->zeta = example.zeta;
-    this->nu = example.nu;
-    this->u = example.u;
+  step_four_out_t<ppT> step_four_out;
+  step_four_out.beta = example.beta;
+  step_four_out.gamma = example.gamma;
+  step_four_out.alpha = example.alpha;
+  step_four_out.zeta = example.zeta;
+  step_four_out.nu = example.nu;
+  step_four_out.u = example.u;
+  return step_four_out;
 }
 
 // Verifier Step 5: compute zero polynomial evaluation
 //
 // INPUT
-// - zeta: evaluation challenge -- hash of transcript
+// - zeta: evaluation challenge -- hash of transcript (from step 4)
 // - common_input: common preprocessed input
 //
 // OUTPUT
 // - zh_zeta: evaluation of vanishing polynomial Zh at x=zeta
 //   i.e. Zh(zeta)
 //  
-template<typename ppT>
-void plonk_verifier<ppT>::step_five(
-    const common_preprocessed_input<ppT> common_input)
+template<typename ppT> step_five_out_t<ppT>
+plonk_verifier<ppT>::step_five(
+			       const step_four_out_t<ppT> step_four_out,
+			       const common_preprocessed_input<ppT> common_input)
 {
-    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
-        libfqfft::get_evaluation_domain<Field>(common_input.num_gates);
-    this->zh_zeta = domain->compute_vanishing_polynomial(this->zeta);
+  step_five_out_t<ppT> step_five_out;
+  std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
+    libfqfft::get_evaluation_domain<Field>(common_input.num_gates);
+  step_five_out.zh_zeta = domain->compute_vanishing_polynomial(step_four_out.zeta);
+  return step_five_out;
 }
 
 // Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
@@ -572,10 +578,6 @@ bool plonk_verifier<ppT>::verify_proof(
     }
 #endif // #ifdef DEBUG
 
-
-    // ----
-    
-#if 0     
     // Verifier Step 1: validate that elements belong to group G1
     // Executed by the caller
 
@@ -588,16 +590,19 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 4: compute challenges hashed transcript as in
     // prover description, from the common inputs, public input, and
     // elements of pi-SNARK (fixed to the test vectors for now)
-    this->step_four();
+    const step_four_out_t<ppT> step_four_out = this->step_four();
 
     // Verifier Step 5: compute zero polynomial evaluation
-    this->step_five(common_input);
+    const step_five_out_t<ppT> step_five_out = this->step_five(step_four_out, common_input);
 #ifdef DEBUG
     printf("[%s:%d] zh_zeta ", __FILE__, __LINE__);
-    this->zh_zeta.print();
-    assert(this->zh_zeta == example.zh_zeta);
+    step_five_out.zh_zeta.print();
+    assert(step_five_out.zh_zeta == example.zh_zeta);
 #endif // #ifdef DEBUG
 
+    // ----
+    
+#if 0     
     // Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
     // Note: the paper counts the L-polynomials from 1; we count from 0
     this->step_six(common_input);

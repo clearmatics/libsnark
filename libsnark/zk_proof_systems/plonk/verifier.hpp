@@ -133,11 +133,16 @@ public:
 		     const srs<ppT> srs,
 		     const common_preprocessed_input<ppT> common_input);
 
-    void step_one(const plonk_proof<ppT> proof);
-    void step_two(const plonk_proof<ppT> proof);
-    void step_three(const common_preprocessed_input<ppT> common_input);
-    void step_four();
-    void step_five(const common_preprocessed_input<ppT> common_input);
+  static void step_one(const plonk_proof<ppT> proof);
+  static void step_two(const plonk_proof<ppT> proof);
+  static void step_three(const common_preprocessed_input<ppT> common_input);
+  
+  static step_four_out_t<ppT> step_four();
+  
+  static step_five_out_t<ppT> step_five(
+					const step_four_out_t<ppT> step_four_out,
+					const common_preprocessed_input<ppT> common_input);
+  
     void step_six(const common_preprocessed_input<ppT> common_input);
     void step_seven(const common_preprocessed_input<ppT> common_input);
     void step_eight(const plonk_proof<ppT> proof);
