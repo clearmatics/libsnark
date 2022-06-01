@@ -219,6 +219,17 @@ struct round_four_out_t {
   libff::Fr<ppT> t_zeta;
 };
 
+// Prover round 5 output
+template<typename ppT>
+struct round_five_out_t {
+  libff::Fr<ppT> nu;
+  libff::Fr<ppT> r_zeta;
+  libff::G1<ppT> W_zeta_at_secret;
+  libff::G1<ppT> W_zeta_omega_at_secret;
+  libff::Fr<ppT> u;
+};
+
+
 /**
  * Plonk prover. Computes object of class plonk_proof.
  */
@@ -269,6 +280,16 @@ public:
 	     const round_one_out_t<ppT> round_one_out,
 	     const round_three_out_t<ppT> round_three_out,
 	     const common_preprocessed_input<ppT> common_input);
+  
+  static round_five_out_t<ppT>
+  round_five(
+	     const round_zero_out_t<ppT> round_zero_out,
+	     const round_one_out_t<ppT> round_one_out,
+	     const round_two_out_t<ppT> round_two_out,  
+	     const round_three_out_t<ppT> round_three_out,
+	     const round_four_out_t<ppT> round_four_out,
+	     const common_preprocessed_input<ppT> common_input,
+	     const srs<ppT> srs);
   
   static plonk_proof<ppT>
   compute_proof(
