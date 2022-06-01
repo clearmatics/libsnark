@@ -82,7 +82,8 @@ void plonk_verifier<ppT>::step_two(plonk_proof<ppT> proof)
 {
 }
 
-// Verifier Step 3: validate that the public input belongs to scalar field Fr
+// Verifier Step 3: validate that the public input belongs to scalar
+// field Fr
 //
 // WARNING! This validation MUST be done by the caller. Empty
 // function here for consistency with the description in [GWC19]
@@ -94,7 +95,19 @@ void plonk_verifier<ppT>::step_three(
 
 // Verifier Step 4: compute challenges hashed transcript as in
 // prover description, from the common inputs, public input, and
-// elements of pi-SNARK .  TODO: fixed to the test vectors for now
+// elements of pi-SNARK.  TODO: fixed to the test vectors for now
+//
+// INPUT
+// - n/a
+//
+// OUTPUT
+// - beta, gamma: permutation challenges -- hashes of transcript
+// - alpha: quotinet challenge -- hash of transcript
+// - zeta: evaluation challenge -- hash of transcript
+// - nu: opening challenge -- hash of transcript (denoted by v in
+//   [GWC19])
+// - u: multipoint evaluation challenge -- hash of transcript
+//  
 template<typename ppT> void plonk_verifier<ppT>::step_four()
 {
     // load challenges from example for debug
@@ -110,6 +123,15 @@ template<typename ppT> void plonk_verifier<ppT>::step_four()
 }
 
 // Verifier Step 5: compute zero polynomial evaluation
+//
+// INPUT
+// - zeta: evaluation challenge -- hash of transcript
+// - common_input: common preprocessed input
+//
+// OUTPUT
+// - zh_zeta: evaluation of vanishing polynomial Zh at x=zeta
+//   i.e. Zh(zeta)
+//  
 template<typename ppT>
 void plonk_verifier<ppT>::step_five(
     const common_preprocessed_input<ppT> common_input)
@@ -121,6 +143,14 @@ void plonk_verifier<ppT>::step_five(
 
 // Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
 // Note: the paper counts the L-polynomials from 1; we count from 0
+//
+// INPUT
+// - common_input: common preprocessed input
+//
+// OUTPUT
+// - L_0_zeta: Lagrange polynomial evaluation of polynomial L1 at
+//   x=zeta i.e. L1(zeta)
+//  
 template<typename ppT>
 void plonk_verifier<ppT>::step_six(
     const common_preprocessed_input<ppT> common_input)
@@ -131,6 +161,14 @@ void plonk_verifier<ppT>::step_six(
 
 // Verifier Step 7: compute public input polynomial evaluation
 // PI(zeta)
+//
+// INPUT
+// - common_input: common preprocessed input
+//
+// OUTPUT
+// - PI_zeta: public input polynomial PI evaluated at x=zeta
+//   i.e. PI(zeta)
+//  
 template<typename ppT>
 void plonk_verifier<ppT>::step_seven(
     const common_preprocessed_input<ppT> common_input)
@@ -148,6 +186,14 @@ void plonk_verifier<ppT>::step_seven(
 // addition, the reference code divides r'(zeta) by the vanishing
 // polynomial at zeta zh_zeta, while the paper does not do that (see
 // also Step 9).
+//
+// INPUT
+// - proof: SNARK proof produced by the prover
+//
+// OUTPUT
+// - r_prime_zeta: quotient polynomial evaluation r'(zeta) = r(zeta) -
+//   r0, where r0 is a constant term
+//  
 template<typename ppT>
 void plonk_verifier<ppT>::step_eight(const plonk_proof<ppT> proof)
 {
@@ -192,6 +238,26 @@ void plonk_verifier<ppT>::step_eight(const plonk_proof<ppT> proof)
 // [t_hi]_1) is added to F1 in Step 10 and the multiplication by
 // Zh(zeta) is accounted for by dividing by Zh(zeta) of r'(zeta) in
 // Step 8.
+//
+// INPUT
+// - beta, gamma: permutation challenges -- hashes of transcript (from
+//   step 4)
+// - alpha: quotinet challenge -- hash of transcript (from step 4)
+// - zeta: evaluation challenge -- hash of transcript (from step 4)
+// - nu: opening challenge -- hash of transcript (denoted by v in
+//   [GWC19]) (from step 4)
+// - u: multipoint evaluation challenge -- hash of transcript (from
+//   step 4)
+// - Q_polys_at_secret_g1: circuit selector polynomials Q evaluated at
+//   the secret input (from verifier preprocessed input)
+// - S_polys_at_secret_g1: permutation polynomials S evaluated at the
+//   secret input (from verifier preprocessed input)
+// - proof: SNARK proof produced by the prover
+// - common_input: common preprocessed input
+//
+// OUTPUT
+// - D1: first part of batched polynomial commitment [D]_1
+//  
 template<typename ppT>
 void plonk_verifier<ppT>::step_nine(
     const plonk_proof<ppT> proof,
@@ -200,7 +266,7 @@ void plonk_verifier<ppT>::step_nine(
     // D1 is computed in 3 parts
     std::vector<libff::G1<ppT>> D1_part(3);
 
-    Field alpha_power2 = libff::power(alpha, libff::bigint<1>(2));
+    Field alpha_power2 = libff::power(this->alpha, libff::bigint<1>(2));
 
     // compute D1_part[0]:
     // (a_bar b_bar [q_M]_1 + a_bar [q_L]_1 + b_bar [q_R]_1 + c_bar [q_O]_1 +
@@ -261,6 +327,23 @@ void plonk_verifier<ppT>::step_nine(
 // code also adds the term ([t_lo]_1 + zeta^n [t_mid]_1 + zeta^2n
 // [t_hi]_1) which is addedto [D]_1 in the paper (see commenst to
 // Steps 8,9)
+//
+// INPUT
+// - zeta: evaluation challenge -- hash of transcript (from step 4)
+// - nu: opening challenge -- hash of transcript (denoted by v in
+//   [GWC19]) (from step 4)
+// - u: multipoint evaluation challenge -- hash of transcript (from
+//   step 4)
+// - S_polys_at_secret_g1: permutation polynomials S evaluated at the
+//   secret input (from verifier preprocessed input)
+// - D1: first part of batched polynomial commitment [D]_1 (from step
+//   9)
+// - proof: SNARK proof produced by the prover
+// - common_input: common preprocessed input
+//
+// OUTPUT
+// - F1: full batched polynomial commitment [F]_1
+//  
 template<typename ppT>
 void plonk_verifier<ppT>::step_ten(
     const plonk_proof<ppT> proof,
@@ -300,6 +383,19 @@ void plonk_verifier<ppT>::step_ten(
 }
 
 // Verifier Step 11: compute group-encoded batch evaluation [E]_1
+//
+// INPUT
+// - nu: opening challenge -- hash of transcript (denoted by v in
+//   [GWC19]) (from step 4)
+// - u: multipoint evaluation challenge -- hash of transcript (from
+//   step 4)
+// - r_prime_zeta: quotient polynomial evaluation r'(zeta) = r(zeta) -
+//   r0, where r0 is a constant term (from step 8)
+// - proof: SNARK proof produced by the prover
+//
+// OUTPUT
+// - E1: group-encoded batch evaluation [E]_1
+//  
 template<typename ppT>
 void plonk_verifier<ppT>::step_eleven(const plonk_proof<ppT> proof)
 {
@@ -330,6 +426,17 @@ void plonk_verifier<ppT>::step_eleven(const plonk_proof<ppT> proof)
 // Denoted as:
 // e(first_lhs, second_lhs) * e(first_rhs, second_rhs) = 1
 //
+//
+// INPUT
+// - F1: full batched polynomial commitment [F]_1 (from step 10)
+// - E1: group-encoded batch evaluation [E]_1 (from step 11)
+// - proof: SNARK proof produced by the prover
+// - srs: structured reference string
+// - common_input: common preprocessed input
+//
+// OUTPUT
+// - boolean 1/0 = valid/invalid proof
+//  
 template<typename ppT>
 bool plonk_verifier<ppT>::step_twelve(
     const plonk_proof<ppT> proof,
@@ -404,6 +511,13 @@ bool plonk_verifier<ppT>::step_twelve(
 // Verifier Step 3: validate that the public input belongs to scalar field Fr
 //
 // Therefore verification starts from Step 4 of [GWC19]
+//
+// INPUT
+//
+//
+// OUTPUT
+//
+//  
 template<typename ppT>
 bool plonk_verifier<ppT>::verify_proof(
     const plonk_proof<ppT> proof,

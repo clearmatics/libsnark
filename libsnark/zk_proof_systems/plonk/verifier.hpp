@@ -25,6 +25,57 @@ Ciobotaru, Cryptology ePrint Archive, Report 2019/953, 2019,
 
 namespace libsnark
 {
+
+/*
+ Verifier preprocessed input
+    std::vector<libff::G1<ppT>> Q_polys_at_secret_g1;
+    std::vector<libff::G1<ppT>> S_polys_at_secret_g1;
+
+ Verifier step 4
+    this->beta = example.beta;
+    this->gamma = example.gamma;
+    this->alpha = example.alpha;
+    this->zeta = example.zeta;
+    this->nu = example.nu;
+    this->u = example.u;
+
+ Verifier step 5
+    // evaluation of vanishing polynomial Zh at x=zeta i.e. Zh(zeta)
+    Field zh_zeta;
+
+ Verifier step 6
+    // Lagrange polynomial evaluation of polynomial L1 at x=zeta
+    // i.e. L1(zeta)
+    Field L_0_zeta;
+
+ Verifier step 7
+    // Public input polynomial PI evaluated at x=zeta .e. PI(zeta)
+    Field PI_zeta;
+
+ Verifier step 8
+    // compute quotient polynomial evaluation r'(zeta) = r(zeta) - r0,
+    // where r0 is a constant term Note:
+    Field r_prime_zeta;
+
+ Verifier step 9
+    // first part of batched polynomial commitment [D]_1
+    libff::G1<ppT> D1;
+
+ Verifier step 10
+    // full batched polynomial commitment [F]_1 = [D]_1 + v [a]_1 + v^2
+    // [b]_1 + v^3 [c]_1 + v^4 [s_sigma_1]_1 + v^5 [s_sigma_2]_1
+    libff::G1<ppT> F1;
+
+ Verifier step 11
+    // group-encoded batch evaluation [E]_1
+    libff::G1<ppT> E1;
+
+ Verifier step 12
+
+
+ 
+*/
+  
 /**
  * Plonk verifier. Verifies object of class plonk_proof.
  */
@@ -45,7 +96,7 @@ private:
     // Public input polynomial PI evaluated at x=zeta .e. PI(zeta)
     Field PI_zeta;
     // compute quotient polynomial evaluation r'(zeta) = r(zeta) - r0,
-    // where r0 is a constant term Note:
+    // where r0 is a constant term
     Field r_prime_zeta;
     // first part of batched polynomial commitment [D]_1
     libff::G1<ppT> D1;
