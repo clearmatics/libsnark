@@ -94,39 +94,40 @@ public:
     }
 };
 
-/**
- * Plonk prover. Computes object of class plonk_proof.
- */
-template<typename ppT> class plonk_prover
-{
-private:
-    using Field = libff::Fr<ppT>;
-
-    // round 0 (initialization)
+// Prover round 0 output
+template<typename ppT> struct round_zero_out_t {
     std::vector<libff::Fr<ppT>> zh_poly;
     polynomial<libff::Fr<ppT>> null_poly;
     polynomial<libff::Fr<ppT>> neg_one_poly;
+};
 
-    // round 1
+// Prover round 1 output
+template<typename ppT> struct round_one_out_t {
     std::vector<libff::Fr<ppT>> blind_scalars;
     std::vector<polynomial<libff::Fr<ppT>>> W_polys;
     std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded;
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
+};
 
-    // round 2
+// Prover round 2 output
+template<typename ppT> struct round_two_out_t {
     libff::Fr<ppT> beta;
     libff::Fr<ppT> gamma;
     polynomial<libff::Fr<ppT>> z_poly;
     libff::G1<ppT> z_poly_at_secret_g1;
+};
 
-    // round 3
+// Prover round 3 output
+template<typename ppT> struct round_three_out_t {
     libff::Fr<ppT> alpha;
     std::vector<libff::Fr<ppT>> z_poly_xomega;
     std::vector<polynomial<libff::Fr<ppT>>> t_poly;
     polynomial<libff::Fr<ppT>> t_poly_long;
     std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
+};
 
-    // round 4
+// Prover round 4 output
+template<typename ppT> struct round_four_out_t {
     libff::Fr<ppT> zeta;
     libff::Fr<ppT> a_zeta;
     libff::Fr<ppT> b_zeta;
@@ -135,169 +136,68 @@ private:
     libff::Fr<ppT> S_1_zeta;
     libff::Fr<ppT> z_poly_xomega_zeta;
     libff::Fr<ppT> t_zeta;
+};
 
-    // round 5
+// Prover round 5 output
+template<typename ppT> struct round_five_out_t {
     libff::Fr<ppT> nu;
     libff::Fr<ppT> r_zeta;
     libff::G1<ppT> W_zeta_at_secret;
     libff::G1<ppT> W_zeta_omega_at_secret;
     libff::Fr<ppT> u;
-
-public:
-    // constructors: initialize round 0 variables
-    plonk_prover(){};
-
-    plonk_prover(const common_preprocessed_input<ppT> common_input);
-
-    void compute_witness_polys(
-        const std::vector<libff::Fr<ppT>> witness,
-        const common_preprocessed_input<ppT> common_input);
-    void round_one(
-        const std::vector<libff::Fr<ppT>> witness,
-        const common_preprocessed_input<ppT> common_input,
-        const srs<ppT> srs);
-    void round_two(
-        const std::vector<libff::Fr<ppT>> witness,
-        const common_preprocessed_input<ppT> common_input,
-        const srs<ppT> srs);
-    void round_three(
-        const common_preprocessed_input<ppT> common_input, const srs<ppT> srs);
-    void round_four(const common_preprocessed_input<ppT> common_input);
-    void round_five(
-        const common_preprocessed_input<ppT> common_input, const srs<ppT> srs);
-    plonk_proof<ppT> compute_proof(
-        const srs<ppT> srs, const common_preprocessed_input<ppT> common_input);
-
 };
-
-// Prover round 0 output
-template<typename ppT>
-struct round_zero_out_t {
-  std::vector<libff::Fr<ppT>> zh_poly;
-  polynomial<libff::Fr<ppT>> null_poly;
-  polynomial<libff::Fr<ppT>> neg_one_poly;
-};
-  
-// Prover round 1 output
-template<typename ppT>
-struct round_one_out_t {
-  std::vector<libff::Fr<ppT>> blind_scalars;
-  std::vector<polynomial<libff::Fr<ppT>>> W_polys;
-  std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded;
-  std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
-};
-
-// Prover round 2 output
-template<typename ppT>
-struct round_two_out_t {
-  libff::Fr<ppT> beta;
-  libff::Fr<ppT> gamma;
-  polynomial<libff::Fr<ppT>> z_poly;
-  libff::G1<ppT> z_poly_at_secret_g1;
-};
-
-// Prover round 3 output
-template<typename ppT>
-struct round_three_out_t {
-  libff::Fr<ppT> alpha;
-  std::vector<libff::Fr<ppT>> z_poly_xomega;
-  std::vector<polynomial<libff::Fr<ppT>>> t_poly;
-  polynomial<libff::Fr<ppT>> t_poly_long;
-  std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
-};
-  
-// Prover round 4 output
-template<typename ppT>
-struct round_four_out_t {
-  libff::Fr<ppT> zeta;
-  libff::Fr<ppT> a_zeta;
-  libff::Fr<ppT> b_zeta;
-  libff::Fr<ppT> c_zeta;
-  libff::Fr<ppT> S_0_zeta;
-  libff::Fr<ppT> S_1_zeta;
-  libff::Fr<ppT> z_poly_xomega_zeta;
-  libff::Fr<ppT> t_zeta;
-};
-
-// Prover round 5 output
-template<typename ppT>
-struct round_five_out_t {
-  libff::Fr<ppT> nu;
-  libff::Fr<ppT> r_zeta;
-  libff::G1<ppT> W_zeta_at_secret;
-  libff::G1<ppT> W_zeta_omega_at_secret;
-  libff::Fr<ppT> u;
-};
-
 
 /**
  * Plonk prover. Computes object of class plonk_proof.
  */
-template<typename ppT> class plonk_prover_new
+template<typename ppT> class plonk_prover
 {
-  using Field = libff::Fr<ppT>;
-  
-private:
+    using Field = libff::Fr<ppT>;
 
-  //  const round_zero_out_t<ppT> round_zero_out;
-  
 public:
-  
-  // constructors: initialize round 0 variables
-  plonk_prover_new(){};
+    plonk_prover(){};
 
-  // --- new ---
+    static round_zero_out_t<ppT> round_zero(
+        const common_preprocessed_input<ppT> common_input);
 
-  static round_zero_out_t<ppT>
-  round_zero(
-	     const common_preprocessed_input<ppT> common_input);
-  
-  static round_one_out_t<ppT>
-  round_one(
-	    const round_zero_out_t<ppT> round_zero_out,
-	    const std::vector<libff::Fr<ppT>> witness,
-	    const common_preprocessed_input<ppT> common_input,
-	    const srs<ppT> srs);
-  
-  static round_two_out_t<ppT>
-  round_two(
-	    const round_zero_out_t<ppT> round_zero_out,
-	    const round_one_out_t<ppT> round_one_out,
-	    const std::vector<libff::Fr<ppT>> witness,
-	    const common_preprocessed_input<ppT> common_input,
-	    const srs<ppT> srs);
-  
-  static round_three_out_t<ppT>
-  round_three(
-	      const round_zero_out_t<ppT> round_zero_out,
-	      const round_one_out_t<ppT> round_one_out,
-	      const round_two_out_t<ppT> round_two_out,  
-	      const common_preprocessed_input<ppT> common_input,
-	      const srs<ppT> srs);
-  
-  static round_four_out_t<ppT>
-  round_four(
-	     const round_one_out_t<ppT> round_one_out,
-	     const round_three_out_t<ppT> round_three_out,
-	     const common_preprocessed_input<ppT> common_input);
-  
-  static round_five_out_t<ppT>
-  round_five(
-	     const round_zero_out_t<ppT> round_zero_out,
-	     const round_one_out_t<ppT> round_one_out,
-	     const round_two_out_t<ppT> round_two_out,  
-	     const round_three_out_t<ppT> round_three_out,
-	     const round_four_out_t<ppT> round_four_out,
-	     const common_preprocessed_input<ppT> common_input,
-	     const srs<ppT> srs);
-  
-  static plonk_proof<ppT>
-  compute_proof(
-		const srs<ppT> srs,
-		const common_preprocessed_input<ppT> common_input);
-  
+    static round_one_out_t<ppT> round_one(
+        const round_zero_out_t<ppT> round_zero_out,
+        const std::vector<libff::Fr<ppT>> witness,
+        const common_preprocessed_input<ppT> common_input,
+        const srs<ppT> srs);
+
+    static round_two_out_t<ppT> round_two(
+        const round_zero_out_t<ppT> round_zero_out,
+        const round_one_out_t<ppT> round_one_out,
+        const std::vector<libff::Fr<ppT>> witness,
+        const common_preprocessed_input<ppT> common_input,
+        const srs<ppT> srs);
+
+    static round_three_out_t<ppT> round_three(
+        const round_zero_out_t<ppT> round_zero_out,
+        const round_one_out_t<ppT> round_one_out,
+        const round_two_out_t<ppT> round_two_out,
+        const common_preprocessed_input<ppT> common_input,
+        const srs<ppT> srs);
+
+    static round_four_out_t<ppT> round_four(
+        const round_one_out_t<ppT> round_one_out,
+        const round_three_out_t<ppT> round_three_out,
+        const common_preprocessed_input<ppT> common_input);
+
+    static round_five_out_t<ppT> round_five(
+        const round_zero_out_t<ppT> round_zero_out,
+        const round_one_out_t<ppT> round_one_out,
+        const round_two_out_t<ppT> round_two_out,
+        const round_three_out_t<ppT> round_three_out,
+        const round_four_out_t<ppT> round_four_out,
+        const common_preprocessed_input<ppT> common_input,
+        const srs<ppT> srs);
+
+    static plonk_proof<ppT> compute_proof(
+        const srs<ppT> srs, const common_preprocessed_input<ppT> common_input);
 };
-  
+
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/prover.tcc"
