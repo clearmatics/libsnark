@@ -196,6 +196,15 @@ struct round_two_out_t {
   libff::G1<ppT> z_poly_at_secret_g1;
 };
 
+// round 3 output
+template<typename ppT>
+struct round_three_out_t {
+  libff::Fr<ppT> alpha;
+  std::vector<libff::Fr<ppT>> z_poly_xomega;
+  std::vector<polynomial<libff::Fr<ppT>>> t_poly;
+  polynomial<libff::Fr<ppT>> t_poly_long;
+  std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
+};
   
 /**
  * Plonk prover. Computes object of class plonk_proof.
@@ -233,6 +242,14 @@ public:
 	    const std::vector<libff::Fr<ppT>> witness,
 	    const common_preprocessed_input<ppT> common_input,
 	    const srs<ppT> srs);
+  
+  static round_three_out_t<ppT>
+  round_three(
+	      const round_zero_out_t<ppT> round_zero_out,
+	      const round_one_out_t<ppT> round_one_out,
+	      const round_two_out_t<ppT> round_two_out,  
+	      const common_preprocessed_input<ppT> common_input,
+	      const srs<ppT> srs);
   
   static plonk_proof<ppT>
   compute_proof(

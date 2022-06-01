@@ -1239,7 +1239,6 @@ plonk_prover_new<ppT>::round_one(
 //
 // OUTPUT
 // - beta, gamma: permutation challenges -- hashes of transcript
-//   (Fiat-Shamir heuristic)
 // - z_poly: blinded accumulator poly z(x)
 // - z_poly_at_secret_g1: blinded accumulator poly z(x) evaluated at
 // secret
@@ -1312,6 +1311,268 @@ plonk_prover_new<ppT>::round_two(
         plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, round_two_out.z_poly);
     
     return round_two_out;
+}
+
+// Prover Round 3 (NEW class)
+//
+// Warning! The most computationally intensive part of the prover
+// routine
+//
+// INPUT
+// - zh_poly: vanishing polynomial Zh (from Round 0)
+// - W_polys_blinded: blinded witness polynomials (from Round 1)
+// - beta, gamma: permutation challenges -- hashes of transcript (from
+//   round 2)
+// - z_poly: blinded accumulator poly z(x) (from Round 2)
+// - common_input: common preprocessed input
+// - srs: structured reference string
+//
+// OUTPUT
+// - alpha: quotinet challenge -- hashe of transcript
+// - t_poly_long: the quotient polynomial t(x) (see Round 3, pp28
+//   [GWC19])
+// - t_poly: t(x) divided in three parts t(x) = t_lo(x) + t_mid(x) x^n
+//   + t_hi(x) x^{2n}
+// - t_poly_at_secret_g1: t(x) evaluated at the secret input zeta
+//   i.e. t(zeta)
+// - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by w
+//
+template<typename ppT> round_three_out_t<ppT>
+plonk_prover_new<ppT>::round_three(
+				   const round_zero_out_t<ppT> round_zero_out,
+				   const round_one_out_t<ppT> round_one_out,
+				   const round_two_out_t<ppT> round_two_out,  
+				   const common_preprocessed_input<ppT> common_input,
+				   const srs<ppT> srs)
+{
+    using Field = libff::Fr<ppT>;
+    int num_hgen = NUM_HGEN;
+
+    // initialize hard-coded values from example circuit
+#ifdef DEBUG
+    plonk_example<ppT> example;
+#endif // #ifdef DEBUG
+    
+    // output from round 3
+    round_three_out_t<ppT> round_three_out;
+
+    // quotient challenge (hash of transcript); fixed to test value
+    round_three_out.alpha = example.alpha;
+
+    // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
+    // w=common_input.omega_roots is the base root of unity and z is
+    // z_poly. we do this by multiplying the coefficients of z by w
+    round_three_out.z_poly_xomega.resize(round_two_out.z_poly.size());
+    std::fill(round_three_out.z_poly_xomega.begin(), round_three_out.z_poly_xomega.end(), Field(0));
+    for (size_t i = 0; i < round_two_out.z_poly.size(); ++i) {
+        // omega_roots^i
+        Field omega_roots_i = libff::power(
+            common_input.omega_roots[base][1], libff::bigint<1>(i));
+        round_three_out.z_poly_xomega[i] = round_two_out.z_poly[i] * omega_roots_i;
+    }
+
+#ifdef DEBUG
+    printf("[%s:%d] this->z_poly_xomega\n", __FILE__, __LINE__);
+    print_vector(round_three_out.z_poly_xomega);
+    for (size_t i = 0; i < round_two_out.z_poly.size(); ++i) {
+        assert(round_three_out.z_poly_xomega[i] == example.z_poly_xomega[i]);
+    }
+#endif // #ifdef DEBUG
+
+    // start computation of polynomial t(X) in round 3. we break t
+    // into 4 parts which we compute separately. each of the 4 parts
+    // is multiplied by 1/zh_poly in the paper
+    std::vector<polynomial<Field>> t_part(4);
+
+    // --- Computation of t_part[0]
+
+    // a(x)b(x)q_M(x)
+    polynomial<Field> abqM;
+    libfqfft::_polynomial_multiplication<Field>(
+        abqM, round_one_out.W_polys_blinded[a], round_one_out.W_polys_blinded[b]);
+    libfqfft::_polynomial_multiplication<Field>(
+        abqM, abqM, common_input.Q_polys[M]);
+    // a(x)q_L(x)
+    polynomial<Field> aqL;
+    libfqfft::_polynomial_multiplication<Field>(
+        aqL, round_one_out.W_polys_blinded[a], common_input.Q_polys[L]);
+    // b(x)q_R(x)
+    polynomial<Field> bqR;
+    libfqfft::_polynomial_multiplication<Field>(
+        bqR, round_one_out.W_polys_blinded[b], common_input.Q_polys[R]);
+    // c(x)q_O(x)
+    polynomial<Field> cqO;
+    libfqfft::_polynomial_multiplication<Field>(
+        cqO, round_one_out.W_polys_blinded[c], common_input.Q_polys[O]);
+    // t_part[0](x) = a(x)b(x)q_M(x) + a(x)q_L(x) + b(x)q_R(x) + c(x)q_O(x) +
+    // PI(x) + q_C(x)
+    polynomial<Field> poly_null{Field(0)};
+    libfqfft::_polynomial_addition<Field>(t_part[0], poly_null, abqM);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], aqL);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], bqR);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], cqO);
+    libfqfft::_polynomial_addition<Field>(
+        t_part[0], t_part[0], common_input.PI_poly);
+    libfqfft::_polynomial_addition<Field>(
+        t_part[0], t_part[0], common_input.Q_polys[C]);
+
+    // --- Computation of t_part[1]
+
+    // X*beta as polynomial in X
+    std::vector<polynomial<Field>> xbeta_poly{
+        {Field(0), round_two_out.beta},                   // X*beta
+        {Field(0), round_two_out.beta * common_input.k1}, // X*beta*k1
+        {Field(0), round_two_out.beta * common_input.k2}  // X*beta*k2
+    };
+    // represent gamma as polynomial in X, needed for prover Round 3
+    polynomial<Field> gamma_poly{round_two_out.gamma}; // gamma
+    // represent alpha as polynomial in X, needed for prover Round 3
+    polynomial<Field> alpha_poly{round_three_out.alpha}; // alpha
+
+    // a(x) + beta*x + gamma
+    polynomial<Field> a_xbeta_gamma;
+    libfqfft::_polynomial_addition<Field>(
+        a_xbeta_gamma, round_one_out.W_polys_blinded[a], xbeta_poly[base]);
+    libfqfft::_polynomial_addition<Field>(
+        a_xbeta_gamma, a_xbeta_gamma, gamma_poly);
+    // b(x) + beta_k1*x + gamma
+    polynomial<Field> b_xbeta_gamma_k1;
+    libfqfft::_polynomial_addition<Field>(
+        b_xbeta_gamma_k1, round_one_out.W_polys_blinded[b], xbeta_poly[base_k1]);
+    libfqfft::_polynomial_addition<Field>(
+        b_xbeta_gamma_k1, b_xbeta_gamma_k1, gamma_poly);
+    // c(x) + beta_k1*x + gamma
+    polynomial<Field> c_xbeta_gamma_k2;
+    libfqfft::_polynomial_addition<Field>(
+        c_xbeta_gamma_k2, round_one_out.W_polys_blinded[c], xbeta_poly[base_k2]);
+    libfqfft::_polynomial_addition<Field>(
+        c_xbeta_gamma_k2, c_xbeta_gamma_k2, gamma_poly);
+    // t_part[1] = (a(x) + beta*x + gamma)*(b(x) + beta_k1*x +
+    // gamma)*(c(x) + beta_k1*x + gamma)*z(x)*alpha
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[1], a_xbeta_gamma, b_xbeta_gamma_k1);
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[1], t_part[1], c_xbeta_gamma_k2);
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[1], t_part[1], round_two_out.z_poly);
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[1], t_part[1], alpha_poly);
+
+    // --- Computation of t_part[2]
+
+    // represent beta as polynomial in X, needed for prover Round 3
+    polynomial<Field> beta_poly{round_two_out.beta};
+    // S*beta as polynomial
+    // S_sigma1(x)*beta, S_sigma2(x)*beta, S_sigma3(x)*beta
+    std::vector<polynomial<Field>> sbeta_poly(num_hgen);
+    for (int i = 0; i < num_hgen; ++i) {
+        libfqfft::_polynomial_multiplication<Field>(
+            sbeta_poly[i], common_input.S_polys[i], beta_poly);
+    }
+    // a(x) + S_sigma1(x)*beta + gamma
+    polynomial<Field> a_sbeta_gamma;
+    libfqfft::_polynomial_addition<Field>(
+        a_sbeta_gamma, round_one_out.W_polys_blinded[a], sbeta_poly[base]);
+    libfqfft::_polynomial_addition<Field>(
+        a_sbeta_gamma, a_sbeta_gamma, gamma_poly);
+    // b(x) + S_sigma2(x)*beta + gamma
+    polynomial<Field> b_sbeta_gamma_k1;
+    libfqfft::_polynomial_addition<Field>(
+        b_sbeta_gamma_k1, round_one_out.W_polys_blinded[b], sbeta_poly[base_k1]);
+    libfqfft::_polynomial_addition<Field>(
+        b_sbeta_gamma_k1, b_sbeta_gamma_k1, gamma_poly);
+    // b(x) + S_sigma2(x)*beta + gamma
+    polynomial<Field> c_sbeta_gamma_k2;
+    libfqfft::_polynomial_addition<Field>(
+        c_sbeta_gamma_k2, round_one_out.W_polys_blinded[c], sbeta_poly[base_k2]);
+    libfqfft::_polynomial_addition<Field>(
+        c_sbeta_gamma_k2, c_sbeta_gamma_k2, gamma_poly);
+    // t_part[2] = (a(x) + S_sigma1(x)*beta + gamma)*(b(x) +
+    // S_sigma2(x)*beta + gamma)*(b(x) + S_sigma2(x)*beta +
+    // gamma)*z(x*common_input.omega_roots)*alpha
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[2], a_sbeta_gamma, b_sbeta_gamma_k1);
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[2], t_part[2], c_sbeta_gamma_k2);
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[2], t_part[2], round_three_out.z_poly_xomega);
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[2], t_part[2], alpha_poly);
+    // -t_part[2]
+    polynomial<Field> neg_one_poly = {-Field("1")};
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[2], t_part[2], neg_one_poly);
+
+    // --- Computation of t_part[3]
+
+    // z(x) - 1
+    polynomial<Field> z_neg_one;
+    libfqfft::_polynomial_addition<Field>(
+        z_neg_one, round_two_out.z_poly, neg_one_poly);
+    // (z(x)-1) * L_1(x)
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[3], z_neg_one, common_input.L_basis[0]);
+    // (z(x)-1) * L_1(x) * alpha
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[3], t_part[3], alpha_poly);
+    // (z(x)-1) * L_1(x) * alpha * alpha
+    libfqfft::_polynomial_multiplication<Field>(
+        t_part[3], t_part[3], alpha_poly);
+
+    // --- computation of t(x)
+
+    // t(x) = (t[0] + t[1] + (-t[2]) + t[3]) / zh(x)
+    round_three_out.t_poly_long = {Field(0)};
+    libfqfft::_polynomial_addition<Field>(
+        round_three_out.t_poly_long, round_three_out.t_poly_long, t_part[0]);
+#if 1 // DEBUG
+    libfqfft::_polynomial_addition<Field>(
+        round_three_out.t_poly_long, round_three_out.t_poly_long, t_part[1]);
+    libfqfft::_polynomial_addition<Field>(
+        round_three_out.t_poly_long, round_three_out.t_poly_long, t_part[2]);
+    libfqfft::_polynomial_addition<Field>(
+        round_three_out.t_poly_long, round_three_out.t_poly_long, t_part[3]);
+#endif // #if 0 // DEBUG
+    //    t(x) = t(x) / zh(x): A/B = (Q, R) st. A = (Q * B) + R.
+    polynomial<Field> remainder;
+    libfqfft::_polynomial_division(
+        round_three_out.t_poly_long, remainder, round_three_out.t_poly_long, round_zero_out.zh_poly);
+#ifdef DEBUG
+    printf("[%s:%d] round_three_out.t_poly_long\n", __FILE__, __LINE__);
+    print_vector(round_three_out.t_poly_long);
+    assert(round_three_out.t_poly_long == example.t_poly_long);
+    printf("[%s:%d] remainder\n", __FILE__, __LINE__);
+    print_vector(remainder);
+#endif // #ifdef DEBUG
+    assert(libfqfft::_is_zero(remainder));
+
+    // break this->t_poly_long into three parts: lo, mid, hi, each of degree
+    // 7. note: (common_input.num_gates+3) is the length of the CRS =
+    // (common_input.num_gates+2) powers of G1 + 1 power of G2
+    round_three_out.t_poly.resize(num_hgen);
+    for (int i = 0; i < num_hgen; ++i) {
+        typename std::vector<Field>::iterator begin =
+            round_three_out.t_poly_long.begin() + (i * (common_input.num_gates + 2));
+        typename std::vector<Field>::iterator end =
+            round_three_out.t_poly_long.begin() + (i * (common_input.num_gates + 2)) +
+            (common_input.num_gates + 2);
+        std::vector<Field> tmp(begin, end);
+        round_three_out.t_poly[i] = tmp;
+    }
+#ifdef DEBUG
+    for (int i = 0; i < num_hgen; ++i) {
+        printf("[%s:%d] t_poly[%d]\n", __FILE__, __LINE__, i);
+        print_vector(round_three_out.t_poly[i]);
+        assert(round_three_out.t_poly[i] == example.t_poly[i]);
+    }
+#endif // #ifdef DEBUG
+    // evaluate each part of t_poly in the secret input
+    round_three_out.t_poly_at_secret_g1.resize(num_hgen);
+    for (int i = 0; i < num_hgen; ++i) {
+        round_three_out.t_poly_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(
+            srs.secret_powers_g1, round_three_out.t_poly[i]);
+    }
+    return round_three_out;
 }
 
 // Prover compute SNARK proof
@@ -1426,20 +1687,20 @@ plonk_prover_new<ppT>::compute_proof(
 #endif // #ifdef DEBUG
 #endif // #if 1 // prover round 2
 
-
-    // ------
-    
-#if 0    
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
 #if 1 // prover round 3
-    this->round_three(common_input, srs);
+    const round_three_out_t<ppT> round_three_out =
+      plonk_prover_new::round_three(round_zero_out,
+				    round_one_out,
+				    round_two_out,
+				    common_input, srs);
     // Prover Round 3 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
     for (int i = 0; i < (int)NUM_HGEN; ++i) {
         printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
-        this->t_poly_at_secret_g1[i].print();
-        libff::G1<ppT> t_poly_at_secret_g1_i(this->t_poly_at_secret_g1[i]);
+        round_three_out.t_poly_at_secret_g1[i].print();
+        libff::G1<ppT> t_poly_at_secret_g1_i(round_three_out.t_poly_at_secret_g1[i]);
         t_poly_at_secret_g1_i.to_affine_coordinates();
         assert(t_poly_at_secret_g1_i.X == example.t_poly_at_secret_g1[i][0]);
         assert(t_poly_at_secret_g1_i.Y == example.t_poly_at_secret_g1[i][1]);
@@ -1447,6 +1708,10 @@ plonk_prover_new<ppT>::compute_proof(
 #endif // #ifdef DEBUG
 #endif // #if 1 // prover round 3
 
+
+    // ------
+    
+#if 0    
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
 #if 1 // prover round 4
     this->round_four(common_input);
