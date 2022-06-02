@@ -4,8 +4,7 @@
 namespace libsnark
 {
 
-template<typename ppT>
-plonk_example<ppT>::plonk_example()
+template<typename ppT> plonk_example<ppT>::plonk_example()
 {
     using Field = libff::Fr<ppT>;
     using BaseField = libff::Fq<ppT>;
@@ -34,50 +33,49 @@ plonk_example<ppT>::plonk_example()
         {Field(0), Field(0), Field(0), Field(0), Field(0)},    // dummy
     };
 
-    this->gates_matrix_transpose =
-        {
-            //  mul          mul          add          con5       PI add dum dum
-            {Field(0),
-             Field(0),
-             Field(1),
-             Field(0),
-             Field(0),
-             Field(1),
-             Field(0),
-             Field(0)}, // q_L
-            {Field(0),
-             Field(0),
-             Field(1),
-             Field(1),
-             Field(1),
-             Field(1),
-             Field(0),
-             Field(0)}, // q_R
-            {Field(1),
-             Field(1),
-             Field(0),
-             Field(0),
-             Field(0),
-             Field(0),
-             Field(0),
-             Field(0)}, // q_M
-            {-Field("1"),
-             -Field("1"),
-             -Field("1"),
-             Field(0),
-             Field(0),
-             -Field("1"),
-             Field(0),
-             Field(0)}, // q_O
-            {Field(0),
-             Field(0),
-             Field(0),
-             -Field("5"),
-             Field(0),
-             Field(0),
-             Field(0),
-             Field(0)}, // q_C
-        };
+    this->gates_matrix_transpose = {
+        //  mul          mul          add          con5       PI add dum dum
+        {Field(0),
+         Field(0),
+         Field(1),
+         Field(0),
+         Field(0),
+         Field(1),
+         Field(0),
+         Field(0)}, // q_L
+        {Field(0),
+         Field(0),
+         Field(1),
+         Field(1),
+         Field(1),
+         Field(1),
+         Field(0),
+         Field(0)}, // q_R
+        {Field(1),
+         Field(1),
+         Field(0),
+         Field(0),
+         Field(0),
+         Field(0),
+         Field(0),
+         Field(0)}, // q_M
+        {-Field("1"),
+         -Field("1"),
+         -Field("1"),
+         Field(0),
+         Field(0),
+         -Field("1"),
+         Field(0),
+         Field(0)}, // q_O
+        {Field(0),
+         Field(0),
+         Field(0),
+         -Field("5"),
+         Field(0),
+         Field(0),
+         Field(0),
+         Field(0)}, // q_C
+    };
 
     // witness values
     // w_L = a = [ 3,  9, 27,  1,  1, 30,  0,  0]
@@ -96,7 +94,7 @@ plonk_example<ppT>::plonk_example()
 
     // public input (PI)
     this->public_input = Field(35);
-    
+
     // index of the row of the PI in the non-transposed gates_matrix
     this->public_input_index = 4;
 

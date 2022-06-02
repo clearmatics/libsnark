@@ -18,69 +18,68 @@
 #include <libff/algebra/scalar_multiplication/multiexp.hpp>
 #include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
 #include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
-#include <libsnark/zk_proof_systems/plonk/plonk.hpp>
 #include <libsnark/zk_proof_systems/plonk/common_input.hpp>
-#include <libsnark/zk_proof_systems/plonk/srs.hpp>
+#include <libsnark/zk_proof_systems/plonk/plonk.hpp>
 #include <libsnark/zk_proof_systems/plonk/prover.hpp>
+#include <libsnark/zk_proof_systems/plonk/srs.hpp>
 #include <libsnark/zk_proof_systems/plonk/verifier.hpp>
 
 namespace libsnark
 {
-  // Manipulate elements of a valid proof to assert that proof
-  // verification fails
-  //
-  // Plonk proof Pi is composed of the following elements:
-  //
-  // Pi ([a]_1, [b]_1, [c]_1, [z]_1,
-  //     [t_lo]_1, [t_mi]_1, [t_hi]_1,
-  //     \bar{a}, \bar{b}, \bar{c},
-  //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
-  //     [W_zeta]_1, [W_{zeta omega_roots}]_1
-  //     r_zeta (*))
-  //
-  template<typename ppT>
-  void test_verify_invalid_proof(
-				 const plonk_proof<ppT> valid_proof,
-				 const srs<ppT> srs,
-				 const common_preprocessed_input<ppT> common_input)
-  {
+// Manipulate elements of a valid proof to assert that proof
+// verification fails
+//
+// Plonk proof Pi is composed of the following elements:
+//
+// Pi ([a]_1, [b]_1, [c]_1, [z]_1,
+//     [t_lo]_1, [t_mi]_1, [t_hi]_1,
+//     \bar{a}, \bar{b}, \bar{c},
+//     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
+//     [W_zeta]_1, [W_{zeta omega_roots}]_1
+//     r_zeta (*))
+//
+template<typename ppT>
+void test_verify_invalid_proof(
+    const plonk_proof<ppT> valid_proof,
+    const srs<ppT> srs,
+    const common_preprocessed_input<ppT> common_input)
+{
     // initialize verifier
     plonk_verifier<ppT> verifier;
     bool b_accept = true;
-    
+
     // random element on the curve initialized to zero
     libff::G1<ppT> G1_noise = libff::G1<ppT>::zero();
     // random element in the scalar field initialized to zero
     libff::Fr<ppT> Fr_noise = libff::Fr<ppT>::zero();
     // initialize the manipulated proof to the valid one
     plonk_proof<ppT> proof = valid_proof;
-    
+
     // manipulate [a]_1, [b]_1, [c]_1
-    for (size_t i = 0; i < valid_proof.W_polys_blinded_at_secret_g1.size(); ++i) {
-      // re-initialize the manipulated proof
-      proof = valid_proof;
-      G1_noise = libff::G1<ppT>::random_element();
-      proof.W_polys_blinded_at_secret_g1[i] =
-	proof.W_polys_blinded_at_secret_g1[i] + G1_noise;
-      b_accept = verifier.verify_proof(proof, srs, common_input);
-      ASSERT_FALSE(b_accept);
+    for (size_t i = 0; i < valid_proof.W_polys_blinded_at_secret_g1.size();
+         ++i) {
+        // re-initialize the manipulated proof
+        proof = valid_proof;
+        G1_noise = libff::G1<ppT>::random_element();
+        proof.W_polys_blinded_at_secret_g1[i] =
+            proof.W_polys_blinded_at_secret_g1[i] + G1_noise;
+        b_accept = verifier.verify_proof(proof, srs, common_input);
+        ASSERT_FALSE(b_accept);
     }
     // manipulate [z]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
-    proof.z_poly_at_secret_g1 =
-      proof.z_poly_at_secret_g1 + G1_noise;
+    proof.z_poly_at_secret_g1 = proof.z_poly_at_secret_g1 + G1_noise;
     b_accept = verifier.verify_proof(proof, srs, common_input);
     ASSERT_FALSE(b_accept);
     // manipulate [t_lo]_1, [t_mi]_1, [t_hi]_1
     for (size_t i = 0; i < valid_proof.t_poly_at_secret_g1.size(); ++i) {
-      // re-initialize the manipulated proof
-      proof = valid_proof;
-      G1_noise = libff::G1<ppT>::random_element();
-      proof.t_poly_at_secret_g1[i] =
-	proof.t_poly_at_secret_g1[i] + G1_noise;
-      b_accept = verifier.verify_proof(proof, srs, common_input);
-      ASSERT_FALSE(b_accept);
+        // re-initialize the manipulated proof
+        proof = valid_proof;
+        G1_noise = libff::G1<ppT>::random_element();
+        proof.t_poly_at_secret_g1[i] = proof.t_poly_at_secret_g1[i] + G1_noise;
+        b_accept = verifier.verify_proof(proof, srs, common_input);
+        ASSERT_FALSE(b_accept);
     }
     // manipulate \bar{a}
     proof = valid_proof;
@@ -121,15 +120,13 @@ namespace libsnark
     // manipulate [W_zeta]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
-    proof.W_zeta_at_secret =
-      proof.W_zeta_at_secret + G1_noise;
+    proof.W_zeta_at_secret = proof.W_zeta_at_secret + G1_noise;
     b_accept = verifier.verify_proof(proof, srs, common_input);
     ASSERT_FALSE(b_accept);
     // manipulate [W_{zeta omega_roots}]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
-    proof.W_zeta_omega_at_secret =
-      proof.W_zeta_omega_at_secret + G1_noise;
+    proof.W_zeta_omega_at_secret = proof.W_zeta_omega_at_secret + G1_noise;
     b_accept = verifier.verify_proof(proof, srs, common_input);
     ASSERT_FALSE(b_accept);
     // manipulate r_zeta
@@ -138,16 +135,12 @@ namespace libsnark
     proof.r_zeta = proof.r_zeta + Fr_noise;
     b_accept = verifier.verify_proof(proof, srs, common_input);
     ASSERT_FALSE(b_accept);
-  }
+}
 
-  
 template<typename ppT> void test_plonk()
 {
 #ifndef DEBUG
-    printf(
-        "[%s:%d] WARNING! DEBUG info disabled.\n",
-        __FILE__,
-        __LINE__);
+    printf("[%s:%d] WARNING! DEBUG info disabled.\n", __FILE__, __LINE__);
     //    assert(0);
 #endif // #ifndef DEBUG
 
@@ -219,10 +212,10 @@ template<typename ppT> void test_plonk()
             proof.W_polys_blinded_at_secret_g1[i]);
         W_polys_blinded_at_secret_g1_i.to_affine_coordinates();
         ASSERT_EQ(
-		  W_polys_blinded_at_secret_g1_i.X,
+            W_polys_blinded_at_secret_g1_i.X,
             example.W_polys_blinded_at_secret_g1[i][0]);
         ASSERT_EQ(
-		  W_polys_blinded_at_secret_g1_i.Y,
+            W_polys_blinded_at_secret_g1_i.Y,
             example.W_polys_blinded_at_secret_g1[i][1]);
     }
     proof.z_poly_at_secret_g1.print();
@@ -264,10 +257,7 @@ template<typename ppT> void test_plonk()
     test_verify_invalid_proof(proof, srs, common_input);
 #endif // #ifndef DEBUG
 #ifndef DEBUG
-    printf(
-        "[%s:%d] WARNING! DEBUG info was disabled.\n",
-        __FILE__,
-        __LINE__);
+    printf("[%s:%d] WARNING! DEBUG info was disabled.\n", __FILE__, __LINE__);
 #endif // #ifndef DEBUG
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
     // end
