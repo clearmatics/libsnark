@@ -29,6 +29,7 @@ J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive, Report
 // enable debug checks. in particular enable comparisons to test
 // vector values.
 #define DEBUG
+//#undef DEBUG
 
 // number of generators for H, Hk1, Hk2
 const size_t NUM_HGEN = 3;

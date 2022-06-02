@@ -53,12 +53,12 @@ public:
     Field a_zeta;
     Field b_zeta;
     Field c_zeta;
-    // \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
+    // \bar{S_sigma1}, \bar{S_sigma2},
     Field S_0_zeta;
     Field S_1_zeta;
     // \bar{z_w}
     Field z_poly_xomega_zeta;
-    // [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1
+    // [W_zeta]_1, [W_{zeta omega_roots}]_1
     libff::G1<ppT> W_zeta_at_secret;
     libff::G1<ppT> W_zeta_omega_at_secret;
     // r_zeta (*)
