@@ -40,7 +40,7 @@ public:
     //     [t_lo]_1, [t_mi]_1, [t_hi]_1,
     //     \bar{a}, \bar{b}, \bar{c},
     //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
-    //     [W_zeta]_1, [W_{zeta common_input.omega_roots}]_1
+    //     [W_zeta]_1, [W_{zeta omega_roots}]_1
     //     r_zeta (*))
 
     // [a]_1, [b]_1, [c]_1

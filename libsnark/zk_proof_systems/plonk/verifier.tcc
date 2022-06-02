@@ -128,9 +128,7 @@ void plonk_verifier<ppT>::step_three(
 template<typename ppT> step_four_out_t<ppT> plonk_verifier<ppT>::step_four()
 {
     // load challenges from example for debug
-#ifdef DEBUG
     plonk_example<ppT> example;
-#endif // #ifdef DEBUG
     step_four_out_t<ppT> step_four_out;
     step_four_out.beta = example.beta;
     step_four_out.gamma = example.gamma;
@@ -534,12 +532,7 @@ bool plonk_verifier<ppT>::step_twelve(
     plonk_example<ppT> example;
 #endif // #ifdef DEBUG
 
-    // add random element (noise) to the opening polynomials to check
-    // that the pairing fails
-    //    libff::G1<ppT> noise = libff::G1<ppT>::random_element();
-    libff::G1<ppT> noise = libff::G1<ppT>::zero();
-
-    std::vector<libff::G1<ppT>> curve_points_lhs{proof.W_zeta_at_secret + noise,
+    std::vector<libff::G1<ppT>> curve_points_lhs{proof.W_zeta_at_secret,
                                                  proof.W_zeta_omega_at_secret};
     std::vector<libff::Fr<ppT>> scalar_elements_lhs{Field(1), step_four_out.u};
     libff::G1<ppT> pairing_first_lhs =

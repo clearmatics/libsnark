@@ -90,9 +90,7 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     int nwitness = 3;
 
     // initialize hard-coded values from example circuit
-#ifdef DEBUG
     plonk_example<ppT> example;
-#endif // #ifdef DEBUG
 
     // output from round 1
     round_one_out_t<ppT> round_one_out;
@@ -197,9 +195,7 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
 {
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
-#ifdef DEBUG
     plonk_example<ppT> example;
-#endif // #ifdef DEBUG
 
     // output from round 2
     round_two_out_t<ppT> round_two_out;
@@ -294,9 +290,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     int num_hgen = NUM_HGEN;
 
     // initialize hard-coded values from example circuit
-#ifdef DEBUG
     plonk_example<ppT> example;
-#endif // #ifdef DEBUG
 
     // output from round 3
     round_three_out_t<ppT> round_three_out;
@@ -574,9 +568,7 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
 {
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
-#ifdef DEBUG
     plonk_example<ppT> example;
-#endif // #ifdef DEBUG
 
     // output from round 4
     round_four_out_t<ppT> round_four_out;
@@ -670,9 +662,7 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     polynomial<Field> remainder;
 
     // initialize hard-coded values from example circuit
-#ifdef DEBUG
     plonk_example<ppT> example;
-#endif // #ifdef DEBUG
 
     // output from round 5
     round_five_out_t<ppT> round_five_out;
