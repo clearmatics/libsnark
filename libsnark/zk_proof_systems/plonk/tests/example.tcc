@@ -5,7 +5,6 @@ namespace libsnark
 {
 
 template<typename ppT>
-// void plonk_example<ppT>::initialize()
 plonk_example<ppT>::plonk_example()
 {
     using Field = libff::Fr<ppT>;
@@ -97,7 +96,7 @@ plonk_example<ppT>::plonk_example()
 
     // public input (PI)
     this->public_input = Field(35);
-    ;
+    
     // index of the row of the PI in the non-transposed gates_matrix
     this->public_input_index = 4;
 

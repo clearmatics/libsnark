@@ -26,7 +26,7 @@
 
 namespace libsnark
 {
-  // Manipulate elements of a valid proof and assert that proof
+  // Manipulate elements of a valid proof to assert that proof
   // verification fails
   //
   // Plonk proof Pi is composed of the following elements:
