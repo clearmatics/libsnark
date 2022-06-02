@@ -579,7 +579,9 @@ bool plonk_verifier<ppT>::step_twelve(
         ppT::double_miller_loop(_A, _B, _C, _D);
     const libff::GT<ppT> result = ppT::final_exponentiation(miller_result);
     bool b_accept = (result == libff::GT<ppT>::one());
+#ifdef DEBUG
     assert(b_accept);
+#endif // #ifdef DEBUG
     return b_accept;
 }
 
