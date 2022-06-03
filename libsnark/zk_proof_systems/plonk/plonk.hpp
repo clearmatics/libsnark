@@ -30,6 +30,9 @@ J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive, Report
 #define DEBUG
 //#undef DEBUG
 
+// maximum degree of the encoded monomials in the usrs
+const size_t MAX_DEGREE = 254;
+
 // number of generators for H, Hk1, Hk2
 const size_t NUM_HGEN = 3;
 

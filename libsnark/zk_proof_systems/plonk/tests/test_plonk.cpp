@@ -168,13 +168,21 @@ template<typename ppT> void test_plonk()
     secret.print();
 #endif // #ifdef DEBUG
 
-    // --- SRS ---
-    printf("[%s:%d] SRS...\n", __FILE__, __LINE__);
-    // create SRS object
-    srs<ppT> srs;
+    printf("[%s:%d] SRS...\n", __FILE__, __LINE__);    
+    // --- USRS ---
+    // create USRS object
+    usrs<ppT> usrs;
     // compute SRS = powers of secret times G1: 1*G1, secret^1*G1,
     // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
-    srs.derive_from_secret(secret, common_input.num_gates);
+    usrs.derive_from_secret(secret);
+    // --- SRS ---
+    // circuit description. consists only of number of gates for now.
+    circuit_t<ppT> circuit;
+    circuit.num_gates = common_input.num_gates;
+    // create SRS object
+    srs<ppT> srs(circuit);
+    // derive SRS from USRS and the circuit description
+    srs.derive(usrs);
     // sompare SRS against reference test values
     for (int i = 0; i < (int)common_input.num_gates + 3; ++i) {
         printf("secret_power_G1[%2d] ", i);
