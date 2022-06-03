@@ -15,7 +15,7 @@ See srs.hpp .
 
 namespace libsnark
 {
-  
+
 // Compute a universal srs (usrs). It is composed *only* of encoded
 // powers of the secret value in the group generator. Therefore a usrs
 // is independent of any particular circuit.
@@ -52,30 +52,29 @@ void usrs<ppT>::derive_from_secret(const libff::Fr<ppT> secret)
     libff::G2<ppT> secret_1_g2 = secret * libff::G2<ppT>::one();
     this->secret_powers_g2.push_back(secret_1_g2);
 }
-  
+
 // Generate (plain) SRS \see r1cs_gg_ppzksnark_generator_from_secrets,
 // \see kzg10<ppT>::setup_from_secret
-//  
+//
 // The (plain) srs is a specialization of the usrs for one particular
 // circuit and is derived from the usrs e.g.
 //
 // usrs = <encoded powers of secret>
 // srs = (proving_key, verificataion_key) = derive(usrs, circuit_description)
 //
-template<typename ppT>
-void srs<ppT>::derive(const usrs<ppT> usrs)
+template<typename ppT> void srs<ppT>::derive(const usrs<ppT> usrs)
 {
-  assert(this->circuit.num_gates <= MAX_DEGREE);
-  // secret^i * G1
-  this->secret_powers_g1.reserve(this->circuit.num_gates + 3);
-  for (size_t i = 0; i < (this->circuit.num_gates + 3); ++i) {
-    this->secret_powers_g1.push_back(usrs.secret_powers_g1[i]);
-  }
-  // secret^i * G2
-  this->secret_powers_g2.reserve(2);
-  for (size_t i = 0; i < 2; ++i) {
-    this->secret_powers_g2.push_back(usrs.secret_powers_g2[i]);
-  }
+    assert(this->circuit.num_gates <= MAX_DEGREE);
+    // secret^i * G1
+    this->secret_powers_g1.reserve(this->circuit.num_gates + 3);
+    for (size_t i = 0; i < (this->circuit.num_gates + 3); ++i) {
+        this->secret_powers_g1.push_back(usrs.secret_powers_g1[i]);
+    }
+    // secret^i * G2
+    this->secret_powers_g2.reserve(2);
+    for (size_t i = 0; i < 2; ++i) {
+        this->secret_powers_g2.push_back(usrs.secret_powers_g2[i]);
+    }
 }
 
 } // namespace libsnark

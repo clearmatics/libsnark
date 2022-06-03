@@ -14,7 +14,6 @@ See example.hpp .
 #ifndef __PLONK_EXAMPLE_CPP__
 #define __PLONK_EXAMPLE_CPP__
 
-
 namespace libsnark
 {
 

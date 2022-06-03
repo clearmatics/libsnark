@@ -18,10 +18,10 @@
 #include <libff/algebra/scalar_multiplication/multiexp.hpp>
 #include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
 #include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
-#include <libsnark/zk_proof_systems/plonk/plonk.hpp>
 #include <libsnark/zk_proof_systems/plonk/common_input.hpp>
-#include <libsnark/zk_proof_systems/plonk/srs.hpp>
+#include <libsnark/zk_proof_systems/plonk/plonk.hpp>
 #include <libsnark/zk_proof_systems/plonk/prover.hpp>
+#include <libsnark/zk_proof_systems/plonk/srs.hpp>
 #include <libsnark/zk_proof_systems/plonk/verifier.hpp>
 
 namespace libsnark
@@ -168,7 +168,7 @@ template<typename ppT> void test_plonk()
     secret.print();
 #endif // #ifdef DEBUG
 
-    printf("[%s:%d] SRS...\n", __FILE__, __LINE__);    
+    printf("[%s:%d] SRS...\n", __FILE__, __LINE__);
     // --- USRS ---
     // create USRS object
     usrs<ppT> usrs;

@@ -33,13 +33,13 @@ namespace libsnark
 // description of the circuit. contains only the number of gates for
 // now.
 template<typename ppT> struct circuit_t {
-  // number of gates in the analyzed circuit, denoted by "n" in
-  // [GWC19]
-  size_t num_gates; 
+    // number of gates in the analyzed circuit, denoted by "n" in
+    // [GWC19]
+    size_t num_gates;
 };
-  
-//  
-// A note on the distinction between an srs and a universal srs. 
+
+//
+// A note on the distinction between an srs and a universal srs.
 //
 // A universal srs (usrs) is composed *only* of monomials i.e. encoded
 // powers of the secret value in the group generator. Therefore a usrs
@@ -58,56 +58,55 @@ template<typename ppT> struct circuit_t {
 template<typename ppT> class usrs
 {
 public:
-  /// Array of powers of secret \alpha, encoded in G1:
-  /// [1]_1, [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
-  std::vector<libff::G1<ppT>> secret_powers_g1;
+    /// Array of powers of secret \alpha, encoded in G1:
+    /// [1]_1, [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
+    std::vector<libff::G1<ppT>> secret_powers_g1;
 
-  /// Array of powers of secret \alpha, encoded in G2:
-  /// [1]_2, [\alpha]_2
-  std::vector<libff::G2<ppT>> secret_powers_g2;
+    /// Array of powers of secret \alpha, encoded in G2:
+    /// [1]_2, [\alpha]_2
+    std::vector<libff::G2<ppT>> secret_powers_g2;
 
-  usrs(){};
+    usrs(){};
 
-  usrs(
-       std::vector<libff::G1<ppT>> &&secret_powers_g1,
-       std::vector<libff::G2<ppT>> &&secret_powers_g2)
-    : secret_powers_g1(secret_powers_g1), secret_powers_g2(secret_powers_g2)
-  {
-  }
+    usrs(
+        std::vector<libff::G1<ppT>> &&secret_powers_g1,
+        std::vector<libff::G2<ppT>> &&secret_powers_g2)
+        : secret_powers_g1(secret_powers_g1), secret_powers_g2(secret_powers_g2)
+    {
+    }
 
-  // for debug only
-  void derive_from_secret(const libff::Fr<ppT> secret);
+    // for debug only
+    void derive_from_secret(const libff::Fr<ppT> secret);
 };
-  
+
 // Plain (i.e. non-universal srs). Contains secret encoded monomials
 // with maximum degree equal to the number of gates of the analyzed
 // circuit + 2. Dependent on the circuit.
 template<typename ppT> class srs
 {
 public:
-  // description of the circuit. contains only the number of gates for
-  // now. the highest degree of the encoded power monomials will
-  // be num_gates+2.
-  circuit_t<ppT> circuit;
-  /// Array of powers of secret \alpha, encoded in G1:
-  /// [1]_1, [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
-  std::vector<libff::G1<ppT>> secret_powers_g1;
+    // description of the circuit. contains only the number of gates for
+    // now. the highest degree of the encoded power monomials will
+    // be num_gates+2.
+    circuit_t<ppT> circuit;
+    /// Array of powers of secret \alpha, encoded in G1:
+    /// [1]_1, [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
+    std::vector<libff::G1<ppT>> secret_powers_g1;
 
-  /// Array of powers of secret \alpha, encoded in G2:
-  /// [1]_2, [\alpha]_2
-  std::vector<libff::G2<ppT>> secret_powers_g2;
+    /// Array of powers of secret \alpha, encoded in G2:
+    /// [1]_2, [\alpha]_2
+    std::vector<libff::G2<ppT>> secret_powers_g2;
 
-  srs(
-      std::vector<libff::G1<ppT>> &&secret_powers_g1,
-      std::vector<libff::G2<ppT>> &&secret_powers_g2)
-    : secret_powers_g1(secret_powers_g1), secret_powers_g2(secret_powers_g2)
-  {
-  }
-  
-  srs(const circuit_t<ppT> &circuit):circuit(circuit){};
+    srs(std::vector<libff::G1<ppT>> &&secret_powers_g1,
+        std::vector<libff::G2<ppT>> &&secret_powers_g2)
+        : secret_powers_g1(secret_powers_g1), secret_powers_g2(secret_powers_g2)
+    {
+    }
 
-  // derive from the usrs
-  void derive(const usrs<ppT> usrs);
+    srs(const circuit_t<ppT> &circuit) : circuit(circuit){};
+
+    // derive from the usrs
+    void derive(const usrs<ppT> usrs);
 };
 
 /******************************** Proving key ********************************/
