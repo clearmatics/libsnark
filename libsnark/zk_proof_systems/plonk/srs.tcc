@@ -1,6 +1,5 @@
 /** @file
 *****************************************************************************
-
 Implementation of SRS interfaces for a ppzkSNARK for Plonk.
 
 See srs.hpp .

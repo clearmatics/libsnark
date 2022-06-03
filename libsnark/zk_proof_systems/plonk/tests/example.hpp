@@ -1,13 +1,38 @@
+/** @file
+ *****************************************************************************
+Test vectors for the implementation of the PlonK protocol \[GWC19]
+(\see plonk.hpp) produced using the Python implementation of Plonk
+available at [PlonkPy].
+
+The test vector values trace the execution of the Plonk protocol for
+the example ciruit P(x) = x**3 + x + 5 = 35 discussed in a blog post
+by Vitalik Buterin [VB19].
+
+References:
+
+\[PlonkPy] Implementation of the Plonk ZKSNARK proof system in Python,
+accessed in May 2022 on GitHub https://github.com/ETHorHIL/Plonk_Py
+
+\[VB19] "Understanding PLONK", Vitalik Buterin, personal blog post
+from 22 Sep 2019, https://vitalik.ca/general/2019/09/22/plonk.html
+
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
+
 #ifndef __PLONK_EXAMPLE_HPP__
 #define __PLONK_EXAMPLE_HPP__
 
 /*
 
-Example Plonk circuit (TODO: give reference)
+Example Plonk circuit from [VB19]:
 
-P(x) = x**3 + x + 5 = 3
+P(x) = x**3 + x + 5 = 35
 
-circuit has 6 gates + 2 dummy gates (to make power of 2)
+circuit has 6 gates + 2 dummy gates (to make power of 2 for the FFT)
 
 gates / constraints
 

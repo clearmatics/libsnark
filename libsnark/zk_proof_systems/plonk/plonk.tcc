@@ -1,6 +1,5 @@
 /** @file
 *****************************************************************************
-
 Implementation of interfaces for a ppzkSNARK for Plonk.
 
 See plonk.hpp .

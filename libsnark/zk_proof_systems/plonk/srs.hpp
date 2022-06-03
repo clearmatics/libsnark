@@ -1,6 +1,5 @@
 /** @file
 *****************************************************************************
-
 Declaration of SRS interfaces for ppzkSNARK proof system Plonk.
 
 This includes:

@@ -1,5 +1,19 @@
+/** @file
+ *****************************************************************************
+Instantiation of the test vector values from the Python implementation
+of the Plonk protocol.
+
+See example.hpp .
+
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
 #ifndef __PLONK_EXAMPLE_CPP__
 #define __PLONK_EXAMPLE_CPP__
+
 
 namespace libsnark
 {

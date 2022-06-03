@@ -1,6 +1,5 @@
 /** @file
 *****************************************************************************
-
 Implementation of Verifier interfaces for a ppzkSNARK for Plonk.
 
 See verifier.hpp .
@@ -28,7 +27,7 @@ namespace libsnark
 //     [W_zeta]_1, [W_{zeta omega}]_1
 //     r_zeta (*))
 //
-// Mapping code-to-paper quantities
+// Mapping code-to-paper quantities (code: paper)
 //
 // - W_polys_blinded_at_secret_g1[a, b, c]: [a]_1, [b]_1, [c]_1 (from Round 1)
 // - z_poly_at_secret_g1: [z]_1 (from Round 2)

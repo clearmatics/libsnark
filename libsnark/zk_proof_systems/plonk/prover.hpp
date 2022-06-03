@@ -1,6 +1,5 @@
 /** @file
 *****************************************************************************
-
 Declaration of Prover interfaces for ppzkSNARK proof system Plonk.
 
 This includes:

@@ -1,6 +1,5 @@
 /** @file
 *****************************************************************************
-
 Declaration of common untility functions for ppzkSNARK proof system
 Plonk.
 

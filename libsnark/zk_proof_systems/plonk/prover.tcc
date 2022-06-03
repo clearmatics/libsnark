@@ -1,6 +1,5 @@
 /** @file
 *****************************************************************************
-
 Implementation of Prover interfaces for a ppzkSNARK for Plonk.
 
 See prover.hpp .
