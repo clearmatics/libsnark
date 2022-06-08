@@ -23,6 +23,8 @@ J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive, Report
 #ifndef PLONK_PPZKSNARK_COMMON_INPUT_HPP_
 #define PLONK_PPZKSNARK_COMMON_INPUT_HPP_
 
+#include <libsnark/zk_proof_systems/plonk/plonk.hpp>
+
 namespace libsnark
 {
 /**

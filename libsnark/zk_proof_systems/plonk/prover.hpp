@@ -23,6 +23,8 @@ Ciobotaru, Cryptology ePrint Archive, Report 2019/953, 2019,
 #ifndef PLONK_PPZKSNARK_PROVER_HPP_
 #define PLONK_PPZKSNARK_PROVER_HPP_
 
+#include <libsnark/zk_proof_systems/plonk/srs.hpp>
+
 namespace libsnark
 {
 /**
