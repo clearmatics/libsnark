@@ -139,12 +139,15 @@ void plonk_interpolate_over_lagrange_basis(
 
     size_t num_gates = L.size();
 
+    // initialize f_poly
+    std::fill(f_poly.begin(), f_poly.end(), FieldT(0));
+
     // the num_gates components of f_poly. each components is
     // a polynomial that is the multiplication of the i-th element of
     // f_points to the i-th polynomial in the lagrange basis L[i]:
     // f_poly_component[i] = f_points[i] * L[i]
-    std::vector<polynomial<FieldT>> f_poly_component(num_gates);
     for (size_t i = 0; i < num_gates; ++i) {
+        polynomial<FieldT> f_poly_component_i;
         // represent the scalar f_points[i] as an all-zero vector with
         // only the first element set to f_points[i]. this is done in
         // order to use libfqfft multiplication function as a function
@@ -153,14 +156,10 @@ void plonk_interpolate_over_lagrange_basis(
         f_points_coeff_i[0] = f_points[i];
         // f_poly_component[i] = f_points[i] * L[i]
         libfqfft::_polynomial_multiplication<FieldT>(
-            f_poly_component[i], f_points_coeff_i, L[i]);
-    }
-    std::fill(f_poly.begin(), f_poly.end(), FieldT(0));
-    // f_poly[i] = \sum_i (f_points[i] * L[i])
-    for (size_t i = 0; i < num_gates; ++i) {
-        // f_poly[i] = f_poly[i] + f_poly_component[i];
+            f_poly_component_i, f_points_coeff_i, L[i]);
+        // accumulate the i-th component to f_poly
         libfqfft::_polynomial_addition<FieldT>(
-            f_poly, f_poly, f_poly_component[i]);
+            f_poly, f_poly, f_poly_component_i);
     }
 }
 
