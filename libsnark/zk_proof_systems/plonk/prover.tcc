@@ -104,8 +104,8 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
             witness.begin() + (i * common_input.num_gates) +
             (common_input.num_gates);
         std::vector<Field> W_points(begin, end);
-        plonk_interpolate_over_lagrange_basis<Field>(
-            W_points, round_one_out.W_polys[i], common_input.L_basis);
+        plonk_interpolate_polynomial_from_points<Field>(
+            W_points, round_one_out.W_polys[i]);
     }
 #ifdef DEBUG
     for (int i = 0; i < nwitness; ++i) {
@@ -236,8 +236,7 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
 #endif // #ifdef DEBUG
 
     polynomial<Field> A_poly(common_input.num_gates);
-    plonk_interpolate_over_lagrange_basis<Field>(
-        A_vector, A_poly, common_input.L_basis);
+    plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly);
 #ifdef DEBUG
     printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
     print_vector(A_poly);

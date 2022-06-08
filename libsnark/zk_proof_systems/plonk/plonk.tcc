@@ -64,8 +64,41 @@ void plonk_compute_lagrange_basis(
     }
 }
 
+// Interpolate a polynomial from a set of points through inverse FFT
 //
-// Interpolate a set of points as a polynomial over Lagrange basis
+// INPUT:
+//
+// - f_points[0..n-1]: a set of points (0,y0), (1,y1),
+//                     ... (n-1,y_{n-1}) s.t. y0=f_points[0],
+//                     y1=f_points[1], ... which we want to
+//                     interpolate as a polynomial
+//
+// OUTPUT:
+//
+// - f_poly[0..n-1]: the coefficients [a0, a1, ..., a_{n-1}] of the
+//                   polynomial f(x) interpolating the set of points
+//                   f_points. For example if f_poly[0..n-1] = [a0,
+//                   a1, ..., a_{n-1}] then this represents the
+//                   polynomial f(x) = a0+a1x+a1x^2+...+a_{n-1}x^{n-1}
+//                   such that f(omega_i)=f_points[i], where omega_0,
+//                   ..., omega_{n-1} are the n roots of unity.
+//
+// \note uses libfqfft iFFT for the interpolation
+//
+template<typename FieldT>
+void plonk_interpolate_polynomial_from_points(
+    const std::vector<FieldT> f_points, polynomial<FieldT> &f_poly)
+{
+    size_t npoints = f_points.size();
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain =
+        libfqfft::get_evaluation_domain<FieldT>(npoints);
+    polynomial<FieldT> u = f_points;
+    domain->iFFT(u);
+    f_poly = u;
+}
+
+//
+// Interpolate a polynomial from a set of points over Lagrange basis
 //
 // INPUT:
 //
@@ -148,8 +181,7 @@ void plonk_compute_selector_polynomials(
     size_t num_qpolys = gates_matrix_transpose.size();
     for (size_t i = 0; i < num_qpolys; ++i) {
         std::vector<FieldT> q_vec = gates_matrix_transpose[i];
-        plonk_interpolate_over_lagrange_basis<FieldT>(
-            q_vec, Q_polys[i], L_basis);
+        plonk_interpolate_polynomial_from_points<FieldT>(q_vec, Q_polys[i]);
     }
 };
 
@@ -160,7 +192,7 @@ void plonk_compute_public_input_polynomial(
     std::vector<polynomial<FieldT>> L_basis)
 {
     assert(PI_points.size() == L_basis.size());
-    plonk_interpolate_over_lagrange_basis<FieldT>(PI_points, PI_poly, L_basis);
+    plonk_interpolate_polynomial_from_points<FieldT>(PI_points, PI_poly);
 };
 
 // output: omega[0] are the n roots of unity, omega[1] are
@@ -236,7 +268,6 @@ template<typename FieldT>
 void plonk_compute_permutation_polynomials(
     std::vector<polynomial<FieldT>> &S_polys,
     std::vector<FieldT> H_gen_permute,
-    std::vector<polynomial<FieldT>> L_basis,
     size_t num_gates)
 {
     assert(S_polys.size() == NUM_HGEN);
@@ -248,8 +279,7 @@ void plonk_compute_permutation_polynomials(
         typename std::vector<FieldT>::iterator end =
             H_gen_permute.begin() + (i * num_gates) + (num_gates);
         std::vector<FieldT> S_points(begin, end);
-        plonk_interpolate_over_lagrange_basis<FieldT>(
-            S_points, S_polys[i], L_basis);
+        plonk_interpolate_polynomial_from_points<FieldT>(S_points, S_polys[i]);
     }
 }
 

@@ -70,8 +70,6 @@ void common_preprocessed_input<ppT>::setup_from_example(
     PI_points[PI_index] = Field(-PI_value);
     plonk_compute_public_input_polynomial(
         PI_points, this->PI_poly, this->L_basis);
-    //    plonk_interpolate_over_lagrange_basis<Field>(PI_points, this->PI_poly,
-    //    this->L_basis);
 #ifdef DEBUG
     printf("[%s:%d] this->PI_poly\n", __FILE__, __LINE__);
     print_vector(this->PI_poly);
@@ -125,7 +123,7 @@ void common_preprocessed_input<ppT>::setup_from_example(
     // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
     this->S_polys.resize(num_hgen, polynomial<Field>(this->num_gates));
     plonk_compute_permutation_polynomials<Field>(
-        this->S_polys, this->H_gen_permute, this->L_basis, this->num_gates);
+        this->S_polys, this->H_gen_permute, this->num_gates);
 #ifdef DEBUG
     for (int i = 0; i < num_hgen; ++i) {
         printf("[%s:%d] this->S_polys[%d]\n", __FILE__, __LINE__, i);
