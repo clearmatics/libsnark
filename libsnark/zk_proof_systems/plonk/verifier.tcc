@@ -53,7 +53,6 @@ namespace libsnark
 //
 // INPUT
 // - srs: structured reference string
-// - common_input: common preprocessed input
 //
 // OUTPUT
 // - Q_polys_at_secret_g1: circuit selector polynomials Q evaluated at
