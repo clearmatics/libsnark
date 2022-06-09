@@ -46,7 +46,7 @@ namespace libsnark
 //
 // Public input polynomial
 //
-// common_input.PI_poly: w_i, 0\le{i}<l<n
+// srs.PI_poly: w_i, 0\le{i}<l<n
 //
 
 // Verifier precomputation
@@ -63,19 +63,19 @@ namespace libsnark
 //
 template<typename ppT>
 verifier_preprocessed_input_t<ppT> plonk_verifier<ppT>::preprocessed_input(
-    const srs<ppT> srs, const common_preprocessed_input<ppT> common_input)
+    const srs<ppT> srs)
 {
     verifier_preprocessed_input_t<ppT> preprocessed_input;
-    preprocessed_input.Q_polys_at_secret_g1.resize(common_input.Q_polys.size());
+    preprocessed_input.Q_polys_at_secret_g1.resize(srs.Q_polys.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(
         srs.secret_powers_g1,
-        common_input.Q_polys,
+        srs.Q_polys,
         preprocessed_input.Q_polys_at_secret_g1);
 
-    preprocessed_input.S_polys_at_secret_g1.resize(common_input.S_polys.size());
+    preprocessed_input.S_polys_at_secret_g1.resize(srs.S_polys.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(
         srs.secret_powers_g1,
-        common_input.S_polys,
+        srs.S_polys,
         preprocessed_input.S_polys_at_secret_g1);
     return preprocessed_input;
 }
@@ -103,9 +103,7 @@ void plonk_verifier<ppT>::step_two(plonk_proof<ppT> proof)
 //
 // WARNING! This validation MUST be done by the caller. Empty
 // function here for consistency with the description in [GWC19]
-template<typename ppT>
-void plonk_verifier<ppT>::step_three(
-    const common_preprocessed_input<ppT> common_input)
+template<typename ppT> void plonk_verifier<ppT>::step_three(const srs<ppT> srs)
 {
 }
 
@@ -142,7 +140,8 @@ template<typename ppT> step_four_out_t<ppT> plonk_verifier<ppT>::step_four()
 //
 // INPUT
 // - zeta: evaluation challenge -- hash of transcript (from step 4)
-// - common_input: common preprocessed input
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - zh_zeta: evaluation of vanishing polynomial Zh at x=zeta
@@ -150,12 +149,11 @@ template<typename ppT> step_four_out_t<ppT> plonk_verifier<ppT>::step_four()
 //
 template<typename ppT>
 step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
-    const step_four_out_t<ppT> step_four_out,
-    const common_preprocessed_input<ppT> common_input)
+    const step_four_out_t<ppT> step_four_out, const srs<ppT> srs)
 {
     step_five_out_t<ppT> step_five_out;
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
-        libfqfft::get_evaluation_domain<Field>(common_input.num_gates);
+        libfqfft::get_evaluation_domain<Field>(srs.num_gates);
     step_five_out.zh_zeta =
         domain->compute_vanishing_polynomial(step_four_out.zeta);
     return step_five_out;
@@ -166,7 +164,8 @@ step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
 //
 // INPUT
 // - zeta: evaluation challenge -- hash of transcript (from step 4)
-// - common_input: common preprocessed input
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - L_0_zeta: Lagrange polynomial evaluation of polynomial L1 at
@@ -174,14 +173,11 @@ step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
 //
 template<typename ppT>
 step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
-    const step_four_out_t<ppT> step_four_out,
-    const common_preprocessed_input<ppT> common_input)
+    const step_four_out_t<ppT> step_four_out, const srs<ppT> srs)
 {
     step_six_out_t<ppT> step_six_out;
     step_six_out.L_0_zeta = libfqfft::evaluate_polynomial<Field>(
-        common_input.L_basis[0].size(),
-        common_input.L_basis[0],
-        step_four_out.zeta);
+        srs.L_basis[0].size(), srs.L_basis[0], step_four_out.zeta);
     return step_six_out;
 }
 
@@ -190,7 +186,8 @@ step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
 //
 // INPUT
 // - zeta: evaluation challenge -- hash of transcript (from step 4)
-// - common_input: common preprocessed input
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - PI_zeta: public input polynomial PI evaluated at x=zeta
@@ -198,12 +195,11 @@ step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
 //
 template<typename ppT>
 step_seven_out_t<ppT> plonk_verifier<ppT>::step_seven(
-    const step_four_out_t<ppT> step_four_out,
-    const common_preprocessed_input<ppT> common_input)
+    const step_four_out_t<ppT> step_four_out, const srs<ppT> srs)
 {
     step_seven_out_t<ppT> step_seven_out;
     step_seven_out.PI_zeta = libfqfft::evaluate_polynomial<Field>(
-        common_input.PI_poly.size(), common_input.PI_poly, step_four_out.zeta);
+        srs.PI_poly.size(), srs.PI_poly, step_four_out.zeta);
     return step_seven_out;
 }
 
@@ -306,7 +302,8 @@ step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
 //   secret input (from verifier preprocessed input)
 // - proof: SNARK proof produced by the prover
 // - preprocessed_input: verifier preprocessed input
-// - common_input: common preprocessed input
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - D1: first part of batched polynomial commitment [D]_1
@@ -317,7 +314,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
     const step_six_out_t<ppT> step_six_out,
     const plonk_proof<ppT> proof,
     const verifier_preprocessed_input_t<ppT> preprocessed_input,
-    const common_preprocessed_input<ppT> common_input)
+    const srs<ppT> srs)
 {
     step_nine_out_t<ppT> step_nine_out;
 
@@ -349,11 +346,9 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
     Field D1_part1_scalar =
         (proof.a_zeta + (step_four_out.beta * step_four_out.zeta) +
          step_four_out.gamma) *
-            (proof.b_zeta +
-             (step_four_out.beta * common_input.k1 * step_four_out.zeta) +
+            (proof.b_zeta + (step_four_out.beta * srs.k1 * step_four_out.zeta) +
              step_four_out.gamma) *
-            (proof.c_zeta +
-             (step_four_out.beta * common_input.k2 * step_four_out.zeta) +
+            (proof.c_zeta + (step_four_out.beta * srs.k2 * step_four_out.zeta) +
              step_four_out.gamma) *
             step_four_out.alpha * step_four_out.nu +
         step_six_out.L_0_zeta * alpha_power2 * step_four_out.nu +
@@ -406,7 +401,8 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
 // - S_polys_at_secret_g1: permutation polynomials S evaluated at the
 //   secret input (from verifier preprocessed input)
 // - proof: SNARK proof produced by the prover
-// - common_input: common preprocessed input
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - F1: full batched polynomial commitment [F]_1
@@ -417,13 +413,13 @@ step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
     const step_nine_out_t<ppT> step_nine_out,
     const plonk_proof<ppT> proof,
     const verifier_preprocessed_input_t<ppT> preprocessed_input,
-    const common_preprocessed_input<ppT> common_input)
+    const srs<ppT> srs)
 {
     step_ten_out_t<ppT> step_ten_out;
-    Field zeta_power_n = libff::power(
-        step_four_out.zeta, libff::bigint<1>(common_input.num_gates + 2));
+    Field zeta_power_n =
+        libff::power(step_four_out.zeta, libff::bigint<1>(srs.num_gates + 2));
     Field zeta_power_2n = libff::power(
-        step_four_out.zeta, libff::bigint<1>(2 * (common_input.num_gates + 2)));
+        step_four_out.zeta, libff::bigint<1>(2 * (srs.num_gates + 2)));
     std::vector<Field> nu_power(7);
     for (size_t i = 0; i < nu_power.size(); ++i) {
         nu_power[i] = libff::power(step_four_out.nu, libff::bigint<1>(i));
@@ -496,9 +492,9 @@ step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
 //
 // Checks the following equality
 //
-// e( [W_zeta]_1 + u [W_{zeta common_input.omega_roots}]_1, [x]_2 ) *
-// e( -zeta [W_zeta ]_1 - u zeta common_input.omega_roots [W_{zeta
-// common_input.omega_roots}]_1 - [F]_1 + [E]_1, [1]_2 ) = Field(1)
+// e( [W_zeta]_1 + u [W_{zeta srs.omega_roots}]_1, [x]_2 ) *
+// e( -zeta [W_zeta ]_1 - u zeta srs.omega_roots [W_{zeta
+// srs.omega_roots}]_1 - [F]_1 + [E]_1, [1]_2 ) = Field(1)
 //
 // Denoted as:
 // e(first_lhs, second_lhs) * e(first_rhs, second_rhs) = 1
@@ -512,7 +508,8 @@ step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
 // - E1: group-encoded batch evaluation [E]_1 (from step 11)
 // - proof: SNARK proof produced by the prover
 // - srs: structured reference string
-// - common_input: common preprocessed input
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - boolean 1/0 = valid/invalid proof
@@ -523,8 +520,7 @@ bool plonk_verifier<ppT>::step_twelve(
     const step_ten_out_t<ppT> step_ten_out,
     const step_eleven_out_t<ppT> step_eleven_out,
     const plonk_proof<ppT> proof,
-    const srs<ppT> srs,
-    const common_preprocessed_input<ppT> common_input)
+    const srs<ppT> srs)
 {
     // load test vectors for debug
 #ifdef DEBUG
@@ -546,7 +542,7 @@ bool plonk_verifier<ppT>::step_twelve(
         // Warning! raise to the power of -1 to check e() * e()^-1 = 1
         Field(-1) * step_four_out.zeta,
         Field(-1) * step_four_out.u * step_four_out.zeta *
-            common_input.omega_roots[base][1],
+            srs.omega_roots[base][1],
         Field(-1) * Field(1),
         Field(-1) * Field(-1)};
 
@@ -595,17 +591,15 @@ bool plonk_verifier<ppT>::step_twelve(
 //
 // INPUT
 // - proof: SNARK proof produced by the prover
-// - srs: structured reference string
-// - common_input: common preprocessed input
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - boolean 1/0 = valid/invalid proof
 //
 template<typename ppT>
 bool plonk_verifier<ppT>::verify_proof(
-    const plonk_proof<ppT> proof,
-    const srs<ppT> srs,
-    const common_preprocessed_input<ppT> common_input)
+    const plonk_proof<ppT> proof, const srs<ppT> srs)
 {
 
     // load test vector values form example for debug
@@ -615,10 +609,10 @@ bool plonk_verifier<ppT>::verify_proof(
 
     // compute verifier preprocessed input
     const verifier_preprocessed_input_t<ppT> preprocessed_input =
-        plonk_verifier::preprocessed_input(srs, common_input);
+        plonk_verifier::preprocessed_input(srs);
 #ifdef DEBUG
-    for (int i = 0; i < (int)common_input.Q_polys.size(); ++i) {
-        printf("common_input.Q_polys_at_secret_G1[%d] \n", i);
+    for (int i = 0; i < (int)srs.Q_polys.size(); ++i) {
+        printf("srs.Q_polys_at_secret_G1[%d] \n", i);
         preprocessed_input.Q_polys_at_secret_g1[i].print();
         libff::G1<ppT> Q_poly_at_secret_g1_i(
             preprocessed_input.Q_polys_at_secret_g1[i]);
@@ -626,7 +620,7 @@ bool plonk_verifier<ppT>::verify_proof(
         assert(Q_poly_at_secret_g1_i.X == example.Q_polys_at_secret_g1[i][0]);
         assert(Q_poly_at_secret_g1_i.Y == example.Q_polys_at_secret_g1[i][1]);
     }
-    for (int i = 0; i < (int)common_input.S_polys.size(); ++i) {
+    for (int i = 0; i < (int)srs.S_polys.size(); ++i) {
         printf("S_polys_at_secret_G1[%d] \n", i);
         preprocessed_input.S_polys_at_secret_g1[i].print();
         libff::G1<ppT> S_poly_at_secret_g1_i(
@@ -651,7 +645,7 @@ bool plonk_verifier<ppT>::verify_proof(
 
     // Verifier Step 5: compute zero polynomial evaluation
     const step_five_out_t<ppT> step_five_out =
-        this->step_five(step_four_out, common_input);
+        this->step_five(step_four_out, srs);
 #ifdef DEBUG
     printf("[%s:%d] zh_zeta ", __FILE__, __LINE__);
     step_five_out.zh_zeta.print();
@@ -660,8 +654,7 @@ bool plonk_verifier<ppT>::verify_proof(
 
     // Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
     // Note: the paper counts the L-polynomials from 1; we count from 0
-    const step_six_out_t<ppT> step_six_out =
-        this->step_six(step_four_out, common_input);
+    const step_six_out_t<ppT> step_six_out = this->step_six(step_four_out, srs);
 #ifdef DEBUG
     printf("L_0_zeta ");
     step_six_out.L_0_zeta.print();
@@ -670,7 +663,7 @@ bool plonk_verifier<ppT>::verify_proof(
 
     // Verifier Step 7: compute public input polynomial evaluation PI(zeta)
     const step_seven_out_t<ppT> step_seven_out =
-        this->step_seven(step_four_out, common_input);
+        this->step_seven(step_four_out, srs);
 #ifdef DEBUG
     printf("PI_zeta ");
     step_seven_out.PI_zeta.print();
@@ -688,7 +681,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 9: compute first part of batched polynomial
     // commitment [D]_1
     step_nine_out_t<ppT> step_nine_out = this->step_nine(
-        step_four_out, step_six_out, proof, preprocessed_input, common_input);
+        step_four_out, step_six_out, proof, preprocessed_input, srs);
 #ifdef DEBUG
     step_nine_out.D1.print();
     libff::G1<ppT> D1_aff(step_nine_out.D1);
@@ -700,7 +693,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 10: compute full batched polynomial commitment
     // [F]_1
     step_ten_out_t<ppT> step_ten_out = this->step_ten(
-        step_four_out, step_nine_out, proof, preprocessed_input, common_input);
+        step_four_out, step_nine_out, proof, preprocessed_input, srs);
 #ifdef DEBUG
     printf("[%s:%d] F1\n", __FILE__, __LINE__);
     step_ten_out.F1.print();
@@ -725,7 +718,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 12: batch validate all evaluations (check
     // pairing)
     bool b_accept = this->step_twelve(
-        step_four_out, step_ten_out, step_eleven_out, proof, srs, common_input);
+        step_four_out, step_ten_out, step_eleven_out, proof, srs);
     return b_accept;
 }
 } // namespace libsnark

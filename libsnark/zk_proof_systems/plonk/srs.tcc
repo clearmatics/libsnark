@@ -58,6 +58,43 @@ usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> secret)
     return usrs<ppT>(std::move(secret_powers_g1), std::move(secret_powers_g2));
 }
 
+// Derive the SRS from the circuit description and the USRS
+template<typename ppT>
+srs<ppT> plonk_srs_derive_from_usrs(
+    const usrs<ppT> usrs, const circuit_t<ppT> circuit)
+{
+    assert(circuit.num_gates <= MAX_DEGREE);
+    // secret^i * G1
+    std::vector<libff::G1<ppT>> secret_powers_g1;
+    secret_powers_g1.reserve(circuit.num_gates + 3);
+    for (size_t i = 0; i < (circuit.num_gates + 3); ++i) {
+        secret_powers_g1.push_back(usrs.secret_powers_g1[i]);
+    }
+    // secret^i * G2
+    std::vector<libff::G2<ppT>> secret_powers_g2;
+    secret_powers_g2.reserve(2);
+    for (size_t i = 0; i < 2; ++i) {
+        secret_powers_g2.push_back(usrs.secret_powers_g2[i]);
+    }
+
+    srs<ppT> srs(
+        circuit.num_gates,
+        circuit.num_qpolys,
+        circuit.L_basis,
+        circuit.PI_poly,
+        circuit.Q_polys,
+        circuit.S_polys,
+        circuit.omega_roots,
+        circuit.H_gen,
+        circuit.H_gen_permute,
+        circuit.k1,
+        circuit.k2,
+        std::move(secret_powers_g1),
+        std::move(secret_powers_g2));
+
+    return srs;
+}
+
 // Generate (plain) SRS \see r1cs_gg_ppzksnark_generator_from_secrets,
 // \see kzg10<ppT>::setup_from_secret
 //
@@ -69,10 +106,10 @@ usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> secret)
 //
 template<typename ppT> void srs<ppT>::derive(const usrs<ppT> usrs)
 {
-    assert(this->circuit.num_gates <= MAX_DEGREE);
+    assert(this->num_gates <= MAX_DEGREE);
     // secret^i * G1
-    this->secret_powers_g1.reserve(this->circuit.num_gates + 3);
-    for (size_t i = 0; i < (this->circuit.num_gates + 3); ++i) {
+    this->secret_powers_g1.reserve(this->num_gates + 3);
+    for (size_t i = 0; i < (this->num_gates + 3); ++i) {
         this->secret_powers_g1.push_back(usrs.secret_powers_g1[i]);
     }
     // secret^i * G2

@@ -21,8 +21,6 @@
 #include <libsnark/zk_proof_systems/plonk/common_input.hpp>
 #include <libsnark/zk_proof_systems/plonk/prover.hpp>
 #include <libsnark/zk_proof_systems/plonk/verifier.hpp>
-//#include <libsnark/zk_proof_systems/plonk/plonk.hpp>
-//#include <libsnark/zk_proof_systems/plonk/srs.hpp>
 
 namespace libsnark
 {
@@ -40,9 +38,7 @@ namespace libsnark
 //
 template<typename ppT>
 void test_verify_invalid_proof(
-    const plonk_proof<ppT> valid_proof,
-    const srs<ppT> srs,
-    const common_preprocessed_input<ppT> common_input)
+    const plonk_proof<ppT> valid_proof, const srs<ppT> srs)
 {
     // initialize verifier
     plonk_verifier<ppT> verifier;
@@ -63,14 +59,14 @@ void test_verify_invalid_proof(
         G1_noise = libff::G1<ppT>::random_element();
         proof.W_polys_blinded_at_secret_g1[i] =
             proof.W_polys_blinded_at_secret_g1[i] + G1_noise;
-        b_accept = verifier.verify_proof(proof, srs, common_input);
+        b_accept = verifier.verify_proof(proof, srs);
         ASSERT_FALSE(b_accept);
     }
     // manipulate [z]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.z_poly_at_secret_g1 = proof.z_poly_at_secret_g1 + G1_noise;
-    b_accept = verifier.verify_proof(proof, srs, common_input);
+    b_accept = verifier.verify_proof(proof, srs);
     ASSERT_FALSE(b_accept);
     // manipulate [t_lo]_1, [t_mi]_1, [t_hi]_1
     for (size_t i = 0; i < valid_proof.t_poly_at_secret_g1.size(); ++i) {
@@ -78,62 +74,62 @@ void test_verify_invalid_proof(
         proof = valid_proof;
         G1_noise = libff::G1<ppT>::random_element();
         proof.t_poly_at_secret_g1[i] = proof.t_poly_at_secret_g1[i] + G1_noise;
-        b_accept = verifier.verify_proof(proof, srs, common_input);
+        b_accept = verifier.verify_proof(proof, srs);
         ASSERT_FALSE(b_accept);
     }
     // manipulate \bar{a}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.a_zeta = proof.a_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, common_input);
+    b_accept = verifier.verify_proof(proof, srs);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{b}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.b_zeta = proof.b_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, common_input);
+    b_accept = verifier.verify_proof(proof, srs);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{c}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.c_zeta = proof.c_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, common_input);
+    b_accept = verifier.verify_proof(proof, srs);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{S_sigma1}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.S_0_zeta = proof.S_0_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, common_input);
+    b_accept = verifier.verify_proof(proof, srs);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{S_sigma2}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.S_1_zeta = proof.S_1_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, common_input);
+    b_accept = verifier.verify_proof(proof, srs);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{z_w}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.z_poly_xomega_zeta = proof.z_poly_xomega_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, common_input);
+    b_accept = verifier.verify_proof(proof, srs);
     ASSERT_FALSE(b_accept);
     // manipulate [W_zeta]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.W_zeta_at_secret = proof.W_zeta_at_secret + G1_noise;
-    b_accept = verifier.verify_proof(proof, srs, common_input);
+    b_accept = verifier.verify_proof(proof, srs);
     ASSERT_FALSE(b_accept);
     // manipulate [W_{zeta omega_roots}]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.W_zeta_omega_at_secret = proof.W_zeta_omega_at_secret + G1_noise;
-    b_accept = verifier.verify_proof(proof, srs, common_input);
+    b_accept = verifier.verify_proof(proof, srs);
     ASSERT_FALSE(b_accept);
     // manipulate r_zeta
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.r_zeta = proof.r_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, common_input);
+    b_accept = verifier.verify_proof(proof, srs);
     ASSERT_FALSE(b_accept);
 }
 
@@ -154,12 +150,7 @@ template<typename ppT> void test_plonk()
     plonk_example<ppT> example;
 
     // --- SETUP ---
-    printf("[%s:%d] Common preprocessed input...\n", __FILE__, __LINE__);
-    // common preprocessed input (CPI)
-    common_preprocessed_input<ppT> common_input;
-    // setup the CPI using an example circuit
-    common_input.setup_from_example(example);
-
+    printf("[%s:%d] Setup...\n", __FILE__, __LINE__);
     // random hidden element secret (toxic waste). we fix it to a
     // constant in order to match against the test vectors
     Field secret = example.secret;
@@ -173,16 +164,13 @@ template<typename ppT> void test_plonk()
     // compute SRS = powers of secret times G1: 1*G1, secret^1*G1,
     // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret);
+    // --- circuit ---
+    circuit_t<ppT> circuit =
+        plonk_curcuit_description_from_example<ppT>(example);
     // --- SRS ---
-    // circuit description. consists only of number of gates for now.
-    circuit_t<ppT> circuit;
-    circuit.num_gates = common_input.num_gates;
-    // create SRS object
-    srs<ppT> srs(circuit);
-    // derive SRS from USRS and the circuit description
-    srs.derive(usrs);
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
     // sompare SRS against reference test values
-    for (int i = 0; i < (int)common_input.num_gates + 3; ++i) {
+    for (int i = 0; i < (int)srs.num_gates + 3; ++i) {
         printf("secret_power_G1[%2d] ", i);
         srs.secret_powers_g1[i].print();
         // test from generator
@@ -202,7 +190,7 @@ template<typename ppT> void test_plonk()
     // initialize prover
     plonk_prover<ppT> prover;
     // compute proof
-    plonk_proof<ppT> proof = prover.compute_proof(srs, common_input);
+    plonk_proof<ppT> proof = prover.compute_proof(srs);
     // compare proof against test vector values (debug)
     ASSERT_EQ(proof.a_zeta, example.a_zeta);
     ASSERT_EQ(proof.b_zeta, example.b_zeta);
@@ -253,14 +241,14 @@ template<typename ppT> void test_plonk()
     // initialize verifier
     plonk_verifier<ppT> verifier;
     // verify proof
-    bool b_valid_proof = verifier.verify_proof(proof, srs, common_input);
+    bool b_valid_proof = verifier.verify_proof(proof, srs);
     ASSERT_TRUE(b_valid_proof);
     // assert that proof verification fails when the proof is
     // manipulated. must be executed when DEBUG is not defined to
     // disable certain assert-s that may fail before the verify
     // invalid proof test
 #ifndef DEBUG
-    test_verify_invalid_proof(proof, srs, common_input);
+    test_verify_invalid_proof(proof, srs);
 #endif // #ifndef DEBUG
 #ifndef DEBUG
     printf("[%s:%d] WARNING! DEBUG info was disabled.\n", __FILE__, __LINE__);

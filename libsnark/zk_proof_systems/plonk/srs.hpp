@@ -30,14 +30,6 @@ namespace libsnark
 {
 /********************************** SRS ***********************************/
 
-// description of the circuit. contains only the number of gates for
-// now.
-template<typename ppT> struct circuit_t {
-    // number of gates in the analyzed circuit, denoted by "n" in
-    // [GWC19]
-    size_t num_gates;
-};
-
 //
 // A note on the distinction between an srs and a universal srs.
 //
@@ -58,12 +50,12 @@ template<typename ppT> struct circuit_t {
 template<typename ppT> class usrs
 {
 public:
-    /// Array of powers of secret \alpha, encoded in G1:
-    /// [1]_1, [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
+    /// Array of powers of secret \secret, encoded in G1:
+    /// [1]_1, [\secret]_1, [\secret^2]_1, ..., [\secret^{n+2}]_1
     std::vector<libff::G1<ppT>> secret_powers_g1;
 
-    /// Array of powers of secret \alpha, encoded in G2:
-    /// [1]_2, [\alpha]_2
+    /// Array of powers of secret \secret, encoded in G2:
+    /// [1]_2, [\secret]_2
     std::vector<libff::G2<ppT>> secret_powers_g2;
 
     usrs(
@@ -79,14 +71,42 @@ usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> secret);
 
 // Plain (i.e. non-universal srs). Contains secret encoded monomials
 // with maximum degree equal to the number of gates of the analyzed
-// circuit + 2. Dependent on the circuit.
+// circuit + 2, plus circuit description. Dependent on the circuit.
 template<typename ppT> class srs
 {
 public:
+    using Field = libff::Fr<ppT>;
     // description of the circuit. contains only the number of gates for
     // now. the highest degree of the encoded power monomials will
     // be num_gates+2.
-    circuit_t<ppT> circuit;
+
+    // number of gates in the analyzed circuit, denoted by "n" in
+    // [GWC19]
+    size_t num_gates;
+    // number of selector polynomials (q-polynomials) (= 5 in the
+    // vanilla Plonk proposal [GWC19])
+    size_t num_qpolys;
+    // Lagrange basis
+    std::vector<polynomial<Field>> L_basis;
+    // Public input polynomial
+    polynomial<Field> PI_poly;
+    // Circuit selector polynomials (Q-polynomials)
+    std::vector<polynomial<Field>> Q_polys;
+    // Permutation polynomials S_sigma_1, S_sigma_2, S_sigma_2 (see
+    // [GWC19], Sect. 8.1)
+    std::vector<polynomial<Field>> S_polys;
+    // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
+    // omega[2] are omega[0]*k2
+    std::vector<std::vector<Field>> omega_roots;
+    // H_gen contains the generators of H, k1 H and k2 H in one place
+    // ie. omega, omega_k1 and omega_k2
+    std::vector<Field> H_gen;
+    // H_gen permuted according to the wire permutation
+    std::vector<Field> H_gen_permute;
+    // constants for H, k1 H, k2 H
+    libff::Fr<ppT> k1;
+    libff::Fr<ppT> k2;
+
     /// Array of powers of secret \alpha, encoded in G1:
     /// [1]_1, [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
     std::vector<libff::G1<ppT>> secret_powers_g1;
@@ -95,17 +115,44 @@ public:
     /// [1]_2, [\alpha]_2
     std::vector<libff::G2<ppT>> secret_powers_g2;
 
-    srs(std::vector<libff::G1<ppT>> &&secret_powers_g1,
+    srs(const size_t &num_gates,
+        const size_t &num_qpolys,
+        const std::vector<polynomial<Field>> &L_basis,
+        const polynomial<Field> &PI_poly,
+        const std::vector<polynomial<Field>> &Q_polys,
+        const std::vector<polynomial<Field>> &S_polys,
+        const std::vector<std::vector<Field>> &omega_roots,
+        const std::vector<Field> &H_gen,
+        const std::vector<Field> &H_gen_permute,
+        const libff::Fr<ppT> &k1,
+        const libff::Fr<ppT> &k2,
+        std::vector<libff::G1<ppT>> &&secret_powers_g1,
         std::vector<libff::G2<ppT>> &&secret_powers_g2)
-        : secret_powers_g1(secret_powers_g1), secret_powers_g2(secret_powers_g2)
+        : num_gates(num_gates)
+        , num_qpolys(num_qpolys)
+        , L_basis(L_basis)
+        , PI_poly(PI_poly)
+        , Q_polys(Q_polys)
+        , S_polys(S_polys)
+        , omega_roots(omega_roots)
+        , H_gen(H_gen)
+        , H_gen_permute(H_gen_permute)
+        , k1(k1)
+        , k2(k2)
+        , secret_powers_g1(secret_powers_g1)
+        , secret_powers_g2(secret_powers_g2)
     {
     }
 
-    srs(const circuit_t<ppT> &circuit) : circuit(circuit){};
+    srs(const size_t num_gates) : num_gates(num_gates){};
 
     // derive from the usrs
     void derive(const usrs<ppT> usrs);
 };
+
+template<typename ppT>
+srs<ppT> plonk_srs_derive_from_usrs(
+    const usrs<ppT> usrs, const circuit_t<ppT> circuit);
 
 /******************************** Proving key ********************************/
 /**

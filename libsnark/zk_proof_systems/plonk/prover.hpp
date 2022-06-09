@@ -194,9 +194,7 @@ template<typename ppT> struct round_five_out_t {
     libff::Fr<ppT> u;
 };
 
-/**
- * Plonk prover. Computes object of class plonk_proof.
- */
+/// Plonk prover. Computes object of class plonk_proof.
 template<typename ppT> class plonk_prover
 {
     using Field = libff::Fr<ppT>;
@@ -204,33 +202,29 @@ template<typename ppT> class plonk_prover
 public:
     plonk_prover(){};
 
-    static round_zero_out_t<ppT> round_zero(
-        const common_preprocessed_input<ppT> common_input);
+    static round_zero_out_t<ppT> round_zero(const srs<ppT> srs);
 
     static round_one_out_t<ppT> round_one(
         const round_zero_out_t<ppT> round_zero_out,
         const std::vector<libff::Fr<ppT>> witness,
-        const common_preprocessed_input<ppT> common_input,
         const srs<ppT> srs);
 
     static round_two_out_t<ppT> round_two(
         const round_zero_out_t<ppT> round_zero_out,
         const round_one_out_t<ppT> round_one_out,
         const std::vector<libff::Fr<ppT>> witness,
-        const common_preprocessed_input<ppT> common_input,
         const srs<ppT> srs);
 
     static round_three_out_t<ppT> round_three(
         const round_zero_out_t<ppT> round_zero_out,
         const round_one_out_t<ppT> round_one_out,
         const round_two_out_t<ppT> round_two_out,
-        const common_preprocessed_input<ppT> common_input,
         const srs<ppT> srs);
 
     static round_four_out_t<ppT> round_four(
         const round_one_out_t<ppT> round_one_out,
         const round_three_out_t<ppT> round_three_out,
-        const common_preprocessed_input<ppT> common_input);
+        const srs<ppT> srs);
 
     static round_five_out_t<ppT> round_five(
         const round_zero_out_t<ppT> round_zero_out,
@@ -238,11 +232,9 @@ public:
         const round_two_out_t<ppT> round_two_out,
         const round_three_out_t<ppT> round_three_out,
         const round_four_out_t<ppT> round_four_out,
-        const common_preprocessed_input<ppT> common_input,
         const srs<ppT> srs);
 
-    static plonk_proof<ppT> compute_proof(
-        const srs<ppT> srs, const common_preprocessed_input<ppT> common_input);
+    static plonk_proof<ppT> compute_proof(const srs<ppT> srs);
 };
 
 } // namespace libsnark

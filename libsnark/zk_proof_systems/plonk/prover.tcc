@@ -21,7 +21,8 @@ namespace libsnark
 // Initialization
 //
 // INPUT
-// - common_input: common preprocessed input
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - W_polys: Lagrange interpolation of the witness values
@@ -29,8 +30,7 @@ namespace libsnark
 // - null_poly: 0 polynomial
 // - neg_one_poly: -1 polynomial
 template<typename ppT>
-round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(
-    const common_preprocessed_input<ppT> common_input)
+round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> srs)
 {
     using Field = libff::Fr<ppT>;
 
@@ -43,10 +43,10 @@ round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(
     round_zero_out_t<ppT> round_zero_out;
 
     // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
-    // unity common_input.omega_roots
-    round_zero_out.zh_poly.resize(common_input.num_gates + 1, Field(0));
+    // unity srs.omega_roots
+    round_zero_out.zh_poly.resize(srs.num_gates + 1, Field(0));
     round_zero_out.zh_poly[0] = Field(-1);
-    round_zero_out.zh_poly[common_input.num_gates] = Field(1);
+    round_zero_out.zh_poly[srs.num_gates] = Field(1);
 #ifdef DEBUG
     printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
     print_vector(round_zero_out.zh_poly);
@@ -66,8 +66,8 @@ round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(
 // - null_poly: 0 polynomial (from round 0)
 // - neg_one_poly: -1 polynomial (from round 0)
 // - witness: witness values
-// - common_input: common preprocessed input
-// - srs: structured reference string
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - blind_scalars: blinding scalars b1, b2, ..., b9 (only
@@ -82,7 +82,6 @@ template<typename ppT>
 round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     const round_zero_out_t<ppT> round_zero_out,
     const std::vector<libff::Fr<ppT>> witness,
-    const common_preprocessed_input<ppT> common_input,
     const srs<ppT> srs)
 {
     using Field = libff::Fr<ppT>;
@@ -95,14 +94,12 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     round_one_out_t<ppT> round_one_out;
 
     // compute witness polynomials via Lagrange interpolation
-    round_one_out.W_polys.resize(
-        nwitness, polynomial<Field>(common_input.num_gates));
+    round_one_out.W_polys.resize(nwitness, polynomial<Field>(srs.num_gates));
     for (int i = 0; i < nwitness; ++i) {
         typename std::vector<Field>::const_iterator begin =
-            witness.begin() + (i * common_input.num_gates);
+            witness.begin() + (i * srs.num_gates);
         typename std::vector<Field>::const_iterator end =
-            witness.begin() + (i * common_input.num_gates) +
-            (common_input.num_gates);
+            witness.begin() + (i * srs.num_gates) + (srs.num_gates);
         std::vector<Field> W_points(begin, end);
         plonk_interpolate_polynomial_from_points<Field>(
             W_points, round_one_out.W_polys[i]);
@@ -174,9 +171,9 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
 // - blind_scalars: blinding scalars b1, b2, ..., b9 (only
 //   b7,b8,b9 used in round 2) (from round 1)
 // - zh_poly: vanishing polynomial Zh (from round 0)
-// - common_input: common preprocessed input
 // - witness: witness values
-// - srs: structured reference string
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - beta, gamma: permutation challenges -- hashes of transcript
@@ -189,7 +186,6 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     const round_zero_out_t<ppT> round_zero_out,
     const round_one_out_t<ppT> round_one_out,
     const std::vector<libff::Fr<ppT>> witness,
-    const common_preprocessed_input<ppT> common_input,
     const srs<ppT> srs)
 {
     using Field = libff::Fr<ppT>;
@@ -219,23 +215,23 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
 #endif // #ifdef DEBUG
 
     // A[0] = 1; ... A[i] = computed from (i-1)
-    std::vector<Field> A_vector(common_input.num_gates, Field(0));
+    std::vector<Field> A_vector(srs.num_gates, Field(0));
     plonk_compute_accumulator(
-        common_input.num_gates,
+        srs.num_gates,
         round_two_out.beta,
         round_two_out.gamma,
         witness,
-        common_input.H_gen,
-        common_input.H_gen_permute,
+        srs.H_gen,
+        srs.H_gen_permute,
         A_vector);
 #ifdef DEBUG
-    for (int i = 0; i < (int)common_input.num_gates; ++i) {
+    for (int i = 0; i < (int)srs.num_gates; ++i) {
         printf("A[%d] ", i);
         A_vector[i].print();
     }
 #endif // #ifdef DEBUG
 
-    polynomial<Field> A_poly(common_input.num_gates);
+    polynomial<Field> A_poly(srs.num_gates);
     plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly);
 #ifdef DEBUG
     printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
@@ -263,8 +259,8 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
 // - beta, gamma: permutation challenges -- hashes of transcript (from
 //   round 2)
 // - z_poly: blinded accumulator poly z(x) (from Round 2)
-// - common_input: common preprocessed input
-// - srs: structured reference string
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - alpha: quotinet challenge -- hash of transcript
@@ -281,7 +277,6 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     const round_zero_out_t<ppT> round_zero_out,
     const round_one_out_t<ppT> round_one_out,
     const round_two_out_t<ppT> round_two_out,
-    const common_preprocessed_input<ppT> common_input,
     const srs<ppT> srs)
 {
     using Field = libff::Fr<ppT>;
@@ -297,7 +292,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     round_three_out.alpha = example.alpha;
 
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
-    // w=common_input.omega_roots is the base root of unity and z is
+    // w=srs.omega_roots is the base root of unity and z is
     // z_poly. we do this by multiplying the coefficients of z by w
     round_three_out.z_poly_xomega.resize(round_two_out.z_poly.size());
     std::fill(
@@ -306,8 +301,8 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
         Field(0));
     for (size_t i = 0; i < round_two_out.z_poly.size(); ++i) {
         // omega_roots^i
-        Field omega_roots_i = libff::power(
-            common_input.omega_roots[base][1], libff::bigint<1>(i));
+        Field omega_roots_i =
+            libff::power(srs.omega_roots[base][1], libff::bigint<1>(i));
         round_three_out.z_poly_xomega[i] =
             round_two_out.z_poly[i] * omega_roots_i;
     }
@@ -333,20 +328,19 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
         abqM,
         round_one_out.W_polys_blinded[a],
         round_one_out.W_polys_blinded[b]);
-    libfqfft::_polynomial_multiplication<Field>(
-        abqM, abqM, common_input.Q_polys[M]);
+    libfqfft::_polynomial_multiplication<Field>(abqM, abqM, srs.Q_polys[M]);
     // a(x)q_L(x)
     polynomial<Field> aqL;
     libfqfft::_polynomial_multiplication<Field>(
-        aqL, round_one_out.W_polys_blinded[a], common_input.Q_polys[L]);
+        aqL, round_one_out.W_polys_blinded[a], srs.Q_polys[L]);
     // b(x)q_R(x)
     polynomial<Field> bqR;
     libfqfft::_polynomial_multiplication<Field>(
-        bqR, round_one_out.W_polys_blinded[b], common_input.Q_polys[R]);
+        bqR, round_one_out.W_polys_blinded[b], srs.Q_polys[R]);
     // c(x)q_O(x)
     polynomial<Field> cqO;
     libfqfft::_polynomial_multiplication<Field>(
-        cqO, round_one_out.W_polys_blinded[c], common_input.Q_polys[O]);
+        cqO, round_one_out.W_polys_blinded[c], srs.Q_polys[O]);
     // t_part[0](x) = a(x)b(x)q_M(x) + a(x)q_L(x) + b(x)q_R(x) + c(x)q_O(x) +
     // PI(x) + q_C(x)
     polynomial<Field> poly_null{Field(0)};
@@ -354,18 +348,16 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], aqL);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], bqR);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], cqO);
-    libfqfft::_polynomial_addition<Field>(
-        t_part[0], t_part[0], common_input.PI_poly);
-    libfqfft::_polynomial_addition<Field>(
-        t_part[0], t_part[0], common_input.Q_polys[C]);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], srs.PI_poly);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], srs.Q_polys[C]);
 
     // --- Computation of t_part[1]
 
     // X*beta as polynomial in X
     std::vector<polynomial<Field>> xbeta_poly{
-        {Field(0), round_two_out.beta},                   // X*beta
-        {Field(0), round_two_out.beta * common_input.k1}, // X*beta*k1
-        {Field(0), round_two_out.beta * common_input.k2}  // X*beta*k2
+        {Field(0), round_two_out.beta},          // X*beta
+        {Field(0), round_two_out.beta * srs.k1}, // X*beta*k1
+        {Field(0), round_two_out.beta * srs.k2}  // X*beta*k2
     };
     // represent gamma as polynomial in X, needed for prover Round 3
     polynomial<Field> gamma_poly{round_two_out.gamma}; // gamma
@@ -414,7 +406,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     std::vector<polynomial<Field>> sbeta_poly(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
         libfqfft::_polynomial_multiplication<Field>(
-            sbeta_poly[i], common_input.S_polys[i], beta_poly);
+            sbeta_poly[i], srs.S_polys[i], beta_poly);
     }
     // a(x) + S_sigma1(x)*beta + gamma
     polynomial<Field> a_sbeta_gamma;
@@ -440,7 +432,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
         c_sbeta_gamma_k2, c_sbeta_gamma_k2, gamma_poly);
     // t_part[2] = (a(x) + S_sigma1(x)*beta + gamma)*(b(x) +
     // S_sigma2(x)*beta + gamma)*(b(x) + S_sigma2(x)*beta +
-    // gamma)*z(x*common_input.omega_roots)*alpha
+    // gamma)*z(x*srs.omega_roots)*alpha
     libfqfft::_polynomial_multiplication<Field>(
         t_part[2], a_sbeta_gamma, b_sbeta_gamma_k1);
     libfqfft::_polynomial_multiplication<Field>(
@@ -462,7 +454,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
         z_neg_one, round_two_out.z_poly, neg_one_poly);
     // (z(x)-1) * L_1(x)
     libfqfft::_polynomial_multiplication<Field>(
-        t_part[3], z_neg_one, common_input.L_basis[0]);
+        t_part[3], z_neg_one, srs.L_basis[0]);
     // (z(x)-1) * L_1(x) * alpha
     libfqfft::_polynomial_multiplication<Field>(
         t_part[3], t_part[3], alpha_poly);
@@ -501,16 +493,15 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     assert(libfqfft::_is_zero(remainder));
 
     // break this->t_poly_long into three parts: lo, mid, hi, each of degree
-    // 7. note: (common_input.num_gates+3) is the length of the CRS =
-    // (common_input.num_gates+2) powers of G1 + 1 power of G2
+    // 7. note: (srs.num_gates+3) is the length of the CRS =
+    // (srs.num_gates+2) powers of G1 + 1 power of G2
     round_three_out.t_poly.resize(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
         typename std::vector<Field>::iterator begin =
-            round_three_out.t_poly_long.begin() +
-            (i * (common_input.num_gates + 2));
+            round_three_out.t_poly_long.begin() + (i * (srs.num_gates + 2));
         typename std::vector<Field>::iterator end =
-            round_three_out.t_poly_long.begin() +
-            (i * (common_input.num_gates + 2)) + (common_input.num_gates + 2);
+            round_three_out.t_poly_long.begin() + (i * (srs.num_gates + 2)) +
+            (srs.num_gates + 2);
         std::vector<Field> tmp(begin, end);
         round_three_out.t_poly[i] = tmp;
     }
@@ -539,7 +530,8 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
 //   Round 3)
 // - t_poly_long: the quotient polynomial t(x) (see Round 3, pp28
 //   [GWC19]) (from Round 3)
-// - common_input: common preprocessed input
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - zeta: evaluation challenge -- hash of transcript
@@ -562,7 +554,7 @@ template<typename ppT>
 round_four_out_t<ppT> plonk_prover<ppT>::round_four(
     const round_one_out_t<ppT> round_one_out,
     const round_three_out_t<ppT> round_three_out,
-    const common_preprocessed_input<ppT> common_input)
+    const srs<ppT> srs)
 {
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
@@ -579,21 +571,21 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
     round_four_out.zeta.print();
 #endif // #ifdef DEBUG
     round_four_out.a_zeta = libfqfft::evaluate_polynomial<Field>(
-        common_input.num_gates + 2,
+        srs.num_gates + 2,
         round_one_out.W_polys_blinded[a],
         round_four_out.zeta);
     round_four_out.b_zeta = libfqfft::evaluate_polynomial<Field>(
-        common_input.num_gates + 2,
+        srs.num_gates + 2,
         round_one_out.W_polys_blinded[b],
         round_four_out.zeta);
     round_four_out.c_zeta = libfqfft::evaluate_polynomial<Field>(
-        common_input.num_gates + 2,
+        srs.num_gates + 2,
         round_one_out.W_polys_blinded[c],
         round_four_out.zeta);
     round_four_out.S_0_zeta = libfqfft::evaluate_polynomial<Field>(
-        common_input.num_gates, common_input.S_polys[0], round_four_out.zeta);
+        srs.num_gates, srs.S_polys[0], round_four_out.zeta);
     round_four_out.S_1_zeta = libfqfft::evaluate_polynomial<Field>(
-        common_input.num_gates, common_input.S_polys[1], round_four_out.zeta);
+        srs.num_gates, srs.S_polys[1], round_four_out.zeta);
     round_four_out.t_zeta = libfqfft::evaluate_polynomial<Field>(
         round_three_out.t_poly_long.size(),
         round_three_out.t_poly_long,
@@ -632,8 +624,8 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
 // - t_poly: t(x) divided in three parts t(x) = t_lo(x) + t_mid(x) x^n
 //   + t_hi(x) x^{2n} (from round 3)
 // - z_poly: blinded accumulator poly z(x) (from round 2)
-// - common_input: common preprocessed input
-// - srs: structured reference string
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - nu: opening challenge -- hash of transcript (denoted by v in
@@ -653,7 +645,6 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     const round_two_out_t<ppT> round_two_out,
     const round_three_out_t<ppT> round_three_out,
     const round_four_out_t<ppT> round_four_out,
-    const common_preprocessed_input<ppT> common_input,
     const srs<ppT> srs)
 {
     using Field = libff::Fr<ppT>;
@@ -682,29 +673,28 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     // a(z)b(z)q_M(x)
     polynomial<Field> abqM_zeta;
     libfqfft::_polynomial_multiplication<Field>(
-        abqM_zeta, common_input.Q_polys[M], a_zeta_poly);
+        abqM_zeta, srs.Q_polys[M], a_zeta_poly);
     libfqfft::_polynomial_multiplication<Field>(
         abqM_zeta, abqM_zeta, b_zeta_poly);
     // a(z)q_L(x)
     polynomial<Field> aqL_zeta;
     libfqfft::_polynomial_multiplication<Field>(
-        aqL_zeta, common_input.Q_polys[L], a_zeta_poly);
+        aqL_zeta, srs.Q_polys[L], a_zeta_poly);
     // b(z)q_R(x)
     polynomial<Field> bqR_zeta;
     libfqfft::_polynomial_multiplication<Field>(
-        bqR_zeta, common_input.Q_polys[R], b_zeta_poly);
+        bqR_zeta, srs.Q_polys[R], b_zeta_poly);
     // c(z)q_O(x)
     polynomial<Field> cqO_zeta;
     libfqfft::_polynomial_multiplication<Field>(
-        cqO_zeta, common_input.Q_polys[O], c_zeta_poly);
+        cqO_zeta, srs.Q_polys[O], c_zeta_poly);
     // a(z)b(z)q_M(x) + a(z)q_L(x) + b(z)q_R(x) + c(z)q_O(x) + q_C(x)
     libfqfft::_polynomial_addition<Field>(
         r_part[0], round_zero_out.null_poly, abqM_zeta);
     libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], aqL_zeta);
     libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], bqR_zeta);
     libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], cqO_zeta);
-    libfqfft::_polynomial_addition<Field>(
-        r_part[0], r_part[0], common_input.Q_polys[C]);
+    libfqfft::_polynomial_addition<Field>(r_part[0], r_part[0], srs.Q_polys[C]);
 
     // --- Computation of r_part[1]
 
@@ -712,10 +702,10 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
         (round_four_out.a_zeta + (round_two_out.beta * round_four_out.zeta) +
          round_two_out.gamma) *
         (round_four_out.b_zeta +
-         (round_two_out.beta * common_input.k1 * round_four_out.zeta) +
+         (round_two_out.beta * srs.k1 * round_four_out.zeta) +
          round_two_out.gamma) *
         (round_four_out.c_zeta +
-         (round_two_out.beta * common_input.k2 * round_four_out.zeta) +
+         (round_two_out.beta * srs.k2 * round_four_out.zeta) +
          round_two_out.gamma) *
         round_three_out.alpha};
     libfqfft::_polynomial_multiplication<Field>(
@@ -731,7 +721,7 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
         (round_three_out.alpha * round_two_out.beta *
          round_four_out.z_poly_xomega_zeta)};
     libfqfft::_polynomial_multiplication<Field>(
-        r_part[2], r2_const_poly, common_input.S_polys[2]);
+        r_part[2], r2_const_poly, srs.S_polys[2]);
     // -r_part[2]
     libfqfft::_polynomial_multiplication<Field>(
         r_part[2], r_part[2], round_zero_out.neg_one_poly);
@@ -740,9 +730,7 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
 
     //     r3 = accumulator_poly_ext3 * eval_poly(L_1, [zeta])[0] * alpha ** 2
     polynomial<Field> L_0_zeta_poly{libfqfft::evaluate_polynomial<Field>(
-        common_input.L_basis[0].size(),
-        common_input.L_basis[0],
-        round_four_out.zeta)};
+        srs.L_basis[0].size(), srs.L_basis[0], round_four_out.zeta)};
     polynomial<Field> alpha_power2_poly{
         libff::power(round_three_out.alpha, libff::bigint<1>(2))};
     libfqfft::_polynomial_multiplication<Field>(
@@ -808,15 +796,14 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     polynomial<Field> t_lo{round_three_out.t_poly[lo]};
     // t_mid(x) * zeta^(n+2)
     polynomial<Field> t_mid_zeta_n;
-    polynomial<Field> zeta_powern_poly{libff::power(
-        round_four_out.zeta, libff::bigint<1>(common_input.num_gates + 2))};
+    polynomial<Field> zeta_powern_poly{
+        libff::power(round_four_out.zeta, libff::bigint<1>(srs.num_gates + 2))};
     libfqfft::_polynomial_multiplication<Field>(
         t_mid_zeta_n, round_three_out.t_poly[mid], zeta_powern_poly);
     // t_hi(x) * zeta^(2(n+1))
     polynomial<Field> t_hi_zeta_2n;
     polynomial<Field> zeta_power2n_poly{libff::power(
-        round_four_out.zeta,
-        libff::bigint<1>(2 * (common_input.num_gates + 2)))};
+        round_four_out.zeta, libff::bigint<1>(2 * (srs.num_gates + 2)))};
     libfqfft::_polynomial_multiplication<Field>(
         t_hi_zeta_2n, round_three_out.t_poly[hi], zeta_power2n_poly);
     // -t_zeta as constant term polynomial
@@ -894,7 +881,7 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     // (S0(x) - S_0_zeta)
     polynomial<Field> S0_sub_szeta;
     libfqfft::_polynomial_addition<Field>(
-        S0_sub_szeta, common_input.S_polys[0], S_0_zeta_poly_neg);
+        S0_sub_szeta, srs.S_polys[0], S_0_zeta_poly_neg);
     // (S0(x) - S_0_zeta) * nu^5
     Field nu5 = libff::power(round_five_out.nu, libff::bigint<1>(5));
     polynomial<Field> nu5_poly{nu5};
@@ -908,7 +895,7 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     // (S1(x) - S_1_zeta)
     polynomial<Field> S1_sub_szeta;
     libfqfft::_polynomial_addition<Field>(
-        S1_sub_szeta, common_input.S_polys[1], S_1_zeta_poly_neg);
+        S1_sub_szeta, srs.S_polys[1], S_1_zeta_poly_neg);
     // (S1(x) - S_1_zeta) * nu^6
     Field nu6 = libff::power(round_five_out.nu, libff::bigint<1>(6));
     polynomial<Field> nu6_poly{nu6};
@@ -934,23 +921,23 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     //    polynomial<Field> z_poly;
 
     // Compute opening proof:
-    // W_zeta_omega = z(X) - z(zeta*common_input.omega_roots) / X -
-    // (zeta*common_input.omega_roots)
+    // W_zeta_omega = z(X) - z(zeta*srs.omega_roots) / X -
+    // (zeta*srs.omega_roots)
     polynomial<Field> W_zeta_omega{round_zero_out.null_poly};
 
-    // -z(zeta*common_input.omega_roots)
+    // -z(zeta*srs.omega_roots)
     polynomial<Field> z_poly_xomega_zeta_neg{
         -round_four_out.z_poly_xomega_zeta};
-    // z(X) - z(zeta*common_input.omega_roots)
+    // z(X) - z(zeta*srs.omega_roots)
     libfqfft::_polynomial_addition<Field>(
         W_zeta_omega, round_two_out.z_poly, z_poly_xomega_zeta_neg);
-    // -zeta*common_input.omega_roots; common_input.omega_roots[base][1] =
-    // common_input.omega_roots_base
+    // -zeta*srs.omega_roots; srs.omega_roots[base][1] =
+    // srs.omega_roots_base
     polynomial<Field> x_sub_zeta_omega_roots{
-        -(round_four_out.zeta * common_input.omega_roots[base][1]), Field(1)};
+        -(round_four_out.zeta * srs.omega_roots[base][1]), Field(1)};
 
-    // z(X) - z(zeta*common_input.omega_roots) / X -
-    // (zeta*common_input.omega_roots)
+    // z(X) - z(zeta*srs.omega_roots) / X -
+    // (zeta*srs.omega_roots)
     libfqfft::_polynomial_division(
         W_zeta_omega, remainder, W_zeta_omega, x_sub_zeta_omega_roots);
     assert(libfqfft::_is_zero(remainder));
@@ -1025,15 +1012,14 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
 // (from Round 5)
 //
 // INPUT
-// - common_input: common preprocessed input
-// - srs: structured reference string
+// - srs: structured reference string containing also circuit-specific
+//   information
 //
 // OUTPUT
 // - proof: SNARK proof Pi (see above)
 //
 template<typename ppT>
-plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
-    const srs<ppT> srs, const common_preprocessed_input<ppT> common_input)
+plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> srs)
 {
     using Field = libff::Fr<ppT>;
 
@@ -1041,15 +1027,14 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     plonk_example<ppT> example;
     std::vector<Field> witness = example.witness;
 #ifdef DEBUG
-    assert(common_input.k1 == example.k1);
-    assert(common_input.k2 == example.k2);
+    assert(srs.k1 == example.k1);
+    assert(srs.k2 == example.k2);
 #endif // #ifdef DEBUG
 
     // Prover Round 0 (initialization)
 #if 1 // prover round 0
     printf("[%s:%d] Prover Round 0...\n", __FILE__, __LINE__);
-    round_zero_out_t<ppT> round_zero_out =
-        plonk_prover::round_zero(common_input);
+    round_zero_out_t<ppT> round_zero_out = plonk_prover::round_zero(srs);
 #ifdef DEBUG
     printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
     print_vector(round_zero_out.zh_poly);
@@ -1061,7 +1046,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
 #if 1 // prover round 1
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
     round_one_out_t<ppT> round_one_out =
-        plonk_prover::round_one(round_zero_out, witness, common_input, srs);
+        plonk_prover::round_one(round_zero_out, witness, srs);
     // Prover Round 1 output check against test vectors
 #ifdef DEBUG
     for (int i = 0; i < (int)NUM_HGEN; ++i) {
@@ -1088,8 +1073,8 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
 
     printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
 #if 1 // prover round 2
-    round_two_out_t<ppT> round_two_out = plonk_prover::round_two(
-        round_zero_out, round_one_out, witness, common_input, srs);
+    round_two_out_t<ppT> round_two_out =
+        plonk_prover::round_two(round_zero_out, round_one_out, witness, srs);
     // Prover Round 2 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
@@ -1108,7 +1093,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
 #if 1 // prover round 3
     round_three_out_t<ppT> round_three_out = plonk_prover::round_three(
-        round_zero_out, round_one_out, round_two_out, common_input, srs);
+        round_zero_out, round_one_out, round_two_out, srs);
     // Prover Round 3 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
@@ -1127,7 +1112,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
 #if 1 // prover round 4
     round_four_out_t<ppT> round_four_out =
-        plonk_prover::round_four(round_one_out, round_three_out, common_input);
+        plonk_prover::round_four(round_one_out, round_three_out, srs);
     // Prover Round 4 output check against test vectors
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
@@ -1163,7 +1148,6 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
         round_two_out,
         round_three_out,
         round_four_out,
-        common_input,
         srs);
 #endif // #if 1 // prover round 5
 #ifdef DEBUG

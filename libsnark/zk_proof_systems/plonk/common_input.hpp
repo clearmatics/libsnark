@@ -27,12 +27,9 @@ J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive, Report
 
 namespace libsnark
 {
-/**
- * Plonk common preprocessed input
- */
-template<typename ppT> class common_preprocessed_input
-{
-public:
+
+/// Plonk circuit-specific data
+template<typename ppT> struct circuit_t {
     using Field = libff::Fr<ppT>;
     // number of gates / constraints
     size_t num_gates;
@@ -59,12 +56,12 @@ public:
     // constants for H, k1 H, k2 H
     libff::Fr<ppT> k1;
     libff::Fr<ppT> k2;
-
-    common_preprocessed_input(){};
-
-    // for debug
-    void setup_from_example(plonk_example<ppT> example);
 };
+
+template<typename ppT>
+circuit_t<ppT> plonk_curcuit_description_from_example(
+    const plonk_example<ppT> example);
+
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/common_input.tcc"
