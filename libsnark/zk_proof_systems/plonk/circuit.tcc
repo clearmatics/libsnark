@@ -3,7 +3,7 @@
 Implementation of Common Preprocessed Input interfaces for a ppzkSNARK
 for Plonk.
 
-See common_input.hpp .
+See circuit.hpp .
 
 *****************************************************************************
 * @author     This file is part of libsnark, developed by SCIPR Lab

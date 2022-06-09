@@ -64,6 +64,6 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
 
 } // namespace libsnark
 
-#include "libsnark/zk_proof_systems/plonk/common_input.tcc"
+#include "libsnark/zk_proof_systems/plonk/circuit.tcc"
 
 #endif // PLONK_PPZKSNARK_COMMON_INPUT_HPP_
