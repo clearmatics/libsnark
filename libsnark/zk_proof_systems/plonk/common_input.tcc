@@ -46,12 +46,12 @@ void common_preprocessed_input<ppT>::setup_from_example(
 #endif // #ifdef DEBUG
 
     this->num_gates = example.num_gates;
+    // ensure that num_gates is not 0
+    assert(this->num_gates);
 #ifdef DEBUG
     // ensure num_gates is power of 2
     bool b_is_power2 = ((this->num_gates & (this->num_gates - 1)) == 0);
     assert(b_is_power2);
-    // ensure that num_gates is not 0
-    assert(this->num_gates);
 #endif // #ifdef DEBUG
 
     this->num_qpolys = example.num_qpolys;
