@@ -66,18 +66,16 @@ public:
     /// [1]_2, [\alpha]_2
     std::vector<libff::G2<ppT>> secret_powers_g2;
 
-    usrs(){};
-
     usrs(
         std::vector<libff::G1<ppT>> &&secret_powers_g1,
         std::vector<libff::G2<ppT>> &&secret_powers_g2)
         : secret_powers_g1(secret_powers_g1), secret_powers_g2(secret_powers_g2)
     {
     }
-
-    // for debug only
-    void derive_from_secret(const libff::Fr<ppT> secret);
 };
+
+template<typename ppT>
+usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> secret);
 
 // Plain (i.e. non-universal srs). Contains secret encoded monomials
 // with maximum degree equal to the number of gates of the analyzed

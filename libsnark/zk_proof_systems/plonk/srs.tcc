@@ -20,9 +20,9 @@ namespace libsnark
 // powers of the secret value in the group generator. Therefore a usrs
 // is independent of any particular circuit.
 //
-// Note: the \ref derive_from_secret method is only for debug
+// Note: only for debug
 template<typename ppT>
-void usrs<ppT>::derive_from_secret(const libff::Fr<ppT> secret)
+usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> secret)
 {
     // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
     const libff::bigint<libff::Fr<ppT>::num_limbs> secret_bigint =
@@ -32,25 +32,30 @@ void usrs<ppT>::derive_from_secret(const libff::Fr<ppT> secret)
         1ul);
     const std::vector<long> naf =
         libff::find_wnaf<libff::Fr<ppT>::num_limbs>(window_size, secret_bigint);
-    this->secret_powers_g1.reserve(MAX_DEGREE);
+
+    std::vector<libff::G1<ppT>> secret_powers_g1;
+    secret_powers_g1.reserve(MAX_DEGREE);
     libff::G1<ppT> secret_i_g1 = libff::G1<ppT>::one();
-    this->secret_powers_g1.push_back(secret_i_g1);
+    secret_powers_g1.push_back(secret_i_g1);
     for (size_t i = 1; i < MAX_DEGREE; ++i) {
         // secret^i * G1
         secret_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
             window_size, secret_i_g1, naf);
-        this->secret_powers_g1.push_back(secret_i_g1);
+        secret_powers_g1.push_back(secret_i_g1);
     }
 
     // compute powers of secret times G2: 1*G2, secret^1*G2
     // Note: in Plonk we *always* have 2 encoded elemnts in G2
-    this->secret_powers_g2.reserve(2);
+    std::vector<libff::G2<ppT>> secret_powers_g2;
+    secret_powers_g2.reserve(2);
     // secret^0 * G2 = G2
     libff::G2<ppT> secret_0_g2 = libff::G2<ppT>::one();
-    this->secret_powers_g2.push_back(secret_0_g2);
+    secret_powers_g2.push_back(secret_0_g2);
     // secret^1 * G2
     libff::G2<ppT> secret_1_g2 = secret * libff::G2<ppT>::one();
-    this->secret_powers_g2.push_back(secret_1_g2);
+    secret_powers_g2.push_back(secret_1_g2);
+
+    return usrs<ppT>(std::move(secret_powers_g1), std::move(secret_powers_g2));
 }
 
 // Generate (plain) SRS \see r1cs_gg_ppzksnark_generator_from_secrets,
