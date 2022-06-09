@@ -58,7 +58,13 @@ usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> secret)
     return usrs<ppT>(std::move(secret_powers_g1), std::move(secret_powers_g2));
 }
 
-// Derive the SRS from the circuit description and the USRS
+// Derive the (plain) SRS from the circuit description and the
+// USRS. The (plain) SRS is a specialization of the USRS for one
+// particular circuit i.e.
+//
+// usrs = <encoded powers of secret>
+// srs = (proving_key, verificataion_key) = derive(usrs, circuit_description)
+//
 template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
     const usrs<ppT> usrs, const circuit_t<ppT> circuit)
@@ -93,30 +99,6 @@ srs<ppT> plonk_srs_derive_from_usrs(
         std::move(secret_powers_g2));
 
     return srs;
-}
-
-// Generate (plain) SRS \see r1cs_gg_ppzksnark_generator_from_secrets,
-// \see kzg10<ppT>::setup_from_secret
-//
-// The (plain) srs is a specialization of the usrs for one particular
-// circuit and is derived from the usrs e.g.
-//
-// usrs = <encoded powers of secret>
-// srs = (proving_key, verificataion_key) = derive(usrs, circuit_description)
-//
-template<typename ppT> void srs<ppT>::derive(const usrs<ppT> usrs)
-{
-    assert(this->num_gates <= MAX_DEGREE);
-    // secret^i * G1
-    this->secret_powers_g1.reserve(this->num_gates + 3);
-    for (size_t i = 0; i < (this->num_gates + 3); ++i) {
-        this->secret_powers_g1.push_back(usrs.secret_powers_g1[i]);
-    }
-    // secret^i * G2
-    this->secret_powers_g2.reserve(2);
-    for (size_t i = 0; i < 2; ++i) {
-        this->secret_powers_g2.push_back(usrs.secret_powers_g2[i]);
-    }
 }
 
 } // namespace libsnark

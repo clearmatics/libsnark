@@ -143,11 +143,6 @@ public:
         , secret_powers_g2(secret_powers_g2)
     {
     }
-
-    srs(const size_t num_gates) : num_gates(num_gates){};
-
-    // derive from the usrs
-    void derive(const usrs<ppT> usrs);
 };
 
 template<typename ppT>
