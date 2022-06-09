@@ -27,9 +27,7 @@ Ciobotaru, Cryptology ePrint Archive, Report 2019/953, 2019,
 
 namespace libsnark
 {
-/**
- * A proof for the Plonk GG-ppzkSNARK.
- */
+/// A proof for the Plonk GG-ppzkSNARK.
 template<typename ppT> class plonk_proof
 {
 public:

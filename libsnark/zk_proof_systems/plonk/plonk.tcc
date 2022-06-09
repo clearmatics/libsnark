@@ -24,7 +24,6 @@ template<typename FieldT> void print_vector(std::vector<FieldT> v)
     }
 }
 
-//
 // Compute the Lagrange basis polynomails for interpolating sets of
 // n points
 //
@@ -44,7 +43,6 @@ template<typename FieldT> void print_vector(std::vector<FieldT> v)
 //                      L_i(x\neq{omega_i)})=0
 //
 // Note: uses libfqfft iFFT for the interpolation
-//
 template<typename FieldT>
 void plonk_compute_lagrange_basis(
     size_t npoints, std::vector<polynomial<FieldT>> &L)
@@ -84,7 +82,6 @@ void plonk_compute_lagrange_basis(
 //                   ..., omega_{n-1} are the n roots of unity.
 //
 // \note uses libfqfft iFFT for the interpolation
-//
 template<typename FieldT>
 void plonk_interpolate_polynomial_from_points(
     const std::vector<FieldT> f_points, polynomial<FieldT> &f_poly)
@@ -246,7 +243,7 @@ void plonk_roots_of_unity_omega_to_subgroup_H(
         omega[base_k2].begin(), omega[base_k2].end(), back_inserter(H_gen));
 }
 
-// permute the multiplicative subgroup H accordingto the wire
+// permute the multiplicative subgroup H according to the wire
 // permutation: (see [GWC19] Sect. 8), \see
 // plonk_compute_roots_of_unity_omega, \see
 // plonk_roots_of_unity_omega_to_subgroup_H
@@ -322,7 +319,6 @@ libff::G1<ppT> plonk_multi_exp_G1(
     return product;
 }
 
-//
 // Evaluate a polynomial F at the encrypted secret input
 // \secret^i*G_1 ie. compute f(\secret)*G1 = [f(\secret)]_i
 //
@@ -337,7 +333,6 @@ libff::G1<ppT> plonk_multi_exp_G1(
 // the polynomial f_poly in the secret parameter \secret (the
 // toxic waste) multiplied by the group generator G_1 i.e. compute
 // f_poly(\secret)*G_1
-//
 template<typename ppT>
 libff::G1<ppT> plonk_evaluate_poly_at_secret_G1(
     std::vector<libff::G1<ppT>> secret_powers_g1,
@@ -462,7 +457,7 @@ template<typename GroupT> bool check_curve_equation(GroupT P)
 }
 
 //
-// check that the input is an elemnet of the field
+// check that the input is an element of the field
 // Warning: under development
 //
 template<typename FieldT> bool check_field_element(FieldT x)
