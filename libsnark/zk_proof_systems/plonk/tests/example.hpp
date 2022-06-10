@@ -1,22 +1,5 @@
 /** @file
  *****************************************************************************
-Test vectors for the implementation of the PlonK protocol \[GWC19]
-(\see plonk.hpp) produced using the Python implementation of Plonk
-available at [PlonkPy].
-
-The test vector values trace the execution of the Plonk protocol for
-the example ciruit P(x) = x**3 + x + 5 = 35 discussed in a blog post
-by Vitalik Buterin [VB19].
-
-References:
-
-\[PlonkPy] Implementation of the Plonk ZKSNARK proof system in Python,
-accessed in May 2022 on GitHub https://github.com/ETHorHIL/Plonk_Py
-
-\[VB19] "Understanding PLONK", Vitalik Buterin, personal blog post
-from 22 Sep 2019, https://vitalik.ca/general/2019/09/22/plonk.html
-
- *****************************************************************************
  * @author     This file is part of libff, developed by Clearmatics Ltd
  *             (originally developed by SCIPR Lab) and contributors
  *             (see AUTHORS).
@@ -26,80 +9,95 @@ from 22 Sep 2019, https://vitalik.ca/general/2019/09/22/plonk.html
 #ifndef __PLONK_EXAMPLE_HPP__
 #define __PLONK_EXAMPLE_HPP__
 
-/*
-
-Example Plonk circuit from [VB19]:
-
-P(x) = x**3 + x + 5 = 35
-
-circuit has 6 gates + 2 dummy gates (to make power of 2 for the FFT)
-
-gates / constraints
-
-        L   R    O
-1 mul   x * x  = v1
-2 mul  v1 * x  = v2
-3 add  v2 + x  = v3
-4 con5  1 * 5  = 5
-5 pin   1 * 35 = 35
-6 add  v3 + 5  = 35
-7 dum   /    /    /
-8 dum   /    /    /
-
-wire polynomials
-
-w_L = [ x, v1, v2,  1,  1, v3,  /,  /] = [a1, a2, a3, a4, a5, a6, a7, a8] = a
-w_R = [ x,  x,  x,  5, 35,  5,  /,  /] = [b1, b2, b3, b4, b5, b6, b7, b8] = b
-w_O = [v1, v2, v3,  5, 35, 35,  /,  /] = [c1, c2, c3, c4, c5, c6, c7, c8] = c
-
-wires = [a1, a2, a3, a4, a5, a6, a7, a8, b1, b2, b3, b4, b5, b6, b7, b8, c1, c2,
-c3, c4, c5, c6, c7, c8] index = [ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,
-13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24] perm  = [ 9, 17, 18,  5,  4, 19,
-7,  8, 10, 11,  1, 14, 21, 20, 15, 16,  2,  3,  6, 12, 22, 13, 23, 24]
-
-witness
-
-x = 3 => v1 = 9, v2 = 27, v3 = 30
-
-w_L = a = [ 3,  9, 27,  1,  1, 30,  0,  0]
-w_R = b = [ 3,  3,  3,  5, 35,  5,  0,  0]
-w_O = c = [ 9, 27, 30,  5, 35, 35,  0,  0]
-
-W = w_L + w_R + w_O
-
-encoding of plonk gates
-
-add  = [1, 1,-1, 0, 0]
-mul  = [0, 0,-1, 1, 0]
-con5 = [0, 1, 0, 0, 5]
-pi   = [0, 1, 0, 0, 0]
-dum  = [0, 0, 0, 0, 0]
-
-gates matrix
-
-(q_L * a) + (q_R * b) + (q_O * c) + (q_M * a * b) + (q_C) = 0
-
-gates                  q_L q_R q_O q_M q_C
-1 mul   x * x  = v1 : [  0,  0, -1,  1,  0]
-2 mul  v1 * x  = v2 : [  0,  0, -1,  1,  0]
-3 add  v2 + x  = v3 : [  1,  1, -1,  0,  0]
-4 con5  1 * 5  = 5  : [  0,  1,  0,  0, -5]
-5 pin   1 * 35 = 35 : [  0,  1,  0,  0,  0]
-6 add  v2 + 5  = 35 : [  1,  1, -1,  0,  0]
-7 dum   /    /    / : [  0,  0,  0,  0,  0]
-8 dum   /    /    / : [  0,  0,  0,  0,  0]
-
-q_L = [ 0,  0,  1,  0,  0,  1,  0,  0]
-q_R = [ 0,  0,  1,  1,  1,  1,  0,  0]
-q_O = [-1, -1, -1,  0,  0,  0,  0,  0]
-q_M = [ 1,  1,  0,  0,  0, -1,  0,  0]
-q_C = [ 0,  0,  0, -1,  0,  0,  0,  0]
-
-*/
+/// Test vectors for the implementation of the PlonK protocol \[GWC19]
+/// (\see plonk.hpp) produced using the Python implementation of Plonk
+/// available at [PlonkPy].
+///
+/// The test vector values trace the execution of the Plonk protocol for
+/// the example ciruit P(x) = x**3 + x + 5 = 35 discussed in a blog post
+/// by Vitalik Buterin [VB19].
+///
+/// References:
+/// - \[PlonkPy]
+///   Title: Implementation of the Plonk ZKSNARK proof system in
+///   Python, accessed in May 2022 on GitHub
+///   https://github.com/ETHorHIL/Plonk_Py
+/// - \[VB19]
+///   Title: "Understanding PLONK", Vitalik Buterin, personal blog
+///   post from 22 Sep 2019,
+///   https://vitalik.ca/general/2019/09/22/plonk.html
 
 namespace libsnark
 {
 
+/// Example Plonk circuit from [VB19]:
+///
+/// P(x) = x**3 + x + 5 = 35
+///
+/// circuit has 6 gates + 2 dummy gates (to make power of 2 for the FFT)
+///
+/// gates / constraints
+///
+///         L   R    O
+/// 1 mul   x * x  = v1
+/// 2 mul  v1 * x  = v2
+/// 3 add  v2 + x  = v3
+/// 4 con5  1 * 5  = 5
+/// 5 pin   1 * 35 = 35
+/// 6 add  v3 + 5  = 35
+/// 7 dum   /    /    /
+/// 8 dum   /    /    /
+///
+/// wire polynomials
+///
+/// w_L = [ x, v1, v2,  1,  1, v3,  /,  /] = [a1, a2, a3, a4, a5, a6, a7, a8] =
+/// a w_R = [ x,  x,  x,  5, 35,  5,  /,  /] = [b1, b2, b3, b4, b5, b6, b7, b8]
+/// = b w_O = [v1, v2, v3,  5, 35, 35,  /,  /] = [c1, c2, c3, c4, c5, c6, c7,
+/// c8] = c
+///
+/// wires = [a1, a2, a3, a4, a5, a6, a7, a8, b1, b2, b3, b4, b5, b6, b7, b8, c1,
+/// c2, c3, c4, c5, c6, c7, c8] index = [ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10,
+/// 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24] perm  = [ 9, 17, 18,
+/// 5,  4, 19, 7,  8, 10, 11,  1, 14, 21, 20, 15, 16,  2,  3,  6, 12, 22, 13,
+/// 23, 24]
+///
+/// witness
+///
+/// x = 3 => v1 = 9, v2 = 27, v3 = 30
+///
+/// w_L = a = [ 3,  9, 27,  1,  1, 30,  0,  0]
+/// w_R = b = [ 3,  3,  3,  5, 35,  5,  0,  0]
+/// w_O = c = [ 9, 27, 30,  5, 35, 35,  0,  0]
+///
+/// W = w_L + w_R + w_O
+///
+/// encoding of plonk gates
+///
+/// add  = [1, 1,-1, 0, 0]
+/// mul  = [0, 0,-1, 1, 0]
+/// con5 = [0, 1, 0, 0, 5]
+/// pi   = [0, 1, 0, 0, 0]
+/// dum  = [0, 0, 0, 0, 0]
+///
+/// gates matrix
+///
+/// (q_L * a) + (q_R * b) + (q_O * c) + (q_M * a * b) + (q_C) = 0
+///
+/// gates                  q_L q_R q_O q_M q_C
+/// 1 mul   x * x  = v1 : [  0,  0, -1,  1,  0]
+/// 2 mul  v1 * x  = v2 : [  0,  0, -1,  1,  0]
+/// 3 add  v2 + x  = v3 : [  1,  1, -1,  0,  0]
+/// 4 con5  1 * 5  = 5  : [  0,  1,  0,  0, -5]
+/// 5 pin   1 * 35 = 35 : [  0,  1,  0,  0,  0]
+/// 6 add  v2 + 5  = 35 : [  1,  1, -1,  0,  0]
+/// 7 dum   /    /    / : [  0,  0,  0,  0,  0]
+/// 8 dum   /    /    / : [  0,  0,  0,  0,  0]
+///
+/// q_L = [ 0,  0,  1,  0,  0,  1,  0,  0]
+/// q_R = [ 0,  0,  1,  1,  1,  1,  0,  0]
+/// q_O = [-1, -1, -1,  0,  0,  0,  0,  0]
+/// q_M = [ 1,  1,  0,  0,  0, -1,  0,  0]
+/// q_C = [ 0,  0,  0, -1,  0,  0,  0,  0]
 template<typename ppT> class plonk_example
 {
 public:

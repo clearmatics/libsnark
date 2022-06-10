@@ -1,9 +1,5 @@
 /** @file
  *****************************************************************************
- Test program that exercises the Plonk protocol (first setup, then
- prover, then verifier) on a synthetic R1CS instance.
-
- *****************************************************************************
  * @author     This file is part of libff, developed by Clearmatics Ltd
  *             (originally developed by SCIPR Lab) and contributors
  *             (see AUTHORS).
@@ -22,8 +18,12 @@
 #include <libsnark/zk_proof_systems/plonk/prover.hpp>
 #include <libsnark/zk_proof_systems/plonk/verifier.hpp>
 
+/// Test program that exercises the Plonk protocol (first setup, then
+/// prover, then verifier) on a synthetic R1CS instance.
+
 namespace libsnark
 {
+
 // Manipulate elements of a valid proof to assert that proof
 // verification fails
 //

@@ -1,18 +1,16 @@
 /** @file
-*****************************************************************************
-Implementation of Common Preprocessed Input interfaces for a ppzkSNARK
-for Plonk.
-
-See circuit.hpp .
-
-*****************************************************************************
-* @author     This file is part of libsnark, developed by SCIPR Lab
-*             and contributors (see AUTHORS).
-* @copyright  MIT license (see LICENSE file)
-*****************************************************************************/
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
 
 #ifndef PLONK_PPZKSNARK_COMMON_INPUT_TCC_
 #define PLONK_PPZKSNARK_COMMON_INPUT_TCC_
+
+/// Implementation of Common Preprocessed Input interfaces for a
+/// ppzkSNARK for Plonk. See circuit.hpp .
 
 namespace libsnark
 {

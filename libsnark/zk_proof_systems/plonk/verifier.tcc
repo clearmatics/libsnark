@@ -1,20 +1,20 @@
 /** @file
-*****************************************************************************
-Implementation of Verifier interfaces for a ppzkSNARK for Plonk.
-
-See verifier.hpp .
-
-*****************************************************************************
-* @author     This file is part of libsnark, developed by SCIPR Lab
-*             and contributors (see AUTHORS).
-* @copyright  MIT license (see LICENSE file)
-*****************************************************************************/
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
 
 #ifndef PLONK_PPZKSNARK_VERIFIER_TCC_
 #define PLONK_PPZKSNARK_VERIFIER_TCC_
 
+/// Implementation of Verifier interfaces for a ppzkSNARK for Plonk. See
+/// verifier.hpp .
+
 namespace libsnark
 {
+
 //
 // SNARK proof
 //
@@ -720,6 +720,7 @@ bool plonk_verifier<ppT>::verify_proof(
         step_four_out, step_ten_out, step_eleven_out, proof, srs);
     return b_accept;
 }
+
 } // namespace libsnark
 
 #endif // PLONK_PPZKSNARK_VERIFIER_TCC_

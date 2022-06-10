@@ -1,17 +1,16 @@
 /** @file
-*****************************************************************************
-Implementation of interfaces for a ppzkSNARK for Plonk.
-
-See plonk.hpp .
-
-*****************************************************************************
-* @author     This file is part of libsnark, developed by SCIPR Lab
-*             and contributors (see AUTHORS).
-* @copyright  MIT license (see LICENSE file)
-*****************************************************************************/
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
 
 #ifndef PLONK_PPZKSNARK_TCC_
 #define PLONK_PPZKSNARK_TCC_
+
+/// Implementation of interfaces for a ppzkSNARK for Plonk. See
+/// plonk.hpp .
 
 namespace libsnark
 {
@@ -24,7 +23,7 @@ template<typename FieldT> void print_vector(std::vector<FieldT> v)
     }
 }
 
-// Compute the Lagrange basis polynomails for interpolating sets of
+// Compute the Lagrange basis polynomials for interpolating sets of
 // n points
 //
 // INPUT:
@@ -216,7 +215,7 @@ void plonk_compute_roots_of_unity_omega(
     FieldT temp = libff::power(omega_base, libff::bigint<1>(std::pow(2, 32)));
     assert(temp == 1);
 #endif // #ifdef DEBUG
-    for (int i = 0; i < (int)num_gates; ++i) {
+    for (size_t i = 0; i < num_gates; ++i) {
         FieldT omega_i = libff::power(omega_base, libff::bigint<1>(i));
         omega[base][i] = omega_i;
         FieldT omega_k1_i = omega[base][i] * k1;

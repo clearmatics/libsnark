@@ -1,17 +1,16 @@
 /** @file
-*****************************************************************************
-Implementation of SRS interfaces for a ppzkSNARK for Plonk.
-
-See srs.hpp .
-
-*****************************************************************************
-* @author     This file is part of libsnark, developed by SCIPR Lab
-*             and contributors (see AUTHORS).
-* @copyright  MIT license (see LICENSE file)
-*****************************************************************************/
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
 
 #ifndef PLONK_PPZKSNARK_SRS_TCC_
 #define PLONK_PPZKSNARK_SRS_TCC_
+
+/// Implementation of SRS interfaces for a ppzkSNARK for Plonk. See
+/// srs.hpp .
 
 namespace libsnark
 {

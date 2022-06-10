@@ -1,29 +1,28 @@
 /** @file
-*****************************************************************************
-
-Declaration of Common Preprocessed Input interfaces for ppzkSNARK
-proof system Plonk.
-
-This includes:
-- class for common preprocessed input
-
-References:
-
-\[GWC19]: "Plonk: Permutations over lagrange-bases for oecumenical
-noninteractive arguments of knowledge", Ariel Gabizon, Zachary
-J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive, Report
-2019/953, 2019, <https://eprint.iacr.org/2019/953>
-
-*****************************************************************************
-* @author     This file is part of libsnark, developed by SCIPR Lab
-*             and contributors (see AUTHORS).
-* @copyright  MIT license (see LICENSE file)
-*****************************************************************************/
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
 
 #ifndef PLONK_PPZKSNARK_COMMON_INPUT_HPP_
 #define PLONK_PPZKSNARK_COMMON_INPUT_HPP_
 
 #include <libsnark/zk_proof_systems/plonk/plonk.hpp>
+
+/// Declaration of Common Preprocessed Input interfaces for ppzkSNARK
+/// proof system Plonk.
+///
+/// This includes:
+/// - class for common preprocessed input
+///
+/// Reference:
+/// - \[GWC19]:
+///   Title: "Plonk: Permutations over lagrange-bases for oecumenical
+///   noninteractive arguments of knowledge", Ariel Gabizon, Zachary
+///   J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive,
+///   Report 2019/953, 2019, <https://eprint.iacr.org/2019/953>
 
 namespace libsnark
 {

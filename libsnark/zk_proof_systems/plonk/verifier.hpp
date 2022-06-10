@@ -1,26 +1,26 @@
 /** @file
-*****************************************************************************
-Declaration of Verifier interfaces for ppzkSNARK proof system Plonk.
-
-This includes:
-- class for verifier
-
-References:
-
-\[GWC19]:
-"Plonk: Permutations over lagrange-bases for oecumenical noninteractive
-arguments of knowledge", Ariel Gabizon, Zachary J. Williamson, and Oana
-Ciobotaru, Cryptology ePrint Archive, Report 2019/953, 2019,
-<https://eprint.iacr.org/2019/953>
-
-*****************************************************************************
-* @author     This file is part of libsnark, developed by SCIPR Lab
-*             and contributors (see AUTHORS).
-* @copyright  MIT license (see LICENSE file)
-*****************************************************************************/
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
 
 #ifndef PLONK_PPZKSNARK_VERIFIER_HPP_
 #define PLONK_PPZKSNARK_VERIFIER_HPP_
+
+/// Declaration of Verifier interfaces for ppzkSNARK proof system Plonk. This
+/// includes:
+///
+/// - class for verifier
+///
+/// References:
+///
+/// - \[GWC19]:
+///   Title: "Plonk: Permutations over lagrange-bases for oecumenical
+///   noninteractive arguments of knowledge", Ariel Gabizon, Zachary
+///   J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive,
+///   Report 2019/953, 2019, <https://eprint.iacr.org/2019/953>
 
 namespace libsnark
 {

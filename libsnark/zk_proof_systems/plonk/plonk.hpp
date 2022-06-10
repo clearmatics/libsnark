@@ -1,22 +1,10 @@
 /** @file
-*****************************************************************************
-Declaration of common untility functions for ppzkSNARK proof system
-Plonk.
-
-The implementation instantiates the protocol of PlonK \[GWC19],
-
-References:
-
-\[GWC19]: "Plonk: Permutations over lagrange-bases for oecumenical
-noninteractive arguments of knowledge", Ariel Gabizon, Zachary
-J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive, Report
-2019/953, 2019, <https://eprint.iacr.org/2019/953>
-
-*****************************************************************************
-* @author     This file is part of libsnark, developed by SCIPR Lab
-*             and contributors (see AUTHORS).
-* @copyright  MIT license (see LICENSE file)
-*****************************************************************************/
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
 
 #ifndef PLONK_PPZKSNARK_HPP_
 #define PLONK_PPZKSNARK_HPP_
@@ -29,6 +17,17 @@ J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive, Report
 // vector values.
 #define DEBUG
 //#undef DEBUG
+
+/// Declaration of common untility functions for ppzkSNARK proof
+/// system Plonk. The implementation instantiates the protocol of
+/// PlonK \[GWC19],
+///
+/// References:
+/// - \[GWC19]:
+///   Title: "Plonk: Permutations over lagrange-bases for oecumenical
+///   noninteractive arguments of knowledge", Ariel Gabizon, Zachary
+///   J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive,
+///   Report 2019/953, 2019, <https://eprint.iacr.org/2019/953>
 
 // maximum degree of the encoded monomials in the usrs
 const size_t MAX_DEGREE = 254;

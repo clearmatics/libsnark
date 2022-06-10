@@ -1,35 +1,35 @@
 /** @file
-*****************************************************************************
-Declaration of SRS interfaces for ppzkSNARK proof system Plonk.
-
-This includes:
-- class usrs
-- class srs
-- class for proving key (TODO: not implemented)
-- class for verification key (TODO: not implemented)
-- class for key pair (proving key & verification key) (TODO: not implemented)
-
-References:
-
-\[GWC19]:
-"Plonk: Permutations over lagrange-bases for oecumenical noninteractive
-arguments of knowledge", Ariel Gabizon, Zachary J. Williamson, and Oana
-Ciobotaru, Cryptology ePrint Archive, Report 2019/953, 2019,
-<https://eprint.iacr.org/2019/953>
-
-*****************************************************************************
-* @author     This file is part of libsnark, developed by SCIPR Lab
-*             and contributors (see AUTHORS).
-* @copyright  MIT license (see LICENSE file)
-*****************************************************************************/
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
 
 #ifndef PLONK_PPZKSNARK_SRS_HPP_
 #define PLONK_PPZKSNARK_SRS_HPP_
 
+/// Declaration of SRS interfaces for ppzkSNARK proof system Plonk. This
+/// includes:
+///
+/// - class usrs
+/// - class srs
+/// - class for proving key (TODO: not implemented)
+/// - class for verification key (TODO: not implemented)
+/// - class for key pair (proving key & verification key) (TODO: not
+///   implemented)
+///
+/// Reference:
+/// - \[GWC19]:
+///   Title: "Plonk: Permutations over lagrange-bases for oecumenical
+///   noninteractive arguments of knowledge", Ariel Gabizon, Zachary
+///   J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive,
+///   Report 2019/953, 2019, <https://eprint.iacr.org/2019/953>
+
 namespace libsnark
 {
-/********************************** SRS ***********************************/
 
+/********************************** SRS ***********************************/
 //
 // A note on the distinction between an srs and a universal srs.
 //
