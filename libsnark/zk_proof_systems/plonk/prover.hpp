@@ -199,8 +199,6 @@ template<typename ppT> class plonk_prover
     using Field = libff::Fr<ppT>;
 
 public:
-    plonk_prover(){};
-
     static round_zero_out_t<ppT> round_zero(const srs<ppT> srs);
 
     static round_one_out_t<ppT> round_one(
