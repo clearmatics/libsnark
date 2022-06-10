@@ -1026,7 +1026,6 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
 #endif // #ifdef DEBUG
 
     // Prover Round 0 (initialization)
-#if 1 // prover round 0
     printf("[%s:%d] Prover Round 0...\n", __FILE__, __LINE__);
     round_zero_out_t<ppT> round_zero_out = plonk_prover::round_zero(srs);
 #ifdef DEBUG
@@ -1034,10 +1033,8 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     print_vector(round_zero_out.zh_poly);
     assert(round_zero_out.zh_poly == example.zh_poly);
 #endif // #ifdef DEBUG
-#endif // #if 1 // prover round 0
 
     // Prover Round 1
-#if 1 // prover round 1
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
     round_one_out_t<ppT> round_one_out =
         plonk_prover::round_one(round_zero_out, witness, srs);
@@ -1063,10 +1060,8 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
             example.W_polys_blinded_at_secret_g1[i][1]);
     }
 #endif // #ifdef DEBUG
-#endif // #if 1 // prover round 1
 
     printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
-#if 1 // prover round 2
     round_two_out_t<ppT> round_two_out =
         plonk_prover::round_two(round_zero_out, round_one_out, witness, srs);
     // Prover Round 2 output check against test vectors
@@ -1082,10 +1077,8 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     assert(z_poly_at_secret_g1_aff.X == example.z_poly_at_secret_g1[0]);
     assert(z_poly_at_secret_g1_aff.Y == example.z_poly_at_secret_g1[1]);
 #endif // #ifdef DEBUG
-#endif // #if 1 // prover round 2
 
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
-#if 1 // prover round 3
     round_three_out_t<ppT> round_three_out = plonk_prover::round_three(
         round_zero_out, round_one_out, round_two_out, srs);
     // Prover Round 3 output check against test vectors
@@ -1101,10 +1094,8 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
         assert(t_poly_at_secret_g1_i.Y == example.t_poly_at_secret_g1[i][1]);
     }
 #endif // #ifdef DEBUG
-#endif // #if 1 // prover round 3
 
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
-#if 1 // prover round 4
     round_four_out_t<ppT> round_four_out =
         plonk_prover::round_four(round_one_out, round_three_out, srs);
     // Prover Round 4 output check against test vectors
@@ -1132,10 +1123,8 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     round_four_out.z_poly_xomega_zeta.print();
     assert(round_four_out.z_poly_xomega_zeta == example.z_poly_xomega_zeta);
 #endif // #ifdef DEBUG
-#endif // #if 1 // prover round 4
 
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
-#if 1 // prover round 5
     round_five_out_t<ppT> round_five_out = plonk_prover::round_five(
         round_zero_out,
         round_one_out,
@@ -1143,7 +1132,6 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
         round_three_out,
         round_four_out,
         srs);
-#endif // #if 1 // prover round 5
 #ifdef DEBUG
     printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
     printf("r_zeta ");
