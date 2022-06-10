@@ -437,25 +437,6 @@ void plonk_compute_accumulator(
 }
 
 //
-// Note: the following function was copied from
-// libff/algebra/curves/tests/test_groups.cpp TODO: maybe add the
-// declaration in a header to use it directly from here. Uded in the
-// Verifier code.
-//
-// Check that a group element satisfies the curve equation Y^2 = X^3
-// + a X + b
-//
-template<typename GroupT> bool check_curve_equation(GroupT P)
-{
-    P.to_affine_coordinates();
-    using Fq = typename std::decay<decltype(P.X)>::type;
-    Fq LHS = (P.Y * P.Y);
-    Fq RHS = ((P.X * P.X * P.X) + (GroupT::coeff_a * P.X) + GroupT::coeff_b);
-    bool b_equal = (LHS == RHS);
-    return b_equal;
-}
-
-//
 // check that the input is an element of the field
 // Warning: under development
 //
