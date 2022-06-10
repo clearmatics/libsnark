@@ -914,8 +914,6 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
 #endif // #ifdef DEBUG
     assert(libfqfft::_is_zero(remainder));
 
-    //    polynomial<Field> z_poly;
-
     // Compute opening proof:
     // W_zeta_omega = z(X) - z(zeta*srs.omega_roots) / X -
     // (zeta*srs.omega_roots)
