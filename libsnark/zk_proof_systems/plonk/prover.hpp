@@ -63,7 +63,6 @@ public:
     // r_zeta (*)
     Field r_zeta;
 
-    plonk_proof(){};
     plonk_proof(
         std::vector<libff::G1<ppT>> &W_polys_blinded_at_secret_g1,
         libff::G1<ppT> &z_poly_at_secret_g1,
