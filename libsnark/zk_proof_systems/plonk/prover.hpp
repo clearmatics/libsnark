@@ -121,9 +121,9 @@ template<typename ppT> struct round_one_out_t {
 
 // Prover round 2 output
 template<typename ppT> struct round_two_out_t {
-    // - beta: permutation challenge -- hashe of transcript
+    // - beta: permutation challenge -- hash of transcript
     libff::Fr<ppT> beta;
-    // - gamma: permutation challenge -- hashe of transcript
+    // - gamma: permutation challenge -- hash of transcript
     libff::Fr<ppT> gamma;
     // - z_poly: blinded accumulator poly z(x)
     polynomial<libff::Fr<ppT>> z_poly;
@@ -134,7 +134,7 @@ template<typename ppT> struct round_two_out_t {
 
 // Prover round 3 output
 template<typename ppT> struct round_three_out_t {
-    // - alpha: quotinet challenge -- hash of transcript
+    // - alpha: quotient challenge -- hash of transcript
     libff::Fr<ppT> alpha;
     // - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by w
     std::vector<libff::Fr<ppT>> z_poly_xomega;

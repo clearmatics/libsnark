@@ -76,10 +76,6 @@ template<typename ppT> class srs
 {
 public:
     using Field = libff::Fr<ppT>;
-    // description of the circuit. contains only the number of gates for
-    // now. the highest degree of the encoded power monomials will
-    // be num_gates+2.
-
     // number of gates in the analyzed circuit, denoted by "n" in
     // [GWC19]
     size_t num_gates;
