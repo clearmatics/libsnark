@@ -278,24 +278,6 @@ void plonk_compute_permutation_polynomials(
     }
 }
 
-// A wrapper for multi_exp_method_BDLO12_signed() for multiplying a
-// single group element in G1 (a point on the curve) to a scalar
-// element in Fr
-template<typename ppT>
-libff::G1<ppT> plonk_exp_G1(
-    libff::G1<ppT> curve_point, libff::Fr<ppT> scalar_element)
-{
-    std::vector<libff::Fr<ppT>> scalar{scalar_element};
-    std::vector<libff::G1<ppT>> point{curve_point};
-    const size_t chunks = 1;
-    libff::G1<ppT> product = libff::multi_exp<
-        libff::G1<ppT>,
-        libff::Fr<ppT>,
-        libff::multi_exp_method_BDLO12_signed>(
-        point.begin(), point.end(), scalar.begin(), scalar.end(), chunks);
-    return product;
-}
-
 // A wrapper for multi_exp_method_BDLO12_signed() dot-product a
 // vector of group elements in G1 (curve points) with a vector of
 // scalar elements in Fr

@@ -352,7 +352,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
             step_four_out.alpha * step_four_out.nu +
         step_six_out.L_0_zeta * alpha_power2 * step_four_out.nu +
         step_four_out.u;
-    D1_part[1] = plonk_exp_G1<ppT>(proof.z_poly_at_secret_g1, D1_part1_scalar);
+    D1_part[1] = D1_part1_scalar * proof.z_poly_at_secret_g1;
 
     // compute D1_part[2]:
     // (a_bar + beta s_sigma1_bar + gamma)(b_bar + beta s_sigma2_bar +
@@ -365,8 +365,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
          step_four_out.alpha * step_four_out.beta * proof.z_poly_xomega_zeta *
          step_four_out.nu) *
         Field(-1);
-    D1_part[2] = plonk_exp_G1<ppT>(
-        preprocessed_input.S_polys_at_secret_g1[2], D1_part2_scalar);
+    D1_part[2] = D1_part2_scalar * preprocessed_input.S_polys_at_secret_g1[2];
 
     // Compute D1 = D1_part[0] + D1_part[1] + D1_part[2]
     step_nine_out.D1 = D1_part[0] + D1_part[1] + D1_part[2];
