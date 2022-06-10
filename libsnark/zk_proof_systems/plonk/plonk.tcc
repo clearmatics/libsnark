@@ -15,7 +15,7 @@
 namespace libsnark
 {
 
-template<typename FieldT> void print_vector(std::vector<FieldT> v)
+template<typename FieldT> void print_vector(const std::vector<FieldT> &v)
 {
     for (size_t i = 0; i < v.size(); ++i) {
         printf("[%2d]: ", (int)i);
@@ -44,7 +44,7 @@ template<typename FieldT> void print_vector(std::vector<FieldT> v)
 // Note: uses libfqfft iFFT for the interpolation
 template<typename FieldT>
 void plonk_compute_lagrange_basis(
-    size_t npoints, std::vector<polynomial<FieldT>> &L)
+    const size_t npoints, std::vector<polynomial<FieldT>> &L)
 {
     assert(L.size() != 0);
     assert(L.size() == L[0].size());
@@ -83,7 +83,7 @@ void plonk_compute_lagrange_basis(
 // \note uses libfqfft iFFT for the interpolation
 template<typename FieldT>
 void plonk_interpolate_polynomial_from_points(
-    const std::vector<FieldT> f_points, polynomial<FieldT> &f_poly)
+    const std::vector<FieldT> &f_points, polynomial<FieldT> &f_poly)
 {
     size_t npoints = f_points.size();
     std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain =
@@ -125,9 +125,9 @@ void plonk_interpolate_polynomial_from_points(
 //
 template<typename FieldT>
 void plonk_interpolate_over_lagrange_basis(
-    std::vector<FieldT> f_points,
-    polynomial<FieldT> &f_poly,
-    std::vector<polynomial<FieldT>> L)
+    const std::vector<FieldT> &f_points,
+    const std::vector<polynomial<FieldT>> &L,
+    polynomial<FieldT> &f_poly)
 {
     assert(L.size() != 0);
     assert(L.size() == L[0].size());
@@ -166,9 +166,9 @@ void plonk_interpolate_over_lagrange_basis(
 // equal to the number of gates. L_basis is the Lagrange basis.
 template<typename FieldT>
 void plonk_compute_selector_polynomials(
-    std::vector<std::vector<FieldT>> gates_matrix_transpose,
-    std::vector<polynomial<FieldT>> &Q_polys,
-    std::vector<polynomial<FieldT>> L_basis)
+    const std::vector<std::vector<FieldT>> &gates_matrix_transpose,
+    const std::vector<polynomial<FieldT>> &L_basis,
+    std::vector<polynomial<FieldT>> &Q_polys)
 {
     assert(gates_matrix_transpose.size() == Q_polys.size());
     assert(gates_matrix_transpose[0].size() == Q_polys[0].size());
@@ -182,9 +182,9 @@ void plonk_compute_selector_polynomials(
 
 template<typename FieldT>
 void plonk_compute_public_input_polynomial(
-    std::vector<FieldT> PI_points,
-    polynomial<FieldT> &PI_poly,
-    std::vector<polynomial<FieldT>> L_basis)
+    const std::vector<FieldT> &PI_points,
+    const std::vector<polynomial<FieldT>> &L_basis,
+    polynomial<FieldT> &PI_poly)
 {
     assert(PI_points.size() == L_basis.size());
     plonk_interpolate_polynomial_from_points<FieldT>(PI_points, PI_poly);
@@ -231,7 +231,7 @@ void plonk_compute_roots_of_unity_omega(
 // plonk_compute_roots_of_unity_omega
 template<typename FieldT>
 void plonk_roots_of_unity_omega_to_subgroup_H(
-    std::vector<std::vector<FieldT>> omega, std::vector<FieldT> &H_gen)
+    const std::vector<std::vector<FieldT>> &omega, std::vector<FieldT> &H_gen)
 {
     assert(omega.size() == NUM_HGEN);
     assert(omega[0].size() > 0);
@@ -248,9 +248,9 @@ void plonk_roots_of_unity_omega_to_subgroup_H(
 // plonk_roots_of_unity_omega_to_subgroup_H
 template<typename FieldT>
 void plonk_permute_subgroup_H(
-    std::vector<FieldT> &H_gen_permute,
-    std::vector<FieldT> H_gen,
-    std::vector<size_t> wire_permutation)
+    const std::vector<FieldT> &H_gen,
+    const std::vector<size_t> &wire_permutation,
+    std::vector<FieldT> &H_gen_permute)
 {
     assert(H_gen.size() > 0);
     for (size_t i = 0; i < H_gen.size(); ++i) {
@@ -261,17 +261,17 @@ void plonk_permute_subgroup_H(
 // S_sigma_2 (see [GWC19], Sect. 8.1)
 template<typename FieldT>
 void plonk_compute_permutation_polynomials(
-    std::vector<polynomial<FieldT>> &S_polys,
-    std::vector<FieldT> H_gen_permute,
-    size_t num_gates)
+    const std::vector<FieldT> &H_gen_permute,
+    const size_t num_gates,
+    std::vector<polynomial<FieldT>> &S_polys)
 {
     assert(S_polys.size() == NUM_HGEN);
     assert(S_polys[0].size() == num_gates);
     assert(H_gen_permute.size() == (NUM_HGEN * num_gates));
     for (size_t i = 0; i < NUM_HGEN; ++i) {
-        typename std::vector<FieldT>::iterator begin =
+        typename std::vector<FieldT>::const_iterator begin =
             H_gen_permute.begin() + (i * num_gates);
-        typename std::vector<FieldT>::iterator end =
+        typename std::vector<FieldT>::const_iterator end =
             H_gen_permute.begin() + (i * num_gates) + (num_gates);
         std::vector<FieldT> S_points(begin, end);
         plonk_interpolate_polynomial_from_points<FieldT>(S_points, S_polys[i]);
@@ -283,8 +283,8 @@ void plonk_compute_permutation_polynomials(
 // scalar elements in Fr
 template<typename ppT>
 libff::G1<ppT> plonk_multi_exp_G1(
-    std::vector<libff::G1<ppT>> curve_points,
-    std::vector<libff::Fr<ppT>> scalar_elements)
+    const std::vector<libff::G1<ppT>> &curve_points,
+    const std::vector<libff::Fr<ppT>> &scalar_elements)
 {
     assert(curve_points.size() == scalar_elements.size());
     const size_t chunks = 1;
@@ -316,8 +316,8 @@ libff::G1<ppT> plonk_multi_exp_G1(
 // f_poly(\secret)*G_1
 template<typename ppT>
 libff::G1<ppT> plonk_evaluate_poly_at_secret_G1(
-    std::vector<libff::G1<ppT>> secret_powers_g1,
-    polynomial<libff::Fr<ppT>> f_poly)
+    const std::vector<libff::G1<ppT>> &secret_powers_g1,
+    const polynomial<libff::Fr<ppT>> &f_poly)
 {
     assert(f_poly.size() <= secret_powers_g1.size());
     const size_t chunks = 1;
@@ -338,8 +338,8 @@ libff::G1<ppT> plonk_evaluate_poly_at_secret_G1(
 // plonk_evaluate_poly_at_secret_G1
 template<typename ppT>
 void plonk_evaluate_polys_at_secret_G1(
-    std::vector<libff::G1<ppT>> secret_powers_g1,
-    std::vector<polynomial<libff::Fr<ppT>>> Q_polys,
+    const std::vector<libff::G1<ppT>> &secret_powers_g1,
+    const std::vector<polynomial<libff::Fr<ppT>>> &Q_polys,
     std::vector<libff::G1<ppT>> &Q_polys_at_secret_g1)
 {
     assert(secret_powers_g1.size());
@@ -358,14 +358,14 @@ void plonk_evaluate_polys_at_secret_G1(
 // H_gen_permute[i-1]m etc.
 template<typename FieldT>
 FieldT plonk_compute_accumulator_factor(
-    size_t i,
-    size_t n, // nconstraimts
-    FieldT beta,
-    FieldT gamma,
-    std::vector<FieldT> witness,
-    std::vector<FieldT> H_gen, // H, Hk1, Hk2
-    std::vector<FieldT> H_gen_permute,
-    std::vector<FieldT> &A // accumulatro vector
+    const size_t i,
+    const size_t n, // nconstraimts
+    const FieldT beta,
+    const FieldT gamma,
+    const std::vector<FieldT> &witness,
+    const std::vector<FieldT> &H_gen, // H, Hk1, Hk2
+    const std::vector<FieldT> &H_gen_permute,
+    const std::vector<FieldT> &A // accumulatro vector
 )
 {
     assert(n);
@@ -398,12 +398,12 @@ FieldT plonk_compute_accumulator_factor(
 
 template<typename FieldT>
 void plonk_compute_accumulator(
-    size_t n, // num_gates
-    FieldT beta,
-    FieldT gamma,
-    std::vector<FieldT> witness,
-    std::vector<FieldT> H_gen, // H, Hk1, Hk2
-    std::vector<FieldT> H_gen_permute,
+    const size_t n, // num_gates
+    const FieldT beta,
+    const FieldT gamma,
+    const std::vector<FieldT> &witness,
+    const std::vector<FieldT> &H_gen, // H, Hk1, Hk2
+    const std::vector<FieldT> &H_gen_permute,
     std::vector<FieldT> &A // accumulatro vector
 )
 {
@@ -422,7 +422,7 @@ void plonk_compute_accumulator(
 // check that the input is an element of the field
 // Warning: under development
 //
-template<typename FieldT> bool check_field_element(FieldT x)
+template<typename FieldT> bool check_field_element(const FieldT x)
 {
     bool b_valid = (typeid(x) == typeid(FieldT));
     return b_valid;

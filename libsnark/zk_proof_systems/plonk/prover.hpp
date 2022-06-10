@@ -205,36 +205,36 @@ public:
     static round_zero_out_t<ppT> round_zero(const srs<ppT> srs);
 
     static round_one_out_t<ppT> round_one(
-        const round_zero_out_t<ppT> round_zero_out,
-        const std::vector<libff::Fr<ppT>> witness,
-        const srs<ppT> srs);
+        const round_zero_out_t<ppT> &round_zero_out,
+        const std::vector<libff::Fr<ppT>> &witness,
+        const srs<ppT> &srs);
 
     static round_two_out_t<ppT> round_two(
-        const round_zero_out_t<ppT> round_zero_out,
-        const round_one_out_t<ppT> round_one_out,
-        const std::vector<libff::Fr<ppT>> witness,
-        const srs<ppT> srs);
+        const round_zero_out_t<ppT> &round_zero_out,
+        const round_one_out_t<ppT> &round_one_out,
+        const std::vector<libff::Fr<ppT>> &witness,
+        const srs<ppT> &srs);
 
     static round_three_out_t<ppT> round_three(
-        const round_zero_out_t<ppT> round_zero_out,
-        const round_one_out_t<ppT> round_one_out,
-        const round_two_out_t<ppT> round_two_out,
-        const srs<ppT> srs);
+        const round_zero_out_t<ppT> &round_zero_out,
+        const round_one_out_t<ppT> &round_one_out,
+        const round_two_out_t<ppT> &round_two_out,
+        const srs<ppT> &srs);
 
     static round_four_out_t<ppT> round_four(
-        const round_one_out_t<ppT> round_one_out,
-        const round_three_out_t<ppT> round_three_out,
-        const srs<ppT> srs);
+        const round_one_out_t<ppT> &round_one_out,
+        const round_three_out_t<ppT> &round_three_out,
+        const srs<ppT> &srs);
 
     static round_five_out_t<ppT> round_five(
-        const round_zero_out_t<ppT> round_zero_out,
-        const round_one_out_t<ppT> round_one_out,
-        const round_two_out_t<ppT> round_two_out,
-        const round_three_out_t<ppT> round_three_out,
-        const round_four_out_t<ppT> round_four_out,
-        const srs<ppT> srs);
+        const round_zero_out_t<ppT> &round_zero_out,
+        const round_one_out_t<ppT> &round_one_out,
+        const round_two_out_t<ppT> &round_two_out,
+        const round_three_out_t<ppT> &round_three_out,
+        const round_four_out_t<ppT> &round_four_out,
+        const srs<ppT> &srs);
 
-    static plonk_proof<ppT> compute_proof(const srs<ppT> srs);
+    static plonk_proof<ppT> compute_proof(const srs<ppT> &srs);
 };
 
 } // namespace libsnark

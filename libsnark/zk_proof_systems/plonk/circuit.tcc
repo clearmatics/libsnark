@@ -70,7 +70,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     std::vector<Field> PI_points(circuit.num_gates, Field(0));
     PI_points[PI_index] = Field(-PI_value);
     plonk_compute_public_input_polynomial(
-        PI_points, circuit.PI_poly, circuit.L_basis);
+        PI_points, circuit.L_basis, circuit.PI_poly);
 #ifdef DEBUG
     printf("[%s:%d] circuit.PI_poly\n", __FILE__, __LINE__);
     print_vector(circuit.PI_poly);
@@ -83,7 +83,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     circuit.Q_polys.resize(
         circuit.num_qpolys, polynomial<Field>(circuit.num_gates));
     plonk_compute_selector_polynomials<Field>(
-        gates_matrix_transpose, circuit.Q_polys, circuit.L_basis);
+        gates_matrix_transpose, circuit.L_basis, circuit.Q_polys);
 #ifdef DEBUG
     for (int i = 0; i < (int)circuit.num_qpolys; ++i) {
         printf("\n[%s:%d] circuit.Q_polys[%2d]\n", __FILE__, __LINE__, i);
@@ -115,7 +115,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     // permute circuit.H_gen according to the wire permutation
     circuit.H_gen_permute.resize(num_hgen * circuit.num_gates, Field(0));
     plonk_permute_subgroup_H<Field>(
-        circuit.H_gen_permute, circuit.H_gen, wire_permutation);
+        circuit.H_gen, wire_permutation, circuit.H_gen_permute);
 #ifdef DEBUG
     printf("[%s:%d] circuit.H_gen_permute\n", __FILE__, __LINE__);
     print_vector(circuit.H_gen_permute);
@@ -128,7 +128,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
     circuit.S_polys.resize(num_hgen, polynomial<Field>(circuit.num_gates));
     plonk_compute_permutation_polynomials<Field>(
-        circuit.S_polys, circuit.H_gen_permute, circuit.num_gates);
+        circuit.H_gen_permute, circuit.num_gates, circuit.S_polys);
 #ifdef DEBUG
     for (int i = 0; i < num_hgen; ++i) {
         printf("[%s:%d] circuit.S_polys[%d]\n", __FILE__, __LINE__, i);

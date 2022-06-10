@@ -97,48 +97,48 @@ public:
     plonk_verifier(){};
 
     static verifier_preprocessed_input_t<ppT> preprocessed_input(
-        const srs<ppT> srs);
+        const srs<ppT> &srs);
 
-    static void step_one(const plonk_proof<ppT> proof);
-    static void step_two(const plonk_proof<ppT> proof);
-    static void step_three(const srs<ppT> srs);
+    static void step_one(const plonk_proof<ppT> &proof);
+    static void step_two(const plonk_proof<ppT> &proof);
+    static void step_three(const srs<ppT> &srs);
 
     static step_four_out_t<ppT> step_four();
     static step_five_out_t<ppT> step_five(
-        const step_four_out_t<ppT> step_four_out, const srs<ppT> srs);
+        const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs);
     static step_six_out_t<ppT> step_six(
-        const step_four_out_t<ppT> step_four_out, const srs<ppT> srs);
+        const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs);
     static step_seven_out_t<ppT> step_seven(
-        const step_four_out_t<ppT> step_four_out, const srs<ppT> srs);
+        const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs);
     static step_eight_out_t<ppT> step_eight(
-        const step_four_out_t<ppT> step_four_out,
-        const step_five_out_t<ppT> step_five_out,
-        const step_six_out_t<ppT> step_six_out,
-        const step_seven_out_t<ppT> step_seven_out,
-        const plonk_proof<ppT> proof);
+        const step_four_out_t<ppT> &step_four_out,
+        const step_five_out_t<ppT> &step_five_out,
+        const step_six_out_t<ppT> &step_six_out,
+        const step_seven_out_t<ppT> &step_seven_out,
+        const plonk_proof<ppT> &proof);
     static step_nine_out_t<ppT> step_nine(
-        const step_four_out_t<ppT> step_four_out,
-        const step_six_out_t<ppT> step_six_out,
-        const plonk_proof<ppT> proof,
-        const verifier_preprocessed_input_t<ppT> preprocessed_input,
-        const srs<ppT> srs);
+        const step_four_out_t<ppT> &step_four_out,
+        const step_six_out_t<ppT> &step_six_out,
+        const plonk_proof<ppT> &proof,
+        const verifier_preprocessed_input_t<ppT> &preprocessed_input,
+        const srs<ppT> &srs);
     static step_ten_out_t<ppT> step_ten(
-        const step_four_out_t<ppT> step_four_out,
-        const step_nine_out_t<ppT> step_nine_out,
-        const plonk_proof<ppT> proof,
-        const verifier_preprocessed_input_t<ppT> preprocessed_input,
-        const srs<ppT> srs);
+        const step_four_out_t<ppT> &step_four_out,
+        const step_nine_out_t<ppT> &step_nine_out,
+        const plonk_proof<ppT> &proof,
+        const verifier_preprocessed_input_t<ppT> &preprocessed_input,
+        const srs<ppT> &srs);
     static step_eleven_out_t<ppT> step_eleven(
-        const step_four_out_t<ppT> step_four_out,
-        const step_eight_out_t<ppT> step_eight_out,
-        const plonk_proof<ppT> proof);
+        const step_four_out_t<ppT> &step_four_out,
+        const step_eight_out_t<ppT> &step_eight_out,
+        const plonk_proof<ppT> &proof);
     static bool step_twelve(
-        const step_four_out_t<ppT> step_four_out,
-        const step_ten_out_t<ppT> step_ten_out,
-        const step_eleven_out_t<ppT> step_eleven_out,
-        const plonk_proof<ppT> proof,
-        const srs<ppT> srs);
-    bool verify_proof(const plonk_proof<ppT> proof, const srs<ppT> srs);
+        const step_four_out_t<ppT> &step_four_out,
+        const step_ten_out_t<ppT> &step_ten_out,
+        const step_eleven_out_t<ppT> &step_eleven_out,
+        const plonk_proof<ppT> &proof,
+        const srs<ppT> &srs);
+    bool verify_proof(const plonk_proof<ppT> &proof, const srs<ppT> &srs);
 };
 
 } // namespace libsnark

@@ -62,7 +62,7 @@ namespace libsnark
 //
 template<typename ppT>
 verifier_preprocessed_input_t<ppT> plonk_verifier<ppT>::preprocessed_input(
-    const srs<ppT> srs)
+    const srs<ppT> &srs)
 {
     verifier_preprocessed_input_t<ppT> preprocessed_input;
     preprocessed_input.Q_polys_at_secret_g1.resize(srs.Q_polys.size());
@@ -84,7 +84,7 @@ verifier_preprocessed_input_t<ppT> plonk_verifier<ppT>::preprocessed_input(
 // WARNING! This validation MUST be done by the caller. Empty
 // function here for consistency with the description in [GWC19]
 template<typename ppT>
-void plonk_verifier<ppT>::step_one(plonk_proof<ppT> proof)
+void plonk_verifier<ppT>::step_one(const plonk_proof<ppT> &proof)
 {
 }
 
@@ -93,7 +93,7 @@ void plonk_verifier<ppT>::step_one(plonk_proof<ppT> proof)
 // WARNING! This validation MUST be done by the caller. Empty
 // function here for consistency with the description in [GWC19]
 template<typename ppT>
-void plonk_verifier<ppT>::step_two(plonk_proof<ppT> proof)
+void plonk_verifier<ppT>::step_two(const plonk_proof<ppT> &proof)
 {
 }
 
@@ -102,7 +102,7 @@ void plonk_verifier<ppT>::step_two(plonk_proof<ppT> proof)
 //
 // WARNING! This validation MUST be done by the caller. Empty
 // function here for consistency with the description in [GWC19]
-template<typename ppT> void plonk_verifier<ppT>::step_three(const srs<ppT> srs)
+template<typename ppT> void plonk_verifier<ppT>::step_three(const srs<ppT> &srs)
 {
 }
 
@@ -148,7 +148,7 @@ template<typename ppT> step_four_out_t<ppT> plonk_verifier<ppT>::step_four()
 //
 template<typename ppT>
 step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
-    const step_four_out_t<ppT> step_four_out, const srs<ppT> srs)
+    const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
     step_five_out_t<ppT> step_five_out;
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
@@ -172,7 +172,7 @@ step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
 //
 template<typename ppT>
 step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
-    const step_four_out_t<ppT> step_four_out, const srs<ppT> srs)
+    const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
     step_six_out_t<ppT> step_six_out;
     step_six_out.L_0_zeta = libfqfft::evaluate_polynomial<Field>(
@@ -194,7 +194,7 @@ step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
 //
 template<typename ppT>
 step_seven_out_t<ppT> plonk_verifier<ppT>::step_seven(
-    const step_four_out_t<ppT> step_four_out, const srs<ppT> srs)
+    const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
     step_seven_out_t<ppT> step_seven_out;
     step_seven_out.PI_zeta = libfqfft::evaluate_polynomial<Field>(
@@ -231,11 +231,11 @@ step_seven_out_t<ppT> plonk_verifier<ppT>::step_seven(
 //
 template<typename ppT>
 step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
-    const step_four_out_t<ppT> step_four_out,
-    const step_five_out_t<ppT> step_five_out,
-    const step_six_out_t<ppT> step_six_out,
-    const step_seven_out_t<ppT> step_seven_out,
-    const plonk_proof<ppT> proof)
+    const step_four_out_t<ppT> &step_four_out,
+    const step_five_out_t<ppT> &step_five_out,
+    const step_six_out_t<ppT> &step_six_out,
+    const step_seven_out_t<ppT> &step_seven_out,
+    const plonk_proof<ppT> &proof)
 {
     step_eight_out_t<ppT> step_eight_out;
 
@@ -309,11 +309,11 @@ step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
 //
 template<typename ppT>
 step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
-    const step_four_out_t<ppT> step_four_out,
-    const step_six_out_t<ppT> step_six_out,
-    const plonk_proof<ppT> proof,
-    const verifier_preprocessed_input_t<ppT> preprocessed_input,
-    const srs<ppT> srs)
+    const step_four_out_t<ppT> &step_four_out,
+    const step_six_out_t<ppT> &step_six_out,
+    const plonk_proof<ppT> &proof,
+    const verifier_preprocessed_input_t<ppT> &preprocessed_input,
+    const srs<ppT> &srs)
 {
     step_nine_out_t<ppT> step_nine_out;
 
@@ -407,11 +407,11 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
 //
 template<typename ppT>
 step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
-    const step_four_out_t<ppT> step_four_out,
-    const step_nine_out_t<ppT> step_nine_out,
-    const plonk_proof<ppT> proof,
-    const verifier_preprocessed_input_t<ppT> preprocessed_input,
-    const srs<ppT> srs)
+    const step_four_out_t<ppT> &step_four_out,
+    const step_nine_out_t<ppT> &step_nine_out,
+    const plonk_proof<ppT> &proof,
+    const verifier_preprocessed_input_t<ppT> &preprocessed_input,
+    const srs<ppT> &srs)
 {
     step_ten_out_t<ppT> step_ten_out;
     Field zeta_power_n =
@@ -464,9 +464,9 @@ step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
 //
 template<typename ppT>
 step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
-    const step_four_out_t<ppT> step_four_out,
-    const step_eight_out_t<ppT> step_eight_out,
-    const plonk_proof<ppT> proof)
+    const step_four_out_t<ppT> &step_four_out,
+    const step_eight_out_t<ppT> &step_eight_out,
+    const plonk_proof<ppT> &proof)
 {
     step_eleven_out_t<ppT> step_eleven_out;
     std::vector<Field> nu_power(7);
@@ -514,11 +514,11 @@ step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
 //
 template<typename ppT>
 bool plonk_verifier<ppT>::step_twelve(
-    const step_four_out_t<ppT> step_four_out,
-    const step_ten_out_t<ppT> step_ten_out,
-    const step_eleven_out_t<ppT> step_eleven_out,
-    const plonk_proof<ppT> proof,
-    const srs<ppT> srs)
+    const step_four_out_t<ppT> &step_four_out,
+    const step_ten_out_t<ppT> &step_ten_out,
+    const step_eleven_out_t<ppT> &step_eleven_out,
+    const plonk_proof<ppT> &proof,
+    const srs<ppT> &srs)
 {
     // load test vectors for debug
 #ifdef DEBUG
@@ -597,7 +597,7 @@ bool plonk_verifier<ppT>::step_twelve(
 //
 template<typename ppT>
 bool plonk_verifier<ppT>::verify_proof(
-    const plonk_proof<ppT> proof, const srs<ppT> srs)
+    const plonk_proof<ppT> &proof, const srs<ppT> &srs)
 {
 
     // load test vector values form example for debug

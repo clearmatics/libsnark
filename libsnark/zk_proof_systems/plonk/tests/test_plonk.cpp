@@ -38,7 +38,7 @@ namespace libsnark
 //
 template<typename ppT>
 void test_verify_invalid_proof(
-    const plonk_proof<ppT> valid_proof, const srs<ppT> srs)
+    const plonk_proof<ppT> &valid_proof, const srs<ppT> &srs)
 {
     // initialize verifier
     plonk_verifier<ppT> verifier;

@@ -79,9 +79,9 @@ round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> srs)
 //   [GWC19]
 template<typename ppT>
 round_one_out_t<ppT> plonk_prover<ppT>::round_one(
-    const round_zero_out_t<ppT> round_zero_out,
-    const std::vector<libff::Fr<ppT>> witness,
-    const srs<ppT> srs)
+    const round_zero_out_t<ppT> &round_zero_out,
+    const std::vector<libff::Fr<ppT>> &witness,
+    const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
     int nwitness = 3;
@@ -182,10 +182,10 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
 //
 template<typename ppT>
 round_two_out_t<ppT> plonk_prover<ppT>::round_two(
-    const round_zero_out_t<ppT> round_zero_out,
-    const round_one_out_t<ppT> round_one_out,
-    const std::vector<libff::Fr<ppT>> witness,
-    const srs<ppT> srs)
+    const round_zero_out_t<ppT> &round_zero_out,
+    const round_one_out_t<ppT> &round_one_out,
+    const std::vector<libff::Fr<ppT>> &witness,
+    const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
@@ -249,9 +249,6 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
 
 // Prover Round 3
 //
-// Warning! The most computationally intensive part of the prover
-// routine
-//
 // INPUT
 // - zh_poly: vanishing polynomial Zh (from Round 0)
 // - W_polys_blinded: blinded witness polynomials (from Round 1)
@@ -273,10 +270,10 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
 //
 template<typename ppT>
 round_three_out_t<ppT> plonk_prover<ppT>::round_three(
-    const round_zero_out_t<ppT> round_zero_out,
-    const round_one_out_t<ppT> round_one_out,
-    const round_two_out_t<ppT> round_two_out,
-    const srs<ppT> srs)
+    const round_zero_out_t<ppT> &round_zero_out,
+    const round_one_out_t<ppT> &round_one_out,
+    const round_two_out_t<ppT> &round_two_out,
+    const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
     int num_hgen = NUM_HGEN;
@@ -551,9 +548,9 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
 //
 template<typename ppT>
 round_four_out_t<ppT> plonk_prover<ppT>::round_four(
-    const round_one_out_t<ppT> round_one_out,
-    const round_three_out_t<ppT> round_three_out,
-    const srs<ppT> srs)
+    const round_one_out_t<ppT> &round_one_out,
+    const round_three_out_t<ppT> &round_three_out,
+    const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
@@ -639,12 +636,12 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
 //
 template<typename ppT>
 round_five_out_t<ppT> plonk_prover<ppT>::round_five(
-    const round_zero_out_t<ppT> round_zero_out,
-    const round_one_out_t<ppT> round_one_out,
-    const round_two_out_t<ppT> round_two_out,
-    const round_three_out_t<ppT> round_three_out,
-    const round_four_out_t<ppT> round_four_out,
-    const srs<ppT> srs)
+    const round_zero_out_t<ppT> &round_zero_out,
+    const round_one_out_t<ppT> &round_one_out,
+    const round_two_out_t<ppT> &round_two_out,
+    const round_three_out_t<ppT> &round_three_out,
+    const round_four_out_t<ppT> &round_four_out,
+    const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
     polynomial<Field> remainder;
@@ -1018,7 +1015,7 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
 // - proof: SNARK proof Pi (see above)
 //
 template<typename ppT>
-plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> srs)
+plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
 

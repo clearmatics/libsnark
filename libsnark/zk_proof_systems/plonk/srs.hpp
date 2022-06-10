@@ -67,7 +67,7 @@ public:
 };
 
 template<typename ppT>
-usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> secret);
+usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> &secret);
 
 // Plain (i.e. non-universal srs). Contains secret encoded monomials
 // with maximum degree equal to the number of gates of the analyzed
@@ -143,7 +143,7 @@ public:
 
 template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
-    const usrs<ppT> usrs, const circuit_t<ppT> circuit);
+    const usrs<ppT> &usrs, const circuit_t<ppT> &circuit);
 
 /******************************** Proving key ********************************/
 /**

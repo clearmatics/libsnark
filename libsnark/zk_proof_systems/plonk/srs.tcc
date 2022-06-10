@@ -21,7 +21,7 @@ namespace libsnark
 //
 // Note: only for debug
 template<typename ppT>
-usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> secret)
+usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> &secret)
 {
     // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
     const libff::bigint<libff::Fr<ppT>::num_limbs> secret_bigint =
@@ -66,7 +66,7 @@ usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> secret)
 //
 template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
-    const usrs<ppT> usrs, const circuit_t<ppT> circuit)
+    const usrs<ppT> &usrs, const circuit_t<ppT> &circuit)
 {
     assert(circuit.num_gates <= MAX_DEGREE);
     // secret^i * G1
