@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef PLONK_PPZKSNARK_HPP_
-#define PLONK_PPZKSNARK_HPP_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_HPP_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_HPP_
 
 #include <libff/algebra/curves/public_params.hpp>
 #include <libsnark/zk_proof_systems/plonk/tests/example.hpp>
@@ -51,4 +51,4 @@ template<typename FieldT> using polynomial = std::vector<FieldT>;
 
 #include "libsnark/zk_proof_systems/plonk/plonk.tcc"
 
-#endif // PLONK_PPZKSNARK_HPP_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_HPP_

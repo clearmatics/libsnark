@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef PLONK_PPZKSNARK_COMMON_INPUT_HPP_
-#define PLONK_PPZKSNARK_COMMON_INPUT_HPP_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_HPP_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_HPP_
 
 #include <libsnark/zk_proof_systems/plonk/plonk.hpp>
 
@@ -65,4 +65,4 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
 
 #include "libsnark/zk_proof_systems/plonk/circuit.tcc"
 
-#endif // PLONK_PPZKSNARK_COMMON_INPUT_HPP_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_HPP_

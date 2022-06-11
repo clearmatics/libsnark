@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef PLONK_PPZKSNARK_TCC_
-#define PLONK_PPZKSNARK_TCC_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_TCC_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_TCC_
 
 /// Implementation of interfaces for a ppzkSNARK for Plonk. See
 /// plonk.hpp .
@@ -430,4 +430,4 @@ template<typename FieldT> bool check_field_element(const FieldT x)
 
 } // namespace libsnark
 
-#endif // PLONK_PPZKSNARK_TCC_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_TCC_

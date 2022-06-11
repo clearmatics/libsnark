@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef PLONK_PPZKSNARK_VERIFIER_HPP_
-#define PLONK_PPZKSNARK_VERIFIER_HPP_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_VERIFIER_HPP_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_VERIFIER_HPP_
 
 /// Declaration of Verifier interfaces for ppzkSNARK proof system Plonk. This
 /// includes:
@@ -145,4 +145,4 @@ public:
 
 #include "libsnark/zk_proof_systems/plonk/verifier.tcc"
 
-#endif // PLONK_PPZKSNARK_VERIFIER_HPP_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_VERIFIER_HPP_

@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef PLONK_PPZKSNARK_PROVER_TCC_
-#define PLONK_PPZKSNARK_PROVER_TCC_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PROVER_TCC_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PROVER_TCC_
 
 /// Implementation of Prover interfaces for a ppzkSNARK for Plonk. See
 /// prover.hpp .
@@ -1173,4 +1173,4 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
 
 } // namespace libsnark
 
-#endif // PLONK_PPZKSNARK_PROVER_TCC_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PROVER_TCC_

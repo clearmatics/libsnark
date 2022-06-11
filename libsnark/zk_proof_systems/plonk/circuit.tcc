@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef PLONK_PPZKSNARK_COMMON_INPUT_TCC_
-#define PLONK_PPZKSNARK_COMMON_INPUT_TCC_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_TCC_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_TCC_
 
 /// Implementation of Common Preprocessed Input interfaces for a
 /// ppzkSNARK for Plonk. See circuit.hpp .
@@ -140,4 +140,4 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
 
 } // namespace libsnark
 
-#endif // PLONK_PPZKSNARK_COMMON_INPUT_TCC_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_TCC_

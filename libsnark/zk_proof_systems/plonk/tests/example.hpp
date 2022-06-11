@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef __PLONK_EXAMPLE_HPP__
-#define __PLONK_EXAMPLE_HPP__
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_EXAMPLE_HPP_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_EXAMPLE_HPP_
 
 /// Test vectors for the implementation of the PlonK protocol \[GWC19]
 /// (\see plonk.hpp) produced using the Python implementation of Plonk
@@ -260,4 +260,4 @@ public:
 
 #include <libsnark/zk_proof_systems/plonk/tests/example.tcc>
 
-#endif // __PLONK_EXAMPLE_HPP__
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_EXAMPLE_HPP_

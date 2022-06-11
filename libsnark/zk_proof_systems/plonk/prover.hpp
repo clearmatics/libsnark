@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef PLONK_PPZKSNARK_PROVER_HPP_
-#define PLONK_PPZKSNARK_PROVER_HPP_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PROVER_HPP_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PROVER_HPP_
 
 #include <libsnark/zk_proof_systems/plonk/srs.hpp>
 
@@ -238,4 +238,4 @@ public:
 
 #include "libsnark/zk_proof_systems/plonk/prover.tcc"
 
-#endif // PLONK_PPZKSNARK_PROVER_HPP_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PROVER_HPP_

@@ -5,8 +5,8 @@
  *             (see AUTHORS).
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
-#ifndef __PLONK_EXAMPLE_CPP__
-#define __PLONK_EXAMPLE_CPP__
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_EXAMPLE_TCC_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_EXAMPLE_TCC_
 
 /// Instantiation of the test vector values from the Python implementation
 /// of the Plonk protocol. See example.hpp .
@@ -916,4 +916,4 @@ template<typename ppT> plonk_example<ppT>::plonk_example()
 
 } // namespace libsnark
 
-#endif // __PLONK_EXAMPLE_CPP__
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_EXAMPLE_TCC_

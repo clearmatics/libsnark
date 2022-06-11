@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef PLONK_PPZKSNARK_VERIFIER_TCC_
-#define PLONK_PPZKSNARK_VERIFIER_TCC_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_VERIFIER_TCC_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_VERIFIER_TCC_
 
 /// Implementation of Verifier interfaces for a ppzkSNARK for Plonk. See
 /// verifier.hpp .
@@ -722,4 +722,4 @@ bool plonk_verifier<ppT>::verify_proof(
 
 } // namespace libsnark
 
-#endif // PLONK_PPZKSNARK_VERIFIER_TCC_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_VERIFIER_TCC_

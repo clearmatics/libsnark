@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef PLONK_PPZKSNARK_SRS_TCC_
-#define PLONK_PPZKSNARK_SRS_TCC_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_SRS_TCC_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_SRS_TCC_
 
 /// Implementation of SRS interfaces for a ppzkSNARK for Plonk. See
 /// srs.hpp .
@@ -102,4 +102,4 @@ srs<ppT> plonk_srs_derive_from_usrs(
 
 } // namespace libsnark
 
-#endif // PLONK_PPZKSNARK_SRS_TCC_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_SRS_TCC_
