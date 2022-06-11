@@ -179,7 +179,6 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
 // - z_poly: blinded accumulator poly z(x)
 // - z_poly_at_secret_g1: blinded accumulator poly z(x) evaluated at
 // secret
-//
 template<typename ppT>
 round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     const round_zero_out_t<ppT> &round_zero_out,
@@ -267,7 +266,6 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
 // - t_poly_at_secret_g1: t(x) evaluated at the secret input zeta
 //   i.e. t(zeta)
 // - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by w
-//
 template<typename ppT>
 round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     const round_zero_out_t<ppT> &round_zero_out,
@@ -545,7 +543,6 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
 //   t_zeta. The Python reference implementation does, so we do the
 //   same in order to match the test vectors. TODO can remove t_zeta
 //   in the future
-//
 template<typename ppT>
 round_four_out_t<ppT> plonk_prover<ppT>::round_four(
     const round_one_out_t<ppT> &round_one_out,
@@ -633,7 +630,6 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
 //   W_zeta(x) at secert input i.e. [W_zeta(secret)]_1
 // - W_zeta_omega_at_secret: commitment to opening proof polynomial
 //   W_{zeta omega}(x) at secert input i.e. [W_{zeta omega}(secret)]_1
-//
 template<typename ppT>
 round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     const round_zero_out_t<ppT> &round_zero_out,
@@ -736,7 +732,6 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
 
     // --- Computation of r_poly = (r0+r1-r2+r3)
 
-    //
     // Note: here the reference Python implementation differs from the
     // paper where:
     //
@@ -1011,7 +1006,6 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
 //
 // OUTPUT
 // - proof: SNARK proof Pi (see above)
-//
 template<typename ppT>
 plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
 {

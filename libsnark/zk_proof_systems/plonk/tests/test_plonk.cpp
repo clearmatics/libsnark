@@ -35,7 +35,6 @@ namespace libsnark
 //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
 //     [W_zeta]_1, [W_{zeta omega_roots}]_1
 //     r_zeta (*))
-//
 template<typename ppT>
 void test_verify_invalid_proof(
     const plonk_proof<ppT> &valid_proof, const srs<ppT> &srs)

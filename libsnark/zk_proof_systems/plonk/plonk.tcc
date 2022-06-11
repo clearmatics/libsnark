@@ -93,7 +93,6 @@ void plonk_interpolate_polynomial_from_points(
     f_poly = u;
 }
 
-//
 // Interpolate a polynomial from a set of points over Lagrange basis
 //
 // INPUT:
@@ -122,7 +121,6 @@ void plonk_interpolate_polynomial_from_points(
 //                   \sum^{n-1}_{i=0} f_vec[i] * L[i] =
 //                   a0+a1x+a1x^2+...+a_{n-1}x^{n-1} such that
 //                   f(omega_i)=f_vec[i].
-//
 template<typename FieldT>
 void plonk_interpolate_over_lagrange_basis(
     const std::vector<FieldT> &f_points,
@@ -418,10 +416,8 @@ void plonk_compute_accumulator(
     }
 }
 
-//
 // check that the input is an element of the field
 // Warning: under development
-//
 template<typename FieldT> bool check_field_element(const FieldT x)
 {
     bool b_valid = (typeid(x) == typeid(FieldT));

@@ -63,7 +63,6 @@ usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> &secret)
 //
 // usrs = <encoded powers of secret>
 // srs = (proving_key, verificataion_key) = derive(usrs, circuit_description)
-//
 template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
     const usrs<ppT> &usrs, const circuit_t<ppT> &circuit)

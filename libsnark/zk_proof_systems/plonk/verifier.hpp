@@ -86,9 +86,7 @@ template<typename ppT> struct step_eleven_out_t {
     libff::G1<ppT> E1;
 };
 
-/**
- * Plonk verifier. Verifies object of class plonk_proof.
- */
+/// Plonk verifier. Verifies object of class plonk_proof.
 template<typename ppT> class plonk_verifier
 {
     using Field = libff::Fr<ppT>;

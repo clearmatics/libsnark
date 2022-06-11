@@ -15,7 +15,6 @@
 namespace libsnark
 {
 
-//
 // SNARK proof
 //
 // (\see plonk_prover::compute_proof)
@@ -59,7 +58,6 @@ namespace libsnark
 //   the secret input
 // - S_polys_at_secret_g1: permutation polynomials S evaluated at the
 //   secret input
-//
 template<typename ppT>
 verifier_preprocessed_input_t<ppT> plonk_verifier<ppT>::preprocessed_input(
     const srs<ppT> &srs)
@@ -120,7 +118,6 @@ template<typename ppT> void plonk_verifier<ppT>::step_three(const srs<ppT> &srs)
 // - nu: opening challenge -- hash of transcript (denoted by v in
 //   [GWC19])
 // - u: multipoint evaluation challenge -- hash of transcript
-//
 template<typename ppT> step_four_out_t<ppT> plonk_verifier<ppT>::step_four()
 {
     // load challenges from example for debug
@@ -145,7 +142,6 @@ template<typename ppT> step_four_out_t<ppT> plonk_verifier<ppT>::step_four()
 // OUTPUT
 // - zh_zeta: evaluation of vanishing polynomial Zh at x=zeta
 //   i.e. Zh(zeta)
-//
 template<typename ppT>
 step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
@@ -169,7 +165,6 @@ step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
 // OUTPUT
 // - L_0_zeta: Lagrange polynomial evaluation of polynomial L1 at
 //   x=zeta i.e. L1(zeta)
-//
 template<typename ppT>
 step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
@@ -191,7 +186,6 @@ step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
 // OUTPUT
 // - PI_zeta: public input polynomial PI evaluated at x=zeta
 //   i.e. PI(zeta)
-//
 template<typename ppT>
 step_seven_out_t<ppT> plonk_verifier<ppT>::step_seven(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
@@ -228,7 +222,6 @@ step_seven_out_t<ppT> plonk_verifier<ppT>::step_seven(
 // OUTPUT
 // - r_prime_zeta: quotient polynomial evaluation r'(zeta) = r(zeta) -
 //   r0, where r0 is a constant term
-//
 template<typename ppT>
 step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
     const step_four_out_t<ppT> &step_four_out,
@@ -306,7 +299,6 @@ step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
 //
 // OUTPUT
 // - D1: first part of batched polynomial commitment [D]_1
-//
 template<typename ppT>
 step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
     const step_four_out_t<ppT> &step_four_out,
@@ -404,7 +396,6 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
 //
 // OUTPUT
 // - F1: full batched polynomial commitment [F]_1
-//
 template<typename ppT>
 step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
     const step_four_out_t<ppT> &step_four_out,
@@ -461,7 +452,6 @@ step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
 //
 // OUTPUT
 // - E1: group-encoded batch evaluation [E]_1
-//
 template<typename ppT>
 step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
     const step_four_out_t<ppT> &step_four_out,
@@ -511,7 +501,6 @@ step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
 //
 // OUTPUT
 // - boolean 1/0 = valid/invalid proof
-//
 template<typename ppT>
 bool plonk_verifier<ppT>::step_twelve(
     const step_four_out_t<ppT> &step_four_out,
@@ -594,7 +583,6 @@ bool plonk_verifier<ppT>::step_twelve(
 //
 // OUTPUT
 // - boolean 1/0 = valid/invalid proof
-//
 template<typename ppT>
 bool plonk_verifier<ppT>::verify_proof(
     const plonk_proof<ppT> &proof, const srs<ppT> &srs)
