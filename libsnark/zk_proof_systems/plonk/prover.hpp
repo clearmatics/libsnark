@@ -100,6 +100,14 @@ template<typename ppT> struct round_zero_out_t {
     polynomial<libff::Fr<ppT>> null_poly;
     // - neg_one_poly: -1 polynomial (from round 0)
     polynomial<libff::Fr<ppT>> neg_one_poly;
+    // stuct constructor
+    round_zero_out_t(
+        const std::vector<libff::Fr<ppT>> &&zh_poly,
+        const polynomial<libff::Fr<ppT>> &&null_poly,
+        const polynomial<libff::Fr<ppT>> &&neg_one_poly)
+        : zh_poly(zh_poly), null_poly(null_poly), neg_one_poly(neg_one_poly)
+    {
+    }
 };
 
 // Prover round 1 output
@@ -116,6 +124,18 @@ template<typename ppT> struct round_one_out_t {
     //   evaluated at the secret input denoted [a]_1, [b]_1, [c]_1 in
     //   [GWC19]
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
+    // stuct constructor
+    round_one_out_t(
+        const std::vector<libff::Fr<ppT>> &&blind_scalars,
+        const std::vector<polynomial<libff::Fr<ppT>>> &&W_polys,
+        const std::vector<std::vector<libff::Fr<ppT>>> &&W_polys_blinded,
+        const std::vector<libff::G1<ppT>> &&W_polys_blinded_at_secret_g1)
+        : blind_scalars(blind_scalars)
+        , W_polys(W_polys)
+        , W_polys_blinded(W_polys_blinded)
+        , W_polys_blinded_at_secret_g1(W_polys_blinded_at_secret_g1)
+    {
+    }
 };
 
 // Prover round 2 output
@@ -129,6 +149,18 @@ template<typename ppT> struct round_two_out_t {
     // - z_poly_at_secret_g1: blinded accumulator poly z(x) evaluated at
     // secret
     libff::G1<ppT> z_poly_at_secret_g1;
+    // stuct constructor
+    round_two_out_t(
+        libff::Fr<ppT> &&beta,
+        libff::Fr<ppT> &&gamma,
+        polynomial<libff::Fr<ppT>> &&z_poly,
+        libff::G1<ppT> &&z_poly_at_secret_g1)
+        : beta(beta)
+        , gamma(gamma)
+        , z_poly(z_poly)
+        , z_poly_at_secret_g1(z_poly_at_secret_g1)
+    {
+    }
 };
 
 // Prover round 3 output
@@ -146,6 +178,20 @@ template<typename ppT> struct round_three_out_t {
     // - t_poly_at_secret_g1: t(x) evaluated at the secret input zeta
     //   i.e. t(zeta)
     std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
+    // stuct constructor
+    round_three_out_t(
+        libff::Fr<ppT> &&alpha,
+        std::vector<libff::Fr<ppT>> &&z_poly_xomega,
+        std::vector<polynomial<libff::Fr<ppT>>> &&t_poly,
+        polynomial<libff::Fr<ppT>> &&t_poly_long,
+        std::vector<libff::G1<ppT>> &&t_poly_at_secret_g1)
+        : alpha(alpha)
+        , z_poly_xomega(z_poly_xomega)
+        , t_poly(t_poly)
+        , t_poly_long(t_poly_long)
+        , t_poly_at_secret_g1(t_poly_at_secret_g1)
+    {
+    }
 };
 
 // Prover round 4 output
@@ -173,6 +219,26 @@ template<typename ppT> struct round_four_out_t {
     //   same in order to match the test vectors. TODO can remove t_zeta
     //   in the future
     libff::Fr<ppT> t_zeta;
+    // stuct constructor
+    round_four_out_t(
+        libff::Fr<ppT> &&zeta,
+        libff::Fr<ppT> &&a_zeta,
+        libff::Fr<ppT> &&b_zeta,
+        libff::Fr<ppT> &&c_zeta,
+        libff::Fr<ppT> &&S_0_zeta,
+        libff::Fr<ppT> &&S_1_zeta,
+        libff::Fr<ppT> &&z_poly_xomega_zeta,
+        libff::Fr<ppT> &&t_zeta)
+        : zeta(zeta)
+        , a_zeta(a_zeta)
+        , b_zeta(b_zeta)
+        , c_zeta(c_zeta)
+        , S_0_zeta(S_0_zeta)
+        , S_1_zeta(S_1_zeta)
+        , z_poly_xomega_zeta(z_poly_xomega_zeta)
+        , t_zeta(t_zeta)
+    {
+    }
 };
 
 // Prover round 5 output
@@ -191,6 +257,20 @@ template<typename ppT> struct round_five_out_t {
     libff::G1<ppT> W_zeta_omega_at_secret;
     // - u: multipoint evaluation challenge -- hash of transcript
     libff::Fr<ppT> u;
+    // struct constructor
+    round_five_out_t(
+        libff::Fr<ppT> &&nu,
+        libff::Fr<ppT> &&r_zeta,
+        libff::G1<ppT> &&W_zeta_at_secret,
+        libff::G1<ppT> &&W_zeta_omega_at_secret,
+        libff::Fr<ppT> &&u)
+        : nu(nu)
+        , r_zeta(r_zeta)
+        , W_zeta_at_secret(W_zeta_at_secret)
+        , W_zeta_omega_at_secret(W_zeta_omega_at_secret)
+        , u(u)
+    {
+    }
 };
 
 /// Plonk prover. Computes object of class plonk_proof.
