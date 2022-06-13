@@ -122,13 +122,29 @@ template<typename ppT> step_four_out_t<ppT> plonk_verifier<ppT>::step_four()
 {
     // load challenges from example for debug
     plonk_example<ppT> example;
-    step_four_out_t<ppT> step_four_out;
-    step_four_out.beta = example.beta;
-    step_four_out.gamma = example.gamma;
-    step_four_out.alpha = example.alpha;
-    step_four_out.zeta = example.zeta;
-    step_four_out.nu = example.nu;
-    step_four_out.u = example.u;
+    // step 4 output
+    libff::Fr<ppT> beta;
+    libff::Fr<ppT> gamma;
+    libff::Fr<ppT> alpha;
+    libff::Fr<ppT> zeta;
+    libff::Fr<ppT> nu;
+    libff::Fr<ppT> u;
+
+    beta = example.beta;
+    gamma = example.gamma;
+    alpha = example.alpha;
+    zeta = example.zeta;
+    nu = example.nu;
+    u = example.u;
+
+    step_four_out_t<ppT> step_four_out(
+        std::move(beta),
+        std::move(gamma),
+        std::move(alpha),
+        std::move(zeta),
+        std::move(nu),
+        std::move(u));
+
     return step_four_out;
 }
 
@@ -146,11 +162,11 @@ template<typename ppT>
 step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
-    step_five_out_t<ppT> step_five_out;
+    libff::Fr<ppT> zh_zeta;
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(srs.num_gates);
-    step_five_out.zh_zeta =
-        domain->compute_vanishing_polynomial(step_four_out.zeta);
+    zh_zeta = domain->compute_vanishing_polynomial(step_four_out.zeta);
+    step_five_out_t<ppT> step_five_out(std::move(zh_zeta));
     return step_five_out;
 }
 
@@ -169,9 +185,10 @@ template<typename ppT>
 step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
-    step_six_out_t<ppT> step_six_out;
-    step_six_out.L_0_zeta = libfqfft::evaluate_polynomial<Field>(
+    libff::Fr<ppT> L_0_zeta;
+    L_0_zeta = libfqfft::evaluate_polynomial<Field>(
         srs.L_basis[0].size(), srs.L_basis[0], step_four_out.zeta);
+    step_six_out_t<ppT> step_six_out(std::move(L_0_zeta));
     return step_six_out;
 }
 
@@ -190,9 +207,10 @@ template<typename ppT>
 step_seven_out_t<ppT> plonk_verifier<ppT>::step_seven(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
-    step_seven_out_t<ppT> step_seven_out;
-    step_seven_out.PI_zeta = libfqfft::evaluate_polynomial<Field>(
+    libff::Fr<ppT> PI_zeta;
+    PI_zeta = libfqfft::evaluate_polynomial<Field>(
         srs.PI_poly.size(), srs.PI_poly, step_four_out.zeta);
+    step_seven_out_t<ppT> step_seven_out(std::move(PI_zeta));
     return step_seven_out;
 }
 
@@ -230,8 +248,7 @@ step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
     const step_seven_out_t<ppT> &step_seven_out,
     const plonk_proof<ppT> &proof)
 {
-    step_eight_out_t<ppT> step_eight_out;
-
+    libff::Fr<ppT> r_prime_zeta;
     Field alpha_power2 = libff::power(step_four_out.alpha, libff::bigint<1>(2));
 
     // compute polynomial r'(zeta) = r(zeta) - r_0
@@ -246,11 +263,10 @@ step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
     r_prime_parts[3] = (proof.c_zeta + step_four_out.gamma) *
                        proof.z_poly_xomega_zeta * step_four_out.alpha;
     r_prime_parts[4] = (step_six_out.L_0_zeta * alpha_power2);
-    step_eight_out.r_prime_zeta =
-        (r_prime_parts[0] -
-         (r_prime_parts[1] * r_prime_parts[2] * r_prime_parts[3]) -
-         r_prime_parts[4]) *
-        step_five_out.zh_zeta.inverse();
+    r_prime_zeta = (r_prime_parts[0] -
+                    (r_prime_parts[1] * r_prime_parts[2] * r_prime_parts[3]) -
+                    r_prime_parts[4]) *
+                   step_five_out.zh_zeta.inverse();
 #ifdef DEBUG
     printf("r_prime_parts[%d] ", 0);
     r_prime_parts[0].print();
@@ -263,8 +279,10 @@ step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
     printf("r_prime_parts[%d] ", 4);
     r_prime_parts[4].print();
     printf("r_prime_zeta     ");
-    step_eight_out.r_prime_zeta.print();
+    r_prime_zeta.print();
 #endif // #ifdef DEBUG
+
+    step_eight_out_t<ppT> step_eight_out(std::move(r_prime_zeta));
     return step_eight_out;
 }
 
@@ -307,7 +325,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
     const verifier_preprocessed_input_t<ppT> &preprocessed_input,
     const srs<ppT> &srs)
 {
-    step_nine_out_t<ppT> step_nine_out;
+    libff::G1<ppT> D1;
 
     // D1 is computed in 3 parts
     std::vector<libff::G1<ppT>> D1_part(3);
@@ -360,7 +378,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
     D1_part[2] = D1_part2_scalar * preprocessed_input.S_polys_at_secret_g1[2];
 
     // Compute D1 = D1_part[0] + D1_part[1] + D1_part[2]
-    step_nine_out.D1 = D1_part[0] + D1_part[1] + D1_part[2];
+    D1 = D1_part[0] + D1_part[1] + D1_part[2];
 #ifdef DEBUG
     printf("[%s:%d] D1_part[%d]\n", __FILE__, __LINE__, 0);
     D1_part[0].print();
@@ -370,6 +388,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
     D1_part[2].print();
     printf("[%s:%d] D1\n", __FILE__, __LINE__);
 #endif // #ifdef DEBUG
+    step_nine_out_t<ppT> step_nine_out(std::move(D1));
     return step_nine_out;
 }
 
@@ -404,7 +423,7 @@ step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
     const verifier_preprocessed_input_t<ppT> &preprocessed_input,
     const srs<ppT> &srs)
 {
-    step_ten_out_t<ppT> step_ten_out;
+    libff::G1<ppT> F1;
     Field zeta_power_n =
         libff::power(step_four_out.zeta, libff::bigint<1>(srs.num_gates + 2));
     Field zeta_power_2n = libff::power(
@@ -435,7 +454,8 @@ step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
         nu_power[5], // nu^5,
         nu_power[6]  // nu^6
     };
-    step_ten_out.F1 = plonk_multi_exp_G1<ppT>(curve_points, scalar_elements);
+    F1 = plonk_multi_exp_G1<ppT>(curve_points, scalar_elements);
+    step_ten_out_t<ppT> step_ten_out(std::move(F1));
     return step_ten_out;
 }
 
@@ -458,7 +478,7 @@ step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
     const step_eight_out_t<ppT> &step_eight_out,
     const plonk_proof<ppT> &proof)
 {
-    step_eleven_out_t<ppT> step_eleven_out;
+    libff::G1<ppT> E1;
     std::vector<Field> nu_power(7);
     for (size_t i = 0; i < nu_power.size(); ++i) {
         nu_power[i] = libff::power(step_four_out.nu, libff::bigint<1>(i));
@@ -472,7 +492,10 @@ step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
         nu_power[5] * proof.S_0_zeta +                             // v^5
         nu_power[6] * proof.S_1_zeta +                             // v^6
         step_four_out.u * proof.z_poly_xomega_zeta};
-    step_eleven_out.E1 = plonk_multi_exp_G1<ppT>(curve_points, scalar_elements);
+
+    E1 = plonk_multi_exp_G1<ppT>(curve_points, scalar_elements);
+
+    step_eleven_out_t<ppT> step_eleven_out(std::move(E1));
     return step_eleven_out;
 }
 

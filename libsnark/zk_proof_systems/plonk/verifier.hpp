@@ -39,12 +39,23 @@ template<typename ppT> struct step_four_out_t {
     libff::Fr<ppT> zeta;
     libff::Fr<ppT> nu;
     libff::Fr<ppT> u;
+    step_four_out_t(
+        libff::Fr<ppT> &&beta,
+        libff::Fr<ppT> &&gamma,
+        libff::Fr<ppT> &&alpha,
+        libff::Fr<ppT> &&zeta,
+        libff::Fr<ppT> &&nu,
+        libff::Fr<ppT> &&u)
+        : beta(beta), gamma(gamma), alpha(alpha), zeta(zeta), nu(nu), u(u)
+    {
+    }
 };
 
 // Verifier step 5 output
 template<typename ppT> struct step_five_out_t {
     // evaluation of vanishing polynomial Zh at x=zeta i.e. Zh(zeta)
     libff::Fr<ppT> zh_zeta;
+    step_five_out_t(libff::Fr<ppT> &&zh_zeta) : zh_zeta(zh_zeta) {}
 };
 
 // Verifier step 6 output
@@ -52,12 +63,14 @@ template<typename ppT> struct step_six_out_t {
     // Lagrange polynomial evaluation of polynomial L1 at x=zeta
     // i.e. L1(zeta)
     libff::Fr<ppT> L_0_zeta;
+    step_six_out_t(libff::Fr<ppT> &&L_0_zeta) : L_0_zeta(L_0_zeta) {}
 };
 
 // Verifier step 7 output
 template<typename ppT> struct step_seven_out_t {
     // Public input polynomial PI evaluated at x=zeta .e. PI(zeta)
     libff::Fr<ppT> PI_zeta;
+    step_seven_out_t(libff::Fr<ppT> &&PI_zeta) : PI_zeta(PI_zeta) {}
 };
 
 // Verifier step 8 output
@@ -65,12 +78,16 @@ template<typename ppT> struct step_eight_out_t {
     // compute quotient polynomial evaluation r'(zeta) = r(zeta) - r0,
     // where r0 is a constant term Note:
     libff::Fr<ppT> r_prime_zeta;
+    step_eight_out_t(libff::Fr<ppT> &&r_prime_zeta) : r_prime_zeta(r_prime_zeta)
+    {
+    }
 };
 
 // Verifier step 9 output
 template<typename ppT> struct step_nine_out_t {
     // first part of batched polynomial commitment [D]_1
     libff::G1<ppT> D1;
+    step_nine_out_t(libff::G1<ppT> &&D1) : D1(D1) {}
 };
 
 // Verifier step 10 output
@@ -78,12 +95,14 @@ template<typename ppT> struct step_ten_out_t {
     // full batched polynomial commitment [F]_1 = [D]_1 + v [a]_1 + v^2
     // [b]_1 + v^3 [c]_1 + v^4 [s_sigma_1]_1 + v^5 [s_sigma_2]_1
     libff::G1<ppT> F1;
+    step_ten_out_t(libff::G1<ppT> &&F1) : F1(F1) {}
 };
 
 // Verifier step 11 output
 template<typename ppT> struct step_eleven_out_t {
     // group-encoded batch evaluation [E]_1
     libff::G1<ppT> E1;
+    step_eleven_out_t(libff::G1<ppT> &&E1) : E1(E1) {}
 };
 
 /// Plonk verifier. Verifies object of class plonk_proof.
@@ -92,8 +111,6 @@ template<typename ppT> class plonk_verifier
     using Field = libff::Fr<ppT>;
 
 public:
-    plonk_verifier(){};
-
     static verifier_preprocessed_input_t<ppT> preprocessed_input(
         const srs<ppT> &srs);
 
