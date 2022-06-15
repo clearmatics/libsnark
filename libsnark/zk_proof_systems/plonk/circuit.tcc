@@ -46,9 +46,10 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
 #endif // #ifdef DEBUG
 
     circuit.num_gates = example.num_gates;
+    // TODO: throw exception
+#ifdef DEBUG
     // ensure that num_gates is not 0
     assert(circuit.num_gates);
-#ifdef DEBUG
     // ensure num_gates is power of 2
     bool b_is_power2 = ((circuit.num_gates & (circuit.num_gates - 1)) == 0);
     assert(b_is_power2);
@@ -71,10 +72,6 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     PI_points[PI_index] = Field(-PI_value);
     plonk_compute_public_input_polynomial(
         PI_points, circuit.L_basis, circuit.PI_poly);
-#ifdef DEBUG
-    printf("[%s:%d] circuit.PI_poly\n", __FILE__, __LINE__);
-    print_vector(circuit.PI_poly);
-#endif // #ifdef DEBUG
 
     // compute the selector polynomials (q-polynomials) from the
     // transposed gates matrix over the Lagrange basis q_poly = \sum_i
@@ -84,12 +81,6 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
         circuit.num_qpolys, polynomial<Field>(circuit.num_gates));
     plonk_compute_selector_polynomials<Field>(
         gates_matrix_transpose, circuit.L_basis, circuit.Q_polys);
-#ifdef DEBUG
-    for (int i = 0; i < (int)circuit.num_qpolys; ++i) {
-        printf("\n[%s:%d] circuit.Q_polys[%2d]\n", __FILE__, __LINE__, i);
-        print_vector(circuit.Q_polys[i]);
-    }
-#endif // #ifdef DEBUG
 
     // number of generators for H, Hk1, Hk2
     int num_hgen = NUM_HGEN;
@@ -104,6 +95,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     // circuit.omega_roots_k2
     plonk_roots_of_unity_omega_to_subgroup_H(
         circuit.omega_roots, circuit.H_gen);
+    // TODO: write unit test for plonk_roots_of_unity_omega_to_subgroup_H
 #ifdef DEBUG
     printf("[%s:%d] circuit.H_gen\n", __FILE__, __LINE__);
     print_vector(circuit.H_gen);
@@ -116,6 +108,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     circuit.H_gen_permute.resize(num_hgen * circuit.num_gates, Field(0));
     plonk_permute_subgroup_H<Field>(
         circuit.H_gen, wire_permutation, circuit.H_gen_permute);
+    // TODO: write unit test for plonk_permute_subgroup_H
 #ifdef DEBUG
     printf("[%s:%d] circuit.H_gen_permute\n", __FILE__, __LINE__);
     print_vector(circuit.H_gen_permute);
@@ -129,12 +122,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     circuit.S_polys.resize(num_hgen, polynomial<Field>(circuit.num_gates));
     plonk_compute_permutation_polynomials<Field>(
         circuit.H_gen_permute, circuit.num_gates, circuit.S_polys);
-#ifdef DEBUG
-    for (int i = 0; i < num_hgen; ++i) {
-        printf("[%s:%d] circuit.S_polys[%d]\n", __FILE__, __LINE__, i);
-        print_vector(circuit.S_polys[i]);
-    }
-#endif // #ifdef DEBUG
+
     return circuit;
 }
 

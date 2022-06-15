@@ -33,26 +33,16 @@ round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> srs)
 {
     using Field = libff::Fr<ppT>;
 
-    // initialize hard-coded values from example circuit
-#ifdef DEBUG
-    plonk_example<ppT> example;
-#endif // #ifdef DEBUG
-
     // output from round 0
     std::vector<libff::Fr<ppT>> zh_poly;
     polynomial<libff::Fr<ppT>> null_poly;
     polynomial<libff::Fr<ppT>> neg_one_poly;
 
-    // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n roots of
-    // unity srs.omega_roots
+    // vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n
+    // roots of unity srs.omega_roots
     zh_poly.resize(srs.num_gates + 1, Field(0));
     zh_poly[0] = Field(-1);
     zh_poly[srs.num_gates] = Field(1);
-#ifdef DEBUG
-    printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
-    print_vector(zh_poly);
-    assert(zh_poly == example.zh_poly);
-#endif // #ifdef DEBUG
 
     null_poly = {Field(0)};
     neg_one_poly = {-Field("1")};
@@ -110,6 +100,8 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
         std::vector<Field> W_points(begin, end);
         plonk_interpolate_polynomial_from_points<Field>(W_points, W_polys[i]);
     }
+    // TODO: move to unit test for
+    // plonk_interpolate_polynomial_from_points
 #ifdef DEBUG
     for (int i = 0; i < nwitness; ++i) {
         printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, i);
@@ -122,11 +114,6 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     // example circuit
     blind_scalars = example.prover_blind_scalars;
     // represent the blinding scalars b1, b2, ..., b9 as polynomials
-#ifdef DEBUG
-    printf("[%s:%d] blind_scalars\n", __FILE__, __LINE__);
-    print_vector(blind_scalars);
-    assert(blind_scalars == example.prover_blind_scalars);
-#endif // #ifdef DEBUG
     std::vector<std::vector<Field>> blind_polys{
         {blind_scalars[1], blind_scalars[0]}, // b1 + b0 X
         {blind_scalars[3], blind_scalars[2]}, // b3 + b2 X
@@ -146,17 +133,6 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     W_polys_blinded_at_secret_g1.resize(W_polys_blinded.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(
         srs.secret_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
-
-#ifdef DEBUG
-    printf(
-        "[%s:%d] poly %d %d %d secret %d\n",
-        __FILE__,
-        __LINE__,
-        (int)W_polys_blinded[0].size(),
-        (int)W_polys_blinded[1].size(),
-        (int)W_polys_blinded[2].size(),
-        (int)srs.secret_powers_g1.size());
-#endif // #ifdef DEBUG
 
     round_one_out_t<ppT> round_one_out(
         std::move(blind_scalars),
@@ -214,10 +190,6 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     // multiply by the vanishing polynomial: z1 = z1 * this->zh_poly
     libfqfft::_polynomial_multiplication<Field>(
         z1_blind_poly, z1_blind_poly, round_zero_out.zh_poly);
-#ifdef DEBUG
-    printf("[%s:%d] z1_blind_poly * zh_poly\n", __FILE__, __LINE__);
-    print_vector(z1_blind_poly);
-#endif // #ifdef DEBUG
 
     // A[0] = 1; ... A[i] = computed from (i-1)
     std::vector<Field> A_vector(srs.num_gates, Field(0));
@@ -229,15 +201,11 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
         srs.H_gen,
         srs.H_gen_permute,
         A_vector);
-#ifdef DEBUG
-    for (int i = 0; i < (int)srs.num_gates; ++i) {
-        printf("A[%d] ", i);
-        A_vector[i].print();
-    }
-#endif // #ifdef DEBUG
 
     polynomial<Field> A_poly(srs.num_gates);
     plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly);
+    // TODO: move to unit test for
+    // plonk_interpolate_polynomial_from_points
 #ifdef DEBUG
     printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
     print_vector(A_poly);
@@ -314,14 +282,6 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
             libff::power(srs.omega_roots[base][1], libff::bigint<1>(i));
         z_poly_xomega[i] = round_two_out.z_poly[i] * omega_roots_i;
     }
-
-#ifdef DEBUG
-    printf("[%s:%d] this->z_poly_xomega\n", __FILE__, __LINE__);
-    print_vector(z_poly_xomega);
-    for (size_t i = 0; i < round_two_out.z_poly.size(); ++i) {
-        assert(z_poly_xomega[i] == example.z_poly_xomega[i]);
-    }
-#endif // #ifdef DEBUG
 
     // start computation of polynomial t(X) in round 3. we break t
     // into 4 parts which we compute separately. each of the 4 parts
@@ -482,6 +442,8 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     polynomial<Field> remainder;
     libfqfft::_polynomial_division(
         t_poly_long, remainder, t_poly_long, round_zero_out.zh_poly);
+
+    // TODO: move to unit test for round_three()
 #ifdef DEBUG
     printf("[%s:%d] t_poly_long\n", __FILE__, __LINE__);
     print_vector(t_poly_long);
@@ -504,6 +466,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
         std::vector<Field> tmp(begin, end);
         t_poly[i] = tmp;
     }
+    // TODO: move to unit test for round_three()
 #ifdef DEBUG
     for (int i = 0; i < num_hgen; ++i) {
         printf("[%s:%d] t_poly[%d]\n", __FILE__, __LINE__, i);
@@ -583,10 +546,6 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
     // evaluation challenge (hash of transcript); fixed to test value
     zeta = example.zeta;
 
-#ifdef DEBUG
-    printf("[%s:%d] zeta\n", __FILE__, __LINE__);
-    zeta.print();
-#endif // #ifdef DEBUG
     a_zeta = libfqfft::evaluate_polynomial<Field>(
         srs.num_gates + 2, round_one_out.W_polys_blinded[a], zeta);
     b_zeta = libfqfft::evaluate_polynomial<Field>(
@@ -787,19 +746,8 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[2]);
     libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[3]);
 
+    // TODO: move to unit test for compyting r_poly
 #ifdef DEBUG
-    //    printf("abqM_zeta\n");
-    //    print_vector(abqM_zeta);
-    printf("[%s:%d] r_part[0]\n", __FILE__, __LINE__);
-    print_vector(r_part[0]);
-    printf("[%s:%d] r_part[1]\n", __FILE__, __LINE__);
-    print_vector(r_part[1]);
-    printf("[%s:%d] r_part[2]\n", __FILE__, __LINE__);
-    print_vector(r_part[2]);
-    printf("[%s:%d] r_part[3]\n", __FILE__, __LINE__);
-    print_vector(r_part[3]);
-    printf("[%s:%d] r_poly\n", __FILE__, __LINE__);
-    print_vector(r_poly);
     assert(r_poly == example.r_poly);
 #endif // #ifdef DEBUG
 
@@ -810,9 +758,9 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     // side
     r_zeta = libfqfft::evaluate_polynomial<Field>(
         r_poly.size(), r_poly, round_four_out.zeta);
+
+    // TODO: move to unit test for compyting r_zeta
 #ifdef DEBUG
-    printf("r_zeta ");
-    r_zeta.print();
     assert(r_zeta == example.r_zeta);
 #endif // #ifdef DEBUG
 
@@ -942,10 +890,6 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     // compute 1/(X-zeta) * W_zeta
     polynomial<Field> x_sub_zeta_poly{-round_four_out.zeta, Field(1)};
     libfqfft::_polynomial_division(W_zeta, remainder, W_zeta, x_sub_zeta_poly);
-#ifdef DEBUG
-    printf("W_zeta\n");
-    print_vector(W_zeta);
-#endif // #ifdef DEBUG
     assert(libfqfft::_is_zero(remainder));
 
     // Compute opening proof:
@@ -970,29 +914,11 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
         W_zeta_omega, remainder, W_zeta_omega, x_sub_zeta_omega_roots);
     assert(libfqfft::_is_zero(remainder));
 
+    // TODO: move to unit test for round_five
 #ifdef DEBUG
-    printf("W_zeta_part[0]\n");
-    print_vector(W_zeta_part[0]);
-    printf("W_zeta_part[1]\n");
-    print_vector(W_zeta_part[1]);
-    printf("W_zeta_part[2]\n");
-    print_vector(W_zeta_part[2]);
-    printf("W_zeta_part[3]\n");
-    print_vector(W_zeta_part[3]);
-    printf("W_zeta_part[4]\n");
-    print_vector(W_zeta_part[4]);
-    printf("W_zeta_part[5]\n");
-    print_vector(W_zeta_part[5]);
-    printf("W_zeta_part[6]\n");
-    print_vector(W_zeta_part[6]);
-    printf("W_zeta\n");
-    print_vector(W_zeta);
-    printf("W_zeta_omega\n");
-    print_vector(W_zeta_omega);
-#endif // #ifdef DEBUG
-
     assert(W_zeta == example.W_zeta);
     assert(W_zeta_omega == example.W_zeta_omega);
+#endif // #ifdef DEBUG
 
     // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
     // input
@@ -1061,25 +987,17 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     // initialize hard-coded values from example circuit
     plonk_example<ppT> example;
     std::vector<Field> witness = example.witness;
-#ifdef DEBUG
-    assert(srs.k1 == example.k1);
-    assert(srs.k2 == example.k2);
-#endif // #ifdef DEBUG
 
     // Prover Round 0 (initialization)
     printf("[%s:%d] Prover Round 0...\n", __FILE__, __LINE__);
     round_zero_out_t<ppT> round_zero_out = plonk_prover::round_zero(srs);
-#ifdef DEBUG
-    printf("[%s:%d] Vanishing polynomial\n", __FILE__, __LINE__);
-    print_vector(round_zero_out.zh_poly);
-    assert(round_zero_out.zh_poly == example.zh_poly);
-#endif // #ifdef DEBUG
 
     // Prover Round 1
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
     round_one_out_t<ppT> round_one_out =
         plonk_prover::round_one(round_zero_out, witness, srs);
     // Prover Round 1 output check against test vectors
+    // TODO: move to unit test for round 1
 #ifdef DEBUG
     for (int i = 0; i < (int)NUM_HGEN; ++i) {
         printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
@@ -1106,6 +1024,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     round_two_out_t<ppT> round_two_out =
         plonk_prover::round_two(round_zero_out, round_one_out, witness, srs);
     // Prover Round 2 output check against test vectors
+    // TODO: move to unit test for round 2
 #ifdef DEBUG
     printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
     print_vector(round_two_out.z_poly);
@@ -1123,6 +1042,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     round_three_out_t<ppT> round_three_out = plonk_prover::round_three(
         round_zero_out, round_one_out, round_two_out, srs);
     // Prover Round 3 output check against test vectors
+    // TODO: move to unit test for round 3
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
     for (int i = 0; i < (int)NUM_HGEN; ++i) {
@@ -1140,6 +1060,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     round_four_out_t<ppT> round_four_out =
         plonk_prover::round_four(round_one_out, round_three_out, srs);
     // Prover Round 4 output check against test vectors
+    // TODO: move to unit test for round 4
 #ifdef DEBUG
     printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
     printf("a_zeta ");
@@ -1173,6 +1094,8 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
         round_three_out,
         round_four_out,
         srs);
+    // Prover Round 5 output check against test vectors
+    // TODO: move to unit test for round 5
 #ifdef DEBUG
     printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
     printf("r_zeta ");

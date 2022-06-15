@@ -238,20 +238,6 @@ step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
                     (r_prime_parts[1] * r_prime_parts[2] * r_prime_parts[3]) -
                     r_prime_parts[4]) *
                    step_five_out.zh_zeta.inverse();
-#ifdef DEBUG
-    printf("r_prime_parts[%d] ", 0);
-    r_prime_parts[0].print();
-    printf("r_prime_parts[%d] ", 1);
-    r_prime_parts[1].print();
-    printf("r_prime_parts[%d] ", 2);
-    r_prime_parts[2].print();
-    printf("r_prime_parts[%d] ", 3);
-    r_prime_parts[3].print();
-    printf("r_prime_parts[%d] ", 4);
-    r_prime_parts[4].print();
-    printf("r_prime_zeta     ");
-    r_prime_zeta.print();
-#endif // #ifdef DEBUG
 
     step_eight_out_t<ppT> step_eight_out(std::move(r_prime_zeta));
     return step_eight_out;
@@ -354,15 +340,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
 
     // Compute D1 = D1_part[0] + D1_part[1] + D1_part[2]
     D1 = D1_part[0] + D1_part[1] + D1_part[2];
-#ifdef DEBUG
-    printf("[%s:%d] D1_part[%d]\n", __FILE__, __LINE__, 0);
-    D1_part[0].print();
-    printf("[%s:%d] D1_part[%d]\n", __FILE__, __LINE__, 1);
-    D1_part[1].print();
-    printf("[%s:%d] D1_part[%d]\n", __FILE__, __LINE__, 2);
-    D1_part[2].print();
-    printf("[%s:%d] D1\n", __FILE__, __LINE__);
-#endif // #ifdef DEBUG
+
     step_nine_out_t<ppT> step_nine_out(std::move(D1));
     return step_nine_out;
 }
@@ -510,11 +488,6 @@ bool plonk_verifier<ppT>::step_twelve(
     const plonk_proof<ppT> &proof,
     const srs<ppT> &srs)
 {
-    // load test vectors for debug
-#ifdef DEBUG
-    plonk_example<ppT> example;
-#endif // #ifdef DEBUG
-
     std::vector<libff::G1<ppT>> curve_points_lhs{proof.W_zeta_at_secret,
                                                  proof.W_zeta_omega_at_secret};
     std::vector<libff::Fr<ppT>> scalar_elements_lhs{Field(1), step_four_out.u};
@@ -538,7 +511,10 @@ bool plonk_verifier<ppT>::step_twelve(
         plonk_multi_exp_G1<ppT>(curve_points_rhs, scalar_elements_rhs);
     libff::G2<ppT> pairing_second_rhs = srs.secret_powers_g2[0];
 
+    // TODO: move to unit test for step_twelve
 #ifdef DEBUG
+    // load test vectors for debug
+    plonk_example<ppT> example;
     printf("[%s:%d] pairing_first_lhs\n", __FILE__, __LINE__);
     pairing_first_lhs.print();
     libff::G1<ppT> pairing_first_lhs_aff(pairing_first_lhs);
@@ -562,9 +538,6 @@ bool plonk_verifier<ppT>::step_twelve(
         ppT::double_miller_loop(_A, _B, _C, _D);
     const libff::GT<ppT> result = ppT::final_exponentiation(miller_result);
     bool b_accept = (result == libff::GT<ppT>::one());
-#ifdef DEBUG
-    assert(b_accept);
-#endif // #ifdef DEBUG
     return b_accept;
 }
 
@@ -590,16 +563,14 @@ template<typename ppT>
 bool plonk_verifier<ppT>::verify_proof(
     const plonk_proof<ppT> &proof, const srs<ppT> &srs)
 {
-
-    // load test vector values form example for debug
-#ifdef DEBUG
-    plonk_example<ppT> example;
-#endif // #ifdef DEBUG
-
     // compute verifier preprocessed input
     const verifier_preprocessed_input_t<ppT> preprocessed_input =
         plonk_verifier::preprocessed_input(srs);
+
+    // TODO: move to unit test for verify_proof
 #ifdef DEBUG
+    // load test vector values form example for debug
+    plonk_example<ppT> example;
     for (int i = 0; i < (int)srs.Q_polys.size(); ++i) {
         printf("srs.Q_polys_at_secret_G1[%d] \n", i);
         preprocessed_input.Q_polys_at_secret_g1[i].print();
@@ -635,6 +606,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 5: compute zero polynomial evaluation
     const step_five_out_t<ppT> step_five_out =
         this->step_five(step_four_out, srs);
+    // TODO: uni test for step_five
 #ifdef DEBUG
     printf("[%s:%d] zh_zeta ", __FILE__, __LINE__);
     step_five_out.zh_zeta.print();
@@ -644,6 +616,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
     // Note: the paper counts the L-polynomials from 1; we count from 0
     const step_six_out_t<ppT> step_six_out = this->step_six(step_four_out, srs);
+    // TODO: uni test for step_six
 #ifdef DEBUG
     printf("L_0_zeta ");
     step_six_out.L_0_zeta.print();
@@ -653,6 +626,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 7: compute public input polynomial evaluation PI(zeta)
     const step_seven_out_t<ppT> step_seven_out =
         this->step_seven(step_four_out, srs);
+    // TODO: uni test for step_seven
 #ifdef DEBUG
     printf("PI_zeta ");
     step_seven_out.PI_zeta.print();
@@ -663,6 +637,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // r'(zeta) = r(zeta) - r0, where r0 is a constant term
     const step_eight_out_t<ppT> step_eight_out = this->step_eight(
         step_four_out, step_five_out, step_six_out, step_seven_out, proof);
+    // TODO: uni test for step_eight
 #ifdef DEBUG
     assert(step_eight_out.r_prime_zeta == example.r_prime_zeta);
 #endif // #ifdef DEBUG
@@ -671,6 +646,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // commitment [D]_1
     step_nine_out_t<ppT> step_nine_out = this->step_nine(
         step_four_out, step_six_out, proof, preprocessed_input, srs);
+    // TODO: uni test for step_nine
 #ifdef DEBUG
     step_nine_out.D1.print();
     libff::G1<ppT> D1_aff(step_nine_out.D1);
@@ -683,6 +659,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // [F]_1
     step_ten_out_t<ppT> step_ten_out = this->step_ten(
         step_four_out, step_nine_out, proof, preprocessed_input, srs);
+    // TODO: uni test for step_ten
 #ifdef DEBUG
     printf("[%s:%d] F1\n", __FILE__, __LINE__);
     step_ten_out.F1.print();
@@ -695,6 +672,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 11: compute group-encoded batch evaluation [E]_1
     const step_eleven_out_t<ppT> step_eleven_out =
         this->step_eleven(step_four_out, step_eight_out, proof);
+    // TODO: uni test for step_eleven
 #ifdef DEBUG
     printf("[%s:%d] E1\n", __FILE__, __LINE__);
     step_eleven_out.E1.print();
