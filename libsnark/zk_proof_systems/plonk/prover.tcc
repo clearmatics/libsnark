@@ -20,8 +20,8 @@ namespace libsnark
 /// Initialization
 ///
 /// INPUT
-/// \param[in] srs: structured reference string containing also circuit-specific
-///   information
+/// \param[in] srs: structured reference string containing also
+///            circuit-specific information
 ///
 /// OUTPUT
 /// \param[out] W_polys: Lagrange interpolation of the witness values
@@ -475,11 +475,9 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     // t(x) = (t[0] + t[1] + (-t[2]) + t[3]) / zh(x)
     t_poly_long = {Field(0)};
     libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[0]);
-#if 1 // DEBUG
     libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[1]);
     libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[2]);
     libfqfft::_polynomial_addition<Field>(t_poly_long, t_poly_long, t_part[3]);
-#endif // #if 0 // DEBUG
     //    t(x) = t(x) / zh(x): A/B = (Q, R) st. A = (Q * B) + R.
     polynomial<Field> remainder;
     libfqfft::_polynomial_division(
