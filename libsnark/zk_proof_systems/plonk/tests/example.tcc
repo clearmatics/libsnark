@@ -28,9 +28,8 @@ template<typename ppT> plonk_example<ppT>::plonk_example()
     // number of q-polynomials
     this->num_qpolys = 5;
 
-    // hard-coded gates matrix for the example circuit
-    // P(x) = x**3 + x + 5 = 3
-    // Each column is a q-vector
+    // hard-coded gates matrix for the example circuit P(x) = x**3 + x
+    // + 5 = 3 Each column is a q-vector
     this->gates_matrix = {
         // q_L     q_R        q_M         q_O       q_C
         {Field(0), Field(0), Field(1), -Field("1"), Field(0)}, // mul

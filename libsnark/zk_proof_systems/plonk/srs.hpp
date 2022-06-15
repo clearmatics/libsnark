@@ -29,24 +29,23 @@
 namespace libsnark
 {
 
-/********************************** SRS ***********************************/
-//
-// A note on the distinction between an srs and a universal srs.
-//
-// A universal srs (usrs) is composed *only* of monomials i.e. encoded
-// powers of the secret value in the group generator. Therefore a usrs
-// is independent of any particular circuit.
-//
-// The (plain) srs is a specialization of the usrs for one particular
-// circuit and is derived from the usrs e.g. as
-//
-// usrs = <encoded powers of secret>
-// srs = (proving_key, verificataion_key) = derive(usrs, circuit_description)
-//
+///
+/// A note on the distinction between an srs and a universal srs.
+///
+/// A universal srs (usrs) is composed *only* of monomials i.e. encoded
+/// powers of the secret value in the group generator. Therefore a usrs
+/// is independent of any particular circuit.
+///
+/// The (plain) srs is a specialization of the usrs for one particular
+/// circuit and is derived from the usrs e.g. as
+///
+/// usrs = <encoded powers of secret>
+/// srs = (proving_key, verificataion_key) = derive(usrs, circuit_description)
+///
 
-// Universal srs (usrs). Contains secret encoded monomials with
-// maximum degree MAX_DEGREE and is so independent of any particular
-// circuit.
+/// Universal srs (usrs). Contains secret encoded monomials with
+/// maximum degree MAX_DEGREE and is so independent of any particular
+/// circuit.
 template<typename ppT> class usrs
 {
 public:
@@ -69,46 +68,46 @@ public:
 template<typename ppT>
 usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> &secret);
 
-// Plain (i.e. non-universal srs). Contains secret encoded monomials
-// with maximum degree equal to the number of gates of the analyzed
-// circuit + 2, plus circuit description. Dependent on the circuit.
+/// Plain (i.e. non-universal srs). Contains secret encoded monomials
+/// with maximum degree equal to the number of gates of the analyzed
+/// circuit + 2, plus circuit description. Dependent on the circuit.
 template<typename ppT> class srs
 {
 public:
     using Field = libff::Fr<ppT>;
-    // number of gates in the analyzed circuit, denoted by "n" in
-    // [GWC19]
+    /// number of gates in the analyzed circuit, denoted by "n" in
+    /// [GWC19]
     size_t num_gates;
-    // number of selector polynomials (q-polynomials) (= 5 in the
-    // vanilla Plonk proposal [GWC19])
+    /// number of selector polynomials (q-polynomials) (= 5 in the
+    /// vanilla Plonk proposal [GWC19])
     size_t num_qpolys;
-    // Lagrange basis
+    /// Lagrange basis
     std::vector<polynomial<Field>> L_basis;
-    // Public input polynomial
+    /// Public input polynomial
     polynomial<Field> PI_poly;
-    // Circuit selector polynomials (Q-polynomials)
+    /// Circuit selector polynomials (Q-polynomials)
     std::vector<polynomial<Field>> Q_polys;
-    // Permutation polynomials S_sigma_1, S_sigma_2, S_sigma_2 (see
-    // [GWC19], Sect. 8.1)
+    /// Permutation polynomials S_sigma_1, S_sigma_2, S_sigma_2 (see
+    /// [GWC19], Sect. 8.1)
     std::vector<polynomial<Field>> S_polys;
-    // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
-    // omega[2] are omega[0]*k2
+    /// omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
+    /// omega[2] are omega[0]*k2
     std::vector<std::vector<Field>> omega_roots;
-    // H_gen contains the generators of H, k1 H and k2 H in one place
-    // ie. omega, omega_k1 and omega_k2
+    /// H_gen contains the generators of H, k1 H and k2 H in one place
+    /// ie. omega, omega_k1 and omega_k2
     std::vector<Field> H_gen;
-    // H_gen permuted according to the wire permutation
+    /// H_gen permuted according to the wire permutation
     std::vector<Field> H_gen_permute;
-    // constants for H, k1 H, k2 H
+    /// constants for H, k1 H, k2 H
     libff::Fr<ppT> k1;
     libff::Fr<ppT> k2;
 
-    /// Array of powers of secret \alpha, encoded in G1:
-    /// [1]_1, [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
+    /// Array of powers of secret \alpha, encoded in G1: [1]_1,
+    /// [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
     std::vector<libff::G1<ppT>> secret_powers_g1;
 
-    /// Array of powers of secret \alpha, encoded in G2:
-    /// [1]_2, [\alpha]_2
+    /// Array of powers of secret \alpha, encoded in G2: [1]_2,
+    /// [\alpha]_2
     std::vector<libff::G2<ppT>> secret_powers_g2;
 
     srs(const size_t &num_gates,
@@ -145,15 +144,12 @@ template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
     const usrs<ppT> &usrs, const circuit_t<ppT> &circuit);
 
-/******************************** Proving key ********************************/
-/**
- * A proving key for Plonk
- */
+/// A proving key for Plonk
 template<typename ppT> class plonk_proving_key
 {
 public:
-    /// Array of powers of secret \alpha, encoded in G1:
-    /// [1]_1, [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
+    /// Array of powers of secret \alpha, encoded in G1: [1]_1,
+    /// [\alpha]_1, [\alpha^2]_1, ..., [\alpha^{n+2}]_1
     std::vector<libff::G1<ppT>> secret_powers_g1;
 
     plonk_proving_key(){};
@@ -161,16 +157,12 @@ public:
         : secret_powers_g1(std::move(secret_powers_g1)){};
 };
 
-/******************************* Verification key ****************************/
-
-/**
- * A verification key for Plonk
- */
+/// A verification key for Plonk
 template<typename ppT> class plonk_verification_key
 {
 public:
-    /// Array of powers of secret \alpha, encoded in G2:
-    /// [1]_2, [\alpha]_2
+    /// Array of powers of secret \alpha, encoded in G2: [1]_2,
+    /// [\alpha]_2
     std::vector<libff::G2<ppT>> secret_powers_g2;
 
     plonk_verification_key();
@@ -178,12 +170,8 @@ public:
         : secret_powers_g2(std::move(secret_powers_g2)){};
 };
 
-/********************************** Key pair *********************************/
-
-/**
- * A key pair for Plonk, which consists of a proving key and a
- * verification key.
- */
+/// A key pair for Plonk, which consists of a proving key and a
+/// verification key.
 template<typename ppT> class plonk_keypair
 {
 public:

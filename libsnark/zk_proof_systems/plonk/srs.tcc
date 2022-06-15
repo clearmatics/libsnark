@@ -15,11 +15,11 @@
 namespace libsnark
 {
 
-// Compute a universal srs (usrs). It is composed *only* of encoded
-// powers of the secret value in the group generator. Therefore a usrs
-// is independent of any particular circuit.
-//
-// Note: only for debug
+/// Compute a universal srs (usrs). It is composed *only* of encoded
+/// powers of the secret value in the group generator. Therefore a usrs
+/// is independent of any particular circuit.
+///
+/// \note only for debug
 template<typename ppT>
 usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> &secret)
 {
@@ -57,12 +57,12 @@ usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> &secret)
     return usrs<ppT>(std::move(secret_powers_g1), std::move(secret_powers_g2));
 }
 
-// Derive the (plain) SRS from the circuit description and the
-// USRS. The (plain) SRS is a specialization of the USRS for one
-// particular circuit i.e.
-//
-// usrs = <encoded powers of secret>
-// srs = (proving_key, verificataion_key) = derive(usrs, circuit_description)
+/// Derive the (plain) SRS from the circuit description and the
+/// USRS. The (plain) SRS is a specialization of the USRS for one
+/// particular circuit i.e.
+///
+/// usrs = <encoded powers of secret>
+/// srs = (proving_key, verificataion_key) = derive(usrs, circuit_description)
 template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
     const usrs<ppT> &usrs, const circuit_t<ppT> &circuit)

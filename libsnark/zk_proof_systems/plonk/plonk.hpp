@@ -221,7 +221,7 @@ FieldT plonk_compute_accumulator_factor(
     const std::vector<FieldT> &H_gen_permute,
     const std::vector<FieldT> &A);
 
-// - A: accumulatro vector
+/// A: accumulatro vector
 template<typename FieldT>
 void plonk_compute_accumulator(
     const size_t n, // num_gates
