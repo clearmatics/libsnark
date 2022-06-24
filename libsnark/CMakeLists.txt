@@ -205,6 +205,7 @@ if ("${IS_LIBSNARK_PARENT}")
   libsnark_test(test_r1cs_ppzksnark_verifier_gadget gadgetlib1/tests/test_r1cs_ppzksnark_verifier_gadget.cpp)
   libsnark_test(test_r1cs_gg_ppzksnark_verifier_gadget gadgetlib1/tests/test_r1cs_gg_ppzksnark_verifier_gadget.cpp)
   libsnark_test(test_kzg10_verifier_gadget gadgetlib1/tests/test_kzg10_verifier_gadget.cpp)
+  libsnark_test(test_plonk zk_proof_systems/plonk/tests/test_plonk.cpp)
 
   # TODO (howardwu): Resolve runtime on targets:
   # libsnark_test(zk_proof_systems_uscs_ppzksnark_test zk_proof_systems/ppzksnark/uscs_ppzksnark/tests/test_uscs_ppzksnark.cpp)
