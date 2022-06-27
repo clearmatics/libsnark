@@ -184,9 +184,10 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     // compute permutation polynomial
 
     // blinding polynomial: b8 + b7 X + b6 X^2
-    std::vector<Field> z1_blind_poly{round_one_out.blind_scalars[8],
-                                     round_one_out.blind_scalars[7],
-                                     round_one_out.blind_scalars[6]};
+    std::vector<Field> z1_blind_poly{
+        round_one_out.blind_scalars[8],
+        round_one_out.blind_scalars[7],
+        round_one_out.blind_scalars[6]};
     // multiply by the vanishing polynomial: z1 = z1 * this->zh_poly
     libfqfft::_polynomial_multiplication<Field>(
         z1_blind_poly, z1_blind_poly, round_zero_out.zh_poly);
