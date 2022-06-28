@@ -134,10 +134,10 @@ void test_verify_invalid_proof(
 
 template<typename ppT> void test_plonk()
 {
-#ifndef DEBUG
-    printf("[%s:%d] WARNING! DEBUG info disabled.\n", __FILE__, __LINE__);
+#ifndef DEBUG_PLONK
+    printf("[%s:%d] WARNING! DEBUG_PLONK info disabled.\n", __FILE__, __LINE__);
     //    assert(0);
-#endif // #ifndef DEBUG
+#endif // #ifndef DEBUG_PLONK
 
     // Execute all tests for the given curve.
     ppT::init_public_params();
@@ -153,10 +153,10 @@ template<typename ppT> void test_plonk()
     // random hidden element secret (toxic waste). we fix it to a
     // constant in order to match against the test vectors
     Field secret = example.secret;
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     printf("[%s:%d] secret ", __FILE__, __LINE__);
     secret.print();
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     printf("[%s:%d] SRS...\n", __FILE__, __LINE__);
     // --- USRS ---
@@ -243,15 +243,18 @@ template<typename ppT> void test_plonk()
     bool b_valid_proof = verifier.verify_proof(proof, srs);
     ASSERT_TRUE(b_valid_proof);
     // assert that proof verification fails when the proof is
-    // manipulated. must be executed when DEBUG is not defined to
+    // manipulated. must be executed when DEBUG_PLONK is not defined to
     // disable certain assert-s that may fail before the verify
     // invalid proof test
-#ifndef DEBUG
+#ifndef DEBUG_PLONK
     test_verify_invalid_proof(proof, srs);
-#endif // #ifndef DEBUG
-#ifndef DEBUG
-    printf("[%s:%d] WARNING! DEBUG info was disabled.\n", __FILE__, __LINE__);
-#endif // #ifndef DEBUG
+#endif // #ifndef DEBUG_PLONK
+#ifndef DEBUG_PLONK
+    printf(
+        "[%s:%d] WARNING! DEBUG_PLONK info was disabled.\n",
+        __FILE__,
+        __LINE__);
+#endif // #ifndef DEBUG_PLONK
     printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
     // end
 }
