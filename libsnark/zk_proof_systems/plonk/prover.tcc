@@ -102,13 +102,13 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     }
     // TODO: move to unit test for
     // plonk_interpolate_polynomial_from_points
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     for (int i = 0; i < nwitness; ++i) {
         printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, i);
         print_vector(W_polys[i]);
         assert(W_polys[i] == example.W_polys[i]);
     }
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     // hard-coded values for the "random" blinding constants from
     // example circuit
@@ -207,11 +207,11 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly);
     // TODO: move to unit test for
     // plonk_interpolate_polynomial_from_points
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
     print_vector(A_poly);
     assert(A_poly == example.A_poly);
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     // add blinding polynomial z_1 to the accumulator polynomial A_poly
     libfqfft::_polynomial_addition<Field>(z_poly, z1_blind_poly, A_poly);
@@ -445,13 +445,13 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
         t_poly_long, remainder, t_poly_long, round_zero_out.zh_poly);
 
     // TODO: move to unit test for round_three()
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     printf("[%s:%d] t_poly_long\n", __FILE__, __LINE__);
     print_vector(t_poly_long);
     assert(t_poly_long == example.t_poly_long);
     printf("[%s:%d] remainder\n", __FILE__, __LINE__);
     print_vector(remainder);
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
     assert(libfqfft::_is_zero(remainder));
 
     // break this->t_poly_long into three parts: lo, mid, hi, each of degree
@@ -468,13 +468,13 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
         t_poly[i] = tmp;
     }
     // TODO: move to unit test for round_three()
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     for (int i = 0; i < num_hgen; ++i) {
         printf("[%s:%d] t_poly[%d]\n", __FILE__, __LINE__, i);
         print_vector(t_poly[i]);
         assert(t_poly[i] == example.t_poly[i]);
     }
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
     // evaluate each part of t_poly in the secret input
     t_poly_at_secret_g1.resize(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
@@ -748,9 +748,9 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[3]);
 
     // TODO: move to unit test for compyting r_poly
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     assert(r_poly == example.r_poly);
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     // Evaluate the r-polynomial at zeta. Note: in the reference
     // implementation, r_zeta is added to the pi-SNARK proof. In the
@@ -761,9 +761,9 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
         r_poly.size(), r_poly, round_four_out.zeta);
 
     // TODO: move to unit test for compyting r_zeta
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     assert(r_zeta == example.r_zeta);
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     // W_zeta polynomial is of degree 6 in the random element nu and
     // hence has 7 terms
@@ -916,10 +916,10 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     assert(libfqfft::_is_zero(remainder));
 
     // TODO: move to unit test for round_five
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     assert(W_zeta == example.W_zeta);
     assert(W_zeta_omega == example.W_zeta_omega);
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
     // input
@@ -999,7 +999,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
         plonk_prover::round_one(round_zero_out, witness, srs);
     // Prover Round 1 output check against test vectors
     // TODO: move to unit test for round 1
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     for (int i = 0; i < (int)NUM_HGEN; ++i) {
         printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
         print_vector(round_one_out.W_polys_blinded[i]);
@@ -1019,14 +1019,14 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
             W_polys_blinded_at_secret_g1_i.Y ==
             example.W_polys_blinded_at_secret_g1[i][1]);
     }
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
     round_two_out_t<ppT> round_two_out =
         plonk_prover::round_two(round_zero_out, round_one_out, witness, srs);
     // Prover Round 2 output check against test vectors
     // TODO: move to unit test for round 2
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
     print_vector(round_two_out.z_poly);
     assert(round_two_out.z_poly == example.z_poly);
@@ -1037,14 +1037,14 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     z_poly_at_secret_g1_aff.to_affine_coordinates();
     assert(z_poly_at_secret_g1_aff.X == example.z_poly_at_secret_g1[0]);
     assert(z_poly_at_secret_g1_aff.Y == example.z_poly_at_secret_g1[1]);
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
     round_three_out_t<ppT> round_three_out = plonk_prover::round_three(
         round_zero_out, round_one_out, round_two_out, srs);
     // Prover Round 3 output check against test vectors
     // TODO: move to unit test for round 3
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
     for (int i = 0; i < (int)NUM_HGEN; ++i) {
         printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
@@ -1055,14 +1055,14 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
         assert(t_poly_at_secret_g1_i.X == example.t_poly_at_secret_g1[i][0]);
         assert(t_poly_at_secret_g1_i.Y == example.t_poly_at_secret_g1[i][1]);
     }
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
     round_four_out_t<ppT> round_four_out =
         plonk_prover::round_four(round_one_out, round_three_out, srs);
     // Prover Round 4 output check against test vectors
     // TODO: move to unit test for round 4
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
     printf("a_zeta ");
     round_four_out.a_zeta.print();
@@ -1085,7 +1085,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     printf("z_poly_xomega_zeta ");
     round_four_out.z_poly_xomega_zeta.print();
     assert(round_four_out.z_poly_xomega_zeta == example.z_poly_xomega_zeta);
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
     round_five_out_t<ppT> round_five_out = plonk_prover::round_five(
@@ -1097,7 +1097,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
         srs);
     // Prover Round 5 output check against test vectors
     // TODO: move to unit test for round 5
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
     printf("r_zeta ");
     round_five_out.r_zeta.print();
@@ -1115,7 +1115,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     W_zeta_omega_at_secret_aff.to_affine_coordinates();
     assert(W_zeta_omega_at_secret_aff.X == example.W_zeta_omega_at_secret[0]);
     assert(W_zeta_omega_at_secret_aff.Y == example.W_zeta_omega_at_secret[1]);
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     // construct proof
     plonk_proof<ppT> proof(

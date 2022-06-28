@@ -15,8 +15,8 @@
 
 // enable debug checks. in particular enable comparisons to test
 // vector values.
-#define DEBUG
-//#undef DEBUG
+#define DEBUG_PLONK
+//#undef DEBUG_PLONK
 
 /// Declaration of common untility functions for ppzkSNARK proof
 /// system Plonk. The implementation instantiates the protocol of

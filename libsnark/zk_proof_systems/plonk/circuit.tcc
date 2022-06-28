@@ -38,22 +38,22 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     // match against the test vector values
     circuit.k1 = example.k1;
     circuit.k2 = example.k2;
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     printf("[%s:%d] k1 ", __FILE__, __LINE__);
     circuit.k1.print();
     printf("[%s:%d] k2 ", __FILE__, __LINE__);
     circuit.k2.print();
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     circuit.num_gates = example.num_gates;
     // TODO: throw exception
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     // ensure that num_gates is not 0
     assert(circuit.num_gates);
     // ensure num_gates is power of 2
     bool b_is_power2 = ((circuit.num_gates & (circuit.num_gates - 1)) == 0);
     assert(b_is_power2);
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     circuit.num_qpolys = example.num_qpolys;
 
@@ -96,26 +96,26 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     plonk_roots_of_unity_omega_to_subgroup_H(
         circuit.omega_roots, circuit.H_gen);
     // TODO: write unit test for plonk_roots_of_unity_omega_to_subgroup_H
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     printf("[%s:%d] circuit.H_gen\n", __FILE__, __LINE__);
     print_vector(circuit.H_gen);
     for (int i = 0; i < (int)circuit.H_gen.size(); ++i) {
         assert(circuit.H_gen[i] == example.H_gen[i]);
     }
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     // permute circuit.H_gen according to the wire permutation
     circuit.H_gen_permute.resize(num_hgen * circuit.num_gates, Field(0));
     plonk_permute_subgroup_H<Field>(
         circuit.H_gen, wire_permutation, circuit.H_gen_permute);
     // TODO: write unit test for plonk_permute_subgroup_H
-#ifdef DEBUG
+#ifdef DEBUG_PLONK
     printf("[%s:%d] circuit.H_gen_permute\n", __FILE__, __LINE__);
     print_vector(circuit.H_gen_permute);
     for (size_t i = 0; i < circuit.H_gen_permute.size(); ++i) {
         assert(circuit.H_gen_permute[i] == example.H_gen_permute[i]);
     }
-#endif // #ifdef DEBUG
+#endif // #ifdef DEBUG_PLONK
 
     // compute the permutation polynomials S_sigma_1, S_sigma_2,
     // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
