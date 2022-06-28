@@ -302,12 +302,12 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
         preprocessed_input.Q_polys_at_secret_g1[R],
         preprocessed_input.Q_polys_at_secret_g1[O],
         preprocessed_input.Q_polys_at_secret_g1[C]};
-    std::vector<libff::Fr<ppT>> scalar_elements{proof.a_zeta * proof.b_zeta *
-                                                    step_four_out.nu,
-                                                proof.a_zeta * step_four_out.nu,
-                                                proof.b_zeta * step_four_out.nu,
-                                                proof.c_zeta * step_four_out.nu,
-                                                step_four_out.nu};
+    std::vector<libff::Fr<ppT>> scalar_elements{
+        proof.a_zeta * proof.b_zeta * step_four_out.nu,
+        proof.a_zeta * step_four_out.nu,
+        proof.b_zeta * step_four_out.nu,
+        proof.c_zeta * step_four_out.nu,
+        step_four_out.nu};
     D1_part[0] = plonk_multi_exp_G1<ppT>(curve_points, scalar_elements);
 
     // compute D1_part[1]:
@@ -488,17 +488,18 @@ bool plonk_verifier<ppT>::step_twelve(
     const plonk_proof<ppT> &proof,
     const srs<ppT> &srs)
 {
-    std::vector<libff::G1<ppT>> curve_points_lhs{proof.W_zeta_at_secret,
-                                                 proof.W_zeta_omega_at_secret};
+    std::vector<libff::G1<ppT>> curve_points_lhs{
+        proof.W_zeta_at_secret, proof.W_zeta_omega_at_secret};
     std::vector<libff::Fr<ppT>> scalar_elements_lhs{Field(1), step_four_out.u};
     libff::G1<ppT> pairing_first_lhs =
         plonk_multi_exp_G1<ppT>(curve_points_lhs, scalar_elements_lhs);
     libff::G2<ppT> pairing_second_lhs = srs.secret_powers_g2[1];
 
-    std::vector<libff::G1<ppT>> curve_points_rhs{proof.W_zeta_at_secret,
-                                                 proof.W_zeta_omega_at_secret,
-                                                 step_ten_out.F1,
-                                                 step_eleven_out.E1};
+    std::vector<libff::G1<ppT>> curve_points_rhs{
+        proof.W_zeta_at_secret,
+        proof.W_zeta_omega_at_secret,
+        step_ten_out.F1,
+        step_eleven_out.E1};
     std::vector<libff::Fr<ppT>> scalar_elements_rhs{
         // Warning! raise to the power of -1 to check e() * e()^-1 = 1
         Field(-1) * step_four_out.zeta,
