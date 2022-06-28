@@ -51,8 +51,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     // ensure that num_gates is not 0
     assert(circuit.num_gates);
     // ensure num_gates is power of 2
-    bool b_is_power2 = ((circuit.num_gates & (circuit.num_gates - 1)) == 0);
-    assert(b_is_power2);
+    assert((circuit.num_gates & (circuit.num_gates - 1)) == 0);
 #endif // #ifdef DEBUG_PLONK
 
     circuit.num_qpolys = example.num_qpolys;
