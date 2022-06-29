@@ -160,12 +160,10 @@ void plonk_interpolate_over_lagrange_basis(
 template<typename FieldT>
 void plonk_compute_selector_polynomials(
     const std::vector<std::vector<FieldT>> &gates_matrix_transpose,
-    const std::vector<polynomial<FieldT>> &L_basis,
     std::vector<polynomial<FieldT>> &Q_polys)
 {
     assert(gates_matrix_transpose.size() == Q_polys.size());
     assert(gates_matrix_transpose[0].size() == Q_polys[0].size());
-    assert(gates_matrix_transpose[0].size() == L_basis.size());
     size_t num_qpolys = gates_matrix_transpose.size();
     for (size_t i = 0; i < num_qpolys; ++i) {
         std::vector<FieldT> q_vec = gates_matrix_transpose[i];
@@ -175,11 +173,8 @@ void plonk_compute_selector_polynomials(
 
 template<typename FieldT>
 void plonk_compute_public_input_polynomial(
-    const std::vector<FieldT> &PI_points,
-    const std::vector<polynomial<FieldT>> &L_basis,
-    polynomial<FieldT> &PI_poly)
+    const std::vector<FieldT> &PI_points, polynomial<FieldT> &PI_poly)
 {
-    assert(PI_points.size() == L_basis.size());
     plonk_interpolate_polynomial_from_points<FieldT>(PI_points, PI_poly);
 };
 
