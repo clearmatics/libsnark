@@ -133,7 +133,6 @@ void plonk_interpolate_over_lagrange_basis(
 template<typename FieldT>
 void plonk_compute_selector_polynomials(
     const std::vector<std::vector<FieldT>> &gates_matrix_transpose,
-    const std::vector<polynomial<FieldT>> &L_basis,
     std::vector<polynomial<FieldT>> &Q_polys);
 
 /// output: omega[0] are the n roots of unity, omega[1] are

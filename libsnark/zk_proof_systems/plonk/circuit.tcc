@@ -69,8 +69,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     // compute public input (PI) polynomial
     std::vector<Field> PI_points(circuit.num_gates, Field(0));
     PI_points[PI_index] = Field(-PI_value);
-    plonk_compute_public_input_polynomial(
-        PI_points, circuit.L_basis, circuit.PI_poly);
+    plonk_compute_public_input_polynomial(PI_points, circuit.PI_poly);
 
     // compute the selector polynomials (q-polynomials) from the
     // transposed gates matrix over the Lagrange basis q_poly = \sum_i
@@ -79,7 +78,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
     circuit.Q_polys.resize(
         circuit.num_qpolys, polynomial<Field>(circuit.num_gates));
     plonk_compute_selector_polynomials<Field>(
-        gates_matrix_transpose, circuit.L_basis, circuit.Q_polys);
+        gates_matrix_transpose, circuit.Q_polys);
 
     // number of generators for H, Hk1, Hk2
     int num_hgen = NUM_HGEN;
