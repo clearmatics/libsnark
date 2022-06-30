@@ -9,8 +9,9 @@
 #ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_HPP_
 #define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_HPP_
 
+#include "libsnark/zk_proof_systems/plonk/tests/example.hpp"
+
 #include <libff/algebra/curves/public_params.hpp>
-#include <libsnark/zk_proof_systems/plonk/tests/example.hpp>
 #include <memory>
 
 // enable debug checks. in particular enable comparisons to test
