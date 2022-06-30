@@ -44,8 +44,6 @@ enum Q_polys_id { L, R, M, O, C };
 enum t_polys_id { lo, mid, hi };
 enum omega_id { base, base_k1, base_k2 };
 
-template<typename FieldT> using polynomial = std::vector<FieldT>;
-
 /***************************** Main algorithms *******************************/
 
 /// print the elements of a vector
