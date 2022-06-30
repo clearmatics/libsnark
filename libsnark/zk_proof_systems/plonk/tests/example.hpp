@@ -27,6 +27,11 @@
 ///   post from 22 Sep 2019,
 ///   https://vitalik.ca/general/2019/09/22/plonk.html
 
+#include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
+#include <libff/algebra/scalar_multiplication/multiexp.hpp>
+#include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
+#include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
+
 namespace libsnark
 {
 
