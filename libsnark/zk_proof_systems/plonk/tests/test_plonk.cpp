@@ -6,6 +6,10 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#include "libsnark/zk_proof_systems/plonk/circuit.hpp"
+#include "libsnark/zk_proof_systems/plonk/prover.hpp"
+#include "libsnark/zk_proof_systems/plonk/verifier.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
@@ -14,9 +18,6 @@
 #include <libff/algebra/scalar_multiplication/multiexp.hpp>
 #include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
 #include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
-#include <libsnark/zk_proof_systems/plonk/circuit.hpp>
-#include <libsnark/zk_proof_systems/plonk/prover.hpp>
-#include <libsnark/zk_proof_systems/plonk/verifier.hpp>
 
 /// Test program that exercises the Plonk protocol (first setup, then
 /// prover, then verifier) on a synthetic R1CS instance.

@@ -9,7 +9,7 @@
 #ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_HPP_
 #define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_HPP_
 
-#include <libsnark/zk_proof_systems/plonk/plonk.hpp>
+#include "libsnark/zk_proof_systems/plonk/plonk.hpp"
 
 /// Declaration of Common Preprocessed Input interfaces for ppzkSNARK
 /// proof system Plonk.
