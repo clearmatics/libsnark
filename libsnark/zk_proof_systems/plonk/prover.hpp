@@ -9,7 +9,7 @@
 #ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PROVER_HPP_
 #define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PROVER_HPP_
 
-#include <libsnark/zk_proof_systems/plonk/srs.hpp>
+#include "libsnark/zk_proof_systems/plonk/srs.hpp"
 
 /// Declaration of Prover interfaces for ppzkSNARK proof system Plonk.This
 /// includes:
