@@ -292,7 +292,7 @@ template<typename ppT> void test_plonk()
     // --- USRS ---
     // compute SRS = powers of secret times G1: 1*G1, secret^1*G1,
     // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
-    usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret);
+    usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, MAX_DEGREE);
     // --- circuit ---
     circuit_t<ppT> circuit =
         plonk_circuit_description_from_example<ppT>(example);
