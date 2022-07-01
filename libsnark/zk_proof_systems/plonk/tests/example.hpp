@@ -104,11 +104,12 @@ namespace libsnark
 /// q_O = [-1, -1, -1,  0,  0,  0,  0,  0]
 /// q_M = [ 1,  1,  0,  0,  0, -1,  0,  0]
 /// q_C = [ 0,  0,  0, -1,  0,  0,  0,  0]
-template<typename ppT> class plonk_example
+// template<typename ppT> class plonk_example
+class plonk_example
 {
 public:
-    using Field = libff::Fr<ppT>;
-    using BaseField = libff::Fq<ppT>;
+    using Field = libff::Fr<libff::bls12_381_pp>;
+    using BaseField = libff::Fq<libff::bls12_381_pp>;
 
     /// Circuit data
 

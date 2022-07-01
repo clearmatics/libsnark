@@ -59,7 +59,7 @@ template<typename ppT> struct circuit_t {
 
 template<typename ppT>
 circuit_t<ppT> plonk_curcuit_description_from_example(
-    const plonk_example<ppT> example);
+    const plonk_example example);
 
 } // namespace libsnark
 

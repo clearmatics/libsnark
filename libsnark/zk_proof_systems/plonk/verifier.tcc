@@ -87,8 +87,17 @@ template<typename ppT> void plonk_verifier<ppT>::step_three(const srs<ppT> &srs)
 ///             transcript
 template<typename ppT> step_four_out_t<ppT> plonk_verifier<ppT>::step_four()
 {
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
     // load challenges from example for debug
-    plonk_example<ppT> example;
+    plonk_example example;
     // step 4 output
     libff::Fr<ppT> beta;
     libff::Fr<ppT> gamma;
@@ -514,8 +523,17 @@ bool plonk_verifier<ppT>::step_twelve(
 
     // TODO: move to unit test for step_twelve
 #ifdef DEBUG_PLONK
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
     // load test vectors for debug
-    plonk_example<ppT> example;
+    plonk_example example;
     printf("[%s:%d] pairing_first_lhs\n", __FILE__, __LINE__);
     pairing_first_lhs.print();
     libff::G1<ppT> pairing_first_lhs_aff(pairing_first_lhs);
@@ -570,8 +588,17 @@ bool plonk_verifier<ppT>::verify_proof(
 
     // TODO: move to unit test for verify_proof
 #ifdef DEBUG_PLONK
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
     // load test vector values form example for debug
-    plonk_example<ppT> example;
+    plonk_example example;
     for (int i = 0; i < (int)srs.Q_polys.size(); ++i) {
         printf("srs.Q_polys_at_secret_G1[%d] \n", i);
         preprocessed_input.Q_polys_at_secret_g1[i].print();

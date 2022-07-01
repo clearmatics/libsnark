@@ -18,10 +18,19 @@ namespace libsnark
 /// Compute or fill-in ciruit specific data from example.
 template<typename ppT>
 circuit_t<ppT> plonk_curcuit_description_from_example(
-    const plonk_example<ppT> example)
+    const plonk_example example)
 {
-    using Field = libff::Fr<ppT>;
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
 
+    using Field = libff::Fr<ppT>;
     circuit_t<ppT> circuit;
 
     // public input (PI)

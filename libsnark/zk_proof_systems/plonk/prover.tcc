@@ -81,8 +81,17 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     using Field = libff::Fr<ppT>;
     int nwitness = 3;
 
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve. TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
     // initialize hard-coded values from example circuit
-    plonk_example<ppT> example;
+    plonk_example example;
 
     // output from round 1
     std::vector<libff::Fr<ppT>> blind_scalars;
@@ -168,7 +177,7 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
 {
     using Field = libff::Fr<ppT>;
     // initialize hard-coded values from example circuit
-    plonk_example<ppT> example;
+    plonk_example example;
 
     // output from round 2
     libff::Fr<ppT> beta;
@@ -259,8 +268,17 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     using Field = libff::Fr<ppT>;
     int num_hgen = NUM_HGEN;
 
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
     // initialize hard-coded values from example circuit
-    plonk_example<ppT> example;
+    plonk_example example;
 
     // output from round 3
     libff::Fr<ppT> alpha;
@@ -531,8 +549,17 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
     const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
     // initialize hard-coded values from example circuit
-    plonk_example<ppT> example;
+    plonk_example example;
 
     // output from round 4
     libff::Fr<ppT> zeta;
@@ -637,8 +664,17 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     using Field = libff::Fr<ppT>;
     polynomial<Field> remainder;
 
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
     // initialize hard-coded values from example circuit
-    plonk_example<ppT> example;
+    plonk_example example;
 
     // output from round 5
     libff::Fr<ppT> nu;
@@ -985,8 +1021,17 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
 
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
     // initialize hard-coded values from example circuit
-    plonk_example<ppT> example;
+    plonk_example example;
     std::vector<Field> witness = example.witness;
 
     // Prover Round 0 (initialization)
