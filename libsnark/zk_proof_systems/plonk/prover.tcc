@@ -266,7 +266,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
-    int num_hgen = NUM_HGEN;
+    int num_hgen = NUM_HSETS;
 
     // the example class is defined specifically for the BLS12-381
     // curve, so make sure we are using this curve TODO: remove when
@@ -1045,13 +1045,13 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     // Prover Round 1 output check against test vectors
     // TODO: move to unit test for round 1
 #ifdef DEBUG_PLONK
-    for (int i = 0; i < (int)NUM_HGEN; ++i) {
+    for (int i = 0; i < (int)NUM_HSETS; ++i) {
         printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
         print_vector(round_one_out.W_polys_blinded[i]);
         assert(round_one_out.W_polys_blinded[i] == example.W_polys_blinded[i]);
     }
     printf("[%s:%d] Output from Round 1\n", __FILE__, __LINE__);
-    for (int i = 0; i < (int)NUM_HGEN; ++i) {
+    for (int i = 0; i < (int)NUM_HSETS; ++i) {
         printf("W_polys_at_secret_g1[%d]\n", i);
         round_one_out.W_polys_blinded_at_secret_g1[i].print();
         libff::G1<ppT> W_polys_blinded_at_secret_g1_i(
@@ -1091,7 +1091,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(const srs<ppT> &srs)
     // TODO: move to unit test for round 3
 #ifdef DEBUG_PLONK
     printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
-    for (int i = 0; i < (int)NUM_HGEN; ++i) {
+    for (int i = 0; i < (int)NUM_HSETS; ++i) {
         printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
         round_three_out.t_poly_at_secret_g1[i].print();
         libff::G1<ppT> t_poly_at_secret_g1_i(

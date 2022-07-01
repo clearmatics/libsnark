@@ -90,7 +90,7 @@ circuit_t<ppT> plonk_curcuit_description_from_example(
         gates_matrix_transpose, circuit.Q_polys);
 
     // number of generators for H, Hk1, Hk2
-    int num_hgen = NUM_HGEN;
+    int num_hgen = NUM_HSETS;
     // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
     // omega[2] are omega[0]*k2
     //    std::vector<std::vector<Field>> omega;
