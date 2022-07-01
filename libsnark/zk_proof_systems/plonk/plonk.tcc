@@ -86,9 +86,8 @@ void plonk_interpolate_polynomial_from_points(
     size_t npoints = f_points.size();
     std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain =
         libfqfft::get_evaluation_domain<FieldT>(npoints);
-    polynomial<FieldT> u = f_points;
-    domain->iFFT(u);
-    f_poly = u;
+    f_poly = f_points;
+    domain->iFFT(f_poly);
 }
 
 /// Interpolate a polynomial from a set of points over Lagrange basis
