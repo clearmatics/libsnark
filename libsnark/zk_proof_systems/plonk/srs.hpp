@@ -26,6 +26,8 @@
 ///   J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive,
 ///   Report 2019/953, 2019, <https://eprint.iacr.org/2019/953>
 
+#include "libsnark/common/data_structures/polynomial.hpp"
+
 namespace libsnark
 {
 

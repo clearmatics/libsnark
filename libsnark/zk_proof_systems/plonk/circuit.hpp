@@ -67,10 +67,6 @@ template<typename ppT> struct circuit_t {
     libff::Fr<ppT> k2;
 };
 
-template<typename ppT>
-circuit_t<ppT> plonk_curcuit_description_from_example(
-    const plonk_example example);
-
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/circuit.tcc"
