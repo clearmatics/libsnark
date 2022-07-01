@@ -186,7 +186,7 @@ template<typename FieldT>
 void plonk_compute_roots_of_unity_omega(
     const FieldT k1, const FieldT k2, std::vector<std::vector<FieldT>> &omega)
 {
-    assert(omega.size() == NUM_HGEN);
+    assert(omega.size() == NUM_HSETS);
     assert(omega[0].size() > 0);
     size_t num_gates = omega[0].size();
     // Get the n-th root of unity omega in Fq (n=8 is the number of
@@ -215,7 +215,7 @@ template<typename FieldT>
 void plonk_roots_of_unity_omega_to_subgroup_H(
     const std::vector<std::vector<FieldT>> &omega, std::vector<FieldT> &H_gen)
 {
-    assert(omega.size() == NUM_HGEN);
+    assert(omega.size() == NUM_HSETS);
     assert(omega[0].size() > 0);
     std::copy(omega[base].begin(), omega[base].end(), back_inserter(H_gen));
     std::copy(
@@ -248,10 +248,10 @@ void plonk_compute_permutation_polynomials(
     const size_t num_gates,
     std::vector<polynomial<FieldT>> &S_polys)
 {
-    assert(S_polys.size() == NUM_HGEN);
+    assert(S_polys.size() == NUM_HSETS);
     assert(S_polys[0].size() == num_gates);
-    assert(H_gen_permute.size() == (NUM_HGEN * num_gates));
-    for (size_t i = 0; i < NUM_HGEN; ++i) {
+    assert(H_gen_permute.size() == (NUM_HSETS * num_gates));
+    for (size_t i = 0; i < NUM_HSETS; ++i) {
         typename std::vector<FieldT>::const_iterator begin =
             H_gen_permute.begin() + (i * num_gates);
         typename std::vector<FieldT>::const_iterator end =
