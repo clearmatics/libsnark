@@ -136,14 +136,29 @@ template<typename ppT> void test_plonk()
     //    assert(0);
 #endif // #ifndef DEBUG_PLONK
 
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
+
     // Execute all tests for the given curve.
     ppT::init_public_params();
 
     using Field = libff::Fr<ppT>;
 
     // --- TEST VECTORS ---
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
     // load test vector values from example circuit
-    plonk_example<ppT> example;
+    plonk_example example;
 
     // --- SETUP ---
     printf("[%s:%d] Setup...\n", __FILE__, __LINE__);
