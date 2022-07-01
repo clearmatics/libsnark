@@ -167,17 +167,20 @@ public:
     /// \attention This validation MUST be done by the caller. Empty
     /// function here for consistency with the description in [GWC19]
     static void step_one(const plonk_proof<ppT> &proof);
+
     /// Verifier Step 2: validate that elements belong to scalar field Fr
     ///
     /// \attention This validation MUST be done by the caller. Empty
     /// function here for consistency with the description in [GWC19]
     static void step_two(const plonk_proof<ppT> &proof);
+
     /// Verifier Step 3: validate that the public input belongs to scalar
     /// field Fr
     ///
     /// \attention This validation MUST be done by the caller. Empty
     /// function here for consistency with the description in [GWC19]
     static void step_three(const srs<ppT> &srs);
+
     /// Verifier Step 4: compute challenges hashed transcript as in prover
     /// description, from the common inputs, public input, and elements of
     /// pi-SNARK. TODO: fixed to the test vectors for now
@@ -192,6 +195,7 @@ public:
     /// \param[out] u: multipoint evaluation challenge - hash of
     ///             transcript
     static step_four_out_t<ppT> step_four();
+
     /// Verifier Step 5: compute zero polynomial evaluation
     ///
     /// INPUT
@@ -205,6 +209,7 @@ public:
     ///             x=zeta i.e. Zh(zeta)
     static step_five_out_t<ppT> step_five(
         const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs);
+
     /// Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
     /// Note: the paper counts the L-polynomials from 1; we count from 0
     ///
@@ -219,6 +224,7 @@ public:
     ///             L1 at x=zeta i.e. L1(zeta)
     static step_six_out_t<ppT> step_six(
         const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs);
+
     /// Verifier Step 7: compute public input polynomial evaluation
     /// PI(zeta)
     ///
@@ -233,6 +239,7 @@ public:
     ///             x=zeta i.e. PI(zeta)
     static step_seven_out_t<ppT> step_seven(
         const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs);
+
     /// Verifier Step 8: compute quotient polynomial evaluation r'(zeta) =
     /// r(zeta) - r0, where r0 is a constant term \note follows the Python
     /// reference implementation, which slightly deviates from the paper
@@ -266,6 +273,7 @@ public:
         const step_six_out_t<ppT> &step_six_out,
         const step_seven_out_t<ppT> &step_seven_out,
         const plonk_proof<ppT> &proof);
+
     /// Verifier Step 9: compute first part of batched polynomial
     /// commitment [D]_1 Note: the reference implemention differs from the
     /// paper -- it does not add the following term to D1, but to F1 (Step
@@ -307,6 +315,7 @@ public:
         const plonk_proof<ppT> &proof,
         const verifier_preprocessed_input_t<ppT> &preprocessed_input,
         const srs<ppT> &srs);
+
     /// Verifier Step 10: compute full batched polynomial commitment [F]_1
     /// = [D]_1 + v [a]_1 + v^2 [b]_1 + v^3 [c]_1 + v^4 [s_sigma_1]_1 +
     /// v^5 [s_sigma_2]_1 Note: to [F]_1 the erefernce code also adds the
@@ -337,6 +346,7 @@ public:
         const plonk_proof<ppT> &proof,
         const verifier_preprocessed_input_t<ppT> &preprocessed_input,
         const srs<ppT> &srs);
+
     /// Verifier Step 11: compute group-encoded batch evaluation [E]_1
     ///
     /// INPUT
@@ -354,6 +364,7 @@ public:
         const step_four_out_t<ppT> &step_four_out,
         const step_eight_out_t<ppT> &step_eight_out,
         const plonk_proof<ppT> &proof);
+
     /// Verifier Step 12: batch validate all evaluations
     ///
     /// Checks the following equality
@@ -387,6 +398,7 @@ public:
         const step_eleven_out_t<ppT> &step_eleven_out,
         const plonk_proof<ppT> &proof,
         const srs<ppT> &srs);
+
     /// \attention The first three steps (as given in [GWC19] -- see
     /// below) MUST be executed by the caller:
     ///
