@@ -210,7 +210,7 @@ template<typename ppT> void test_plonk()
     ASSERT_EQ(proof.S_1_zeta, example.S_1_zeta);
     ASSERT_EQ(proof.z_poly_xomega_zeta, example.z_poly_xomega_zeta);
     ASSERT_EQ(proof.r_zeta, example.r_zeta);
-    for (int i = 0; i < (int)NUM_HGEN; ++i) {
+    for (int i = 0; i < (int)NUM_HSETS; ++i) {
         printf("W_polys_at_secret_g1[%d]\n", i);
         proof.W_polys_blinded_at_secret_g1[i].print();
         libff::G1<ppT> W_polys_blinded_at_secret_g1_i(
@@ -228,7 +228,7 @@ template<typename ppT> void test_plonk()
     z_poly_at_secret_g1_aff.to_affine_coordinates();
     ASSERT_EQ(z_poly_at_secret_g1_aff.X, example.z_poly_at_secret_g1[0]);
     ASSERT_EQ(z_poly_at_secret_g1_aff.Y, example.z_poly_at_secret_g1[1]);
-    for (int i = 0; i < (int)NUM_HGEN; ++i) {
+    for (int i = 0; i < (int)NUM_HSETS; ++i) {
         printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
         proof.t_poly_at_secret_g1[i].print();
         libff::G1<ppT> t_poly_at_secret_g1_i(proof.t_poly_at_secret_g1[i]);

@@ -33,8 +33,9 @@
 /// maximum degree of the encoded monomials in the usrs
 const size_t MAX_DEGREE = 254;
 
-/// number of generators for H, Hk1, Hk2
-const size_t NUM_HGEN = 3;
+/// number of H-sets: H, Hk1 and Hk2, where H is a subgroup, while Hk1
+/// and Hk2 are cosets
+const size_t NUM_HSETS = 3;
 
 namespace libsnark
 {
