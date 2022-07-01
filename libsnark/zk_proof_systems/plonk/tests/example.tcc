@@ -14,10 +14,22 @@
 namespace libsnark
 {
 
-template<typename ppT> plonk_example<ppT>::plonk_example()
+// the example class is defined specifically for the BLS12-381
+// curve. This function checks that the template parameter ppT indeed
+// corresponds to the bls12_381 curev i.e. is equal to
+// libff::bls12_381_pp
+template<typename ppT> void plonk_exception_assert_curve_bls12_381()
 {
-    using Field = libff::Fr<ppT>;
-    using BaseField = libff::Fq<ppT>;
+    const bool b_bls12_381 = std::is_same<ppT, libff::bls12_381_pp>::value;
+    if (!b_bls12_381) {
+        throw std::domain_error("Curve is not BLS12-381");
+    }
+}
+
+plonk_example::plonk_example()
+{
+    using Field = libff::Fr<libff::bls12_381_pp>;
+    using BaseField = libff::Fq<libff::bls12_381_pp>;
 
     // Circuit data
 
