@@ -44,22 +44,29 @@ public:
 
     /// [a]_1, [b]_1, [c]_1
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
+
     /// [z]_1,
     libff::G1<ppT> z_poly_at_secret_g1;
+
     /// [t_lo]_1, [t_mi]_1, [t_hi]_1
     std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
+
     /// \bar{a}, \bar{b}, \bar{c},
     Field a_zeta;
     Field b_zeta;
     Field c_zeta;
+
     /// \bar{S_sigma1}, \bar{S_sigma2},
     Field S_0_zeta;
     Field S_1_zeta;
+
     /// \bar{z_w}
     Field z_poly_xomega_zeta;
+
     /// [W_zeta]_1, [W_{zeta omega_roots}]_1
     libff::G1<ppT> W_zeta_at_secret;
     libff::G1<ppT> W_zeta_omega_at_secret;
+
     /// r_zeta (*)
     Field r_zeta;
 
@@ -94,12 +101,16 @@ public:
 
 /// Prover round 0 output
 template<typename ppT> struct round_zero_out_t {
+
     /// - zh_poly: vanishing polynomial Zh (from round 0)
     std::vector<libff::Fr<ppT>> zh_poly;
+
     /// - null_poly: 0 polynomial (from round 0)
     polynomial<libff::Fr<ppT>> null_poly;
+
     /// - neg_one_poly: -1 polynomial (from round 0)
     polynomial<libff::Fr<ppT>> neg_one_poly;
+
     /// stuct constructor
     round_zero_out_t(
         const std::vector<libff::Fr<ppT>> &&zh_poly,
@@ -112,18 +123,23 @@ template<typename ppT> struct round_zero_out_t {
 
 /// Prover round 1 output
 template<typename ppT> struct round_one_out_t {
+
     /// - blind_scalars: blinding scalars b1, b2, ..., b9 (only
     ///   b1-b6 used in round 1)
     std::vector<libff::Fr<ppT>> blind_scalars;
+
     /// - W_polys: witness polynomials (Lagrange interpolation of the
     ///   witness values)
     std::vector<polynomial<libff::Fr<ppT>>> W_polys;
+
     /// - W_polys_blinded: blinded witness polynomials
     std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded;
+
     /// - W_polys_blinded_at_secret_g1: the blinded witness polynomials
     ///   evaluated at the secret input denoted [a]_1, [b]_1, [c]_1 in
     ///   [GWC19]
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
+
     /// stuct constructor
     round_one_out_t(
         const std::vector<libff::Fr<ppT>> &&blind_scalars,
@@ -140,15 +156,20 @@ template<typename ppT> struct round_one_out_t {
 
 /// Prover round 2 output
 template<typename ppT> struct round_two_out_t {
+
     /// - beta: permutation challenge -- hash of transcript
     libff::Fr<ppT> beta;
+
     /// - gamma: permutation challenge -- hash of transcript
     libff::Fr<ppT> gamma;
+
     /// - z_poly: blinded accumulator poly z(x)
     polynomial<libff::Fr<ppT>> z_poly;
+
     /// - z_poly_at_secret_g1: blinded accumulator poly z(x) evaluated at
     /// secret
     libff::G1<ppT> z_poly_at_secret_g1;
+
     /// stuct constructor
     round_two_out_t(
         libff::Fr<ppT> &&beta,
@@ -165,19 +186,25 @@ template<typename ppT> struct round_two_out_t {
 
 /// Prover round 3 output
 template<typename ppT> struct round_three_out_t {
+
     /// - alpha: quotient challenge -- hash of transcript
     libff::Fr<ppT> alpha;
+
     /// - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by w
     std::vector<libff::Fr<ppT>> z_poly_xomega;
+
     /// - t_poly: t(x) divided in three parts t(x) = t_lo(x) + t_mid(x) x^n
     ///   + t_hi(x) x^{2n}
     std::vector<polynomial<libff::Fr<ppT>>> t_poly;
+
     /// - t_poly_long: the quotient polynomial t(x) (see Round 3, pp28
     ///   [GWC19])
     polynomial<libff::Fr<ppT>> t_poly_long;
+
     /// - t_poly_at_secret_g1: t(x) evaluated at the secret input zeta
     ///   i.e. t(zeta)
     std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
+
     /// stuct constructor
     round_three_out_t(
         libff::Fr<ppT> &&alpha,
@@ -196,22 +223,27 @@ template<typename ppT> struct round_three_out_t {
 
 /// Prover round 4 output
 template<typename ppT> struct round_four_out_t {
+
     /// - zeta: evaluation challenge -- hash of transcript
     libff::Fr<ppT> zeta;
+
     /// - a_zeta, b_zeta, c_zeta: the blinded witness polynomials a(x),
     ///   b(x), c(x) (denoted by W_polys_blinded[] output from Round 1)
     ///   evaluated at x=zeta i.e. a(z), b(z), c(z)
     libff::Fr<ppT> a_zeta;
     libff::Fr<ppT> b_zeta;
     libff::Fr<ppT> c_zeta;
+
     /// - S_0_zeta, S_1_zeta: the permutation polynomials S_sigma_1(x),
     ///   S_sigma_2(x) from the common preprocessed input (see [GWC19],
     ///   Sect. 8.1) evaluated at x=zeta i.e. S_sigma_1(z), S_sigma_2(z)
     libff::Fr<ppT> S_0_zeta;
     libff::Fr<ppT> S_1_zeta;
+
     /// - z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x) shifted by w
     ///   (output from Round 3) evaluated at x=zeta i.e. z(zeta*w)
     libff::Fr<ppT> z_poly_xomega_zeta;
+
     /// - t_zeta: the quotient polynomial t(x) output from Round 3, see
     ///   pp28 [GWC19]) evaluated at x=zeta i.e. t(z). IMPORTANT! the
     ///   original Plonk proposal [GWC19] does not output this parameter
@@ -243,20 +275,26 @@ template<typename ppT> struct round_four_out_t {
 
 /// Prover round 5 output
 template<typename ppT> struct round_five_out_t {
+
     /// - nu: opening challenge -- hash of transcript (denoted by v in
     ///   [GWC19])
     libff::Fr<ppT> nu;
+
     /// - r_zeta: linearisation polynomial r(x) evaluated at x=zeta
     ///   ie. r(zeta)
     libff::Fr<ppT> r_zeta;
+
     /// - W_zeta_at_secret: commitment to opening proof polynomial
     ///   W_zeta(x) at secert input i.e. [W_zeta(secret)]_1
     libff::G1<ppT> W_zeta_at_secret;
+
     /// - W_zeta_omega_at_secret: commitment to opening proof polynomial
     ///   W_{zeta omega}(x) at secert input i.e. [W_{zeta omega}(secret)]_1
     libff::G1<ppT> W_zeta_omega_at_secret;
+
     /// - u: multipoint evaluation challenge -- hash of transcript
     libff::Fr<ppT> u;
+
     /// struct constructor
     round_five_out_t(
         libff::Fr<ppT> &&nu,

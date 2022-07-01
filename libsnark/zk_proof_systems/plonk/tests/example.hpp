@@ -143,6 +143,7 @@ public:
 
     /// public input (PI)
     Field public_input;
+
     /// index of the row of the PI in the non-transposed gates_matrix
     size_t public_input_index;
 
@@ -159,6 +160,7 @@ public:
     /// witness polynomials. k can be random, but we fix it for debug
     /// to match against the test vector values
     Field k1;
+
     /// Similarly, k2 can be random, but we fix it to match the test
     /// vectors
     Field k2;
@@ -166,18 +168,23 @@ public:
     /// H_gen contains the generators of H, k1 H and K2 H in one place
     /// ie. omega, omega_k1 and omega_k2
     std::vector<Field> H_gen;
+
     /// H_gen permuted according to the wire permutation
     std::vector<Field> H_gen_permute;
+
     /// random hidden element secret (toxic waste). we fix it to a
     /// constant in order to match against the test vectors
     Field secret;
     /// powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
     std::vector<std::vector<BaseField>> secret_powers_g1;
+
     /// powers of secret times G2: 1*G2, secret^1*G2
     std::vector<std::vector<BaseField>> secret_powers_g2;
+
     /// blinding scalars b1, b2, ..., b9. random but fixed to match
     /// the python test vectors
     std::vector<Field> prover_blind_scalars;
+
     /// Hashes of transcript (Fiat-Shamir heuristic)
     Field beta;
     Field gamma;
@@ -185,36 +192,51 @@ public:
     Field zeta;
     Field nu; /// v in the paper
     Field u;
+
     /// Prover Round 1
     std::vector<polynomial<Field>> W_polys;
+
     /// vanishing polynomial zh_poly(X) = x^n-1. vanishes on all n
     /// roots of unity omega_roots
     std::vector<Field> zh_poly;
+
     /// Witness polynomials blinded by b constants a_poly =
     /// blind_polys[0] * zh_poly + W_polys[0]
     std::vector<std::vector<Field>> W_polys_blinded;
+
     /// blinded witness polynomials evaluate at secret input
     std::vector<std::vector<BaseField>> W_polys_blinded_at_secret_g1;
+
     /// Prover Round 2
+
     /// accumulator polynomial
     std::vector<Field> A_poly;
+
     /// blinded accumulator poly z(x)
     std::vector<Field> z_poly;
+
     /// blinded accumulator poly z(x) evaluated at secret
     std::vector<BaseField> z_poly_at_secret_g1;
+
     /// Prover Round 3
+
     /// z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by w
     std::vector<Field> z_poly_xomega;
+
     /// t_poly: the quotient polynomial t(x) (see Round 3, pp28
     /// [GWC19])
     std::vector<polynomial<Field>> t_poly;
+
     /// t_poly_long: t(x) divided in three parts t(x) = t_lo(x) +
     /// t_mid(x) x^n + t_hi(x) x^{2n}
     polynomial<Field> t_poly_long;
+
     /// t_poly_at_secret_g1: t(x) evaluated at the secret input zeta
     /// i.e.  t(zeta)
     std::vector<std::vector<BaseField>> t_poly_at_secret_g1;
+
     /// Prover Round 4
+
     Field a_zeta;
     Field b_zeta;
     Field c_zeta;
@@ -222,41 +244,57 @@ public:
     Field S_1_zeta;
     Field t_zeta;
     Field z_poly_xomega_zeta;
+
     /// Prover Round 5
+
     /// linearisation polynomial r(x)
     polynomial<Field> r_poly;
+
     /// linearisation polynomial evaluated at x=zeta ie. r(zeta)
     Field r_zeta;
+
     /// opening proof polynomial W_zeta(x)
     polynomial<Field> W_zeta;
+
     /// opening proof polynomial W_{zeta omega}(x)
     polynomial<Field> W_zeta_omega;
+
     /// commitment to opening proof polynomial W_zeta(x) at secert
     /// input i.e. [W_zeta(secret)]_1 (represented as a point on the
     /// curve as a pair of X,Y coordinates (values in the base field))
     std::vector<BaseField> W_zeta_at_secret;
+
     /// commitment to opening proof polynomial W_{zeta omega}(x) at
     /// secert input i.e. [W_{zeta omega}(secret)]_1
     std::vector<BaseField> W_zeta_omega_at_secret;
+
     /// Verifier precomputation
     std::vector<std::vector<BaseField>> Q_polys_at_secret_g1;
     std::vector<std::vector<BaseField>> S_polys_at_secret_g1;
+
     /// Verifier Step 5: vanishing polynomial evaluation at zeta
     Field zh_zeta;
+
     /// Verifier Step 6: compute Lagrange polynomial evaluation
     /// L1(zeta)
     Field L_0_zeta;
+
     /// Verifier Step7: evaluate public input polynomial at zeta
     Field PI_zeta;
+
     /// Verifier Step 8: compute quotient polynomial evaluation
     /// r'(zeta) = r(zeta) - r0, where r0 is a constant term
     Field r_prime_zeta;
+
     /// Verifier Step 9
     std::vector<BaseField> D1;
+
     /// Verifier Step 10: compute full batched polynomial commitment
     std::vector<BaseField> F1;
+
     /// Verifier Step 11: compute group-encoded batch evaluation [E]_1
     std::vector<BaseField> E1;
+
     /// Verifier Step 12: batch validate all evaluations via pairing
     std::vector<BaseField> pairing_first_lhs;
     std::vector<BaseField> pairing_first_rhs;
