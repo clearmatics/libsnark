@@ -9,6 +9,8 @@
 #ifndef __LIBSNARK_COMMON_DATA_STRUCTURES_POLYNOMIAL_HPP__
 #define __LIBSNARK_COMMON_DATA_STRUCTURES_POLYNOMIAL_HPP__
 
+#include <vector>
+
 namespace libsnark
 {
 
