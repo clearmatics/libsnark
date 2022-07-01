@@ -21,7 +21,8 @@ namespace libsnark
 ///
 /// \note only for debug
 template<typename ppT>
-usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> &secret)
+usrs<ppT> plonk_usrs_derive_from_secret(
+    const libff::Fr<ppT> &secret, const size_t max_degree)
 {
     // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
     const libff::bigint<libff::Fr<ppT>::num_limbs> secret_bigint =
@@ -33,10 +34,10 @@ usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> &secret)
         libff::find_wnaf<libff::Fr<ppT>::num_limbs>(window_size, secret_bigint);
 
     std::vector<libff::G1<ppT>> secret_powers_g1;
-    secret_powers_g1.reserve(MAX_DEGREE);
+    secret_powers_g1.reserve(max_degree);
     libff::G1<ppT> secret_i_g1 = libff::G1<ppT>::one();
     secret_powers_g1.push_back(secret_i_g1);
-    for (size_t i = 1; i < MAX_DEGREE; ++i) {
+    for (size_t i = 1; i < max_degree; ++i) {
         // secret^i * G1
         secret_i_g1 = libff::fixed_window_wnaf_exp<libff::G1<ppT>>(
             window_size, secret_i_g1, naf);

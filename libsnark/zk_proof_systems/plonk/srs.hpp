@@ -68,7 +68,8 @@ public:
 };
 
 template<typename ppT>
-usrs<ppT> plonk_usrs_derive_from_secret(const libff::Fr<ppT> &secret);
+usrs<ppT> plonk_usrs_derive_from_secret(
+    const libff::Fr<ppT> &secret, const size_t max_degree);
 
 /// Plain (i.e. non-universal srs). Contains secret encoded monomials
 /// with maximum degree equal to the number of gates of the analyzed
