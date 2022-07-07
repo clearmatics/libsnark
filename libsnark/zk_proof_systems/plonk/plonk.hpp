@@ -30,9 +30,6 @@
 ///   J. Williamson, and Oana Ciobotaru, Cryptology ePrint Archive,
 ///   Report 2019/953, 2019, <https://eprint.iacr.org/2019/953>
 
-/// maximum degree of the encoded monomials in the usrs
-const size_t MAX_DEGREE = 254;
-
 /// number of H-sets: H, Hk1 and Hk2, where H is a subgroup, while Hk1
 /// and Hk2 are cosets
 const size_t NUM_HSETS = 3;

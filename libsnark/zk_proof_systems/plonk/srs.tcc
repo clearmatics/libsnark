@@ -69,7 +69,6 @@ template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
     const usrs<ppT> &usrs, const circuit_t<ppT> &circuit)
 {
-    assert(circuit.num_gates <= MAX_DEGREE);
     // secret^i * G1
     std::vector<libff::G1<ppT>> secret_powers_g1;
     secret_powers_g1.reserve(circuit.num_gates + 3);
