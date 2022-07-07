@@ -11,8 +11,8 @@
 
 #include "libsnark/zk_proof_systems/plonk/plonk.hpp"
 
-/// Declaration of Common Preprocessed Input interfaces for ppzkSNARK
-/// proof system Plonk.
+/// Declaration of Common Preprocessed Input data structures for a
+/// specific arithmetic circuit.
 ///
 /// This includes:
 /// - class for common preprocessed input
