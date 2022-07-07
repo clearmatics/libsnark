@@ -196,13 +196,14 @@ void plonk_compute_roots_of_unity_omega(
     // power of 2 divides (q-1). In particular 2**32|(q-1) and so the
     // 2**32-th root of unity exists.
     FieldT omega_base = libff::get_root_of_unity<FieldT>(num_gates);
+    FieldT omega_i = 1;
     for (size_t i = 0; i < num_gates; ++i) {
-        FieldT omega_i = libff::power(omega_base, libff::bigint<1>(i));
         omega[base][i] = omega_i;
         FieldT omega_k1_i = omega[base][i] * k1;
         FieldT omega_k2_i = omega[base][i] * k2;
         omega[base_k1][i] = omega_k1_i;
         omega[base_k2][i] = omega_k2_i;
+        omega_i *= omega_base;
     }
 }
 
