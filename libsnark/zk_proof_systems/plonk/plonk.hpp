@@ -228,9 +228,6 @@ void plonk_compute_accumulator(
     const std::vector<FieldT> &H_gen_permute,
     std::vector<FieldT> &A);
 
-/// check that the input is an element of the field
-template<typename FieldT> bool check_field_element(const FieldT x);
-
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/plonk.tcc"
