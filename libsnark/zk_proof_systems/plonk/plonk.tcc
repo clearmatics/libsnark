@@ -400,13 +400,6 @@ void plonk_compute_accumulator(
     }
 }
 
-/// check that the input is an element of the field
-template<typename FieldT> bool check_field_element(const FieldT x)
-{
-    bool b_valid = (typeid(x) == typeid(FieldT));
-    return b_valid;
-}
-
 } // namespace libsnark
 
 #endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_TCC_
