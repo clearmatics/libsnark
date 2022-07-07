@@ -290,9 +290,11 @@ template<typename ppT> void test_plonk()
 
     printf("[%s:%d] SRS...\n", __FILE__, __LINE__);
     // --- USRS ---
+    // maximum degree of the encoded monomials in the usrs
+    size_t max_degree = 254;
     // compute SRS = powers of secret times G1: 1*G1, secret^1*G1,
     // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
-    usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, MAX_DEGREE);
+    usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     // --- circuit ---
     circuit_t<ppT> circuit =
         plonk_circuit_description_from_example<ppT>(example);

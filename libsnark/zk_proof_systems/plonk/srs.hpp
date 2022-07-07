@@ -45,9 +45,8 @@ namespace libsnark
 /// srs = (proving_key, verificataion_key) = derive(usrs, circuit_description)
 ///
 
-/// Universal srs (usrs). Contains secret encoded monomials with
-/// maximum degree MAX_DEGREE and is so independent of any particular
-/// circuit.
+/// Universal srs (usrs). Contains secret encoded monomials with some
+/// maximum degree and is so independent of any particular circuit.
 template<typename ppT> class usrs
 {
 public:
