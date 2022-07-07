@@ -145,7 +145,6 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     }
 
     using Field = libff::Fr<ppT>;
-    circuit_t<ppT> circuit;
 
     // public input (PI)
     Field PI_value = example.public_input;
@@ -159,91 +158,103 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     // Generate domains on which to evaluate the witness
     // polynomials. k1,k2 can be random, but we fix them for debug to
     // match against the test vector values
-    circuit.k1 = example.k1;
-    circuit.k2 = example.k2;
+    libff::Fr<ppT> k1 = example.k1;
+    libff::Fr<ppT> k2 = example.k2;
 #ifdef DEBUG_PLONK
     printf("[%s:%d] k1 ", __FILE__, __LINE__);
-    circuit.k1.print();
+    k1.print();
     printf("[%s:%d] k2 ", __FILE__, __LINE__);
-    circuit.k2.print();
+    k2.print();
 #endif // #ifdef DEBUG_PLONK
 
-    circuit.num_gates = example.num_gates;
+    size_t num_gates = example.num_gates;
     // TODO: throw exception
 #ifdef DEBUG_PLONK
     // ensure that num_gates is not 0
-    assert(circuit.num_gates);
+    assert(num_gates);
     // ensure num_gates is power of 2
-    assert((circuit.num_gates & (circuit.num_gates - 1)) == 0);
+    assert((num_gates & (num_gates - 1)) == 0);
 #endif // #ifdef DEBUG_PLONK
 
-    circuit.num_qpolys = example.num_qpolys;
+    size_t num_qpolys = example.num_qpolys;
 
     // We represent the constraints q_L, q_R, q_O, q_M, q_C and the
     // witness w_L, w_R, w_O as polynomials in the roots of unity
     // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
     // compute Lagrange basis
-    circuit.L_basis.resize(
-        circuit.num_gates, polynomial<Field>(circuit.num_gates));
+    std::vector<polynomial<Field>> L_basis;
+    L_basis.resize(num_gates, polynomial<Field>(num_gates));
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
-        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
-    plonk_compute_lagrange_basis<Field>(circuit.num_gates, circuit.L_basis);
+        libfqfft::get_evaluation_domain<Field>(num_gates);
+    plonk_compute_lagrange_basis<Field>(num_gates, L_basis);
 
     // compute public input (PI) polynomial
-    std::vector<Field> PI_points(circuit.num_gates, Field(0));
+    polynomial<Field> PI_poly;
+    std::vector<Field> PI_points(num_gates, Field(0));
     PI_points[PI_index] = Field(-PI_value);
-    plonk_compute_public_input_polynomial(PI_points, circuit.PI_poly);
+    plonk_compute_public_input_polynomial(PI_points, PI_poly);
 
     // compute the selector polynomials (q-polynomials) from the
     // transposed gates matrix over the Lagrange basis q_poly = \sum_i
     // q[i] * L[i] where q[i] is a coefficient (a scalar Field
     // element) and L[i] is a polynomial with Field coefficients
-    circuit.Q_polys.resize(
-        circuit.num_qpolys, polynomial<Field>(circuit.num_gates));
-    plonk_compute_selector_polynomials<Field>(
-        gates_matrix_transpose, circuit.Q_polys);
+    std::vector<polynomial<Field>> Q_polys;
+    Q_polys.resize(num_qpolys, polynomial<Field>(num_gates));
+    plonk_compute_selector_polynomials<Field>(gates_matrix_transpose, Q_polys);
 
     // number of generators for H, Hk1, Hk2
     int num_hgen = NUM_HSETS;
     // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
     // omega[2] are omega[0]*k2
-    //    std::vector<std::vector<Field>> omega;
-    circuit.omega_roots.resize(num_hgen, std::vector<Field>(circuit.num_gates));
-    plonk_compute_roots_of_unity_omega(
-        circuit.k1, circuit.k2, circuit.omega_roots);
+    std::vector<std::vector<Field>> omega_roots;
+    omega_roots.resize(num_hgen, std::vector<Field>(num_gates));
+    plonk_compute_roots_of_unity_omega(k1, k2, omega_roots);
     // H_gen contains the generators of H, k1 H and k2 H in one place
     // ie. circuit.omega_roots, circuit.omega_roots_k1 and
     // circuit.omega_roots_k2
-    plonk_roots_of_unity_omega_to_subgroup_H(
-        circuit.omega_roots, circuit.H_gen);
+    std::vector<Field> H_gen;
+    plonk_roots_of_unity_omega_to_subgroup_H(omega_roots, H_gen);
     // TODO: write unit test for plonk_roots_of_unity_omega_to_subgroup_H
 #ifdef DEBUG_PLONK
-    printf("[%s:%d] circuit.H_gen\n", __FILE__, __LINE__);
-    print_vector(circuit.H_gen);
-    for (int i = 0; i < (int)circuit.H_gen.size(); ++i) {
-        assert(circuit.H_gen[i] == example.H_gen[i]);
+    printf("[%s:%d] H_gen\n", __FILE__, __LINE__);
+    print_vector(H_gen);
+    for (int i = 0; i < (int)H_gen.size(); ++i) {
+        assert(H_gen[i] == example.H_gen[i]);
     }
 #endif // #ifdef DEBUG_PLONK
 
     // permute circuit.H_gen according to the wire permutation
-    circuit.H_gen_permute.resize(num_hgen * circuit.num_gates, Field(0));
-    plonk_permute_subgroup_H<Field>(
-        circuit.H_gen, wire_permutation, circuit.H_gen_permute);
+    std::vector<Field> H_gen_permute;
+    H_gen_permute.resize(num_hgen * num_gates, Field(0));
+    plonk_permute_subgroup_H<Field>(H_gen, wire_permutation, H_gen_permute);
     // TODO: write unit test for plonk_permute_subgroup_H
 #ifdef DEBUG_PLONK
-    printf("[%s:%d] circuit.H_gen_permute\n", __FILE__, __LINE__);
-    print_vector(circuit.H_gen_permute);
-    for (size_t i = 0; i < circuit.H_gen_permute.size(); ++i) {
-        assert(circuit.H_gen_permute[i] == example.H_gen_permute[i]);
+    printf("[%s:%d] H_gen_permute\n", __FILE__, __LINE__);
+    print_vector(H_gen_permute);
+    for (size_t i = 0; i < H_gen_permute.size(); ++i) {
+        assert(H_gen_permute[i] == example.H_gen_permute[i]);
     }
 #endif // #ifdef DEBUG_PLONK
 
     // compute the permutation polynomials S_sigma_1, S_sigma_2,
     // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
-    circuit.S_polys.resize(num_hgen, polynomial<Field>(circuit.num_gates));
+    std::vector<polynomial<Field>> S_polys;
+    S_polys.resize(num_hgen, polynomial<Field>(num_gates));
     plonk_compute_permutation_polynomials<Field>(
-        circuit.H_gen_permute, circuit.num_gates, circuit.S_polys);
+        H_gen_permute, num_gates, S_polys);
 
+    circuit_t<ppT> circuit(
+        std::move(num_gates),
+        std::move(num_qpolys),
+        std::move(L_basis),
+        std::move(PI_poly),
+        std::move(Q_polys),
+        std::move(S_polys),
+        std::move(omega_roots),
+        std::move(H_gen),
+        std::move(H_gen_permute),
+        std::move(k1),
+        std::move(k2));
     return circuit;
 }
 
