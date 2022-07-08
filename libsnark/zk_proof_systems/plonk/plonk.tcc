@@ -285,7 +285,7 @@ libff::G1<ppT> plonk_multi_exp_G1(
     return product;
 }
 
-/// Evaluate a polynomial F at the encrypted secret input
+/// Evaluate a polynomial F at the encoded secret input
 /// \secret^i*G_1 ie. compute f(\secret)*G1 = [f(\secret)]_i
 ///
 /// INPUT
