@@ -972,6 +972,8 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
 /// INPUT
 /// \param[in] srs: structured reference string containing also
 ///            circuit-specific information
+/// \param[in] witness: all internal values and public input
+///            corresponding to the given circuit
 /// \param[in] transcript_hash: hashes of the communication transcript
 ///            after prover rounds 1,2,3,4,5. TODO: \attention
 ///            currently the structure is used as an input initialized
@@ -986,10 +988,10 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
 /// \param[out] proof: SNARK proof Pi (see above)
 template<typename ppT>
 plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
-    const srs<ppT> &srs, transcript_hash_t<ppT> &transcript_hash)
+    const srs<ppT> &srs,
+    const std::vector<Field> &witness,
+    transcript_hash_t<ppT> &transcript_hash)
 {
-    using Field = libff::Fr<ppT>;
-
     // the example class is defined specifically for the BLS12-381
     // curve, so make sure we are using this curve TODO: remove when
     // the implementation is stable and tested
@@ -1001,7 +1003,6 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     }
     // initialize hard-coded values from example circuit
     plonk_example example;
-    std::vector<Field> witness = example.witness;
 
     // Prover Round 0 (initialization)
     printf("[%s:%d] Prover Round 0...\n", __FILE__, __LINE__);
