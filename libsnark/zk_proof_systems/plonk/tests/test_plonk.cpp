@@ -330,11 +330,17 @@ template<typename ppT> void test_plonk()
 
     // --- PROVER ---
     printf("[%s:%d] Prover...\n", __FILE__, __LINE__);
-
+    transcript_hash_t<ppT> transcript_hash(
+        example.beta,
+        example.gamma,
+        example.alpha,
+        example.zeta,
+        example.nu,
+        example.u);
     // initialize prover
     plonk_prover<ppT> prover;
     // compute proof
-    plonk_proof<ppT> proof = prover.compute_proof(srs);
+    plonk_proof<ppT> proof = prover.compute_proof(srs, transcript_hash);
     // compare proof against test vector values (debug)
     ASSERT_EQ(proof.a_zeta, example.a_zeta);
     ASSERT_EQ(proof.b_zeta, example.b_zeta);
