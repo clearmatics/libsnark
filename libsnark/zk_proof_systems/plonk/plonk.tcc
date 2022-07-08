@@ -417,7 +417,7 @@ FieldT plonk_compute_accumulator_factor(
     return res;
 }
 
-// - A: accumulatro vector
+// - A: accumulator vector
 template<typename FieldT>
 void plonk_compute_accumulator(
     const size_t n, // num_gates
