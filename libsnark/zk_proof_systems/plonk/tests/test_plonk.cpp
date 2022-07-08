@@ -260,6 +260,310 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     return circuit;
 }
 
+template<typename ppT>
+void test_plonk_compute_accumulator(
+    const plonk_example &example,
+    const libff::Fr<ppT> &beta,
+    const libff::Fr<ppT> &gamma,
+    const std::vector<libff::Fr<ppT>> &witness,
+    const srs<ppT> &srs)
+{
+    using Field = libff::Fr<ppT>;
+    // A[0] = 1; ... A[i] = computed from (i-1)
+    std::vector<Field> A_vector(srs.num_gates, Field(0));
+    plonk_compute_accumulator(
+        srs.num_gates,
+        beta,
+        gamma,
+        witness,
+        srs.H_gen,
+        srs.H_gen_permute,
+        A_vector);
+    polynomial<Field> A_poly(srs.num_gates);
+    plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly);
+
+    // initialize hard-coded values from example circuit
+    printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
+    print_vector(A_poly);
+    ASSERT_EQ(A_poly, example.A_poly);
+}
+
+template<typename ppT>
+void test_plonk_prover_round_one(
+    const plonk_example &example,
+    const round_zero_out_t<ppT> &round_zero_out,
+    const std::vector<libff::Fr<ppT>> &witness,
+    const srs<ppT> &srs)
+{
+    std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
+    round_one_out_t<ppT> round_one_out = plonk_prover<ppT>::round_one(
+        round_zero_out, blind_scalars, witness, srs);
+    for (int i = 0; i < (int)NUM_HSETS; ++i) {
+        printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, (int)i);
+        print_vector(round_one_out.W_polys[i]);
+        ASSERT_EQ(round_one_out.W_polys[i], example.W_polys[i]);
+    }
+    for (int i = 0; i < (int)NUM_HSETS; ++i) {
+        printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
+        print_vector(round_one_out.W_polys_blinded[i]);
+        ASSERT_EQ(round_one_out.W_polys_blinded[i], example.W_polys_blinded[i]);
+    }
+    printf("[%s:%d] Output from Round 1\n", __FILE__, __LINE__);
+    for (int i = 0; i < (int)NUM_HSETS; ++i) {
+        printf("W_polys_at_secret_g1[%d]\n", i);
+        round_one_out.W_polys_blinded_at_secret_g1[i].print();
+        libff::G1<ppT> W_polys_blinded_at_secret_g1_i(
+            round_one_out.W_polys_blinded_at_secret_g1[i]);
+        W_polys_blinded_at_secret_g1_i.to_affine_coordinates();
+        ASSERT_EQ(
+            W_polys_blinded_at_secret_g1_i.X,
+            example.W_polys_blinded_at_secret_g1[i][0]);
+        ASSERT_EQ(
+            W_polys_blinded_at_secret_g1_i.Y,
+            example.W_polys_blinded_at_secret_g1[i][1]);
+    }
+}
+
+template<typename ppT>
+void test_plonk_prover_round_two(
+    const plonk_example &example,
+    const libff::Fr<ppT> &beta,
+    const libff::Fr<ppT> &gamma,
+    const round_zero_out_t<ppT> &round_zero_out,
+    const std::vector<libff::Fr<ppT>> &blind_scalars,
+    const std::vector<libff::Fr<ppT>> &witness,
+    const srs<ppT> &srs)
+{
+    round_two_out_t<ppT> round_two_out = plonk_prover<ppT>::round_two(
+        beta, gamma, round_zero_out, blind_scalars, witness, srs);
+    printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
+    print_vector(round_two_out.z_poly);
+    ASSERT_EQ(round_two_out.z_poly, example.z_poly);
+    printf("[%s:%d] Output from Round 2\n", __FILE__, __LINE__);
+    printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
+    round_two_out.z_poly_at_secret_g1.print();
+    libff::G1<ppT> z_poly_at_secret_g1_aff(round_two_out.z_poly_at_secret_g1);
+    z_poly_at_secret_g1_aff.to_affine_coordinates();
+    ASSERT_EQ(z_poly_at_secret_g1_aff.X, example.z_poly_at_secret_g1[0]);
+    ASSERT_EQ(z_poly_at_secret_g1_aff.Y, example.z_poly_at_secret_g1[1]);
+}
+
+template<typename ppT>
+void test_plonk_prover_round_three(
+    const plonk_example &example,
+    const libff::Fr<ppT> &alpha,
+    const libff::Fr<ppT> &beta,
+    const libff::Fr<ppT> &gamma,
+    const round_zero_out_t<ppT> &round_zero_out,
+    const round_one_out_t<ppT> &round_one_out,
+    const round_two_out_t<ppT> &round_two_out,
+    const srs<ppT> &srs)
+{
+    round_three_out_t<ppT> round_three_out = plonk_prover<ppT>::round_three(
+        alpha, beta, gamma, round_zero_out, round_one_out, round_two_out, srs);
+    printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
+    printf("[%s:%d] t_poly_long\n", __FILE__, __LINE__);
+    print_vector(round_three_out.t_poly_long);
+    ASSERT_EQ(round_three_out.t_poly_long, example.t_poly_long);
+    for (int i = 0; i < (int)NUM_HSETS; ++i) {
+        printf("[%s:%d] t_poly[%d]\n", __FILE__, __LINE__, i);
+        print_vector(round_three_out.t_poly[i]);
+        ASSERT_EQ(round_three_out.t_poly[i], example.t_poly[i]);
+    }
+    for (int i = 0; i < (int)NUM_HSETS; ++i) {
+        printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
+        round_three_out.t_poly_at_secret_g1[i].print();
+        libff::G1<ppT> t_poly_at_secret_g1_i(
+            round_three_out.t_poly_at_secret_g1[i]);
+        t_poly_at_secret_g1_i.to_affine_coordinates();
+        ASSERT_EQ(t_poly_at_secret_g1_i.X, example.t_poly_at_secret_g1[i][0]);
+        ASSERT_EQ(t_poly_at_secret_g1_i.Y, example.t_poly_at_secret_g1[i][1]);
+    }
+}
+
+template<typename ppT>
+void test_plonk_prover_round_four(
+    const plonk_example &example,
+    const libff::Fr<ppT> &zeta,
+    const round_one_out_t<ppT> &round_one_out,
+    const round_three_out_t<ppT> &round_three_out,
+    const srs<ppT> &srs)
+{
+    round_four_out_t<ppT> round_four_out = plonk_prover<ppT>::round_four(
+        zeta, round_one_out, round_three_out, srs);
+    // Prover Round 4 output check against test vectors
+    printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
+    printf("a_zeta ");
+    round_four_out.a_zeta.print();
+    ASSERT_EQ(round_four_out.a_zeta, example.a_zeta);
+    printf("b_zeta ");
+    round_four_out.b_zeta.print();
+    ASSERT_EQ(round_four_out.b_zeta, example.b_zeta);
+    printf("c_zeta ");
+    round_four_out.c_zeta.print();
+    ASSERT_EQ(round_four_out.c_zeta, example.c_zeta);
+    printf("S_0_zeta ");
+    round_four_out.S_0_zeta.print();
+    ASSERT_EQ(round_four_out.S_0_zeta, example.S_0_zeta);
+    printf("S_1_zeta ");
+    round_four_out.S_1_zeta.print();
+    ASSERT_EQ(round_four_out.S_1_zeta, example.S_1_zeta);
+    printf("t_zeta ");
+    round_four_out.t_zeta.print();
+    ASSERT_EQ(round_four_out.t_zeta, example.t_zeta);
+    printf("z_poly_xomega_zeta ");
+    round_four_out.z_poly_xomega_zeta.print();
+    ASSERT_EQ(round_four_out.z_poly_xomega_zeta, example.z_poly_xomega_zeta);
+}
+
+template<typename ppT>
+void test_plonk_prover_round_five(
+    const plonk_example &example,
+    const libff::Fr<ppT> &alpha,
+    const libff::Fr<ppT> &beta,
+    const libff::Fr<ppT> &gamma,
+    const libff::Fr<ppT> &zeta,
+    const libff::Fr<ppT> &nu,
+    const round_zero_out_t<ppT> &round_zero_out,
+    const round_one_out_t<ppT> &round_one_out,
+    const round_two_out_t<ppT> &round_two_out,
+    const round_three_out_t<ppT> &round_three_out,
+    const round_four_out_t<ppT> &round_four_out,
+    const srs<ppT> &srs)
+{
+    round_five_out_t<ppT> round_five_out = plonk_prover<ppT>::round_five(
+        alpha,
+        beta,
+        gamma,
+        zeta,
+        nu,
+        round_zero_out,
+        round_one_out,
+        round_two_out,
+        round_three_out,
+        round_four_out,
+        srs);
+
+    printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
+    printf("r_zeta ");
+    round_five_out.r_zeta.print();
+    ASSERT_EQ(round_five_out.r_zeta, example.r_zeta);
+    printf("[%s:%d] W_zeta_at_secret \n", __FILE__, __LINE__);
+    round_five_out.W_zeta_at_secret.print();
+    libff::G1<ppT> W_zeta_at_secret_aff(round_five_out.W_zeta_at_secret);
+    W_zeta_at_secret_aff.to_affine_coordinates();
+    ASSERT_EQ(W_zeta_at_secret_aff.X, example.W_zeta_at_secret[0]);
+    ASSERT_EQ(W_zeta_at_secret_aff.Y, example.W_zeta_at_secret[1]);
+    printf("[%s:%d] W_zeta_omega_at_secret \n", __FILE__, __LINE__);
+    round_five_out.W_zeta_omega_at_secret.print();
+    libff::G1<ppT> W_zeta_omega_at_secret_aff(
+        round_five_out.W_zeta_omega_at_secret);
+    W_zeta_omega_at_secret_aff.to_affine_coordinates();
+    ASSERT_EQ(W_zeta_omega_at_secret_aff.X, example.W_zeta_omega_at_secret[0]);
+    ASSERT_EQ(W_zeta_omega_at_secret_aff.Y, example.W_zeta_omega_at_secret[1]);
+}
+
+template<typename ppT> void test_plonk_prover_rounds()
+{
+    using Field = libff::Fr<ppT>;
+
+    // example test values are defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    ppT::init_public_params();
+
+    // load test vector values from example circuit
+    plonk_example example;
+    // random hidden element secret (toxic waste)
+    Field secret = example.secret;
+    // example witness
+    std::vector<Field> witness = example.witness;
+    // get hard-coded values for the transcipt hash
+    transcript_hash_t<ppT> transcript_hash(
+        example.beta,
+        example.gamma,
+        example.alpha,
+        example.zeta,
+        example.nu,
+        example.u);
+    // hard-coded values for the "random" blinding constants from
+    // example circuit
+    std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
+    // prepare srs
+    size_t max_degree = 254;
+    usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
+    circuit_t<ppT> circuit =
+        plonk_circuit_description_from_example<ppT>(example);
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
+
+    // Prover Round 0 (initialization)
+    round_zero_out_t<ppT> round_zero_out = plonk_prover<ppT>::round_zero(srs);
+
+    // Unit test Prover Round 1
+    printf("[%s:%d] Unit test Prover Round 1...\n", __FILE__, __LINE__);
+    test_plonk_prover_round_one<ppT>(example, round_zero_out, witness, srs);
+
+    // Unit test Prover Round 2
+    printf("[%s:%d] Unit test Prover Round 2...\n", __FILE__, __LINE__);
+    const libff::Fr<ppT> beta = transcript_hash.beta;
+    const libff::Fr<ppT> gamma = transcript_hash.gamma;
+    test_plonk_prover_round_two<ppT>(
+        example, beta, gamma, round_zero_out, blind_scalars, witness, srs);
+
+    // Unit test plonk_compute_accumulator
+    test_plonk_compute_accumulator<ppT>(example, beta, gamma, witness, srs);
+
+    // Unit test Prover Round 3
+    printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
+    round_one_out_t<ppT> round_one_out = plonk_prover<ppT>::round_one(
+        round_zero_out, blind_scalars, witness, srs);
+    round_two_out_t<ppT> round_two_out = plonk_prover<ppT>::round_two(
+        beta, gamma, round_zero_out, blind_scalars, witness, srs);
+    libff::Fr<ppT> alpha = transcript_hash.alpha;
+    test_plonk_prover_round_three<ppT>(
+        example,
+        alpha,
+        beta,
+        gamma,
+        round_zero_out,
+        round_one_out,
+        round_two_out,
+        srs);
+
+    // Unit test Prover Round 4
+    printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
+    round_three_out_t<ppT> round_three_out = plonk_prover<ppT>::round_three(
+        alpha, beta, gamma, round_zero_out, round_one_out, round_two_out, srs);
+    libff::Fr<ppT> zeta = transcript_hash.zeta;
+    test_plonk_prover_round_four<ppT>(
+        example, zeta, round_one_out, round_three_out, srs);
+
+    // Unit test Prover Round 5
+    printf("[%s:%d] Unit test Prover Round 5...\n", __FILE__, __LINE__);
+    round_four_out_t<ppT> round_four_out = plonk_prover<ppT>::round_four(
+        zeta, round_one_out, round_three_out, srs);
+    libff::Fr<ppT> nu = transcript_hash.nu;
+    test_plonk_prover_round_five<ppT>(
+        example,
+        alpha,
+        beta,
+        gamma,
+        zeta,
+        nu,
+        round_zero_out,
+        round_one_out,
+        round_two_out,
+        round_three_out,
+        round_four_out,
+        srs);
+}
+
 template<typename ppT> void test_plonk()
 {
 #ifndef DEBUG_PLONK
@@ -341,8 +645,11 @@ template<typename ppT> void test_plonk()
     plonk_prover<ppT> prover;
     // compute proof
     std::vector<Field> witness = example.witness;
+    // hard-coded values for the "random" blinding constants from
+    // example circuit
+    std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
     plonk_proof<ppT> proof =
-        prover.compute_proof(srs, witness, transcript_hash);
+        prover.compute_proof(srs, witness, blind_scalars, transcript_hash);
     // compare proof against test vector values (debug)
     ASSERT_EQ(proof.a_zeta, example.a_zeta);
     ASSERT_EQ(proof.b_zeta, example.b_zeta);
@@ -412,6 +719,10 @@ template<typename ppT> void test_plonk()
     // end
 }
 
-TEST(TestPlonk, BLS12_381) { test_plonk<libff::bls12_381_pp>(); }
+TEST(TestPlonk, BLS12_381)
+{
+    test_plonk<libff::bls12_381_pp>();
+    test_plonk_prover_rounds<libff::bls12_381_pp>();
+}
 
 } // namespace libsnark

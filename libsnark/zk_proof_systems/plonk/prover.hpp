@@ -124,10 +124,6 @@ template<typename ppT> struct round_zero_out_t {
 /// Prover round 1 output
 template<typename ppT> struct round_one_out_t {
 
-    /// - blind_scalars: blinding scalars b1, b2, ..., b9 (only
-    ///   b1-b6 used in round 1)
-    std::vector<libff::Fr<ppT>> blind_scalars;
-
     /// - W_polys: witness polynomials (Lagrange interpolation of the
     ///   witness values)
     std::vector<polynomial<libff::Fr<ppT>>> W_polys;
@@ -142,12 +138,10 @@ template<typename ppT> struct round_one_out_t {
 
     /// stuct constructor
     round_one_out_t(
-        const std::vector<libff::Fr<ppT>> &&blind_scalars,
         const std::vector<polynomial<libff::Fr<ppT>>> &&W_polys,
         const std::vector<std::vector<libff::Fr<ppT>>> &&W_polys_blinded,
         const std::vector<libff::G1<ppT>> &&W_polys_blinded_at_secret_g1)
-        : blind_scalars(blind_scalars)
-        , W_polys(W_polys)
+        : W_polys(W_polys)
         , W_polys_blinded(W_polys_blinded)
         , W_polys_blinded_at_secret_g1(W_polys_blinded_at_secret_g1)
     {
@@ -307,13 +301,13 @@ public:
     /// \param[in] zh_poly: vanishing polynomial Zh (from round 0)
     /// \param[in] null_poly: 0 polynomial (from round 0)
     /// \param[in] neg_one_poly: -1 polynomial (from round 0)
+    /// \param[in] blind_scalars: blinding scalars b1, b2, ..., b9 (only
+    ///            b1-b6 used in round 1)
     /// \param[in] witness: witness values
     /// \param[in] srs: structured reference string containing also
     ///            circuit-specific information
     ///
     /// OUTPUT
-    /// \param[out] blind_scalars: blinding scalars b1, b2, ..., b9 (only
-    ///             b1-b6 used in round 1)
     /// \param[out] W_polys: witness polynomials (Lagrange interpolation
     ///             of the witness values)
     /// \param[out] W_polys_blinded: blinded witness polynomials
@@ -322,15 +316,16 @@ public:
     ///             [a]_1, [b]_1, [c]_1 in [GWC19]
     static round_one_out_t<ppT> round_one(
         const round_zero_out_t<ppT> &round_zero_out,
+        const std::vector<libff::Fr<ppT>> blind_scalars,
         const std::vector<libff::Fr<ppT>> &witness,
         const srs<ppT> &srs);
 
     /// Prover Round 2
     ///
     /// INPUT
-    /// \param[in] blind_scalars: blinding scalars b1, b2, ..., b9 (only
-    ///            b7,b8,b9 used in round 2) (from round 1)
     /// \param[in] zh_poly: vanishing polynomial Zh (from round 0)
+    /// \param[in] blind_scalars: blinding scalars b1, b2, ..., b9 (only
+    ///            b7,b8,b9 used in round 2)
     /// \param[in] witness: witness values
     /// \param[in] srs: structured reference string containing also
     ///            circuit-specific information
@@ -343,7 +338,7 @@ public:
         const libff::Fr<ppT> beta,
         const libff::Fr<ppT> gamma,
         const round_zero_out_t<ppT> &round_zero_out,
-        const round_one_out_t<ppT> &round_one_out,
+        const std::vector<libff::Fr<ppT>> blind_scalars,
         const std::vector<libff::Fr<ppT>> &witness,
         const srs<ppT> &srs);
 
@@ -506,6 +501,11 @@ public:
     /// INPUT
     /// \param[in] srs: structured reference string containing also
     ///            circuit-specific information
+    /// \param[in] witness: all internal values and public input
+    ///            corresponding to the given circuit
+    /// \param[in] blind_scalars: random blinding scalars b1, b2, ..., b9
+    ///            used in prover rounds 1 and 2 (see Sect. 8.3, roumds
+    ///            1,2 [GWC19])
     /// \param[in] transcript_hash: hashes of the communication transcript
     ///            after prover rounds 1,2,3,4,5. TODO: \attention
     ///            currently the structure is used as an input initialized
@@ -521,6 +521,7 @@ public:
     static plonk_proof<ppT> compute_proof(
         const srs<ppT> &srs,
         const std::vector<Field> &witness,
+        const std::vector<libff::Fr<ppT>> blind_scalars,
         transcript_hash_t<ppT> &transcript_hash);
 };
 

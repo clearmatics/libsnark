@@ -58,13 +58,13 @@ round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> srs)
 /// \param[in] zh_poly: vanishing polynomial Zh (from round 0)
 /// \param[in] null_poly: 0 polynomial (from round 0)
 /// \param[in] neg_one_poly: -1 polynomial (from round 0)
+/// \param[in] blind_scalars: blinding scalars b1, b2, ..., b9 (only
+///            b1-b6 used in round 1)
 /// \param[in] witness: witness values
 /// \param[in] srs: structured reference string containing also
 ///            circuit-specific information
 ///
 /// OUTPUT
-/// \param[out] blind_scalars: blinding scalars b1, b2, ..., b9 (only
-///             b1-b6 used in round 1)
 /// \param[out] W_polys: witness polynomials (Lagrange interpolation
 ///             of the witness values)
 /// \param[out] W_polys_blinded: blinded witness polynomials
@@ -74,26 +74,14 @@ round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> srs)
 template<typename ppT>
 round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     const round_zero_out_t<ppT> &round_zero_out,
+    const std::vector<libff::Fr<ppT>> blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
     const size_t nwitness = NUM_HSETS;
 
-    // the example class is defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve. TODO: remove when
-    // the implementation is stable and tested
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
-    // initialize hard-coded values from example circuit
-    plonk_example example;
-
     // output from round 1
-    std::vector<libff::Fr<ppT>> blind_scalars;
     std::vector<polynomial<libff::Fr<ppT>>> W_polys;
     std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded;
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
@@ -108,19 +96,7 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
         std::vector<Field> W_points(begin, end);
         plonk_interpolate_polynomial_from_points<Field>(W_points, W_polys[i]);
     }
-    // TODO: move to unit test for
-    // plonk_interpolate_polynomial_from_points
-#ifdef DEBUG_PLONK
-    for (size_t i = 0; i < nwitness; ++i) {
-        printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, (int)i);
-        print_vector(W_polys[i]);
-        assert(W_polys[i] == example.W_polys[i]);
-    }
-#endif // #ifdef DEBUG_PLONK
 
-    // hard-coded values for the "random" blinding constants from
-    // example circuit
-    blind_scalars = example.prover_blind_scalars;
     // represent the blinding scalars b1, b2, ..., b9 as polynomials
     std::vector<std::vector<Field>> blind_polys{
         {blind_scalars[1], blind_scalars[0]}, // b1 + b0 X
@@ -143,7 +119,6 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
         srs.secret_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
 
     round_one_out_t<ppT> round_one_out(
-        std::move(blind_scalars),
         std::move(W_polys),
         std::move(W_polys_blinded),
         std::move(W_polys_blinded_at_secret_g1));
@@ -154,9 +129,9 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
 /// Prover Round 2
 ///
 /// INPUT
-/// \param[in] blind_scalars: blinding scalars b1, b2, ..., b9 (only
-///            b7,b8,b9 used in round 2) (from round 1)
 /// \param[in] zh_poly: vanishing polynomial Zh (from round 0)
+/// \param[in] blind_scalars: blinding scalars b1, b2, ..., b9 (only
+///            b7,b8,b9 used in round 2)
 /// \param[in] witness: witness values
 /// \param[in] srs: structured reference string containing also
 ///            circuit-specific information
@@ -170,13 +145,11 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     const libff::Fr<ppT> beta,
     const libff::Fr<ppT> gamma,
     const round_zero_out_t<ppT> &round_zero_out,
-    const round_one_out_t<ppT> &round_one_out,
+    const std::vector<libff::Fr<ppT>> blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
-    // initialize hard-coded values from example circuit
-    plonk_example example;
 
     polynomial<libff::Fr<ppT>> z_poly;
     libff::G1<ppT> z_poly_at_secret_g1;
@@ -185,9 +158,7 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
 
     // blinding polynomial: b8 + b7 X + b6 X^2
     std::vector<Field> z1_blind_poly{
-        round_one_out.blind_scalars[8],
-        round_one_out.blind_scalars[7],
-        round_one_out.blind_scalars[6]};
+        blind_scalars[8], blind_scalars[7], blind_scalars[6]};
     // multiply by the vanishing polynomial: z1 = z1 * this->zh_poly
     libfqfft::_polynomial_multiplication<Field>(
         z1_blind_poly, z1_blind_poly, round_zero_out.zh_poly);
@@ -205,13 +176,6 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
 
     polynomial<Field> A_poly(srs.num_gates);
     plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly);
-    // TODO: move to unit test for
-    // plonk_interpolate_polynomial_from_points
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
-    print_vector(A_poly);
-    assert(A_poly == example.A_poly);
-#endif // #ifdef DEBUG_PLONK
 
     // add blinding polynomial z_1 to the accumulator polynomial A_poly
     libfqfft::_polynomial_addition<Field>(z_poly, z1_blind_poly, A_poly);
@@ -257,18 +221,6 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
 {
     using Field = libff::Fr<ppT>;
     int num_hgen = NUM_HSETS;
-
-    // the example class is defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve TODO: remove when
-    // the implementation is stable and tested
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
-    // initialize hard-coded values from example circuit
-    plonk_example example;
 
     // output from round 3
     std::vector<libff::Fr<ppT>> z_poly_xomega;
@@ -447,16 +399,15 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     polynomial<Field> remainder;
     libfqfft::_polynomial_division(
         t_poly_long, remainder, t_poly_long, round_zero_out.zh_poly);
-
-    // TODO: move to unit test for round_three()
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] t_poly_long\n", __FILE__, __LINE__);
-    print_vector(t_poly_long);
-    assert(t_poly_long == example.t_poly_long);
-    printf("[%s:%d] remainder\n", __FILE__, __LINE__);
-    print_vector(remainder);
-#endif // #ifdef DEBUG_PLONK
-    assert(libfqfft::_is_zero(remainder));
+    try {
+        bool b_zero_remainder = libfqfft::_is_zero(remainder);
+        if (!b_zero_remainder) {
+            throw std::logic_error("Non-zero remainder in polynomial division");
+        }
+    } catch (const std::logic_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
 
     // break this->t_poly_long into three parts: lo, mid, hi, each of degree
     // 7. note: (srs.num_gates+3) is the length of the CRS =
@@ -471,14 +422,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
         std::vector<Field> tmp(begin, end);
         t_poly[i] = tmp;
     }
-    // TODO: move to unit test for round_three()
-#ifdef DEBUG_PLONK
-    for (int i = 0; i < num_hgen; ++i) {
-        printf("[%s:%d] t_poly[%d]\n", __FILE__, __LINE__, i);
-        print_vector(t_poly[i]);
-        assert(t_poly[i] == example.t_poly[i]);
-    }
-#endif // #ifdef DEBUG_PLONK
+
     // evaluate each part of t_poly in the secret input
     t_poly_at_secret_g1.resize(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
@@ -534,17 +478,6 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
     const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
-    // the example class is defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve TODO: remove when
-    // the implementation is stable and tested
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
-    // initialize hard-coded values from example circuit
-    plonk_example example;
 
     // output from round 4
     libff::Fr<ppT> a_zeta;
@@ -645,18 +578,6 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     using Field = libff::Fr<ppT>;
     polynomial<Field> remainder;
 
-    // the example class is defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve TODO: remove when
-    // the implementation is stable and tested
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
-    // initialize hard-coded values from example circuit
-    plonk_example example;
-
     // output from round 5
     libff::Fr<ppT> r_zeta;
     libff::G1<ppT> W_zeta_at_secret;
@@ -749,8 +670,8 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[2]);
     libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[3]);
 
-    // TODO: move to unit test for compyting r_poly
-#ifdef DEBUG_PLONK
+    // TODO: make a separate unit test for r_poly
+#if 0
     assert(r_poly == example.r_poly);
 #endif // #ifdef DEBUG_PLONK
 
@@ -760,11 +681,6 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     // epxense of a slightly heavier computation on the verifier's
     // side
     r_zeta = libfqfft::evaluate_polynomial<Field>(r_poly.size(), r_poly, zeta);
-
-    // TODO: move to unit test for compyting r_zeta
-#ifdef DEBUG_PLONK
-    assert(r_zeta == example.r_zeta);
-#endif // #ifdef DEBUG_PLONK
 
     // W_zeta polynomial is of degree 6 in the random element nu and
     // hence has 7 terms
@@ -916,8 +832,8 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
         W_zeta_omega, remainder, W_zeta_omega, x_sub_zeta_omega_roots);
     assert(libfqfft::_is_zero(remainder));
 
-    // TODO: move to unit test for round_five
-#ifdef DEBUG_PLONK
+    // TODO: make a separate unit test for W_zeta, W_zeta_omega
+#if 0
     assert(W_zeta == example.W_zeta);
     assert(W_zeta_omega == example.W_zeta_omega);
 #endif // #ifdef DEBUG_PLONK
@@ -974,6 +890,9 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
 ///            circuit-specific information
 /// \param[in] witness: all internal values and public input
 ///            corresponding to the given circuit
+/// \param[in] blind_scalars: random blinding scalars b1, b2, ..., b9
+///            used in prover rounds 1 and 2 (see Sect. 8.3, roumds
+///            1,2 [GWC19])
 /// \param[in] transcript_hash: hashes of the communication transcript
 ///            after prover rounds 1,2,3,4,5. TODO: \attention
 ///            currently the structure is used as an input initialized
@@ -990,20 +909,9 @@ template<typename ppT>
 plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     const srs<ppT> &srs,
     const std::vector<Field> &witness,
+    const std::vector<libff::Fr<ppT>> blind_scalars,
     transcript_hash_t<ppT> &transcript_hash)
 {
-    // the example class is defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve TODO: remove when
-    // the implementation is stable and tested
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
-    // initialize hard-coded values from example circuit
-    plonk_example example;
-
     // Prover Round 0 (initialization)
     printf("[%s:%d] Prover Round 0...\n", __FILE__, __LINE__);
     round_zero_out_t<ppT> round_zero_out = plonk_prover::round_zero(srs);
@@ -1011,103 +919,26 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     // Prover Round 1
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
     round_one_out_t<ppT> round_one_out =
-        plonk_prover::round_one(round_zero_out, witness, srs);
-    // Prover Round 1 output check against test vectors
-    // TODO: move to unit test for round 1
-#ifdef DEBUG_PLONK
-    for (int i = 0; i < (int)NUM_HSETS; ++i) {
-        printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
-        print_vector(round_one_out.W_polys_blinded[i]);
-        assert(round_one_out.W_polys_blinded[i] == example.W_polys_blinded[i]);
-    }
-    printf("[%s:%d] Output from Round 1\n", __FILE__, __LINE__);
-    for (int i = 0; i < (int)NUM_HSETS; ++i) {
-        printf("W_polys_at_secret_g1[%d]\n", i);
-        round_one_out.W_polys_blinded_at_secret_g1[i].print();
-        libff::G1<ppT> W_polys_blinded_at_secret_g1_i(
-            round_one_out.W_polys_blinded_at_secret_g1[i]);
-        W_polys_blinded_at_secret_g1_i.to_affine_coordinates();
-        assert(
-            W_polys_blinded_at_secret_g1_i.X ==
-            example.W_polys_blinded_at_secret_g1[i][0]);
-        assert(
-            W_polys_blinded_at_secret_g1_i.Y ==
-            example.W_polys_blinded_at_secret_g1[i][1]);
-    }
-#endif // #ifdef DEBUG_PLONK
+        plonk_prover::round_one(round_zero_out, blind_scalars, witness, srs);
 
     printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
     // - beta, gamma: permutation challenges - hashes of transcript of round 1
     const libff::Fr<ppT> beta = transcript_hash.beta;
     const libff::Fr<ppT> gamma = transcript_hash.gamma;
     round_two_out_t<ppT> round_two_out = plonk_prover::round_two(
-        beta, gamma, round_zero_out, round_one_out, witness, srs);
-    // Prover Round 2 output check against test vectors
-    // TODO: move to unit test for round 2
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
-    print_vector(round_two_out.z_poly);
-    assert(round_two_out.z_poly == example.z_poly);
-    printf("[%s:%d] Output from Round 2\n", __FILE__, __LINE__);
-    printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
-    round_two_out.z_poly_at_secret_g1.print();
-    libff::G1<ppT> z_poly_at_secret_g1_aff(round_two_out.z_poly_at_secret_g1);
-    z_poly_at_secret_g1_aff.to_affine_coordinates();
-    assert(z_poly_at_secret_g1_aff.X == example.z_poly_at_secret_g1[0]);
-    assert(z_poly_at_secret_g1_aff.Y == example.z_poly_at_secret_g1[1]);
-#endif // #ifdef DEBUG_PLONK
+        beta, gamma, round_zero_out, blind_scalars, witness, srs);
 
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
     // - alpha: quotient challenge - hash of transcript of rounds 1,2
     libff::Fr<ppT> alpha = transcript_hash.alpha;
     round_three_out_t<ppT> round_three_out = plonk_prover::round_three(
         alpha, beta, gamma, round_zero_out, round_one_out, round_two_out, srs);
-    // Prover Round 3 output check against test vectors
-    // TODO: move to unit test for round 3
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
-    for (int i = 0; i < (int)NUM_HSETS; ++i) {
-        printf("[%s:%d] t_poly_at_secret_g1[%d]\n", __FILE__, __LINE__, i);
-        round_three_out.t_poly_at_secret_g1[i].print();
-        libff::G1<ppT> t_poly_at_secret_g1_i(
-            round_three_out.t_poly_at_secret_g1[i]);
-        t_poly_at_secret_g1_i.to_affine_coordinates();
-        assert(t_poly_at_secret_g1_i.X == example.t_poly_at_secret_g1[i][0]);
-        assert(t_poly_at_secret_g1_i.Y == example.t_poly_at_secret_g1[i][1]);
-    }
-#endif // #ifdef DEBUG_PLONK
 
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
     // - zeta: evaluation challenge - hash of transcriptof rounds 1,2,3
     libff::Fr<ppT> zeta = transcript_hash.zeta;
     round_four_out_t<ppT> round_four_out =
         plonk_prover::round_four(zeta, round_one_out, round_three_out, srs);
-    // Prover Round 4 output check against test vectors
-    // TODO: move to unit test for round 4
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
-    printf("a_zeta ");
-    round_four_out.a_zeta.print();
-    assert(round_four_out.a_zeta == example.a_zeta);
-    printf("b_zeta ");
-    round_four_out.b_zeta.print();
-    assert(round_four_out.b_zeta == example.b_zeta);
-    printf("c_zeta ");
-    round_four_out.c_zeta.print();
-    assert(round_four_out.c_zeta == example.c_zeta);
-    printf("S_0_zeta ");
-    round_four_out.S_0_zeta.print();
-    assert(round_four_out.S_0_zeta == example.S_0_zeta);
-    printf("S_1_zeta ");
-    round_four_out.S_1_zeta.print();
-    assert(round_four_out.S_1_zeta == example.S_1_zeta);
-    printf("t_zeta ");
-    round_four_out.t_zeta.print();
-    assert(round_four_out.t_zeta == example.t_zeta);
-    printf("z_poly_xomega_zeta ");
-    round_four_out.z_poly_xomega_zeta.print();
-    assert(round_four_out.z_poly_xomega_zeta == example.z_poly_xomega_zeta);
-#endif // #ifdef DEBUG_PLONK
 
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
     /// - nu: opening challenge -- hash of transcript (denoted by v in
@@ -1125,27 +956,6 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
         round_three_out,
         round_four_out,
         srs);
-    // Prover Round 5 output check against test vectors
-    // TODO: move to unit test for round 5
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
-    printf("r_zeta ");
-    round_five_out.r_zeta.print();
-    assert(round_five_out.r_zeta == example.r_zeta);
-    printf("[%s:%d] W_zeta_at_secret \n", __FILE__, __LINE__);
-    round_five_out.W_zeta_at_secret.print();
-    libff::G1<ppT> W_zeta_at_secret_aff(round_five_out.W_zeta_at_secret);
-    W_zeta_at_secret_aff.to_affine_coordinates();
-    assert(W_zeta_at_secret_aff.X == example.W_zeta_at_secret[0]);
-    assert(W_zeta_at_secret_aff.Y == example.W_zeta_at_secret[1]);
-    printf("[%s:%d] W_zeta_omega_at_secret \n", __FILE__, __LINE__);
-    round_five_out.W_zeta_omega_at_secret.print();
-    libff::G1<ppT> W_zeta_omega_at_secret_aff(
-        round_five_out.W_zeta_omega_at_secret);
-    W_zeta_omega_at_secret_aff.to_affine_coordinates();
-    assert(W_zeta_omega_at_secret_aff.X == example.W_zeta_omega_at_secret[0]);
-    assert(W_zeta_omega_at_secret_aff.Y == example.W_zeta_omega_at_secret[1]);
-#endif // #ifdef DEBUG_PLONK
 
     // TODO: activate this part when we implement actual hashing of
     // communication transcripts
