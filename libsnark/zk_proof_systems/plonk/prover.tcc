@@ -78,7 +78,7 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
-    int nwitness = 3;
+    const size_t nwitness = NUM_HSETS;
 
     // the example class is defined specifically for the BLS12-381
     // curve, so make sure we are using this curve. TODO: remove when
@@ -100,7 +100,7 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
 
     // compute witness polynomials via Lagrange interpolation
     W_polys.resize(nwitness, polynomial<Field>(srs.num_gates));
-    for (int i = 0; i < nwitness; ++i) {
+    for (size_t i = 0; i < nwitness; ++i) {
         typename std::vector<Field>::const_iterator begin =
             witness.begin() + (i * srs.num_gates);
         typename std::vector<Field>::const_iterator end =
@@ -111,8 +111,8 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     // TODO: move to unit test for
     // plonk_interpolate_polynomial_from_points
 #ifdef DEBUG_PLONK
-    for (int i = 0; i < nwitness; ++i) {
-        printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, i);
+    for (size_t i = 0; i < nwitness; ++i) {
+        printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, (int)i);
         print_vector(W_polys[i]);
         assert(W_polys[i] == example.W_polys[i]);
     }
@@ -131,7 +131,7 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     // compute blinded witness polynomials e.g. a_poly =
     // blind_polys[0] * zh_poly + W_polys[0]
     W_polys_blinded.resize(nwitness);
-    for (int i = 0; i < nwitness; ++i) {
+    for (size_t i = 0; i < nwitness; ++i) {
         libfqfft::_polynomial_multiplication<Field>(
             W_polys_blinded[i], blind_polys[i], round_zero_out.zh_poly);
         libfqfft::_polynomial_addition<Field>(
