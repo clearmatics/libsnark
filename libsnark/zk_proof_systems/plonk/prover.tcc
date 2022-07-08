@@ -24,7 +24,6 @@ namespace libsnark
 ///            circuit-specific information
 ///
 /// OUTPUT
-/// \param[out] W_polys: Lagrange interpolation of the witness values
 /// \param[out] zh_poly: vanishing polynomial
 /// \param[out] null_poly: 0 polynomial
 /// \param[out] neg_one_poly: -1 polynomial
