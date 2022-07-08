@@ -177,10 +177,12 @@ void plonk_compute_public_input_polynomial(
     plonk_interpolate_polynomial_from_points<FieldT>(PI_points, PI_poly);
 };
 
-/// output: omega[0] are the n roots of unity, omega[1] are
-/// omega[0]*k1, omega[2] are omega[0]*k2; k1 H is a coset of H with
-/// generator omega_k1 distinct from H; k2 H is a coset of H with
-/// generator omega_k2, distinct from H and k1 H
+/// This function computes the sets H, k1H, k2H.  H is a
+/// multiplicative subgroup containing the n-th roots of unity in Fr,
+/// where \omega is a primitive n-th root of unity and a generator of
+/// H i.e H = {1, \omega, ..., \omega^{n-1}}. k1, k2 \in Fr are chosen
+/// such that H, H k1, H k2 are distinct cosets of H in Fr, and thus
+/// consist of 3n distinct elements. \see [GWC19] pp26 (top).
 template<typename FieldT>
 void plonk_compute_roots_of_unity_omega(
     const FieldT k1, const FieldT k2, std::vector<std::vector<FieldT>> &omega)
