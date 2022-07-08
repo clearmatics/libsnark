@@ -204,16 +204,17 @@ circuit_t<ppT> plonk_circuit_description_from_example(
 
     // number of generators for H, Hk1, Hk2
     int num_hgen = NUM_HSETS;
+
     // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
     // omega[2] are omega[0]*k2
     std::vector<std::vector<Field>> omega_roots;
-    omega_roots.resize(num_hgen, std::vector<Field>(num_gates));
-    plonk_compute_roots_of_unity_omega(k1, k2, omega_roots);
+    plonk_compute_roots_of_unity_omega(num_gates, k1, k2, omega_roots);
     // H_gen contains the generators of H, k1 H and k2 H in one place
     // ie. circuit.omega_roots, circuit.omega_roots_k1 and
     // circuit.omega_roots_k2
     std::vector<Field> H_gen;
     plonk_roots_of_unity_omega_to_subgroup_H(omega_roots, H_gen);
+
     // TODO: write unit test for plonk_roots_of_unity_omega_to_subgroup_H
 #ifdef DEBUG_PLONK
     printf("[%s:%d] H_gen\n", __FILE__, __LINE__);

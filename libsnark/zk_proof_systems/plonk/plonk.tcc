@@ -185,11 +185,25 @@ void plonk_compute_public_input_polynomial(
 /// consist of 3n distinct elements. \see [GWC19] pp26 (top).
 template<typename FieldT>
 void plonk_compute_roots_of_unity_omega(
-    const FieldT k1, const FieldT k2, std::vector<std::vector<FieldT>> &omega)
+    const size_t num_gates,
+    const FieldT k1,
+    const FieldT k2,
+    std::vector<std::vector<FieldT>> &omega)
 {
-    assert(omega.size() == NUM_HSETS);
-    assert(omega[0].size() > 0);
-    size_t num_gates = omega[0].size();
+    // ensure that num_gates is not 0 and is power of 2
+    // TODO: check also that it's less than 2^(ppT::s)
+    try {
+        bool b_nonzero = (num_gates > 0);
+        bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
+        if (!(b_nonzero && b_is_power2)) {
+            throw std::invalid_argument("Curve is not BLS12-381");
+        }
+    } catch (const std::invalid_argument &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
+    omega.resize(NUM_HSETS, std::vector<FieldT>(num_gates));
+
     // Get the n-th root of unity omega in Fq (n=8 is the number of
     // constraints in the example). omega is a generator of the
     // multiplicative subgroup H.  Example (2**32)-th primitive root
