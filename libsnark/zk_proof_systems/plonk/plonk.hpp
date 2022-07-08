@@ -145,13 +145,20 @@ void plonk_compute_roots_of_unity_omega(
     const FieldT k2,
     std::vector<std::vector<FieldT>> &omega);
 
-/// copy the roots of unity omega[base], omega[k1] and omega[k2] into
-/// a single vector H_gen representing the multiplicative subgroups
-/// H, k1 H and k2 H (see [GWC19] Sect. 8); \see
-/// plonk_compute_roots_of_unity_omega
+/// This function computes the sets H, k1H, k2H, where H is a
+/// multiplicative subgroup containing the n-th roots of unity in Fr and
+/// \omega is a primitive n-th root of unity and a generator of
+/// H ie. H = {1, \omega, ..., \omega^{n-1}}. k1, k2 \in Fr are chosen
+/// such that H, H k1, H k2 are distinct cosets of H in Fr, and thus
+/// consist of 3n distinct elements. \see [GWC19] pp26 (top) and Sect. 8.
+///
+/// \note uses plonk_compute_roots_of_unity_omega
 template<typename FieldT>
-void plonk_roots_of_unity_omega_to_subgroup_H(
-    const std::vector<std::vector<FieldT>> &omega, std::vector<FieldT> &H_gen);
+void plonk_multiplicative_subgroups_H_k1H_k2H(
+    const size_t num_gates,
+    const FieldT k1,
+    const FieldT k2,
+    std::vector<FieldT> &H_gen);
 
 /// permute the multiplicative subgroup H according to the wire
 /// permutation: (see [GWC19] Sect. 8), \see
