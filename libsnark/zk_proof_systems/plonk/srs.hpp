@@ -200,6 +200,37 @@ public:
     plonk_keypair(plonk_keypair<ppT> &&other) = default;
 };
 
+/// Hashes of transcript after prover rounds 1,2,3,4,5
+template<typename ppT> struct transcript_hash_t {
+
+    /// - beta: permutation challenge - hashes of transcript after round 1
+    libff::Fr<ppT> beta;
+    /// - gamma: permutation challenge - hashes of transcript after round 1
+    libff::Fr<ppT> gamma;
+    /// - alpha: quotient challenge - hash of transcript after rounds 1,2
+    libff::Fr<ppT> alpha;
+    /// - zeta: evaluation challenge - hash of transcriptafter rounds 1,2,3
+    libff::Fr<ppT> zeta;
+    /// - nu: opening challenge - hash of transcript after rounds 1,2,3,4
+    /// (denoted by v in [GWC19])
+    libff::Fr<ppT> nu;
+    /// - u: multipoint evaluation challenge -- hash of transcript after rounds
+    /// 1,2,3,4,5
+    libff::Fr<ppT> u;
+
+    /// stuct constructor
+    transcript_hash_t(
+        libff::Fr<ppT> &beta,
+        libff::Fr<ppT> &gamma,
+        libff::Fr<ppT> &alpha,
+        libff::Fr<ppT> &zeta,
+        libff::Fr<ppT> &nu,
+        libff::Fr<ppT> &u)
+        : beta(beta), gamma(gamma), alpha(alpha), zeta(zeta), nu(nu), u(u)
+    {
+    }
+};
+
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/srs.tcc"

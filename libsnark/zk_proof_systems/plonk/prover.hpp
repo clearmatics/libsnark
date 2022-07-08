@@ -157,12 +157,6 @@ template<typename ppT> struct round_one_out_t {
 /// Prover round 2 output
 template<typename ppT> struct round_two_out_t {
 
-    /// - beta: permutation challenge -- hash of transcript
-    libff::Fr<ppT> beta;
-
-    /// - gamma: permutation challenge -- hash of transcript
-    libff::Fr<ppT> gamma;
-
     /// - z_poly: blinded accumulator poly z(x)
     polynomial<libff::Fr<ppT>> z_poly;
 
@@ -172,23 +166,15 @@ template<typename ppT> struct round_two_out_t {
 
     /// stuct constructor
     round_two_out_t(
-        libff::Fr<ppT> &&beta,
-        libff::Fr<ppT> &&gamma,
         polynomial<libff::Fr<ppT>> &&z_poly,
         libff::G1<ppT> &&z_poly_at_secret_g1)
-        : beta(beta)
-        , gamma(gamma)
-        , z_poly(z_poly)
-        , z_poly_at_secret_g1(z_poly_at_secret_g1)
+        : z_poly(z_poly), z_poly_at_secret_g1(z_poly_at_secret_g1)
     {
     }
 };
 
 /// Prover round 3 output
 template<typename ppT> struct round_three_out_t {
-
-    /// - alpha: quotient challenge -- hash of transcript
-    libff::Fr<ppT> alpha;
 
     /// - z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted by w
     std::vector<libff::Fr<ppT>> z_poly_xomega;
@@ -207,13 +193,11 @@ template<typename ppT> struct round_three_out_t {
 
     /// stuct constructor
     round_three_out_t(
-        libff::Fr<ppT> &&alpha,
         std::vector<libff::Fr<ppT>> &&z_poly_xomega,
         std::vector<polynomial<libff::Fr<ppT>>> &&t_poly,
         polynomial<libff::Fr<ppT>> &&t_poly_long,
         std::vector<libff::G1<ppT>> &&t_poly_at_secret_g1)
-        : alpha(alpha)
-        , z_poly_xomega(z_poly_xomega)
+        : z_poly_xomega(z_poly_xomega)
         , t_poly(t_poly)
         , t_poly_long(t_poly_long)
         , t_poly_at_secret_g1(t_poly_at_secret_g1)
@@ -223,9 +207,6 @@ template<typename ppT> struct round_three_out_t {
 
 /// Prover round 4 output
 template<typename ppT> struct round_four_out_t {
-
-    /// - zeta: evaluation challenge -- hash of transcript
-    libff::Fr<ppT> zeta;
 
     /// - a_zeta, b_zeta, c_zeta: the blinded witness polynomials a(x),
     ///   b(x), c(x) (denoted by W_polys_blinded[] output from Round 1)
@@ -253,7 +234,6 @@ template<typename ppT> struct round_four_out_t {
     libff::Fr<ppT> t_zeta;
     /// stuct constructor
     round_four_out_t(
-        libff::Fr<ppT> &&zeta,
         libff::Fr<ppT> &&a_zeta,
         libff::Fr<ppT> &&b_zeta,
         libff::Fr<ppT> &&c_zeta,
@@ -261,8 +241,7 @@ template<typename ppT> struct round_four_out_t {
         libff::Fr<ppT> &&S_1_zeta,
         libff::Fr<ppT> &&z_poly_xomega_zeta,
         libff::Fr<ppT> &&t_zeta)
-        : zeta(zeta)
-        , a_zeta(a_zeta)
+        : a_zeta(a_zeta)
         , b_zeta(b_zeta)
         , c_zeta(c_zeta)
         , S_0_zeta(S_0_zeta)
@@ -276,10 +255,6 @@ template<typename ppT> struct round_four_out_t {
 /// Prover round 5 output
 template<typename ppT> struct round_five_out_t {
 
-    /// - nu: opening challenge -- hash of transcript (denoted by v in
-    ///   [GWC19])
-    libff::Fr<ppT> nu;
-
     /// - r_zeta: linearisation polynomial r(x) evaluated at x=zeta
     ///   ie. r(zeta)
     libff::Fr<ppT> r_zeta;
@@ -292,21 +267,14 @@ template<typename ppT> struct round_five_out_t {
     ///   W_{zeta omega}(x) at secert input i.e. [W_{zeta omega}(secret)]_1
     libff::G1<ppT> W_zeta_omega_at_secret;
 
-    /// - u: multipoint evaluation challenge -- hash of transcript
-    libff::Fr<ppT> u;
-
     /// struct constructor
     round_five_out_t(
-        libff::Fr<ppT> &&nu,
         libff::Fr<ppT> &&r_zeta,
         libff::G1<ppT> &&W_zeta_at_secret,
-        libff::G1<ppT> &&W_zeta_omega_at_secret,
-        libff::Fr<ppT> &&u)
-        : nu(nu)
-        , r_zeta(r_zeta)
+        libff::G1<ppT> &&W_zeta_omega_at_secret)
+        : r_zeta(r_zeta)
         , W_zeta_at_secret(W_zeta_at_secret)
         , W_zeta_omega_at_secret(W_zeta_omega_at_secret)
-        , u(u)
     {
     }
 };
@@ -368,12 +336,12 @@ public:
     ///            circuit-specific information
     ///
     /// OUTPUT
-    /// \param[out] beta, gamma: permutation challenges -- hashes of
-    /// transcript
     /// \param[out] z_poly: blinded accumulator poly z(x)
     /// \param[out] z_poly_at_secret_g1: blinded accumulator poly z(x)
     ///             evaluated at secret
     static round_two_out_t<ppT> round_two(
+        const libff::Fr<ppT> beta,
+        const libff::Fr<ppT> gamma,
         const round_zero_out_t<ppT> &round_zero_out,
         const round_one_out_t<ppT> &round_one_out,
         const std::vector<libff::Fr<ppT>> &witness,
@@ -392,7 +360,6 @@ public:
     ///            circuit-specific information
     ///
     /// OUTPUT
-    /// \param[out] alpha: quotinet challenge -- hash of transcript
     /// \param[out] t_poly_long: the quotient polynomial t(x) (see Round
     ///             3, pp28 [GWC19])
     /// \param[out] t_poly: t(x) divided in three parts t(x) = t_lo(x) +
@@ -402,6 +369,9 @@ public:
     /// \param[out] z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted
     ///             by w
     static round_three_out_t<ppT> round_three(
+        const libff::Fr<ppT> alpha,
+        const libff::Fr<ppT> beta,
+        const libff::Fr<ppT> gamma,
         const round_zero_out_t<ppT> &round_zero_out,
         const round_one_out_t<ppT> &round_one_out,
         const round_two_out_t<ppT> &round_two_out,
@@ -420,7 +390,6 @@ public:
     ///            circuit-specific information
     ///
     /// OUTPUT
-    /// \param[out] zeta: evaluation challenge -- hash of transcript
     /// \param[out] a_zeta, b_zeta, c_zeta: the blinded witness
     ///             polynomials a(x), b(x), c(x) (denoted by
     ///             W_polys_blinded[] output from Round 1) evaluated at
@@ -440,6 +409,7 @@ public:
     ///             same in order to match the test vectors. TODO can
     ///             remove t_zeta in the future
     static round_four_out_t<ppT> round_four(
+        const libff::Fr<ppT> zeta,
         const round_one_out_t<ppT> &round_one_out,
         const round_three_out_t<ppT> &round_three_out,
         const srs<ppT> &srs);
@@ -480,10 +450,6 @@ public:
     ///            circuit-specific information
     ///
     /// OUTPUT
-    /// \param[out] nu: opening challenge -- hash of transcript (denoted
-    ///             by v in [GWC19])
-    /// \param[out] u: multipoint evaluation challenge -- hash of
-    ///             transcript
     /// \param[out] r_zeta: linearisation polynomial r(x) evaluated at
     ///             x=zeta ie. r(zeta)
     /// \param[out] W_zeta_at_secret: commitment to opening proof
@@ -493,6 +459,11 @@ public:
     ///             polynomial W_{zeta omega}(x) at secert input
     ///             i.e. [W_{zeta omega}(secret)]_1
     static round_five_out_t<ppT> round_five(
+        const libff::Fr<ppT> alpha,
+        const libff::Fr<ppT> beta,
+        const libff::Fr<ppT> gamma,
+        const libff::Fr<ppT> zeta,
+        const libff::Fr<ppT> nu,
         const round_zero_out_t<ppT> &round_zero_out,
         const round_one_out_t<ppT> &round_one_out,
         const round_two_out_t<ppT> &round_two_out,
@@ -535,10 +506,20 @@ public:
     /// INPUT
     /// \param[in] srs: structured reference string containing also
     ///            circuit-specific information
+    /// \param[in] transcript_hash: hashes of the communication transcript
+    ///            after prover rounds 1,2,3,4,5. TODO: \attention
+    ///            currently the structure is used as an input initialized
+    ///            with hard-coded example values for debug purposes. In
+    ///            the long run it should be modified to be used as an
+    ///            output. More specifically, the hard-coded values should
+    ///            be overwritten with the actual transcript hashes
+    ///            produced after the respective rounds within \ref
+    ///            compute_proof
     ///
     /// OUTPUT
     /// \param[out] proof: SNARK proof Pi (see above)
-    static plonk_proof<ppT> compute_proof(const srs<ppT> &srs);
+    static plonk_proof<ppT> compute_proof(
+        const srs<ppT> &srs, transcript_hash_t<ppT> &transcript_hash);
 };
 
 } // namespace libsnark
