@@ -340,7 +340,9 @@ template<typename ppT> void test_plonk()
     // initialize prover
     plonk_prover<ppT> prover;
     // compute proof
-    plonk_proof<ppT> proof = prover.compute_proof(srs, transcript_hash);
+    std::vector<Field> witness = example.witness;
+    plonk_proof<ppT> proof =
+        prover.compute_proof(srs, witness, transcript_hash);
     // compare proof against test vector values (debug)
     ASSERT_EQ(proof.a_zeta, example.a_zeta);
     ASSERT_EQ(proof.b_zeta, example.b_zeta);

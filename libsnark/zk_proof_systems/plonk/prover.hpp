@@ -519,7 +519,9 @@ public:
     /// OUTPUT
     /// \param[out] proof: SNARK proof Pi (see above)
     static plonk_proof<ppT> compute_proof(
-        const srs<ppT> &srs, transcript_hash_t<ppT> &transcript_hash);
+        const srs<ppT> &srs,
+        const std::vector<Field> &witness,
+        transcript_hash_t<ppT> &transcript_hash);
 };
 
 } // namespace libsnark
