@@ -520,34 +520,6 @@ bool plonk_verifier<ppT>::step_twelve(
         plonk_multi_exp_G1<ppT>(curve_points_rhs, scalar_elements_rhs);
     libff::G2<ppT> pairing_second_rhs = srs.secret_powers_g2[0];
 
-    // TODO: move to unit test for step_twelve
-#ifdef DEBUG_PLONK
-    // the example class is defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve TODO: remove when
-    // the implementation is stable and tested
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
-    // load test vectors for debug
-    plonk_example example;
-    printf("[%s:%d] pairing_first_lhs\n", __FILE__, __LINE__);
-    pairing_first_lhs.print();
-    libff::G1<ppT> pairing_first_lhs_aff(pairing_first_lhs);
-    pairing_first_lhs_aff.to_affine_coordinates();
-    assert(pairing_first_lhs_aff.X == example.pairing_first_lhs[0]);
-    assert(pairing_first_lhs_aff.Y == example.pairing_first_lhs[1]);
-
-    printf("[%s:%d] pairing_first_rhs\n", __FILE__, __LINE__);
-    pairing_first_rhs.print();
-    libff::G1<ppT> pairing_first_rhs_aff(pairing_first_rhs);
-    pairing_first_rhs_aff.to_affine_coordinates();
-    assert(pairing_first_rhs_aff.X == example.pairing_first_rhs[0]);
-    assert(pairing_first_rhs_aff.Y == example.pairing_first_rhs[1]);
-#endif // #ifdef DEBUG_PLONK
-
     const libff::G1_precomp<ppT> _A = ppT::precompute_G1(pairing_first_lhs);
     const libff::G2_precomp<ppT> _B = ppT::precompute_G2(pairing_second_lhs);
     const libff::G1_precomp<ppT> _C = ppT::precompute_G1(pairing_first_rhs);
@@ -593,39 +565,6 @@ bool plonk_verifier<ppT>::verify_proof(
     const verifier_preprocessed_input_t<ppT> preprocessed_input =
         plonk_verifier::preprocessed_input(srs);
 
-    // TODO: move to unit test for verify_proof
-#ifdef DEBUG_PLONK
-    // the example class is defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve TODO: remove when
-    // the implementation is stable and tested
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
-    // load test vector values form example for debug
-    plonk_example example;
-    for (int i = 0; i < (int)srs.Q_polys.size(); ++i) {
-        printf("srs.Q_polys_at_secret_G1[%d] \n", i);
-        preprocessed_input.Q_polys_at_secret_g1[i].print();
-        libff::G1<ppT> Q_poly_at_secret_g1_i(
-            preprocessed_input.Q_polys_at_secret_g1[i]);
-        Q_poly_at_secret_g1_i.to_affine_coordinates();
-        assert(Q_poly_at_secret_g1_i.X == example.Q_polys_at_secret_g1[i][0]);
-        assert(Q_poly_at_secret_g1_i.Y == example.Q_polys_at_secret_g1[i][1]);
-    }
-    for (int i = 0; i < (int)srs.S_polys.size(); ++i) {
-        printf("S_polys_at_secret_G1[%d] \n", i);
-        preprocessed_input.S_polys_at_secret_g1[i].print();
-        libff::G1<ppT> S_poly_at_secret_g1_i(
-            preprocessed_input.S_polys_at_secret_g1[i]);
-        S_poly_at_secret_g1_i.to_affine_coordinates();
-        assert(S_poly_at_secret_g1_i.X == example.S_polys_at_secret_g1[i][0]);
-        assert(S_poly_at_secret_g1_i.Y == example.S_polys_at_secret_g1[i][1]);
-    }
-#endif // #ifdef DEBUG_PLONK
-
     // Verifier Step 1: validate that elements belong to group G1
     // Verifier Step 2: validate that elements belong to scalar field Fr
     // Verifier Step 3: validate that the public input belongs to scalar field
@@ -641,81 +580,33 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 5: compute zero polynomial evaluation
     const step_five_out_t<ppT> step_five_out =
         this->step_five(step_four_out, srs);
-    // TODO: uni test for step_five
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] zh_zeta ", __FILE__, __LINE__);
-    step_five_out.zh_zeta.print();
-    assert(step_five_out.zh_zeta == example.zh_zeta);
-#endif // #ifdef DEBUG_PLONK
 
     // Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
     // Note: the paper counts the L-polynomials from 1; we count from 0
     const step_six_out_t<ppT> step_six_out = this->step_six(step_four_out, srs);
-    // TODO: uni test for step_six
-#ifdef DEBUG_PLONK
-    printf("L_0_zeta ");
-    step_six_out.L_0_zeta.print();
-    assert(step_six_out.L_0_zeta == example.L_0_zeta);
-#endif // #ifdef DEBUG_PLONK
 
     // Verifier Step 7: compute public input polynomial evaluation PI(zeta)
     const step_seven_out_t<ppT> step_seven_out =
         this->step_seven(step_four_out, srs);
-    // TODO: uni test for step_seven
-#ifdef DEBUG_PLONK
-    printf("PI_zeta ");
-    step_seven_out.PI_zeta.print();
-    assert(step_seven_out.PI_zeta == example.PI_zeta);
-#endif // #ifdef DEBUG_PLONK
 
     // Verifier Step 8: compute quotient polynomial evaluation
     // r'(zeta) = r(zeta) - r0, where r0 is a constant term
     const step_eight_out_t<ppT> step_eight_out = this->step_eight(
         step_four_out, step_five_out, step_six_out, step_seven_out, proof);
-    // TODO: uni test for step_eight
-#ifdef DEBUG_PLONK
-    assert(step_eight_out.r_prime_zeta == example.r_prime_zeta);
-#endif // #ifdef DEBUG_PLONK
 
     // Verifier Step 9: compute first part of batched polynomial
     // commitment [D]_1
     step_nine_out_t<ppT> step_nine_out = this->step_nine(
         step_four_out, step_six_out, proof, preprocessed_input, srs);
-    // TODO: uni test for step_nine
-#ifdef DEBUG_PLONK
-    step_nine_out.D1.print();
-    libff::G1<ppT> D1_aff(step_nine_out.D1);
-    D1_aff.to_affine_coordinates();
-    assert(D1_aff.X == example.D1[0]);
-    assert(D1_aff.Y == example.D1[1]);
-#endif // #ifdef DEBUG_PLONK
 
     // Verifier Step 10: compute full batched polynomial commitment
     // [F]_1
     step_ten_out_t<ppT> step_ten_out = this->step_ten(
         step_four_out, step_nine_out, proof, preprocessed_input, srs);
-    // TODO: uni test for step_ten
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] F1\n", __FILE__, __LINE__);
-    step_ten_out.F1.print();
-    libff::G1<ppT> F1_aff(step_ten_out.F1);
-    F1_aff.to_affine_coordinates();
-    assert(F1_aff.X == example.F1[0]);
-    assert(F1_aff.Y == example.F1[1]);
-#endif // #ifdef DEBUG_PLONK
 
     // Verifier Step 11: compute group-encoded batch evaluation [E]_1
     const step_eleven_out_t<ppT> step_eleven_out =
         this->step_eleven(step_four_out, step_eight_out, proof);
-    // TODO: uni test for step_eleven
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] E1\n", __FILE__, __LINE__);
-    step_eleven_out.E1.print();
-    libff::G1<ppT> E1_aff(step_eleven_out.E1);
-    E1_aff.to_affine_coordinates();
-    assert(E1_aff.X == example.E1[0]);
-    assert(E1_aff.Y == example.E1[1]);
-#endif // #ifdef DEBUG_PLONK
 
     // Verifier Step 12: batch validate all evaluations (check
     // pairing)

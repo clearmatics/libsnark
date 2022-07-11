@@ -172,13 +172,10 @@ circuit_t<ppT> plonk_circuit_description_from_example(
 #endif // #ifdef DEBUG_PLONK
 
     size_t num_gates = example.num_gates;
-    // TODO: throw exception
-#ifdef DEBUG_PLONK
     // ensure that num_gates is not 0
-    assert(num_gates);
+    assert(num_gates > 0);
     // ensure num_gates is power of 2
     assert((num_gates & (num_gates - 1)) == 0);
-#endif // #ifdef DEBUG_PLONK
 
     size_t num_qpolys = example.num_qpolys;
 
@@ -709,6 +706,327 @@ template<typename ppT> void test_plonk_prover()
     ASSERT_EQ(W_zeta_omega_at_secret_aff.Y, example.W_zeta_omega_at_secret[1]);
 }
 
+template<typename ppT>
+void test_plonk_verifier_preprocessed_input(
+    const plonk_example &example, const srs<ppT> &srs)
+{
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    // compute verifier preprocessed input
+    const verifier_preprocessed_input_t<ppT> preprocessed_input =
+        plonk_verifier<ppT>::preprocessed_input(srs);
+
+    for (int i = 0; i < (int)srs.Q_polys.size(); ++i) {
+        printf("srs.Q_polys_at_secret_G1[%d] \n", i);
+        preprocessed_input.Q_polys_at_secret_g1[i].print();
+        libff::G1<ppT> Q_poly_at_secret_g1_i(
+            preprocessed_input.Q_polys_at_secret_g1[i]);
+        Q_poly_at_secret_g1_i.to_affine_coordinates();
+        ASSERT_EQ(Q_poly_at_secret_g1_i.X, example.Q_polys_at_secret_g1[i][0]);
+        ASSERT_EQ(Q_poly_at_secret_g1_i.Y, example.Q_polys_at_secret_g1[i][1]);
+    }
+    for (int i = 0; i < (int)srs.S_polys.size(); ++i) {
+        printf("S_polys_at_secret_G1[%d] \n", i);
+        preprocessed_input.S_polys_at_secret_g1[i].print();
+        libff::G1<ppT> S_poly_at_secret_g1_i(
+            preprocessed_input.S_polys_at_secret_g1[i]);
+        S_poly_at_secret_g1_i.to_affine_coordinates();
+        ASSERT_EQ(S_poly_at_secret_g1_i.X, example.S_polys_at_secret_g1[i][0]);
+        ASSERT_EQ(S_poly_at_secret_g1_i.Y, example.S_polys_at_secret_g1[i][1]);
+    }
+}
+
+template<typename ppT>
+void test_plonk_verifier_step_five(
+    const plonk_example &example,
+    const step_four_out_t<ppT> &step_four_out,
+    const srs<ppT> &srs)
+{
+    const step_five_out_t<ppT> step_five_out =
+        plonk_verifier<ppT>::step_five(step_four_out, srs);
+    printf("[%s:%d] zh_zeta ", __FILE__, __LINE__);
+    step_five_out.zh_zeta.print();
+    ASSERT_EQ(step_five_out.zh_zeta, example.zh_zeta);
+}
+
+template<typename ppT>
+void test_plonk_verifier_step_six(
+    const plonk_example &example,
+    const step_four_out_t<ppT> &step_four_out,
+    const srs<ppT> &srs)
+{
+    const step_six_out_t<ppT> step_six_out =
+        plonk_verifier<ppT>::step_six(step_four_out, srs);
+    printf("L_0_zeta ");
+    step_six_out.L_0_zeta.print();
+    ASSERT_EQ(step_six_out.L_0_zeta, example.L_0_zeta);
+}
+
+template<typename ppT>
+void test_plonk_verifier_step_seven(
+    const plonk_example &example,
+    const step_four_out_t<ppT> &step_four_out,
+    const srs<ppT> &srs)
+{
+    const step_seven_out_t<ppT> step_seven_out =
+        plonk_verifier<ppT>::step_seven(step_four_out, srs);
+    printf("PI_zeta ");
+    step_seven_out.PI_zeta.print();
+    ASSERT_EQ(step_seven_out.PI_zeta, example.PI_zeta);
+}
+
+template<typename ppT>
+void test_plonk_verifier_step_eight(
+    const plonk_example &example,
+    const step_four_out_t<ppT> &step_four_out,
+    const step_five_out_t<ppT> &step_five_out,
+    const step_six_out_t<ppT> &step_six_out,
+    const step_seven_out_t<ppT> &step_seven_out,
+    const plonk_proof<ppT> &proof)
+{
+    const step_eight_out_t<ppT> step_eight_out =
+        plonk_verifier<ppT>::step_eight(
+            step_four_out, step_five_out, step_six_out, step_seven_out, proof);
+    ASSERT_EQ(step_eight_out.r_prime_zeta, example.r_prime_zeta);
+}
+
+template<typename ppT>
+void test_plonk_verifier_step_nine(
+    const plonk_example &example,
+    const step_four_out_t<ppT> &step_four_out,
+    const step_six_out_t<ppT> &step_six_out,
+    const plonk_proof<ppT> &proof,
+    const verifier_preprocessed_input_t<ppT> &preprocessed_input,
+    const srs<ppT> &srs)
+{
+    step_nine_out_t<ppT> step_nine_out = plonk_verifier<ppT>::step_nine(
+        step_four_out, step_six_out, proof, preprocessed_input, srs);
+    step_nine_out.D1.print();
+    libff::G1<ppT> D1_aff(step_nine_out.D1);
+    D1_aff.to_affine_coordinates();
+    ASSERT_EQ(D1_aff.X, example.D1[0]);
+    ASSERT_EQ(D1_aff.Y, example.D1[1]);
+}
+
+template<typename ppT>
+void test_plonk_verifier_step_ten(
+    const plonk_example &example,
+    const step_four_out_t<ppT> &step_four_out,
+    const step_nine_out_t<ppT> &step_nine_out,
+    const plonk_proof<ppT> &proof,
+    const verifier_preprocessed_input_t<ppT> &preprocessed_input,
+    const srs<ppT> &srs)
+{
+    step_ten_out_t<ppT> step_ten_out = plonk_verifier<ppT>::step_ten(
+        step_four_out, step_nine_out, proof, preprocessed_input, srs);
+    printf("[%s:%d] F1\n", __FILE__, __LINE__);
+    step_ten_out.F1.print();
+    libff::G1<ppT> F1_aff(step_ten_out.F1);
+    F1_aff.to_affine_coordinates();
+    ASSERT_EQ(F1_aff.X, example.F1[0]);
+    ASSERT_EQ(F1_aff.Y, example.F1[1]);
+}
+
+template<typename ppT>
+void test_plonk_verifier_step_eleven(
+    const plonk_example &example,
+    const step_four_out_t<ppT> &step_four_out,
+    const step_eight_out_t<ppT> &step_eight_out,
+    const plonk_proof<ppT> &proof)
+{
+    const step_eleven_out_t<ppT> step_eleven_out =
+        plonk_verifier<ppT>::step_eleven(step_four_out, step_eight_out, proof);
+    printf("[%s:%d] E1\n", __FILE__, __LINE__);
+    step_eleven_out.E1.print();
+    libff::G1<ppT> E1_aff(step_eleven_out.E1);
+    E1_aff.to_affine_coordinates();
+    ASSERT_EQ(E1_aff.X, example.E1[0]);
+    ASSERT_EQ(E1_aff.Y, example.E1[1]);
+}
+
+// step 12
+template<typename ppT>
+void test_plonk_verifier_pairing(
+    const plonk_example &example,
+    const libff::Fr<ppT> &zeta, // step 4
+    const libff::Fr<ppT> &u,    // step 4
+    const libff::G1<ppT> &F1,   // step 10
+    const libff::G1<ppT> &E1,   // step 11
+    const plonk_proof<ppT> &proof,
+    const srs<ppT> &srs)
+{
+    // the example class is defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve TODO: remove when
+    // the implementation is stable and tested
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
+    using Field = libff::Fr<ppT>;
+    std::vector<libff::G1<ppT>> curve_points_lhs{
+        proof.W_zeta_at_secret, proof.W_zeta_omega_at_secret};
+    std::vector<libff::Fr<ppT>> scalar_elements_lhs{Field(1), u};
+    libff::G1<ppT> pairing_first_lhs =
+        plonk_multi_exp_G1<ppT>(curve_points_lhs, scalar_elements_lhs);
+    libff::G2<ppT> pairing_second_lhs = srs.secret_powers_g2[1];
+    std::vector<libff::G1<ppT>> curve_points_rhs{
+        proof.W_zeta_at_secret, proof.W_zeta_omega_at_secret, F1, E1};
+    std::vector<libff::Fr<ppT>> scalar_elements_rhs{
+        // Warning! raise to the power of -1 to check e() * e()^-1 = 1
+        Field(-1) * zeta,
+        Field(-1) * u * zeta * srs.omega_roots[base][1],
+        Field(-1) * Field(1),
+        Field(-1) * Field(-1)};
+
+    libff::G1<ppT> pairing_first_rhs =
+        plonk_multi_exp_G1<ppT>(curve_points_rhs, scalar_elements_rhs);
+    libff::G2<ppT> pairing_second_rhs = srs.secret_powers_g2[0];
+
+    const libff::G1_precomp<ppT> _A = ppT::precompute_G1(pairing_first_lhs);
+    const libff::G2_precomp<ppT> _B = ppT::precompute_G2(pairing_second_lhs);
+    const libff::G1_precomp<ppT> _C = ppT::precompute_G1(pairing_first_rhs);
+    const libff::G2_precomp<ppT> _D = ppT::precompute_G2(pairing_second_rhs);
+    const libff::Fqk<ppT> miller_result =
+        ppT::double_miller_loop(_A, _B, _C, _D);
+    const libff::GT<ppT> result = ppT::final_exponentiation(miller_result);
+    bool b_accept = (result == libff::GT<ppT>::one());
+
+    printf("[%s:%d] pairing_first_lhs\n", __FILE__, __LINE__);
+    pairing_first_lhs.print();
+    libff::G1<ppT> pairing_first_lhs_aff(pairing_first_lhs);
+    pairing_first_lhs_aff.to_affine_coordinates();
+    ASSERT_EQ(pairing_first_lhs_aff.X, example.pairing_first_lhs[0]);
+    ASSERT_EQ(pairing_first_lhs_aff.Y, example.pairing_first_lhs[1]);
+
+    printf("[%s:%d] pairing_first_rhs\n", __FILE__, __LINE__);
+    pairing_first_rhs.print();
+    libff::G1<ppT> pairing_first_rhs_aff(pairing_first_rhs);
+    pairing_first_rhs_aff.to_affine_coordinates();
+    ASSERT_EQ(pairing_first_rhs_aff.X, example.pairing_first_rhs[0]);
+    ASSERT_EQ(pairing_first_rhs_aff.Y, example.pairing_first_rhs[1]);
+
+    ASSERT_TRUE(b_accept);
+}
+
+template<typename ppT> void test_plonk_verifier_steps()
+{
+    using Field = libff::Fr<ppT>;
+
+    // example test values are defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
+    ppT::init_public_params();
+    // load test vector values from example circuit
+    plonk_example example;
+    // random hidden element secret (toxic waste)
+    Field secret = example.secret;
+    // example witness
+    std::vector<Field> witness = example.witness;
+    // example circuit
+    circuit_t<ppT> circuit =
+        plonk_circuit_description_from_example<ppT>(example);
+    // get hard-coded values for the transcipt hash
+    transcript_hash_t<ppT> transcript_hash(
+        example.beta,
+        example.gamma,
+        example.alpha,
+        example.zeta,
+        example.nu,
+        example.u);
+    // hard-coded values for the "random" blinding constants from
+    // example circuit
+    std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
+    // maximum degree of the encoded monomials in the usrs
+    size_t max_degree = PLONK_MAX_DEGREE;
+
+    // prepare srs
+    usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
+
+    // initialize prover
+    plonk_prover<ppT> prover;
+    // compute proof
+    plonk_proof<ppT> proof =
+        prover.compute_proof(srs, witness, blind_scalars, transcript_hash);
+
+    // Unit test verifier preprocessed input
+    test_plonk_verifier_preprocessed_input(example, srs);
+
+    // unit test verifier step 5
+    const step_four_out_t<ppT> step_four_out =
+        plonk_verifier<ppT>::step_four(transcript_hash);
+    test_plonk_verifier_step_five(example, step_four_out, srs);
+
+    // unit test verifier step 6
+    test_plonk_verifier_step_six(example, step_four_out, srs);
+
+    // unit test verifier step 7
+    test_plonk_verifier_step_seven(example, step_four_out, srs);
+
+    // unit test verifier step 8
+    const step_five_out_t<ppT> step_five_out =
+        plonk_verifier<ppT>::step_five(step_four_out, srs);
+    const step_six_out_t<ppT> step_six_out =
+        plonk_verifier<ppT>::step_six(step_four_out, srs);
+    const step_seven_out_t<ppT> step_seven_out =
+        plonk_verifier<ppT>::step_seven(step_four_out, srs);
+    test_plonk_verifier_step_eight(
+        example,
+        step_four_out,
+        step_five_out,
+        step_six_out,
+        step_seven_out,
+        proof);
+
+    // unit test verifier step 9
+    const verifier_preprocessed_input_t<ppT> preprocessed_input =
+        plonk_verifier<ppT>::preprocessed_input(srs);
+    test_plonk_verifier_step_nine(
+        example, step_four_out, step_six_out, proof, preprocessed_input, srs);
+
+    // unit test verifier step 10
+    step_nine_out_t<ppT> step_nine_out = plonk_verifier<ppT>::step_nine(
+        step_four_out, step_six_out, proof, preprocessed_input, srs);
+    test_plonk_verifier_step_ten(
+        example, step_four_out, step_nine_out, proof, preprocessed_input, srs);
+
+    // unit test verifier step 11
+    const step_eight_out_t<ppT> step_eight_out =
+        plonk_verifier<ppT>::step_eight(
+            step_four_out, step_five_out, step_six_out, step_seven_out, proof);
+    test_plonk_verifier_step_eleven(
+        example, step_four_out, step_eight_out, proof);
+
+    // unit test verifier pairing (step 12)
+    step_ten_out_t<ppT> step_ten_out = plonk_verifier<ppT>::step_ten(
+        step_four_out, step_nine_out, proof, preprocessed_input, srs);
+    const step_eleven_out_t<ppT> step_eleven_out =
+        plonk_verifier<ppT>::step_eleven(step_four_out, step_eight_out, proof);
+    test_plonk_verifier_pairing(
+        example,
+        step_four_out.zeta,
+        step_four_out.u,
+        step_ten_out.F1,
+        step_eleven_out.E1,
+        proof,
+        srs);
+}
+
 template<typename ppT> void test_plonk_verifier()
 {
     using Field = libff::Fr<ppT>;
@@ -761,12 +1079,8 @@ template<typename ppT> void test_plonk_verifier()
     bool b_valid_proof = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_TRUE(b_valid_proof);
     // assert that proof verification fails when the proof is
-    // manipulated. must be executed when DEBUG_PLONK is not defined to
-    // disable certain assert-s that may fail before the verify
-    // invalid proof test TODO: remove DEBUG guards
-#ifndef DEBUG_PLONK
+    // manipulated
     test_verify_invalid_proof(proof, srs, transcript_hash);
-#endif // #ifndef DEBUG_PLONK
 }
 
 TEST(TestPlonk, BLS12_381)
@@ -774,6 +1088,7 @@ TEST(TestPlonk, BLS12_381)
     test_plonk_srs<libff::bls12_381_pp>();
     test_plonk_prover_rounds<libff::bls12_381_pp>();
     test_plonk_prover<libff::bls12_381_pp>();
+    test_plonk_verifier_steps<libff::bls12_381_pp>();
     test_plonk_verifier<libff::bls12_381_pp>();
 }
 
