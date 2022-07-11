@@ -21,6 +21,8 @@
 namespace libsnark
 {
 
+#define PLONK_MAX_DEGREE 245
+
 // Manipulate elements of a valid proof to assert that proof
 // verification fails
 //
@@ -484,6 +486,9 @@ template<typename ppT> void test_plonk_prover_rounds()
     Field secret = example.secret;
     // example witness
     std::vector<Field> witness = example.witness;
+    // example circuit
+    circuit_t<ppT> circuit =
+        plonk_circuit_description_from_example<ppT>(example);
     // get hard-coded values for the transcipt hash
     transcript_hash_t<ppT> transcript_hash(
         example.beta,
@@ -495,11 +500,11 @@ template<typename ppT> void test_plonk_prover_rounds()
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
+    // maximum degree of the encoded monomials in the usrs
+    size_t max_degree = PLONK_MAX_DEGREE;
+
     // prepare srs
-    size_t max_degree = 254;
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    circuit_t<ppT> circuit =
-        plonk_circuit_description_from_example<ppT>(example);
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
     // Prover Round 0 (initialization)
@@ -564,27 +569,11 @@ template<typename ppT> void test_plonk_prover_rounds()
         srs);
 }
 
-template<typename ppT> void test_plonk()
+template<typename ppT> void test_plonk_srs()
 {
-#ifndef DEBUG_PLONK
-    printf("[%s:%d] WARNING! DEBUG_PLONK info disabled.\n", __FILE__, __LINE__);
-    //    assert(0);
-#endif // #ifndef DEBUG_PLONK
-
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
-
-    // Execute all tests for the given curve.
-    ppT::init_public_params();
-
     using Field = libff::Fr<ppT>;
 
-    // --- TEST VECTORS ---
-    // the example class is defined specifically for the BLS12-381
+    // example test values are defined specifically for the BLS12-381
     // curve, so make sure we are using this curve
     try {
         plonk_exception_assert_curve_bls12_381<ppT>();
@@ -592,32 +581,26 @@ template<typename ppT> void test_plonk()
         std::cout << "Error: " << e.what() << "\n";
         exit(EXIT_FAILURE);
     }
+    ppT::init_public_params();
     // load test vector values from example circuit
     plonk_example example;
-
-    // --- SETUP ---
-    printf("[%s:%d] Setup...\n", __FILE__, __LINE__);
-    // random hidden element secret (toxic waste). we fix it to a
-    // constant in order to match against the test vectors
+    // random hidden element secret (toxic waste)
     Field secret = example.secret;
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] secret ", __FILE__, __LINE__);
-    secret.print();
-#endif // #ifdef DEBUG_PLONK
-
-    printf("[%s:%d] SRS...\n", __FILE__, __LINE__);
-    // --- USRS ---
+    // example circuit
+    circuit_t<ppT> circuit =
+        plonk_circuit_description_from_example<ppT>(example);
     // maximum degree of the encoded monomials in the usrs
-    size_t max_degree = 254;
+    size_t max_degree = PLONK_MAX_DEGREE;
+
+    // --- USRS ---
     // compute SRS = powers of secret times G1: 1*G1, secret^1*G1,
     // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    // --- circuit ---
-    circuit_t<ppT> circuit =
-        plonk_circuit_description_from_example<ppT>(example);
     // --- SRS ---
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
-    // sompare SRS against reference test values
+    // compare SRS against reference test values
+    printf("[%s:%d] secret ", __FILE__, __LINE__);
+    secret.print();
     for (int i = 0; i < (int)srs.num_gates + 3; ++i) {
         printf("secret_power_G1[%2d] ", i);
         srs.secret_powers_g1[i].print();
@@ -631,9 +614,31 @@ template<typename ppT> void test_plonk()
         printf("secret_power_G2[%2d] ", i);
         srs.secret_powers_g2[i].print();
     }
+}
 
-    // --- PROVER ---
-    printf("[%s:%d] Prover...\n", __FILE__, __LINE__);
+template<typename ppT> void test_plonk_prover()
+{
+    using Field = libff::Fr<ppT>;
+
+    // example test values are defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
+    ppT::init_public_params();
+    // load test vector values from example circuit
+    plonk_example example;
+    // random hidden element secret (toxic waste)
+    Field secret = example.secret;
+    // example witness
+    std::vector<Field> witness = example.witness;
+    // example circuit
+    circuit_t<ppT> circuit =
+        plonk_circuit_description_from_example<ppT>(example);
+    // get hard-coded values for the transcipt hash
     transcript_hash_t<ppT> transcript_hash(
         example.beta,
         example.gamma,
@@ -641,13 +646,19 @@ template<typename ppT> void test_plonk()
         example.zeta,
         example.nu,
         example.u);
-    // initialize prover
-    plonk_prover<ppT> prover;
-    // compute proof
-    std::vector<Field> witness = example.witness;
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
+    // maximum degree of the encoded monomials in the usrs
+    size_t max_degree = PLONK_MAX_DEGREE;
+
+    // prepare srs
+    usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
+
+    // initialize prover
+    plonk_prover<ppT> prover;
+    // compute proof
     plonk_proof<ppT> proof =
         prover.compute_proof(srs, witness, blind_scalars, transcript_hash);
     // compare proof against test vector values (debug)
@@ -694,9 +705,54 @@ template<typename ppT> void test_plonk()
     W_zeta_omega_at_secret_aff.to_affine_coordinates();
     ASSERT_EQ(W_zeta_omega_at_secret_aff.X, example.W_zeta_omega_at_secret[0]);
     ASSERT_EQ(W_zeta_omega_at_secret_aff.Y, example.W_zeta_omega_at_secret[1]);
+}
 
-    // --- VERIFIER ---
-    printf("[%s:%d] Verifier...\n", __FILE__, __LINE__);
+template<typename ppT> void test_plonk_verifier()
+{
+    using Field = libff::Fr<ppT>;
+
+    // example test values are defined specifically for the BLS12-381
+    // curve, so make sure we are using this curve
+    try {
+        plonk_exception_assert_curve_bls12_381<ppT>();
+    } catch (const std::domain_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+        exit(EXIT_FAILURE);
+    }
+    ppT::init_public_params();
+    // load test vector values from example circuit
+    plonk_example example;
+    // random hidden element secret (toxic waste)
+    Field secret = example.secret;
+    // example witness
+    std::vector<Field> witness = example.witness;
+    // example circuit
+    circuit_t<ppT> circuit =
+        plonk_circuit_description_from_example<ppT>(example);
+    // get hard-coded values for the transcipt hash
+    transcript_hash_t<ppT> transcript_hash(
+        example.beta,
+        example.gamma,
+        example.alpha,
+        example.zeta,
+        example.nu,
+        example.u);
+    // hard-coded values for the "random" blinding constants from
+    // example circuit
+    std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
+    // maximum degree of the encoded monomials in the usrs
+    size_t max_degree = PLONK_MAX_DEGREE;
+
+    // prepare srs
+    usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
+
+    // initialize prover
+    plonk_prover<ppT> prover;
+    // compute proof
+    plonk_proof<ppT> proof =
+        prover.compute_proof(srs, witness, blind_scalars, transcript_hash);
+
     // initialize verifier
     plonk_verifier<ppT> verifier;
     // verify proof
@@ -705,24 +761,18 @@ template<typename ppT> void test_plonk()
     // assert that proof verification fails when the proof is
     // manipulated. must be executed when DEBUG_PLONK is not defined to
     // disable certain assert-s that may fail before the verify
-    // invalid proof test
+    // invalid proof test TODO: remove DEBUG guards
 #ifndef DEBUG_PLONK
     test_verify_invalid_proof(proof, srs);
 #endif // #ifndef DEBUG_PLONK
-#ifndef DEBUG_PLONK
-    printf(
-        "[%s:%d] WARNING! DEBUG_PLONK info was disabled.\n",
-        __FILE__,
-        __LINE__);
-#endif // #ifndef DEBUG_PLONK
-    printf("[%s:%d] Test OK\n", __FILE__, __LINE__);
-    // end
 }
 
 TEST(TestPlonk, BLS12_381)
 {
-    test_plonk<libff::bls12_381_pp>();
+    test_plonk_srs<libff::bls12_381_pp>();
     test_plonk_prover_rounds<libff::bls12_381_pp>();
+    test_plonk_prover<libff::bls12_381_pp>();
+    test_plonk_verifier<libff::bls12_381_pp>();
 }
 
 } // namespace libsnark
