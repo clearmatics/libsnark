@@ -36,7 +36,9 @@ namespace libsnark
 //     r_zeta (*))
 template<typename ppT>
 void test_verify_invalid_proof(
-    const plonk_proof<ppT> &valid_proof, const srs<ppT> &srs)
+    const plonk_proof<ppT> &valid_proof,
+    const srs<ppT> &srs,
+    transcript_hash_t<ppT> &transcript_hash)
 {
     // initialize verifier
     plonk_verifier<ppT> verifier;
@@ -57,14 +59,14 @@ void test_verify_invalid_proof(
         G1_noise = libff::G1<ppT>::random_element();
         proof.W_polys_blinded_at_secret_g1[i] =
             proof.W_polys_blinded_at_secret_g1[i] + G1_noise;
-        b_accept = verifier.verify_proof(proof, srs);
+        b_accept = verifier.verify_proof(proof, srs, transcript_hash);
         ASSERT_FALSE(b_accept);
     }
     // manipulate [z]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.z_poly_at_secret_g1 = proof.z_poly_at_secret_g1 + G1_noise;
-    b_accept = verifier.verify_proof(proof, srs);
+    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_FALSE(b_accept);
     // manipulate [t_lo]_1, [t_mi]_1, [t_hi]_1
     for (size_t i = 0; i < valid_proof.t_poly_at_secret_g1.size(); ++i) {
@@ -72,62 +74,62 @@ void test_verify_invalid_proof(
         proof = valid_proof;
         G1_noise = libff::G1<ppT>::random_element();
         proof.t_poly_at_secret_g1[i] = proof.t_poly_at_secret_g1[i] + G1_noise;
-        b_accept = verifier.verify_proof(proof, srs);
+        b_accept = verifier.verify_proof(proof, srs, transcript_hash);
         ASSERT_FALSE(b_accept);
     }
     // manipulate \bar{a}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.a_zeta = proof.a_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs);
+    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{b}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.b_zeta = proof.b_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs);
+    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{c}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.c_zeta = proof.c_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs);
+    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{S_sigma1}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.S_0_zeta = proof.S_0_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs);
+    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{S_sigma2}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.S_1_zeta = proof.S_1_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs);
+    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{z_w}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.z_poly_xomega_zeta = proof.z_poly_xomega_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs);
+    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_FALSE(b_accept);
     // manipulate [W_zeta]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.W_zeta_at_secret = proof.W_zeta_at_secret + G1_noise;
-    b_accept = verifier.verify_proof(proof, srs);
+    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_FALSE(b_accept);
     // manipulate [W_{zeta omega_roots}]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.W_zeta_omega_at_secret = proof.W_zeta_omega_at_secret + G1_noise;
-    b_accept = verifier.verify_proof(proof, srs);
+    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_FALSE(b_accept);
     // manipulate r_zeta
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.r_zeta = proof.r_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs);
+    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_FALSE(b_accept);
 }
 
@@ -756,14 +758,14 @@ template<typename ppT> void test_plonk_verifier()
     // initialize verifier
     plonk_verifier<ppT> verifier;
     // verify proof
-    bool b_valid_proof = verifier.verify_proof(proof, srs);
+    bool b_valid_proof = verifier.verify_proof(proof, srs, transcript_hash);
     ASSERT_TRUE(b_valid_proof);
     // assert that proof verification fails when the proof is
     // manipulated. must be executed when DEBUG_PLONK is not defined to
     // disable certain assert-s that may fail before the verify
     // invalid proof test TODO: remove DEBUG guards
 #ifndef DEBUG_PLONK
-    test_verify_invalid_proof(proof, srs);
+    test_verify_invalid_proof(proof, srs, transcript_hash);
 #endif // #ifndef DEBUG_PLONK
 }
 
