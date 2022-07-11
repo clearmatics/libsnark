@@ -185,6 +185,14 @@ public:
     /// description, from the common inputs, public input, and elements of
     /// pi-SNARK. TODO: fixed to the test vectors for now
     ///
+    /// INPUT
+    /// \param[in] transcript_hash: hashes of the communication transcript
+    ///            after prover rounds 1,2,3,4,5. TODO: \attention
+    ///            currently the hashes are pre-computed by the caller and
+    ///            passed as input for the purpouses of unit testing. In
+    ///            the long run this input can be removed and the hashes
+    ///            can be computed directly inside verifier::step_four()
+    ///
     /// OUTPUT
     /// \param[out] beta, gamma: permutation challenges - hashes of
     ///             transcript
@@ -194,7 +202,8 @@ public:
     ///             v in [GWC19])
     /// \param[out] u: multipoint evaluation challenge - hash of
     ///             transcript
-    static step_four_out_t<ppT> step_four();
+    static step_four_out_t<ppT> step_four(
+        transcript_hash_t<ppT> &transcript_hash);
 
     /// Verifier Step 5: compute zero polynomial evaluation
     ///
@@ -412,12 +421,20 @@ public:
     /// INPUT
     /// \param[in] proof: SNARK proof produced by the prover
     /// \param[in] srs: structured reference string containing also
-    /// circuit-specific
-    ///   information
+    ///            circuit-specific information
+    /// \param[in] transcript_hash: hashes of the communication transcript
+    ///            after prover rounds 1,2,3,4,5. TODO: \attention
+    ///            currently the hashes are pre-computed by the caller and
+    ///            passed as input for the purpouses of unit testing. In
+    ///            the long run this input can be removed and the hashes
+    ///            can be computed directly inside verifier::step_four()
     ///
     /// OUTPUT
     /// \param[out] boolean 1/0 = valid/invalid proof
-    bool verify_proof(const plonk_proof<ppT> &proof, const srs<ppT> &srs);
+    bool verify_proof(
+        const plonk_proof<ppT> &proof,
+        const srs<ppT> &srs,
+        transcript_hash_t<ppT> &transcript_hash);
 };
 
 } // namespace libsnark
