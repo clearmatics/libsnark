@@ -452,9 +452,9 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
         std::cout << "Error: " << e.what() << "\n";
     }
 
-    // break this->t_poly_long into three parts: lo, mid, hi, each of degree
-    // 7. note: (srs.num_gates+3) is the length of the CRS =
-    // (srs.num_gates+2) powers of G1 + 1 power of G2
+    // break this->t_poly_long into three parts: lo, mid, hi, each of
+    // degree (num_gates-1). note: (srs.num_gates+3) is the length of
+    // the CRS = (srs.num_gates+2) powers of G1 + 1 power of G2
     t_poly.resize(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
         typename std::vector<Field>::iterator begin =
