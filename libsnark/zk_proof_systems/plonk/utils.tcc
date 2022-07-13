@@ -204,28 +204,29 @@ void plonk_compute_cosets_H_k1H_k2H(
 /// plonk_compute_roots_of_unity_omega, \see
 /// plonk_roots_of_unity_omega_to_subgroup_H
 template<typename FieldT>
-void plonk_permute_subgroup_H(
+std::vector<FieldT> plonk_permute_subgroup_H(
     const std::vector<FieldT> &H_gen,
     const std::vector<size_t> &wire_permutation,
-    std::vector<FieldT> &H_gen_permute)
+    const size_t num_gates)
 {
     assert(H_gen.size() > 0);
+    std::vector<FieldT> H_gen_permute;
+    H_gen_permute.resize(NUM_HSETS * num_gates, FieldT(0));
     for (size_t i = 0; i < H_gen.size(); ++i) {
         H_gen_permute[i] = H_gen[wire_permutation[i] - 1];
     }
+    return H_gen_permute;
 }
 
 /// compute the permutation polynomials S_sigma_1, S_sigma_2,
 /// S_sigma_2 (see [GWC19], Sect. 8.1)
 template<typename FieldT>
-void plonk_compute_permutation_polynomials(
-    const std::vector<FieldT> &H_gen_permute,
-    const size_t num_gates,
-    std::vector<polynomial<FieldT>> &S_polys)
+std::vector<polynomial<FieldT>> plonk_compute_permutation_polynomials(
+    const std::vector<FieldT> &H_gen_permute, const size_t num_gates)
 {
-    assert(S_polys.size() == NUM_HSETS);
-    assert(S_polys[0].size() == num_gates);
     assert(H_gen_permute.size() == (NUM_HSETS * num_gates));
+    std::vector<polynomial<FieldT>> S_polys;
+    S_polys.resize(NUM_HSETS, polynomial<FieldT>(num_gates));
     for (size_t i = 0; i < NUM_HSETS; ++i) {
         typename std::vector<FieldT>::const_iterator begin =
             H_gen_permute.begin() + (i * num_gates);
@@ -234,6 +235,7 @@ void plonk_compute_permutation_polynomials(
         std::vector<FieldT> S_points(begin, end);
         plonk_interpolate_polynomial_from_points<FieldT>(S_points, S_polys[i]);
     }
+    return S_polys;
 }
 
 // A wrapper for multi_exp_method_BDLO12_signed() dot-product a
