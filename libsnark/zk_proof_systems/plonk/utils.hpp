@@ -154,7 +154,7 @@ void plonk_compute_roots_of_unity_omega(
 ///
 /// \note uses plonk_compute_roots_of_unity_omega
 template<typename FieldT>
-void plonk_multiplicative_subgroups_H_k1H_k2H(
+void plonk_compute_cosets_H_k1H_k2H(
     const size_t num_gates,
     const FieldT k1,
     const FieldT k2,
