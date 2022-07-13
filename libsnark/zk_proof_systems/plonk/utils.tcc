@@ -320,7 +320,7 @@ void plonk_evaluate_polys_at_secret_G1(
 template<typename FieldT>
 FieldT plonk_compute_accumulator_factor(
     const size_t i,
-    const size_t n, // nconstraimts
+    const size_t num_gates,
     const FieldT beta,
     const FieldT gamma,
     const std::vector<FieldT> &witness,
@@ -328,25 +328,26 @@ FieldT plonk_compute_accumulator_factor(
     const std::vector<FieldT> &H_gen_permute,
     const std::vector<FieldT> &A)
 {
-    assert(n);
-    assert((i >= 0) && (i < n));
-    assert(witness.size() == (3 * n));
-    assert(H_gen.size() == (3 * n));
-    assert(H_gen_permute.size() == (3 * n));
-    assert(A.size() == n);
+    assert(num_gates);
+    assert((i >= 0) && (i < num_gates));
+    assert(witness.size() == (NUM_HSETS * num_gates));
+    assert(H_gen.size() == (NUM_HSETS * num_gates));
+    assert(H_gen_permute.size() == (NUM_HSETS * num_gates));
+    assert(A.size() == num_gates);
     FieldT res = FieldT(1);
     if (i > 0) {
         FieldT nom_1 = witness[i - 1] + (beta * H_gen[i - 1]) + gamma;
         FieldT den_1 = witness[i - 1] + (beta * H_gen_permute[i - 1]) + gamma;
 
-        FieldT nom_2 = witness[n + i - 1] + (beta * H_gen[n + i - 1]) + gamma;
-        FieldT den_2 =
-            witness[n + i - 1] + (beta * H_gen_permute[n + i - 1]) + gamma;
+        FieldT nom_2 = witness[num_gates + i - 1] +
+                       (beta * H_gen[num_gates + i - 1]) + gamma;
+        FieldT den_2 = witness[num_gates + i - 1] +
+                       (beta * H_gen_permute[num_gates + i - 1]) + gamma;
 
-        FieldT nom_3 =
-            witness[2 * n + i - 1] + (beta * H_gen[2 * n + i - 1]) + gamma;
-        FieldT den_3 = witness[2 * n + i - 1] +
-                       (beta * H_gen_permute[2 * n + i - 1]) + gamma;
+        FieldT nom_3 = witness[2 * num_gates + i - 1] +
+                       (beta * H_gen[2 * num_gates + i - 1]) + gamma;
+        FieldT den_3 = witness[2 * num_gates + i - 1] +
+                       (beta * H_gen_permute[2 * num_gates + i - 1]) + gamma;
 
         FieldT nom = nom_1 * nom_2 * nom_3;
         FieldT den = den_1 * den_2 * den_3;
@@ -359,7 +360,7 @@ FieldT plonk_compute_accumulator_factor(
 // - A: accumulator vector
 template<typename FieldT>
 void plonk_compute_accumulator(
-    const size_t n, // num_gates
+    const size_t num_gates,
     const FieldT beta,
     const FieldT gamma,
     const std::vector<FieldT> &witness,
@@ -367,14 +368,14 @@ void plonk_compute_accumulator(
     const std::vector<FieldT> &H_gen_permute,
     std::vector<FieldT> &A)
 {
-    assert(n);
-    assert(witness.size() == (3 * n));
-    assert(H_gen.size() == (3 * n));
-    assert(H_gen_permute.size() == (3 * n));
-    assert(A.size() == n);
-    for (size_t i = 0; i < n; ++i) {
+    assert(num_gates);
+    assert(witness.size() == (NUM_HSETS * num_gates));
+    assert(H_gen.size() == (NUM_HSETS * num_gates));
+    assert(H_gen_permute.size() == (NUM_HSETS * num_gates));
+    assert(A.size() == num_gates);
+    for (size_t i = 0; i < num_gates; ++i) {
         A[i] = plonk_compute_accumulator_factor(
-            i, n, beta, gamma, witness, H_gen, H_gen_permute, A);
+            i, num_gates, beta, gamma, witness, H_gen, H_gen_permute, A);
     }
 }
 
