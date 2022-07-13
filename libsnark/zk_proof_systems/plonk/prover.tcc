@@ -530,9 +530,9 @@ round_four_out_t<ppT>::round_four_out_t(
 ///             3, see pp28 [GWC19]) evaluated at x=zeta
 ///             i.e. t(z). IMPORTANT! the original Plonk proposal
 ///             [GWC19] does not output this parameter t_zeta. The
-///             Python reference implementation does, so we do the
-///             same in order to match the test vectors. TODO can
-///             remove t_zeta in the future
+///             Python reference implementation \[PlonkPy] does, so we
+///             do the same in order to match the test vectors. TODO
+///             can remove t_zeta in the future
 template<typename ppT>
 round_four_out_t<ppT> plonk_prover<ppT>::round_four(
     const libff::Fr<ppT> &zeta,
@@ -613,9 +613,9 @@ round_five_out_t<ppT>::round_five_out_t(
 ///            3, see pp28 [GWC19]) evaluated at x=zeta
 ///            i.e. t(z). IMPORTANT! the original Plonk proposal
 ///            [GWC19] does not output this parameter t_zeta. The
-///            Python reference implementation does, so we do the same
-///            in order to match the test vectors. TODO can remove
-///            t_zeta in the future (from round 4)
+///            Python reference implementation \[PlonkPy] does, so we
+///            do the same in order to match the test vectors. TODO
+///            can remove t_zeta in the future (from round 4)
 /// \param[in] z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x)
 ///            shifted by w (output from Round 3) evaluated at x=zeta
 ///            i.e. z(zeta*w) (from round 4)
@@ -734,8 +734,8 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     //
     // r(x) = r(x) - zh(zeta) (t_lo(x) + zeta^n t_mid(x) + zeta^2n t_hi(x))
     //
-    // In the reference implementation, the missing term is added in
-    // the computation of the W_zeta(x) polynomial
+    // In the reference implementation \[PlonkPy], the missing term is
+    // added in the computation of the W_zeta(x) polynomial
     //
     // linearisation polynomial r(x)
     polynomial<Field> r_poly;
@@ -967,15 +967,15 @@ plonk_proof<ppT>::plonk_proof(
 ///     [W_zeta]_1, [W_{zeta omega}]_1
 ///     r_zeta)
 ///
-/// \note in the reference Python implementation, r_zeta (the
-/// evaluation of the linearlization polynomial r(X) at zeta from
+/// \note in the reference Python implementation \[PlonkPy], r_zeta
+/// (the evaluation of the linearlization polynomial r(X) at zeta from
 /// Prover round 5) is added to the pi-SNARK proof. In the paper this
 /// is omitted, which seems to make the proof shorter by 1 element at
 /// the epxense of a slightly heavier computation on the verifier's
-/// side. Here we follow the reference implementation to make sure we
-/// match the test values. TODO: once all test vectors are verified,
-/// we may remove r_zeta from the proof to be fully compliant with the
-/// paper.
+/// side. Here we follow the reference implementation \[PlonkPy] to
+/// make sure we match the test values. TODO: once all test vectors
+/// are verified, we may remove r_zeta from the proof to be fully
+/// compliant with the paper.
 ///
 /// Mapping code-to-paper quantities
 ///
