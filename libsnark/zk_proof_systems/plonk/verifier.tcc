@@ -118,30 +118,16 @@ step_four_out_t<ppT>::step_four_out_t(
 ///             transcript
 template<typename ppT>
 step_four_out_t<ppT> plonk_verifier<ppT>::step_four(
-    transcript_hash_t<ppT> &transcript_hash)
+    const transcript_hash_t<ppT> &transcript_hash)
 {
     // step 4 output
-    libff::Fr<ppT> beta;
-    libff::Fr<ppT> gamma;
-    libff::Fr<ppT> alpha;
-    libff::Fr<ppT> zeta;
-    libff::Fr<ppT> nu;
-    libff::Fr<ppT> u;
-
-    beta = transcript_hash.beta;
-    gamma = transcript_hash.gamma;
-    alpha = transcript_hash.alpha;
-    zeta = transcript_hash.zeta;
-    nu = transcript_hash.nu;
-    u = transcript_hash.u;
-
     step_four_out_t<ppT> step_four_out(
-        std::move(beta),
-        std::move(gamma),
-        std::move(alpha),
-        std::move(zeta),
-        std::move(nu),
-        std::move(u));
+        Field(transcript_hash.beta),
+        Field(transcript_hash.gamma),
+        Field(transcript_hash.alpha),
+        Field(transcript_hash.zeta),
+        Field(transcript_hash.nu),
+        Field(transcript_hash.u));
 
     return step_four_out;
 }
