@@ -203,7 +203,7 @@ public:
     /// \param[out] u: multipoint evaluation challenge - hash of
     ///             transcript
     static step_four_out_t<ppT> step_four(
-        transcript_hash_t<ppT> &transcript_hash);
+        const transcript_hash_t<ppT> &transcript_hash);
 
     /// Verifier Step 5: compute zero polynomial evaluation
     ///
