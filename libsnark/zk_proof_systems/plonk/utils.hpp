@@ -134,18 +134,16 @@ void plonk_compute_cosets_H_k1H_k2H(
 /// plonk_compute_roots_of_unity_omega, \see
 /// plonk_roots_of_unity_omega_to_subgroup_H
 template<typename FieldT>
-void plonk_permute_subgroup_H(
+std::vector<FieldT> plonk_permute_subgroup_H(
     const std::vector<FieldT> &H_gen,
     const std::vector<size_t> &wire_permutation,
-    std::vector<FieldT> &H_gen_permute);
+    const size_t num_gates);
 
 /// compute the permutation polynomials S_sigma_1, S_sigma_2,
 /// S_sigma_2 (see [GWC19], Sect. 8.1)
 template<typename FieldT>
-void plonk_compute_permutation_polynomials(
-    const std::vector<FieldT> &H_gen_permute,
-    const size_t num_gates,
-    std::vector<polynomial<FieldT>> &S_polys);
+std::vector<polynomial<FieldT>> plonk_compute_permutation_polynomials(
+    const std::vector<FieldT> &H_gen_permute, const size_t num_gates);
 
 // A wrapper for multi_exp_method_BDLO12_signed() dot-product a
 // vector of group elements in G1 (curve points) with a vector of
