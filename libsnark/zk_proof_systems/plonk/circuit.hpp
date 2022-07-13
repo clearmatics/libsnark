@@ -9,7 +9,7 @@
 #ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_HPP_
 #define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_HPP_
 
-#include "libsnark/zk_proof_systems/plonk/plonk.hpp"
+#include "libsnark/zk_proof_systems/plonk/utils.hpp"
 
 /// Declaration of Common Preprocessed Input data structures for a
 /// specific arithmetic circuit.
