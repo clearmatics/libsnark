@@ -450,7 +450,6 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
         }
     } catch (const std::logic_error &e) {
         std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
     }
 
     // break this->t_poly_long into three parts: lo, mid, hi, each of degree

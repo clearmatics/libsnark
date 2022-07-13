@@ -139,7 +139,6 @@ void plonk_compute_roots_of_unity_omega(
         }
     } catch (const std::invalid_argument &e) {
         std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
     }
     omega.resize(NUM_HSETS, std::vector<FieldT>(num_gates));
 
@@ -186,7 +185,6 @@ void plonk_compute_cosets_H_k1H_k2H(
         }
     } catch (const std::invalid_argument &e) {
         std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
     }
 
     // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
