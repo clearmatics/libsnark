@@ -203,9 +203,6 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     Q_polys.resize(num_qpolys, polynomial<Field>(num_gates));
     plonk_compute_selector_polynomials<Field>(gates_matrix_transpose, Q_polys);
 
-    // number of generators for H, Hk1, Hk2
-    int num_hgen = NUM_HSETS;
-
     // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
     // omega[2] are omega[0]*k2
     std::vector<std::vector<Field>> omega_roots;
@@ -227,9 +224,8 @@ circuit_t<ppT> plonk_circuit_description_from_example(
 #endif // #ifdef DEBUG_PLONK
 
     // permute circuit.H_gen according to the wire permutation
-    std::vector<Field> H_gen_permute;
-    H_gen_permute.resize(num_hgen * num_gates, Field(0));
-    plonk_permute_subgroup_H<Field>(H_gen, wire_permutation, H_gen_permute);
+    std::vector<Field> H_gen_permute =
+        plonk_permute_subgroup_H<Field>(H_gen, wire_permutation, num_gates);
     // TODO: write unit test for plonk_permute_subgroup_H
 #ifdef DEBUG_PLONK
     printf("[%s:%d] H_gen_permute\n", __FILE__, __LINE__);
@@ -241,10 +237,8 @@ circuit_t<ppT> plonk_circuit_description_from_example(
 
     // compute the permutation polynomials S_sigma_1, S_sigma_2,
     // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
-    std::vector<polynomial<Field>> S_polys;
-    S_polys.resize(num_hgen, polynomial<Field>(num_gates));
-    plonk_compute_permutation_polynomials<Field>(
-        H_gen_permute, num_gates, S_polys);
+    std::vector<polynomial<Field>> S_polys =
+        plonk_compute_permutation_polynomials<Field>(H_gen_permute, num_gates);
 
     circuit_t<ppT> circuit(
         std::move(num_gates),
