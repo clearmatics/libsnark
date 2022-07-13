@@ -6,11 +6,11 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_TCC_
-#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_TCC_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_TCC_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_TCC_
 
 /// Implementation of interfaces for a ppzkSNARK for Plonk. See
-/// plonk.hpp .
+/// utils.hpp .
 
 namespace libsnark
 {
@@ -441,4 +441,4 @@ void plonk_compute_accumulator(
 
 } // namespace libsnark
 
-#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_TCC_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_TCC_
