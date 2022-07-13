@@ -134,20 +134,12 @@ void test_verify_invalid_proof(
 }
 
 /// Compute or fill-in ciruit specific data from example.
+/// \attention the example class is defined specifically for the BLS12-381
+/// curve, so make sure we are using this curve
 template<typename ppT>
 circuit_t<ppT> plonk_circuit_description_from_example(
     const plonk_example example)
 {
-    // the example class is defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve TODO: remove when
-    // the implementation is stable and tested
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
-
     using Field = libff::Fr<ppT>;
 
     // public input (PI)
@@ -458,18 +450,11 @@ void test_plonk_prover_round_five(
     ASSERT_EQ(W_zeta_omega_at_secret_aff.Y, example.W_zeta_omega_at_secret[1]);
 }
 
+/// \attention the example class is defined specifically for the BLS12-381
+/// curve, so make sure we are using this curve
 template<typename ppT> void test_plonk_prover_rounds()
 {
     using Field = libff::Fr<ppT>;
-
-    // example test values are defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
 
     ppT::init_public_params();
 
@@ -562,18 +547,12 @@ template<typename ppT> void test_plonk_prover_rounds()
         srs);
 }
 
+/// \attention the example class is defined specifically for the BLS12-381
+/// curve, so make sure we are using this curve
 template<typename ppT> void test_plonk_srs()
 {
     using Field = libff::Fr<ppT>;
 
-    // example test values are defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
     ppT::init_public_params();
     // load test vector values from example circuit
     plonk_example example;
@@ -609,18 +588,12 @@ template<typename ppT> void test_plonk_srs()
     }
 }
 
+/// \attention the example class is defined specifically for the BLS12-381
+/// curve, so make sure we are using this curve
 template<typename ppT> void test_plonk_prover()
 {
     using Field = libff::Fr<ppT>;
 
-    // example test values are defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
     ppT::init_public_params();
     // load test vector values from example circuit
     plonk_example example;
@@ -700,20 +673,12 @@ template<typename ppT> void test_plonk_prover()
     ASSERT_EQ(W_zeta_omega_at_secret_aff.Y, example.W_zeta_omega_at_secret[1]);
 }
 
+/// \attention the example class is defined specifically for the BLS12-381
+/// curve, so make sure we are using this curve
 template<typename ppT>
 void test_plonk_verifier_preprocessed_input(
     const plonk_example &example, const srs<ppT> &srs)
 {
-    // the example class is defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve TODO: remove when
-    // the implementation is stable and tested
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
-
     // compute verifier preprocessed input
     const verifier_preprocessed_input_t<ppT> preprocessed_input =
         plonk_verifier<ppT>::preprocessed_input(srs);
@@ -846,7 +811,9 @@ void test_plonk_verifier_step_eleven(
     ASSERT_EQ(E1_aff.Y, example.E1[1]);
 }
 
-// step 12
+/// test verifier step 12
+/// \attention the example class is defined specifically for the BLS12-381
+/// curve, so make sure we are using this curve
 template<typename ppT>
 void test_plonk_verifier_pairing(
     const plonk_example &example,
@@ -857,15 +824,6 @@ void test_plonk_verifier_pairing(
     const plonk_proof<ppT> &proof,
     const srs<ppT> &srs)
 {
-    // the example class is defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve TODO: remove when
-    // the implementation is stable and tested
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
     using Field = libff::Fr<ppT>;
     std::vector<libff::G1<ppT>> curve_points_lhs{
         proof.W_zeta_at_secret, proof.W_zeta_omega_at_secret};
@@ -912,18 +870,12 @@ void test_plonk_verifier_pairing(
     ASSERT_TRUE(b_accept);
 }
 
+/// \attention the example class is defined specifically for the BLS12-381
+/// curve, so make sure we are using this curve
 template<typename ppT> void test_plonk_verifier_steps()
 {
     using Field = libff::Fr<ppT>;
 
-    // example test values are defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
     ppT::init_public_params();
     // load test vector values from example circuit
     plonk_example example;
@@ -1021,18 +973,12 @@ template<typename ppT> void test_plonk_verifier_steps()
         srs);
 }
 
+/// \attention the example class is defined specifically for the BLS12-381
+/// curve, so make sure we are using this curve
 template<typename ppT> void test_plonk_verifier()
 {
     using Field = libff::Fr<ppT>;
 
-    // example test values are defined specifically for the BLS12-381
-    // curve, so make sure we are using this curve
-    try {
-        plonk_exception_assert_curve_bls12_381<ppT>();
-    } catch (const std::domain_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
-        exit(EXIT_FAILURE);
-    }
     ppT::init_public_params();
     // load test vector values from example circuit
     plonk_example example;
