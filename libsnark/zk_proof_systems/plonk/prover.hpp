@@ -369,7 +369,7 @@ public:
     /// INPUT
     /// \param[in] beta, gamma: permutation challenges -- hashes of
     ///            transcript (from round 2)
-    /// \param[in] alpha: quotinet challenge -- hash of transcript (from
+    /// \param[in] alpha: quotient challenge -- hash of transcript (from
     ///            round 3)
     /// \param[in] zeta: evaluation challenge -- hash of transcript (from
     ///            round 4)
