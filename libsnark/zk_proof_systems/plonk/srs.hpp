@@ -60,10 +60,7 @@ public:
 
     usrs(
         std::vector<libff::G1<ppT>> &&secret_powers_g1,
-        std::vector<libff::G2<ppT>> &&secret_powers_g2)
-        : secret_powers_g1(secret_powers_g1), secret_powers_g2(secret_powers_g2)
-    {
-    }
+        std::vector<libff::G2<ppT>> &&secret_powers_g2);
 };
 
 template<typename ppT>
@@ -134,22 +131,7 @@ public:
         const libff::Fr<ppT> &k1,
         const libff::Fr<ppT> &k2,
         std::vector<libff::G1<ppT>> &&secret_powers_g1,
-        std::vector<libff::G2<ppT>> &&secret_powers_g2)
-        : num_gates(num_gates)
-        , num_qpolys(num_qpolys)
-        , L_basis(L_basis)
-        , PI_poly(PI_poly)
-        , Q_polys(Q_polys)
-        , S_polys(S_polys)
-        , omega_roots(omega_roots)
-        , H_gen(H_gen)
-        , H_gen_permute(H_gen_permute)
-        , k1(k1)
-        , k2(k2)
-        , secret_powers_g1(secret_powers_g1)
-        , secret_powers_g2(secret_powers_g2)
-    {
-    }
+        std::vector<libff::G2<ppT>> &&secret_powers_g2);
 };
 
 template<typename ppT>
@@ -178,8 +160,7 @@ public:
     std::vector<libff::G2<ppT>> secret_powers_g2;
 
     plonk_verification_key();
-    plonk_verification_key(std::vector<libff::G2<ppT>> &&secret_powers_g2)
-        : secret_powers_g2(std::move(secret_powers_g2)){};
+    plonk_verification_key(std::vector<libff::G2<ppT>> &&secret_powers_g2);
 };
 
 /// A key pair for Plonk, which consists of a proving key and a
@@ -192,10 +173,8 @@ public:
 
     plonk_keypair() = default;
     plonk_keypair(const plonk_keypair<ppT> &other) = default;
-    plonk_keypair(plonk_proving_key<ppT> &&pk, plonk_verification_key<ppT> &&vk)
-        : pk(std::move(pk)), vk(std::move(vk))
-    {
-    }
+    plonk_keypair(
+        plonk_proving_key<ppT> &&pk, plonk_verification_key<ppT> &&vk);
 
     plonk_keypair(plonk_keypair<ppT> &&other) = default;
 };
@@ -218,17 +197,14 @@ template<typename ppT> struct transcript_hash_t {
     /// 1,2,3,4,5
     libff::Fr<ppT> u;
 
-    /// stuct constructor
+    /// struct constructor
     transcript_hash_t(
         libff::Fr<ppT> &beta,
         libff::Fr<ppT> &gamma,
         libff::Fr<ppT> &alpha,
         libff::Fr<ppT> &zeta,
         libff::Fr<ppT> &nu,
-        libff::Fr<ppT> &u)
-        : beta(beta), gamma(gamma), alpha(alpha), zeta(zeta), nu(nu), u(u)
-    {
-    }
+        libff::Fr<ppT> &u);
 };
 
 } // namespace libsnark

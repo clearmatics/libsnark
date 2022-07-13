@@ -15,6 +15,16 @@
 namespace libsnark
 {
 
+/// struct verifier_preprocessed_input_t constructor
+template<typename ppT>
+verifier_preprocessed_input_t<ppT>::verifier_preprocessed_input_t(
+    std::vector<libff::G1<ppT>> &&Q_polys_at_secret_g1,
+    std::vector<libff::G1<ppT>> &&S_polys_at_secret_g1)
+    : Q_polys_at_secret_g1(Q_polys_at_secret_g1)
+    , S_polys_at_secret_g1(S_polys_at_secret_g1)
+{
+}
+
 /// Verifier precomputation
 ///
 /// INPUT
@@ -30,18 +40,18 @@ template<typename ppT>
 verifier_preprocessed_input_t<ppT> plonk_verifier<ppT>::preprocessed_input(
     const srs<ppT> &srs)
 {
-    verifier_preprocessed_input_t<ppT> preprocessed_input;
-    preprocessed_input.Q_polys_at_secret_g1.resize(srs.Q_polys.size());
+    std::vector<libff::G1<ppT>> Q_polys_at_secret_g1;
+    Q_polys_at_secret_g1.resize(srs.Q_polys.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(
-        srs.secret_powers_g1,
-        srs.Q_polys,
-        preprocessed_input.Q_polys_at_secret_g1);
+        srs.secret_powers_g1, srs.Q_polys, Q_polys_at_secret_g1);
 
-    preprocessed_input.S_polys_at_secret_g1.resize(srs.S_polys.size());
+    std::vector<libff::G1<ppT>> S_polys_at_secret_g1;
+    S_polys_at_secret_g1.resize(srs.S_polys.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(
-        srs.secret_powers_g1,
-        srs.S_polys,
-        preprocessed_input.S_polys_at_secret_g1);
+        srs.secret_powers_g1, srs.S_polys, S_polys_at_secret_g1);
+
+    verifier_preprocessed_input_t<ppT> preprocessed_input(
+        std::move(Q_polys_at_secret_g1), std::move(S_polys_at_secret_g1));
     return preprocessed_input;
 }
 
@@ -69,6 +79,19 @@ void plonk_verifier<ppT>::step_two(const plonk_proof<ppT> &proof)
 /// \attention This validation MUST be done by the caller. Empty
 /// function here for consistency with the description in [GWC19]
 template<typename ppT> void plonk_verifier<ppT>::step_three(const srs<ppT> &srs)
+{
+}
+
+/// struct step_four_out_t constructor
+template<typename ppT>
+step_four_out_t<ppT>::step_four_out_t(
+    libff::Fr<ppT> &&beta,
+    libff::Fr<ppT> &&gamma,
+    libff::Fr<ppT> &&alpha,
+    libff::Fr<ppT> &&zeta,
+    libff::Fr<ppT> &&nu,
+    libff::Fr<ppT> &&u)
+    : beta(beta), gamma(gamma), alpha(alpha), zeta(zeta), nu(nu), u(u)
 {
 }
 
@@ -123,6 +146,13 @@ step_four_out_t<ppT> plonk_verifier<ppT>::step_four(
     return step_four_out;
 }
 
+/// struct step_five_out_t constructor
+template<typename ppT>
+step_five_out_t<ppT>::step_five_out_t(libff::Fr<ppT> &&zh_zeta)
+    : zh_zeta(zh_zeta)
+{
+}
+
 /// Verifier Step 5: compute zero polynomial evaluation
 ///
 /// INPUT
@@ -144,6 +174,13 @@ step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
     zh_zeta = domain->compute_vanishing_polynomial(step_four_out.zeta);
     step_five_out_t<ppT> step_five_out(std::move(zh_zeta));
     return step_five_out;
+}
+
+/// struct step_six_out_t constructor
+template<typename ppT>
+step_six_out_t<ppT>::step_six_out_t(libff::Fr<ppT> &&L_0_zeta)
+    : L_0_zeta(L_0_zeta)
+{
 }
 
 /// Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
@@ -169,6 +206,13 @@ step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
     return step_six_out;
 }
 
+/// struct step_seven_out_t constructor
+template<typename ppT>
+step_seven_out_t<ppT>::step_seven_out_t(libff::Fr<ppT> &&PI_zeta)
+    : PI_zeta(PI_zeta)
+{
+}
+
 /// Verifier Step 7: compute public input polynomial evaluation
 /// PI(zeta)
 ///
@@ -190,6 +234,13 @@ step_seven_out_t<ppT> plonk_verifier<ppT>::step_seven(
         srs.PI_poly.size(), srs.PI_poly, step_four_out.zeta);
     step_seven_out_t<ppT> step_seven_out(std::move(PI_zeta));
     return step_seven_out;
+}
+
+/// struct step_eight_out_t constructor
+template<typename ppT>
+step_eight_out_t<ppT>::step_eight_out_t(libff::Fr<ppT> &&r_prime_zeta)
+    : r_prime_zeta(r_prime_zeta)
+{
 }
 
 /// Verifier Step 8: compute quotient polynomial evaluation r'(zeta) =
@@ -249,6 +300,12 @@ step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
 
     step_eight_out_t<ppT> step_eight_out(std::move(r_prime_zeta));
     return step_eight_out;
+}
+
+/// struct step_nine_out_t constructor
+template<typename ppT>
+step_nine_out_t<ppT>::step_nine_out_t(libff::G1<ppT> &&D1) : D1(D1)
+{
 }
 
 /// Verifier Step 9: compute first part of batched polynomial
@@ -353,6 +410,12 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
     return step_nine_out;
 }
 
+/// struct step_ten_out_t constructor
+template<typename ppT>
+step_ten_out_t<ppT>::step_ten_out_t(libff::G1<ppT> &&F1) : F1(F1)
+{
+}
+
 /// Verifier Step 10: compute full batched polynomial commitment [F]_1
 /// = [D]_1 + v [a]_1 + v^2 [b]_1 + v^3 [c]_1 + v^4 [s_sigma_1]_1 +
 /// v^5 [s_sigma_2]_1 Note: to [F]_1 the erefernce code also adds the
@@ -419,6 +482,12 @@ step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
     F1 = plonk_multi_exp_G1<ppT>(curve_points, scalar_elements);
     step_ten_out_t<ppT> step_ten_out(std::move(F1));
     return step_ten_out;
+}
+
+/// struct step_eleven_out_t constructor
+template<typename ppT>
+step_eleven_out_t<ppT>::step_eleven_out_t(libff::G1<ppT> &&E1) : E1(E1)
+{
 }
 
 /// Verifier Step 11: compute group-encoded batch evaluation [E]_1

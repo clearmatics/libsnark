@@ -15,6 +15,16 @@
 namespace libsnark
 {
 
+/// Prover round 0 output constructor
+template<typename ppT>
+round_zero_out_t<ppT>::round_zero_out_t(
+    const std::vector<libff::Fr<ppT>> &&zh_poly,
+    const polynomial<libff::Fr<ppT>> &&null_poly,
+    const polynomial<libff::Fr<ppT>> &&neg_one_poly)
+    : zh_poly(zh_poly), null_poly(null_poly), neg_one_poly(neg_one_poly)
+{
+}
+
 /// Prover Round 0 initialization
 ///
 /// Initialization
@@ -50,6 +60,18 @@ round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> srs)
         std::move(zh_poly), std::move(null_poly), std::move(neg_one_poly));
 
     return round_zero_out;
+}
+
+/// Prover round 1 output constructor
+template<typename ppT>
+round_one_out_t<ppT>::round_one_out_t(
+    const std::vector<polynomial<libff::Fr<ppT>>> &&W_polys,
+    const std::vector<std::vector<libff::Fr<ppT>>> &&W_polys_blinded,
+    const std::vector<libff::G1<ppT>> &&W_polys_blinded_at_secret_g1)
+    : W_polys(W_polys)
+    , W_polys_blinded(W_polys_blinded)
+    , W_polys_blinded_at_secret_g1(W_polys_blinded_at_secret_g1)
+{
 }
 
 /// Prover Round 1
@@ -126,6 +148,14 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     return round_one_out;
 }
 
+/// Prover round 2 output
+template<typename ppT>
+round_two_out_t<ppT>::round_two_out_t(
+    polynomial<libff::Fr<ppT>> &&z_poly, libff::G1<ppT> &&z_poly_at_secret_g1)
+    : z_poly(z_poly), z_poly_at_secret_g1(z_poly_at_secret_g1)
+{
+}
+
 /// Prover Round 2
 ///
 /// INPUT
@@ -186,6 +216,20 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
         std::move(z_poly), std::move(z_poly_at_secret_g1));
 
     return round_two_out;
+}
+
+/// Prover round 3 output constructor
+template<typename ppT>
+round_three_out_t<ppT>::round_three_out_t(
+    std::vector<libff::Fr<ppT>> &&z_poly_xomega,
+    std::vector<polynomial<libff::Fr<ppT>>> &&t_poly,
+    polynomial<libff::Fr<ppT>> &&t_poly_long,
+    std::vector<libff::G1<ppT>> &&t_poly_at_secret_g1)
+    : z_poly_xomega(z_poly_xomega)
+    , t_poly(t_poly)
+    , t_poly_long(t_poly_long)
+    , t_poly_at_secret_g1(t_poly_at_secret_g1)
+{
 }
 
 /// Prover Round 3
@@ -439,6 +483,26 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     return round_three_out;
 }
 
+/// Prover round 4 output constructor
+template<typename ppT>
+round_four_out_t<ppT>::round_four_out_t(
+    libff::Fr<ppT> &&a_zeta,
+    libff::Fr<ppT> &&b_zeta,
+    libff::Fr<ppT> &&c_zeta,
+    libff::Fr<ppT> &&S_0_zeta,
+    libff::Fr<ppT> &&S_1_zeta,
+    libff::Fr<ppT> &&z_poly_xomega_zeta,
+    libff::Fr<ppT> &&t_zeta)
+    : a_zeta(a_zeta)
+    , b_zeta(b_zeta)
+    , c_zeta(c_zeta)
+    , S_0_zeta(S_0_zeta)
+    , S_1_zeta(S_1_zeta)
+    , z_poly_xomega_zeta(z_poly_xomega_zeta)
+    , t_zeta(t_zeta)
+{
+}
+
 /// Prover Round 4
 ///
 /// INPUT
@@ -515,6 +579,18 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
         std::move(t_zeta));
 
     return round_four_out;
+}
+
+/// Prover round 5 output constructor
+template<typename ppT>
+round_five_out_t<ppT>::round_five_out_t(
+    libff::Fr<ppT> &&r_zeta,
+    libff::G1<ppT> &&W_zeta_at_secret,
+    libff::G1<ppT> &&W_zeta_omega_at_secret)
+    : r_zeta(r_zeta)
+    , W_zeta_at_secret(W_zeta_at_secret)
+    , W_zeta_omega_at_secret(W_zeta_omega_at_secret)
+{
 }
 
 /// Prover Round 5
@@ -851,6 +927,36 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
         std::move(W_zeta_omega_at_secret));
 
     return round_five_out;
+}
+
+// class plonk_proof constructor
+template<typename ppT>
+plonk_proof<ppT>::plonk_proof(
+    std::vector<libff::G1<ppT>> &W_polys_blinded_at_secret_g1,
+    libff::G1<ppT> &z_poly_at_secret_g1,
+    std::vector<libff::G1<ppT>> &t_poly_at_secret_g1,
+    Field &a_zeta,
+    Field &b_zeta,
+    Field &c_zeta,
+    Field &S_0_zeta,
+    Field &S_1_zeta,
+    Field &z_poly_xomega_zeta,
+    libff::G1<ppT> &W_zeta_at_secret,
+    libff::G1<ppT> &W_zeta_omega_at_secret,
+    Field &r_zeta)
+    : W_polys_blinded_at_secret_g1(W_polys_blinded_at_secret_g1)
+    , z_poly_at_secret_g1(z_poly_at_secret_g1)
+    , t_poly_at_secret_g1(t_poly_at_secret_g1)
+    , a_zeta(a_zeta)
+    , b_zeta(b_zeta)
+    , c_zeta(c_zeta)
+    , S_0_zeta(S_0_zeta)
+    , S_1_zeta(S_1_zeta)
+    , z_poly_xomega_zeta(z_poly_xomega_zeta)
+    , W_zeta_at_secret(W_zeta_at_secret)
+    , W_zeta_omega_at_secret(W_zeta_omega_at_secret)
+    , r_zeta(r_zeta)
+{
 }
 
 /// Prover compute SNARK proof
