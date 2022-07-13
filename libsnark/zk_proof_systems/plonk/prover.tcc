@@ -38,7 +38,7 @@ round_zero_out_t<ppT>::round_zero_out_t(
 /// \param[out] null_poly: 0 polynomial
 /// \param[out] neg_one_poly: -1 polynomial
 template<typename ppT>
-round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> srs)
+round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
 
@@ -96,7 +96,7 @@ round_one_out_t<ppT>::round_one_out_t(
 template<typename ppT>
 round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     const round_zero_out_t<ppT> &round_zero_out,
-    const std::vector<libff::Fr<ppT>> blind_scalars,
+    const std::vector<libff::Fr<ppT>> &blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs)
 {
@@ -172,8 +172,8 @@ round_two_out_t<ppT>::round_two_out_t(
 ///             evaluated at secret
 template<typename ppT>
 round_two_out_t<ppT> plonk_prover<ppT>::round_two(
-    const libff::Fr<ppT> beta,
-    const libff::Fr<ppT> gamma,
+    const libff::Fr<ppT> &beta,
+    const libff::Fr<ppT> &gamma,
     const round_zero_out_t<ppT> &round_zero_out,
     const std::vector<libff::Fr<ppT>> blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
@@ -255,9 +255,9 @@ round_three_out_t<ppT>::round_three_out_t(
 ///             by w
 template<typename ppT>
 round_three_out_t<ppT> plonk_prover<ppT>::round_three(
-    const libff::Fr<ppT> alpha,
-    const libff::Fr<ppT> beta,
-    const libff::Fr<ppT> gamma,
+    const libff::Fr<ppT> &alpha,
+    const libff::Fr<ppT> &beta,
+    const libff::Fr<ppT> &gamma,
     const round_zero_out_t<ppT> &round_zero_out,
     const round_one_out_t<ppT> &round_one_out,
     const round_two_out_t<ppT> &round_two_out,
@@ -535,7 +535,7 @@ round_four_out_t<ppT>::round_four_out_t(
 ///             remove t_zeta in the future
 template<typename ppT>
 round_four_out_t<ppT> plonk_prover<ppT>::round_four(
-    const libff::Fr<ppT> zeta,
+    const libff::Fr<ppT> &zeta,
     const round_one_out_t<ppT> &round_one_out,
     const round_three_out_t<ppT> &round_three_out,
     const srs<ppT> &srs)
@@ -638,11 +638,11 @@ round_five_out_t<ppT>::round_five_out_t(
 ///             i.e. [W_{zeta omega}(secret)]_1
 template<typename ppT>
 round_five_out_t<ppT> plonk_prover<ppT>::round_five(
-    const libff::Fr<ppT> alpha,
-    const libff::Fr<ppT> beta,
-    const libff::Fr<ppT> gamma,
-    const libff::Fr<ppT> zeta,
-    const libff::Fr<ppT> nu,
+    const libff::Fr<ppT> &alpha,
+    const libff::Fr<ppT> &beta,
+    const libff::Fr<ppT> &gamma,
+    const libff::Fr<ppT> &zeta,
+    const libff::Fr<ppT> &nu,
     const round_zero_out_t<ppT> &round_zero_out,
     const round_one_out_t<ppT> &round_one_out,
     const round_two_out_t<ppT> &round_two_out,
@@ -1014,7 +1014,7 @@ template<typename ppT>
 plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     const srs<ppT> &srs,
     const std::vector<Field> &witness,
-    const std::vector<libff::Fr<ppT>> blind_scalars,
+    const std::vector<libff::Fr<ppT>> &blind_scalars,
     transcript_hash_t<ppT> &transcript_hash)
 {
     // Prover Round 0 (initialization)

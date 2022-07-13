@@ -248,7 +248,7 @@ public:
     /// \param[out] zh_poly: vanishing polynomial
     /// \param[out] null_poly: 0 polynomial
     /// \param[out] neg_one_poly: -1 polynomial
-    static round_zero_out_t<ppT> round_zero(const srs<ppT> srs);
+    static round_zero_out_t<ppT> round_zero(const srs<ppT> &srs);
 
     /// Prover Round 1
     ///
@@ -271,7 +271,7 @@ public:
     ///             [a]_1, [b]_1, [c]_1 in [GWC19]
     static round_one_out_t<ppT> round_one(
         const round_zero_out_t<ppT> &round_zero_out,
-        const std::vector<libff::Fr<ppT>> blind_scalars,
+        const std::vector<libff::Fr<ppT>> &blind_scalars,
         const std::vector<libff::Fr<ppT>> &witness,
         const srs<ppT> &srs);
 
@@ -290,8 +290,8 @@ public:
     /// \param[out] z_poly_at_secret_g1: blinded accumulator poly z(x)
     ///             evaluated at secret
     static round_two_out_t<ppT> round_two(
-        const libff::Fr<ppT> beta,
-        const libff::Fr<ppT> gamma,
+        const libff::Fr<ppT> &beta,
+        const libff::Fr<ppT> &gamma,
         const round_zero_out_t<ppT> &round_zero_out,
         const std::vector<libff::Fr<ppT>> blind_scalars,
         const std::vector<libff::Fr<ppT>> &witness,
@@ -319,9 +319,9 @@ public:
     /// \param[out] z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted
     ///             by w
     static round_three_out_t<ppT> round_three(
-        const libff::Fr<ppT> alpha,
-        const libff::Fr<ppT> beta,
-        const libff::Fr<ppT> gamma,
+        const libff::Fr<ppT> &alpha,
+        const libff::Fr<ppT> &beta,
+        const libff::Fr<ppT> &gamma,
         const round_zero_out_t<ppT> &round_zero_out,
         const round_one_out_t<ppT> &round_one_out,
         const round_two_out_t<ppT> &round_two_out,
@@ -359,7 +359,7 @@ public:
     ///             same in order to match the test vectors. TODO can
     ///             remove t_zeta in the future
     static round_four_out_t<ppT> round_four(
-        const libff::Fr<ppT> zeta,
+        const libff::Fr<ppT> &zeta,
         const round_one_out_t<ppT> &round_one_out,
         const round_three_out_t<ppT> &round_three_out,
         const srs<ppT> &srs);
@@ -409,11 +409,11 @@ public:
     ///             polynomial W_{zeta omega}(x) at secert input
     ///             i.e. [W_{zeta omega}(secret)]_1
     static round_five_out_t<ppT> round_five(
-        const libff::Fr<ppT> alpha,
-        const libff::Fr<ppT> beta,
-        const libff::Fr<ppT> gamma,
-        const libff::Fr<ppT> zeta,
-        const libff::Fr<ppT> nu,
+        const libff::Fr<ppT> &alpha,
+        const libff::Fr<ppT> &beta,
+        const libff::Fr<ppT> &gamma,
+        const libff::Fr<ppT> &zeta,
+        const libff::Fr<ppT> &nu,
         const round_zero_out_t<ppT> &round_zero_out,
         const round_one_out_t<ppT> &round_one_out,
         const round_two_out_t<ppT> &round_two_out,
@@ -476,7 +476,7 @@ public:
     static plonk_proof<ppT> compute_proof(
         const srs<ppT> &srs,
         const std::vector<Field> &witness,
-        const std::vector<libff::Fr<ppT>> blind_scalars,
+        const std::vector<libff::Fr<ppT>> &blind_scalars,
         transcript_hash_t<ppT> &transcript_hash);
 };
 
