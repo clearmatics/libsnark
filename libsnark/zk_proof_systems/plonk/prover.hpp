@@ -82,21 +82,7 @@ public:
         Field &z_poly_xomega_zeta,
         libff::G1<ppT> &W_zeta_at_secret,
         libff::G1<ppT> &W_zeta_omega_at_secret,
-        Field &r_zeta)
-        : W_polys_blinded_at_secret_g1(W_polys_blinded_at_secret_g1)
-        , z_poly_at_secret_g1(z_poly_at_secret_g1)
-        , t_poly_at_secret_g1(t_poly_at_secret_g1)
-        , a_zeta(a_zeta)
-        , b_zeta(b_zeta)
-        , c_zeta(c_zeta)
-        , S_0_zeta(S_0_zeta)
-        , S_1_zeta(S_1_zeta)
-        , z_poly_xomega_zeta(z_poly_xomega_zeta)
-        , W_zeta_at_secret(W_zeta_at_secret)
-        , W_zeta_omega_at_secret(W_zeta_omega_at_secret)
-        , r_zeta(r_zeta)
-    {
-    }
+        Field &r_zeta);
 };
 
 /// Prover round 0 output
@@ -115,10 +101,7 @@ template<typename ppT> struct round_zero_out_t {
     round_zero_out_t(
         const std::vector<libff::Fr<ppT>> &&zh_poly,
         const polynomial<libff::Fr<ppT>> &&null_poly,
-        const polynomial<libff::Fr<ppT>> &&neg_one_poly)
-        : zh_poly(zh_poly), null_poly(null_poly), neg_one_poly(neg_one_poly)
-    {
-    }
+        const polynomial<libff::Fr<ppT>> &&neg_one_poly);
 };
 
 /// Prover round 1 output
@@ -140,12 +123,7 @@ template<typename ppT> struct round_one_out_t {
     round_one_out_t(
         const std::vector<polynomial<libff::Fr<ppT>>> &&W_polys,
         const std::vector<std::vector<libff::Fr<ppT>>> &&W_polys_blinded,
-        const std::vector<libff::G1<ppT>> &&W_polys_blinded_at_secret_g1)
-        : W_polys(W_polys)
-        , W_polys_blinded(W_polys_blinded)
-        , W_polys_blinded_at_secret_g1(W_polys_blinded_at_secret_g1)
-    {
-    }
+        const std::vector<libff::G1<ppT>> &&W_polys_blinded_at_secret_g1);
 };
 
 /// Prover round 2 output
@@ -161,10 +139,7 @@ template<typename ppT> struct round_two_out_t {
     /// stuct constructor
     round_two_out_t(
         polynomial<libff::Fr<ppT>> &&z_poly,
-        libff::G1<ppT> &&z_poly_at_secret_g1)
-        : z_poly(z_poly), z_poly_at_secret_g1(z_poly_at_secret_g1)
-    {
-    }
+        libff::G1<ppT> &&z_poly_at_secret_g1);
 };
 
 /// Prover round 3 output
@@ -190,13 +165,7 @@ template<typename ppT> struct round_three_out_t {
         std::vector<libff::Fr<ppT>> &&z_poly_xomega,
         std::vector<polynomial<libff::Fr<ppT>>> &&t_poly,
         polynomial<libff::Fr<ppT>> &&t_poly_long,
-        std::vector<libff::G1<ppT>> &&t_poly_at_secret_g1)
-        : z_poly_xomega(z_poly_xomega)
-        , t_poly(t_poly)
-        , t_poly_long(t_poly_long)
-        , t_poly_at_secret_g1(t_poly_at_secret_g1)
-    {
-    }
+        std::vector<libff::G1<ppT>> &&t_poly_at_secret_g1);
 };
 
 /// Prover round 4 output
@@ -234,16 +203,7 @@ template<typename ppT> struct round_four_out_t {
         libff::Fr<ppT> &&S_0_zeta,
         libff::Fr<ppT> &&S_1_zeta,
         libff::Fr<ppT> &&z_poly_xomega_zeta,
-        libff::Fr<ppT> &&t_zeta)
-        : a_zeta(a_zeta)
-        , b_zeta(b_zeta)
-        , c_zeta(c_zeta)
-        , S_0_zeta(S_0_zeta)
-        , S_1_zeta(S_1_zeta)
-        , z_poly_xomega_zeta(z_poly_xomega_zeta)
-        , t_zeta(t_zeta)
-    {
-    }
+        libff::Fr<ppT> &&t_zeta);
 };
 
 /// Prover round 5 output
@@ -265,12 +225,7 @@ template<typename ppT> struct round_five_out_t {
     round_five_out_t(
         libff::Fr<ppT> &&r_zeta,
         libff::G1<ppT> &&W_zeta_at_secret,
-        libff::G1<ppT> &&W_zeta_omega_at_secret)
-        : r_zeta(r_zeta)
-        , W_zeta_at_secret(W_zeta_at_secret)
-        , W_zeta_omega_at_secret(W_zeta_omega_at_secret)
-    {
-    }
+        libff::G1<ppT> &&W_zeta_omega_at_secret);
 };
 
 /// Plonk prover. Computes object of class plonk_proof.

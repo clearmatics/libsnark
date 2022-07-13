@@ -66,7 +66,6 @@ template<typename ppT> struct circuit_t {
     libff::Fr<ppT> k1;
     libff::Fr<ppT> k2;
 
-    /// stuct constructor
     circuit_t(
         size_t num_gates,
         size_t num_qpolys,
@@ -78,20 +77,7 @@ template<typename ppT> struct circuit_t {
         std::vector<Field> &&H_gen,
         std::vector<Field> &&H_gen_permute,
         libff::Fr<ppT> &&k1,
-        libff::Fr<ppT> &&k2)
-        : num_gates(num_gates)
-        , num_qpolys(num_qpolys)
-        , L_basis(L_basis)
-        , PI_poly(PI_poly)
-        , Q_polys(Q_polys)
-        , S_polys(S_polys)
-        , omega_roots(omega_roots)
-        , H_gen(H_gen)
-        , H_gen_permute(H_gen_permute)
-        , k1(k1)
-        , k2(k2)
-    {
-    }
+        libff::Fr<ppT> &&k2);
 };
 
 } // namespace libsnark
