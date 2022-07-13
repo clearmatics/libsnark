@@ -215,7 +215,7 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     // ie. circuit.omega_roots, circuit.omega_roots_k1 and
     // circuit.omega_roots_k2
     std::vector<Field> H_gen;
-    plonk_multiplicative_subgroups_H_k1H_k2H(num_gates, k1, k2, H_gen);
+    plonk_compute_cosets_H_k1H_k2H(num_gates, k1, k2, H_gen);
 
     // TODO: write unit test for plonk_roots_of_unity_omega_to_subgroup_H
 #ifdef DEBUG_PLONK
