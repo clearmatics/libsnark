@@ -91,37 +91,6 @@ template<typename FieldT>
 void plonk_interpolate_polynomial_from_points(
     const std::vector<FieldT> &f_points, polynomial<FieldT> &f_poly);
 
-/// Interpolate a polynomial from a set of points over Lagrange basis
-///
-/// INPUT:
-///
-/// \param[in] f_points[0..n-1]: a set of points (0,y0), (1,y1),
-///            ... (n-1,y_{n-1}) s.t. y0=f_points[0], y1=f_points[1],
-///            ... which we want to interpolate as a polynomial
-///
-/// \param[in] L[0..n-1][0..n-1]: Lagrange basis over the n roots of
-///            unity omega_0, ..., omega_{n-1} i.e. L[omega_i] = [a0,
-///            a1, ..., a_{n-1}] is a vector representing the
-///            coefficients of the i-th Lagrange polynomial L_i(x) =
-///            a0+a1x+a2x^2+..+a_{n-1}x^{n-1} s.t. L_i(x=omega_i)=1
-///            and L_i(x\neq{omega_i)})=0
-///
-/// OUTPUT:
-///
-/// \param[out] f_poly[0..n-1]: the coefficients [a0, a1, ...,
-///             a_{n-1}] of the polynomial f(x) interpolating the set
-///             of points f_points over the Lagrange basis. For
-///             example if f_poly[0..n-1] = [a0, a1, ..., a_{n-1}]
-///             then this represents the polynomial f(x) =
-///             \sum^{n-1}_{i=0} f_vec[i] * L[i] =
-///             a0+a1x+a1x^2+...+a_{n-1}x^{n-1} such that
-///             f(omega_i)=f_vec[i].
-template<typename FieldT>
-void plonk_interpolate_over_lagrange_basis(
-    const std::vector<FieldT> &f_points,
-    const std::vector<polynomial<FieldT>> &L,
-    polynomial<FieldT> &f_poly);
-
 /// Compute the selector polynomials of the given circuit (also
 /// called here "q-polynomials"). See Sect. 8.1.  The matrix
 /// gates_matrix_transpose has 5 rows, each corresponding to the
