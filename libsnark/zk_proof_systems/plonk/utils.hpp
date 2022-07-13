@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_HPP_
-#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_HPP_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_HPP_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_HPP_
 
 #include "libsnark/zk_proof_systems/plonk/tests/example.hpp"
 
@@ -242,6 +242,6 @@ void plonk_compute_accumulator(
 
 } // namespace libsnark
 
-#include "libsnark/zk_proof_systems/plonk/plonk.tcc"
+#include "libsnark/zk_proof_systems/plonk/utils.tcc"
 
-#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PLONK_HPP_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_HPP_

@@ -10,7 +10,7 @@
 #define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_EXAMPLE_HPP_
 
 /// Test vectors for the implementation of the PlonK protocol \[GWC19]
-/// (\see plonk.hpp) produced using the Python implementation of Plonk
+/// (\see utils.hpp) produced using the Python implementation of Plonk
 /// available at [PlonkPy].
 ///
 /// The test vector values trace the execution of the Plonk protocol for
