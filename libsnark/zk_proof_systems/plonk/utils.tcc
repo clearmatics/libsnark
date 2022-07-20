@@ -131,14 +131,11 @@ void plonk_compute_roots_of_unity_omega(
 {
     // ensure that num_gates is not 0 and is power of 2
     // TODO: check also that it's less than 2^(ppT::s)
-    try {
-        bool b_nonzero = (num_gates > 0);
-        bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
-        if (!(b_nonzero && b_is_power2)) {
-            throw std::invalid_argument("Curve is not BLS12-381");
-        }
-    } catch (const std::invalid_argument &e) {
-        std::cout << "Error: " << e.what() << "\n";
+    bool b_nonzero = (num_gates > 0);
+    bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
+    if (!(b_nonzero && b_is_power2)) {
+        throw std::invalid_argument(
+            "Number of gates not power of 2 or is zero.");
     }
     omega.resize(NUM_HSETS, std::vector<FieldT>(num_gates));
 
@@ -177,14 +174,11 @@ void plonk_compute_cosets_H_k1H_k2H(
     std::vector<FieldT> &H_gen)
 {
     // ensure that num_gates is not 0 and is power of 2
-    try {
-        bool b_nonzero = (num_gates > 0);
-        bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
-        if (!(b_nonzero && b_is_power2)) {
-            throw std::invalid_argument("Curve is not BLS12-381");
-        }
-    } catch (const std::invalid_argument &e) {
-        std::cout << "Error: " << e.what() << "\n";
+    bool b_nonzero = (num_gates > 0);
+    bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
+    if (!(b_nonzero && b_is_power2)) {
+        throw std::invalid_argument(
+            "Number of gates not power of 2 or is zero.");
     }
 
     // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
