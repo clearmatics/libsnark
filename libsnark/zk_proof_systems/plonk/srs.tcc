@@ -72,17 +72,66 @@ plonk_keypair<ppT>::plonk_keypair(
 {
 }
 
-/// struct transcript_hash_t constructor
+/// transcript_hasher constructor
 template<typename ppT>
-transcript_hash_t<ppT>::transcript_hash_t(
-    libff::Fr<ppT> &beta,
-    libff::Fr<ppT> &gamma,
-    libff::Fr<ppT> &alpha,
-    libff::Fr<ppT> &zeta,
-    libff::Fr<ppT> &nu,
-    libff::Fr<ppT> &u)
-    : beta(beta), gamma(gamma), alpha(alpha), zeta(zeta), nu(nu), u(u)
+transcript_hasher<ppT>::transcript_hasher(size_t &istep) : istep(istep)
 {
+}
+
+/// dummy implementation of get_hash that directly returns the
+/// expected hard-coded hashes for the purposes of unit testing TODO
+/// to be replaced by a call to a proper hash function e.g. SHA2,
+/// BLAKE, etc.
+template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
+{
+    assert((this->istep >= 0) && (this->istep <= 5));
+    using Field = libff::Fr<ppT>;
+
+    Field beta = Field("3710899868510394644410941212967766116886736137326022751"
+                       "891187938298987182388");
+    Field gamma = Field("110379303840831945879077096653321168432672740458288022"
+                        "49545114995763715746939");
+    Field alpha = Field("379799789992747238930717819864848384921111623418803600"
+                        "22719385400306128734648");
+    Field zeta = Field("4327197228921839935583364394550235027071910395980312641"
+                       "5018065799136107272465");
+    Field nu = Field("275158598338697752421507265080923414294782807831923791651"
+                     "55175653098691426347");
+    Field u = Field("1781751143954696684632449211212056577828855388109883650570"
+                    "6049265393896966778");
+    if (this->istep == 0) {
+        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
+        this->istep++;
+        return beta;
+    }
+    if (this->istep == 1) {
+        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
+        this->istep++;
+        return gamma;
+    }
+    if (this->istep == 2) {
+        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
+        this->istep++;
+        return alpha;
+    }
+    if (this->istep == 3) {
+        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
+        this->istep++;
+        return zeta;
+    }
+    if (this->istep == 4) {
+        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
+        this->istep++;
+        return nu;
+    }
+    if (this->istep == 5) {
+        // reset step to 0
+        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
+        this->istep = 0;
+        return u;
+    }
+    // error
+    return 0;
 }
 
 /// Compute a universal srs (usrs). It is composed *only* of encoded

@@ -38,7 +38,7 @@ template<typename ppT>
 void test_verify_invalid_proof(
     const plonk_proof<ppT> &valid_proof,
     const srs<ppT> &srs,
-    transcript_hash_t<ppT> &transcript_hash)
+    transcript_hasher<ppT> &hasher)
 {
     // initialize verifier
     plonk_verifier<ppT> verifier;
@@ -59,14 +59,14 @@ void test_verify_invalid_proof(
         G1_noise = libff::G1<ppT>::random_element();
         proof.W_polys_blinded_at_secret_g1[i] =
             proof.W_polys_blinded_at_secret_g1[i] + G1_noise;
-        b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+        b_accept = verifier.verify_proof(proof, srs, hasher);
         ASSERT_FALSE(b_accept);
     }
     // manipulate [z]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.z_poly_at_secret_g1 = proof.z_poly_at_secret_g1 + G1_noise;
-    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+    b_accept = verifier.verify_proof(proof, srs, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate [t_lo]_1, [t_mi]_1, [t_hi]_1
     for (size_t i = 0; i < valid_proof.t_poly_at_secret_g1.size(); ++i) {
@@ -74,62 +74,62 @@ void test_verify_invalid_proof(
         proof = valid_proof;
         G1_noise = libff::G1<ppT>::random_element();
         proof.t_poly_at_secret_g1[i] = proof.t_poly_at_secret_g1[i] + G1_noise;
-        b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+        b_accept = verifier.verify_proof(proof, srs, hasher);
         ASSERT_FALSE(b_accept);
     }
     // manipulate \bar{a}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.a_zeta = proof.a_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+    b_accept = verifier.verify_proof(proof, srs, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{b}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.b_zeta = proof.b_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+    b_accept = verifier.verify_proof(proof, srs, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{c}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.c_zeta = proof.c_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+    b_accept = verifier.verify_proof(proof, srs, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{S_sigma1}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.S_0_zeta = proof.S_0_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+    b_accept = verifier.verify_proof(proof, srs, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{S_sigma2}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.S_1_zeta = proof.S_1_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+    b_accept = verifier.verify_proof(proof, srs, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{z_w}
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.z_poly_xomega_zeta = proof.z_poly_xomega_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+    b_accept = verifier.verify_proof(proof, srs, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate [W_zeta]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.W_zeta_at_secret = proof.W_zeta_at_secret + G1_noise;
-    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+    b_accept = verifier.verify_proof(proof, srs, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate [W_{zeta omega_roots}]_1
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.W_zeta_omega_at_secret = proof.W_zeta_omega_at_secret + G1_noise;
-    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+    b_accept = verifier.verify_proof(proof, srs, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate r_zeta
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.r_zeta = proof.r_zeta + Fr_noise;
-    b_accept = verifier.verify_proof(proof, srs, transcript_hash);
+    b_accept = verifier.verify_proof(proof, srs, hasher);
     ASSERT_FALSE(b_accept);
 }
 
@@ -455,14 +455,6 @@ template<typename ppT> void test_plonk_prover_rounds()
     // example circuit
     circuit_t<ppT> circuit =
         plonk_circuit_description_from_example<ppT>(example);
-    // get hard-coded values for the transcipt hash
-    transcript_hash_t<ppT> transcript_hash(
-        example.beta,
-        example.gamma,
-        example.alpha,
-        example.zeta,
-        example.nu,
-        example.u);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -473,6 +465,10 @@ template<typename ppT> void test_plonk_prover_rounds()
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
+    // initialize hasher
+    size_t istep = 0;
+    transcript_hasher<ppT> hasher(istep);
+
     // Prover Round 0 (initialization)
     round_zero_out_t<ppT> round_zero_out = plonk_prover<ppT>::round_zero(srs);
 
@@ -482,8 +478,8 @@ template<typename ppT> void test_plonk_prover_rounds()
 
     // Unit test Prover Round 2
     printf("[%s:%d] Unit test Prover Round 2...\n", __FILE__, __LINE__);
-    const libff::Fr<ppT> beta = transcript_hash.beta;
-    const libff::Fr<ppT> gamma = transcript_hash.gamma;
+    const libff::Fr<ppT> beta = hasher.get_hash();
+    const libff::Fr<ppT> gamma = hasher.get_hash();
     test_plonk_prover_round_two<ppT>(
         example, beta, gamma, round_zero_out, blind_scalars, witness, srs);
 
@@ -496,7 +492,7 @@ template<typename ppT> void test_plonk_prover_rounds()
         round_zero_out, blind_scalars, witness, srs);
     round_two_out_t<ppT> round_two_out = plonk_prover<ppT>::round_two(
         beta, gamma, round_zero_out, blind_scalars, witness, srs);
-    libff::Fr<ppT> alpha = transcript_hash.alpha;
+    const libff::Fr<ppT> alpha = hasher.get_hash();
     test_plonk_prover_round_three<ppT>(
         example,
         alpha,
@@ -511,7 +507,7 @@ template<typename ppT> void test_plonk_prover_rounds()
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
     round_three_out_t<ppT> round_three_out = plonk_prover<ppT>::round_three(
         alpha, beta, gamma, round_zero_out, round_one_out, round_two_out, srs);
-    libff::Fr<ppT> zeta = transcript_hash.zeta;
+    const libff::Fr<ppT> zeta = hasher.get_hash();
     test_plonk_prover_round_four<ppT>(
         example, zeta, round_one_out, round_three_out, srs);
 
@@ -519,7 +515,7 @@ template<typename ppT> void test_plonk_prover_rounds()
     printf("[%s:%d] Unit test Prover Round 5...\n", __FILE__, __LINE__);
     round_four_out_t<ppT> round_four_out = plonk_prover<ppT>::round_four(
         zeta, round_one_out, round_three_out, srs);
-    libff::Fr<ppT> nu = transcript_hash.nu;
+    const libff::Fr<ppT> nu = hasher.get_hash();
     test_plonk_prover_round_five<ppT>(
         example,
         alpha,
@@ -592,14 +588,6 @@ template<typename ppT> void test_plonk_prover()
     // example circuit
     circuit_t<ppT> circuit =
         plonk_circuit_description_from_example<ppT>(example);
-    // get hard-coded values for the transcipt hash
-    transcript_hash_t<ppT> transcript_hash(
-        example.beta,
-        example.gamma,
-        example.alpha,
-        example.zeta,
-        example.nu,
-        example.u);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -610,11 +598,15 @@ template<typename ppT> void test_plonk_prover()
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
+    // initialize hasher
+    size_t istep = 0;
+    transcript_hasher<ppT> hasher(istep);
+
     // initialize prover
     plonk_prover<ppT> prover;
     // compute proof
     plonk_proof<ppT> proof =
-        prover.compute_proof(srs, witness, blind_scalars, transcript_hash);
+        prover.compute_proof(srs, witness, blind_scalars, hasher);
     // compare proof against test vector values (debug)
     ASSERT_EQ(proof.a_zeta, example.a_zeta);
     ASSERT_EQ(proof.b_zeta, example.b_zeta);
@@ -874,14 +866,6 @@ template<typename ppT> void test_plonk_verifier_steps()
     // example circuit
     circuit_t<ppT> circuit =
         plonk_circuit_description_from_example<ppT>(example);
-    // get hard-coded values for the transcipt hash
-    transcript_hash_t<ppT> transcript_hash(
-        example.beta,
-        example.gamma,
-        example.alpha,
-        example.zeta,
-        example.nu,
-        example.u);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -892,18 +876,22 @@ template<typename ppT> void test_plonk_verifier_steps()
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
+    // initialize hasher
+    size_t istep = 0;
+    transcript_hasher<ppT> hasher(istep);
+
     // initialize prover
     plonk_prover<ppT> prover;
     // compute proof
     plonk_proof<ppT> proof =
-        prover.compute_proof(srs, witness, blind_scalars, transcript_hash);
+        prover.compute_proof(srs, witness, blind_scalars, hasher);
 
     // Unit test verifier preprocessed input
     test_plonk_verifier_preprocessed_input(example, srs);
 
     // unit test verifier step 5
     const step_four_out_t<ppT> step_four_out =
-        plonk_verifier<ppT>::step_four(transcript_hash);
+        plonk_verifier<ppT>::step_four(hasher);
     test_plonk_verifier_step_five(example, step_four_out, srs);
 
     // unit test verifier step 6
@@ -977,14 +965,6 @@ template<typename ppT> void test_plonk_verifier()
     // example circuit
     circuit_t<ppT> circuit =
         plonk_circuit_description_from_example<ppT>(example);
-    // get hard-coded values for the transcipt hash
-    transcript_hash_t<ppT> transcript_hash(
-        example.beta,
-        example.gamma,
-        example.alpha,
-        example.zeta,
-        example.nu,
-        example.u);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -995,20 +975,24 @@ template<typename ppT> void test_plonk_verifier()
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
+    // initialize hasher
+    size_t istep = 0;
+    transcript_hasher<ppT> hasher(istep);
+
     // initialize prover
     plonk_prover<ppT> prover;
     // compute proof
     plonk_proof<ppT> proof =
-        prover.compute_proof(srs, witness, blind_scalars, transcript_hash);
+        prover.compute_proof(srs, witness, blind_scalars, hasher);
 
     // initialize verifier
     plonk_verifier<ppT> verifier;
     // verify proof
-    bool b_valid_proof = verifier.verify_proof(proof, srs, transcript_hash);
+    bool b_valid_proof = verifier.verify_proof(proof, srs, hasher);
     ASSERT_TRUE(b_valid_proof);
     // assert that proof verification fails when the proof is
     // manipulated
-    test_verify_invalid_proof(proof, srs, transcript_hash);
+    test_verify_invalid_proof(proof, srs, hasher);
 }
 
 TEST(TestPlonk, BLS12_381)
