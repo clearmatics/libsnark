@@ -85,12 +85,12 @@ template<typename ppT> void plonk_verifier<ppT>::step_three(const srs<ppT> &srs)
 /// struct step_four_out_t constructor
 template<typename ppT>
 step_four_out_t<ppT>::step_four_out_t(
-    libff::Fr<ppT> &&beta,
-    libff::Fr<ppT> &&gamma,
-    libff::Fr<ppT> &&alpha,
-    libff::Fr<ppT> &&zeta,
-    libff::Fr<ppT> &&nu,
-    libff::Fr<ppT> &&u)
+    libff::Fr<ppT> &beta,
+    libff::Fr<ppT> &gamma,
+    libff::Fr<ppT> &alpha,
+    libff::Fr<ppT> &zeta,
+    libff::Fr<ppT> &nu,
+    libff::Fr<ppT> &u)
     : beta(beta), gamma(gamma), alpha(alpha), zeta(zeta), nu(nu), u(u)
 {
 }
@@ -100,12 +100,8 @@ step_four_out_t<ppT>::step_four_out_t(
 /// pi-SNARK. TODO: fixed to the test vectors for now
 ///
 /// INPUT
-/// \param[in] transcript_hash: hashes of the communication transcript
-///            after prover rounds 1,2,3,4,5. TODO: \attention
-///            currently the hashes are pre-computed by the caller and
-///            passed as input for the purpouses of unit testing. In
-///            the long run this input can be removed and the hashes
-///            can be computed directly inside verifier::step_four()
+/// \param[in] transcript_hasher: hashes of the communication
+///            transcript after prover rounds 1,2,3,4,5.
 ///
 /// OUTPUT
 /// \param[out] beta, gamma: permutation challenges - hashes of
@@ -118,16 +114,16 @@ step_four_out_t<ppT>::step_four_out_t(
 ///             transcript
 template<typename ppT>
 step_four_out_t<ppT> plonk_verifier<ppT>::step_four(
-    const transcript_hash_t<ppT> &transcript_hash)
+    transcript_hasher<ppT> &hasher)
 {
+    libff::Fr<ppT> beta = hasher.get_hash();
+    libff::Fr<ppT> gamma = hasher.get_hash();
+    libff::Fr<ppT> alpha = hasher.get_hash();
+    libff::Fr<ppT> zeta = hasher.get_hash();
+    libff::Fr<ppT> nu = hasher.get_hash();
+    libff::Fr<ppT> u = hasher.get_hash();
     // step 4 output
-    step_four_out_t<ppT> step_four_out(
-        Field(transcript_hash.beta),
-        Field(transcript_hash.gamma),
-        Field(transcript_hash.alpha),
-        Field(transcript_hash.zeta),
-        Field(transcript_hash.nu),
-        Field(transcript_hash.u));
+    step_four_out_t<ppT> step_four_out(beta, gamma, alpha, zeta, nu, u);
 
     return step_four_out;
 }
@@ -600,12 +596,8 @@ bool plonk_verifier<ppT>::step_twelve(
 /// \param[in] proof: SNARK proof produced by the prover
 /// \param[in] srs: structured reference string containing also
 ///            circuit-specific information
-/// \param[in] transcript_hash: hashes of the communication transcript
-///            after prover rounds 1,2,3,4,5. TODO: \attention
-///            currently the hashes are pre-computed by the caller and
-///            passed as input for the purpouses of unit testing. In
-///            the long run this input can be removed and the hashes
-///            can be computed directly inside verifier::step_four()
+/// \param[in] transcript_hasher: hashes of the communication
+///            transcript after prover rounds 1,2,3,4,5.
 ///
 /// OUTPUT
 /// \param[out] boolean 1/0 = valid/invalid proof
@@ -613,7 +605,7 @@ template<typename ppT>
 bool plonk_verifier<ppT>::verify_proof(
     const plonk_proof<ppT> &proof,
     const srs<ppT> &srs,
-    transcript_hash_t<ppT> &transcript_hash)
+    transcript_hasher<ppT> &hasher)
 {
     // compute verifier preprocessed input
     const verifier_preprocessed_input_t<ppT> preprocessed_input =
@@ -629,7 +621,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 4: compute challenges hashed transcript as in
     // prover description, from the common inputs, public input, and
     // elements of pi-SNARK (fixed to the test vectors for now)
-    const step_four_out_t<ppT> step_four_out = this->step_four(transcript_hash);
+    const step_four_out_t<ppT> step_four_out = this->step_four(hasher);
 
     // Verifier Step 5: compute zero polynomial evaluation
     const step_five_out_t<ppT> step_five_out =

@@ -461,15 +461,8 @@ public:
     /// \param[in] blind_scalars: random blinding scalars b1, b2, ..., b9
     ///            used in prover rounds 1 and 2 (see Sect. 8.3, roumds
     ///            1,2 [GWC19])
-    /// \param[in] transcript_hash: hashes of the communication transcript
-    ///            after prover rounds 1,2,3,4,5. TODO: \attention
-    ///            currently the structure is used as an input initialized
-    ///            with hard-coded example values for debug purposes. In
-    ///            the long run it should be modified to be used as an
-    ///            output. More specifically, the hard-coded values should
-    ///            be overwritten with the actual transcript hashes
-    ///            produced after the respective rounds within \ref
-    ///            compute_proof
+    /// \param[in] transcript_hasher: hashes of the communication
+    ///            transcript after prover rounds 1,2,3,4,5.
     ///
     /// OUTPUT
     /// \param[out] proof: SNARK proof Pi (see above)
@@ -477,7 +470,7 @@ public:
         const srs<ppT> &srs,
         const std::vector<Field> &witness,
         const std::vector<libff::Fr<ppT>> &blind_scalars,
-        transcript_hash_t<ppT> &transcript_hash);
+        transcript_hasher<ppT> &hasher);
 };
 
 } // namespace libsnark
