@@ -987,15 +987,8 @@ plonk_proof<ppT>::plonk_proof(
 /// \param[in] blind_scalars: random blinding scalars b1, b2, ..., b9
 ///            used in prover rounds 1 and 2 (see Sect. 8.3, roumds
 ///            1,2 [GWC19])
-/// \param[in] transcript_hash: hashes of the communication transcript
-///            after prover rounds 1,2,3,4,5. TODO: \attention
-///            currently the structure is used as an input initialized
-///            with hard-coded example values for debug purposes. In
-///            the long run it should be modified to be used as an
-///            output. More specifically, the hard-coded values should
-///            be overwritten with the actual transcript hashes
-///            produced after the respective rounds within \ref
-///            compute_proof
+/// \param[in] transcript_hasher: hashes of the communication
+///            transcript after prover rounds 1,2,3,4,5.
 ///
 /// OUTPUT
 /// \param[out] proof: SNARK proof Pi (see above)
@@ -1004,7 +997,7 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     const srs<ppT> &srs,
     const std::vector<Field> &witness,
     const std::vector<libff::Fr<ppT>> &blind_scalars,
-    transcript_hash_t<ppT> &transcript_hash)
+    transcript_hasher<ppT> &hasher)
 {
     // Prover Round 0 (initialization)
     printf("[%s:%d] Prover Round 0...\n", __FILE__, __LINE__);
@@ -1017,27 +1010,28 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
 
     printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
     // - beta, gamma: permutation challenges - hashes of transcript of round 1
-    const libff::Fr<ppT> beta = transcript_hash.beta;
-    const libff::Fr<ppT> gamma = transcript_hash.gamma;
+    const libff::Fr<ppT> beta = hasher.get_hash();
+    const libff::Fr<ppT> gamma = hasher.get_hash();
+
     round_two_out_t<ppT> round_two_out = plonk_prover::round_two(
         beta, gamma, round_zero_out, blind_scalars, witness, srs);
 
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
     // - alpha: quotient challenge - hash of transcript of rounds 1,2
-    libff::Fr<ppT> alpha = transcript_hash.alpha;
+    const libff::Fr<ppT> alpha = hasher.get_hash();
     round_three_out_t<ppT> round_three_out = plonk_prover::round_three(
         alpha, beta, gamma, round_zero_out, round_one_out, round_two_out, srs);
 
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
     // - zeta: evaluation challenge - hash of transcriptof rounds 1,2,3
-    libff::Fr<ppT> zeta = transcript_hash.zeta;
+    const libff::Fr<ppT> zeta = hasher.get_hash();
     round_four_out_t<ppT> round_four_out =
         plonk_prover::round_four(zeta, round_one_out, round_three_out, srs);
 
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
     /// - nu: opening challenge -- hash of transcript (denoted by v in
     ///   [GWC19])
-    libff::Fr<ppT> nu = transcript_hash.nu;
+    const libff::Fr<ppT> nu = hasher.get_hash();
     round_five_out_t<ppT> round_five_out = plonk_prover::round_five(
         alpha,
         beta,
@@ -1053,10 +1047,15 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
 
     // TODO: activate this part when we implement actual hashing of
     // communication transcripts
-#if 0    
+#if 0
     // u: multipoint evaluation challenge -- hash of transcript from
     // rounds 1,2,3,4,5
-    libff::Fr<ppT> u = transcript_hash.u;
+    const libff::Fr<ppT> u = hasher.get_hash();
+#else
+    // do the hash anyway in order to keep the correct count of the
+    // hasher istep member (which resets to 0 only after the last hash
+    // is performed which is hash of u)
+    hasher.get_hash();
 #endif
 
     // construct proof

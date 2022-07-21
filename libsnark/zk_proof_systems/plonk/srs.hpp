@@ -183,32 +183,22 @@ public:
     plonk_keypair(plonk_keypair<ppT> &&other) = default;
 };
 
-/// Hashes of transcript after prover rounds 1,2,3,4,5
-template<typename ppT> struct transcript_hash_t {
+/// transcript hasher interface
+template<typename ppT> class transcript_hasher
+{
+private:
+    // the current step of the hasher
+    size_t istep;
 
-    /// - beta: permutation challenge - hashes of transcript after round 1
-    libff::Fr<ppT> beta;
-    /// - gamma: permutation challenge - hashes of transcript after round 1
-    libff::Fr<ppT> gamma;
-    /// - alpha: quotient challenge - hash of transcript after rounds 1,2
-    libff::Fr<ppT> alpha;
-    /// - zeta: evaluation challenge - hash of transcriptafter rounds 1,2,3
-    libff::Fr<ppT> zeta;
-    /// - nu: opening challenge - hash of transcript after rounds 1,2,3,4
-    /// (denoted by v in [GWC19])
-    libff::Fr<ppT> nu;
-    /// - u: multipoint evaluation challenge -- hash of transcript after rounds
-    /// 1,2,3,4,5
-    libff::Fr<ppT> u;
+public:
+    void add_element(const libff::Fr<ppT> &element);
+    void add_element(const libff::G1<ppT> &element);
+    void add_element(const libff::G2<ppT> &element);
 
-    /// struct constructor
-    transcript_hash_t(
-        libff::Fr<ppT> &beta,
-        libff::Fr<ppT> &gamma,
-        libff::Fr<ppT> &alpha,
-        libff::Fr<ppT> &zeta,
-        libff::Fr<ppT> &nu,
-        libff::Fr<ppT> &u);
+    libff::Fr<ppT> get_hash();
+
+    // constructor
+    transcript_hasher(size_t &istep);
 };
 
 } // namespace libsnark
