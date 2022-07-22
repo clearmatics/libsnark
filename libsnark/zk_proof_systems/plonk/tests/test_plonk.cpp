@@ -191,9 +191,9 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     // transposed gates matrix over the Lagrange basis q_poly = \sum_i
     // q[i] * L[i] where q[i] is a coefficient (a scalar Field
     // element) and L[i] is a polynomial with Field coefficients
-    std::vector<polynomial<Field>> Q_polys;
-    Q_polys.resize(num_qpolys, polynomial<Field>(num_gates));
-    plonk_compute_selector_polynomials<Field>(gates_matrix_transpose, Q_polys);
+    std::vector<polynomial<Field>> Q_polys =
+        plonk_compute_selector_polynomials<Field>(
+            num_gates, num_qpolys, gates_matrix_transpose);
 
     // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
     // omega[2] are omega[0]*k2
@@ -257,15 +257,8 @@ void test_plonk_compute_accumulator(
 {
     using Field = libff::Fr<ppT>;
     // A[0] = 1; ... A[i] = computed from (i-1)
-    std::vector<Field> A_vector(srs.num_gates, Field(0));
-    plonk_compute_accumulator(
-        srs.num_gates,
-        beta,
-        gamma,
-        witness,
-        srs.H_gen,
-        srs.H_gen_permute,
-        A_vector);
+    std::vector<Field> A_vector = plonk_compute_accumulator(
+        srs.num_gates, beta, gamma, witness, srs.H_gen, srs.H_gen_permute);
     polynomial<Field> A_poly(srs.num_gates);
     plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly);
 
