@@ -38,9 +38,6 @@ template<typename ppT> struct circuit_t {
     /// vanilla Plonk proposal [GWC19])
     size_t num_qpolys;
 
-    /// Lagrange basis
-    std::vector<polynomial<Field>> L_basis;
-
     /// Public input polynomial
     polynomial<Field> PI_poly;
 
@@ -69,7 +66,6 @@ template<typename ppT> struct circuit_t {
     circuit_t(
         size_t num_gates,
         size_t num_qpolys,
-        std::vector<polynomial<Field>> &&L_basis,
         polynomial<Field> &&PI_poly,
         std::vector<polynomial<Field>> &&Q_polys,
         std::vector<polynomial<Field>> &&S_polys,
