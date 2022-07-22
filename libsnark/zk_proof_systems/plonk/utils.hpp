@@ -97,9 +97,9 @@ void plonk_interpolate_polynomial_from_points(
 /// values L, R, M, O and C for each gate; the number of columns is
 /// equal to the number of gates. L_basis is the Lagrange basis.
 template<typename FieldT>
-void plonk_compute_selector_polynomials(
-    const std::vector<std::vector<FieldT>> &gates_matrix_transpose,
-    std::vector<polynomial<FieldT>> &Q_polys);
+std::vector<polynomial<FieldT>> plonk_compute_selector_polynomials(
+    const size_t &num_gates,
+    const std::vector<std::vector<FieldT>> &gates_matrix_transpose);
 
 /// This function computes the sets H, k1H, k2H.  H is a
 /// multiplicative subgroup containing the n-th roots of unity in Fr,
@@ -198,14 +198,13 @@ FieldT plonk_compute_accumulator_factor(
 
 /// A: accumulatro vector
 template<typename FieldT>
-void plonk_compute_accumulator(
-    const size_t n, // num_gates
+std::vector<FieldT> plonk_compute_accumulator(
+    const size_t num_gates,
     const FieldT beta,
     const FieldT gamma,
     const std::vector<FieldT> &witness,
     const std::vector<FieldT> &H_gen, // H, Hk1, Hk2
-    const std::vector<FieldT> &H_gen_permute,
-    std::vector<FieldT> &A);
+    const std::vector<FieldT> &H_gen_permute);
 
 } // namespace libsnark
 

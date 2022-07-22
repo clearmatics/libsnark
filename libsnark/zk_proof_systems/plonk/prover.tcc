@@ -194,15 +194,8 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
         z1_blind_poly, z1_blind_poly, round_zero_out.zh_poly);
 
     // A[0] = 1; ... A[i] = computed from (i-1)
-    std::vector<Field> A_vector(srs.num_gates, Field(0));
-    plonk_compute_accumulator(
-        srs.num_gates,
-        beta,
-        gamma,
-        witness,
-        srs.H_gen,
-        srs.H_gen_permute,
-        A_vector);
+    std::vector<Field> A_vector = plonk_compute_accumulator(
+        srs.num_gates, beta, gamma, witness, srs.H_gen, srs.H_gen_permute);
 
     polynomial<Field> A_poly(srs.num_gates);
     plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly);
