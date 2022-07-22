@@ -410,13 +410,16 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
 
     // --- Computation of t_part[3]
 
+    std::vector<polynomial<Field>> L_basis =
+        plonk_compute_lagrange_basis<Field>(srs.num_gates);
+
     // z(x) - 1
     polynomial<Field> z_neg_one;
     libfqfft::_polynomial_addition<Field>(
         z_neg_one, round_two_out.z_poly, neg_one_poly);
     // (z(x)-1) * L_1(x)
     libfqfft::_polynomial_multiplication<Field>(
-        t_part[3], z_neg_one, srs.L_basis[0]);
+        t_part[3], z_neg_one, L_basis[0]);
     // (z(x)-1) * L_1(x) * alpha
     libfqfft::_polynomial_multiplication<Field>(
         t_part[3], t_part[3], alpha_poly);
@@ -706,9 +709,12 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
 
     // --- Computation of r_part[3]
 
+    std::vector<polynomial<Field>> L_basis =
+        plonk_compute_lagrange_basis<Field>(srs.num_gates);
+
     //     r3 = accumulator_poly_ext3 * eval_poly(L_1, [zeta])[0] * alpha ** 2
     polynomial<Field> L_0_zeta_poly{libfqfft::evaluate_polynomial<Field>(
-        srs.L_basis[0].size(), srs.L_basis[0], zeta)};
+        L_basis[0].size(), L_basis[0], zeta)};
     polynomial<Field> alpha_power2_poly{
         libff::power(alpha, libff::bigint<1>(2))};
     libfqfft::_polynomial_multiplication<Field>(

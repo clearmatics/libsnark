@@ -29,7 +29,6 @@ template<typename ppT>
 srs<ppT>::srs(
     const size_t &num_gates,
     const size_t &num_qpolys,
-    const std::vector<polynomial<Field>> &L_basis,
     const polynomial<Field> &PI_poly,
     const std::vector<polynomial<Field>> &Q_polys,
     const std::vector<polynomial<Field>> &S_polys,
@@ -42,7 +41,6 @@ srs<ppT>::srs(
     std::vector<libff::G2<ppT>> &&secret_powers_g2)
     : num_gates(num_gates)
     , num_qpolys(num_qpolys)
-    , L_basis(L_basis)
     , PI_poly(PI_poly)
     , Q_polys(Q_polys)
     , S_polys(S_polys)
@@ -153,7 +151,6 @@ srs<ppT> plonk_srs_derive_from_usrs(
     srs<ppT> srs(
         circuit.num_gates,
         circuit.num_qpolys,
-        circuit.L_basis,
         circuit.PI_poly,
         circuit.Q_polys,
         circuit.S_polys,

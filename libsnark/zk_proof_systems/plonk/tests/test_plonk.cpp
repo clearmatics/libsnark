@@ -174,12 +174,8 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     // We represent the constraints q_L, q_R, q_O, q_M, q_C and the
     // witness w_L, w_R, w_O as polynomials in the roots of unity
     // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
-    // compute Lagrange basis
-    std::vector<polynomial<Field>> L_basis;
-    L_basis.resize(num_gates, polynomial<Field>(num_gates));
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(num_gates);
-    plonk_compute_lagrange_basis<Field>(num_gates, L_basis);
 
     // compute public input (PI) polynomial
     polynomial<Field> PI_poly;
@@ -235,7 +231,6 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     circuit_t<ppT> circuit(
         std::move(num_gates),
         std::move(num_qpolys),
-        std::move(L_basis),
         std::move(PI_poly),
         std::move(Q_polys),
         std::move(S_polys),

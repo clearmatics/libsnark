@@ -185,9 +185,11 @@ template<typename ppT>
 step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
+    std::vector<polynomial<Field>> L_basis =
+        plonk_compute_lagrange_basis<Field>(srs.num_gates);
     libff::Fr<ppT> L_0_zeta;
     L_0_zeta = libfqfft::evaluate_polynomial<Field>(
-        srs.L_basis[0].size(), srs.L_basis[0], step_four_out.zeta);
+        L_basis[0].size(), L_basis[0], step_four_out.zeta);
     step_six_out_t<ppT> step_six_out(std::move(L_0_zeta));
     return step_six_out;
 }

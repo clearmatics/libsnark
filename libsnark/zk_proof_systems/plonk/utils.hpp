@@ -63,10 +63,10 @@ template<typename FieldT> void print_vector(const std::vector<FieldT> &v);
 ///             a0+a1x+a2x^2+..+a_{n-1}x^{n-1} s.t. L_i(x=omega_i)=1
 ///             and L_i(x\neq{omega_i)})=0
 ///
-/// Note: uses libfqfft iFFT for the interpolation
+/// \note uses libfqfft iFFT for the interpolation
 template<typename FieldT>
-void plonk_compute_lagrange_basis(
-    const size_t npoints, std::vector<polynomial<FieldT>> &L);
+std::vector<polynomial<FieldT>> plonk_compute_lagrange_basis(
+    const size_t &npoints);
 
 /// Interpolate a polynomial from a set of points through inverse FFT
 ///
