@@ -53,6 +53,8 @@ template<typename FieldT> void print_vector(const std::vector<FieldT> &v);
 /// INPUT:
 ///
 /// \param[in] npoints - number of points
+/// \param[in] domain - libfqfft domain (\see
+///            libfqfft::get_evaluation_domain)
 ///
 /// OUTPUT:
 ///
@@ -66,7 +68,8 @@ template<typename FieldT> void print_vector(const std::vector<FieldT> &v);
 /// \note uses libfqfft iFFT for the interpolation
 template<typename FieldT>
 std::vector<polynomial<FieldT>> plonk_compute_lagrange_basis(
-    const size_t &npoints);
+    const size_t &npoints,
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain);
 
 /// Interpolate a polynomial from a set of points through inverse FFT
 ///

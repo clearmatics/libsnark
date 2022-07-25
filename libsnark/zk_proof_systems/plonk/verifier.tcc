@@ -186,7 +186,7 @@ step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
     std::vector<polynomial<Field>> L_basis =
-        plonk_compute_lagrange_basis<Field>(srs.num_gates);
+        plonk_compute_lagrange_basis<Field>(srs.num_gates, srs.domain);
     libff::Fr<ppT> L_0_zeta;
     L_0_zeta = libfqfft::evaluate_polynomial<Field>(
         L_basis[0].size(), L_basis[0], step_four_out.zeta);

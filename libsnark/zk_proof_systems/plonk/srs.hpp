@@ -116,6 +116,9 @@ public:
     /// [\alpha]_2
     std::vector<libff::G2<ppT>> secret_powers_g2;
 
+    /// the libfqfft domain
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain;
+
     srs(const size_t &num_gates,
         const size_t &num_qpolys,
         const polynomial<Field> &PI_poly,
@@ -127,7 +130,8 @@ public:
         const libff::Fr<ppT> &k1,
         const libff::Fr<ppT> &k2,
         std::vector<libff::G1<ppT>> &&secret_powers_g1,
-        std::vector<libff::G2<ppT>> &&secret_powers_g2);
+        std::vector<libff::G2<ppT>> &&secret_powers_g2,
+        std::shared_ptr<libfqfft::evaluation_domain<Field>> domain);
 };
 
 template<typename ppT>
