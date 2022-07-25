@@ -411,7 +411,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     // --- Computation of t_part[3]
 
     std::vector<polynomial<Field>> L_basis =
-        plonk_compute_lagrange_basis<Field>(srs.num_gates);
+        plonk_compute_lagrange_basis<Field>(srs.num_gates, srs.domain);
 
     // z(x) - 1
     polynomial<Field> z_neg_one;
@@ -710,7 +710,7 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     // --- Computation of r_part[3]
 
     std::vector<polynomial<Field>> L_basis =
-        plonk_compute_lagrange_basis<Field>(srs.num_gates);
+        plonk_compute_lagrange_basis<Field>(srs.num_gates, srs.domain);
 
     //     r3 = accumulator_poly_ext3 * eval_poly(L_1, [zeta])[0] * alpha ** 2
     polynomial<Field> L_0_zeta_poly{libfqfft::evaluate_polynomial<Field>(
