@@ -9,7 +9,9 @@
 #include <libff/common/default_types/ec_pp.hpp>
 #include <libff/common/profiling.hpp>
 #include <libff/common/utils.hpp>
+#include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp> // VV
 #include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_components.hpp>
+#include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp> // VV
 
 using namespace libsnark;
 
@@ -18,34 +20,33 @@ template<typename FieldT> void test_anemoi_power_three_gadget(const size_t n)
     printf("testing anemoi_power_three_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
-    pb_variable_array<FieldT> inputs;
-    inputs.allocate(pb, n, "inputs");
+    pb_variable<FieldT> x;
+    pb_variable<FieldT> y;
+    pb_variable<FieldT> alpha;
+    pb_variable<FieldT> beta;
 
-    pb_variable<FieldT> output;
-    output.allocate(pb, "output");
+    // input
+    x.allocate(pb, "x");
+    // output
+    y.allocate(pb, "y");
+    // constants
+    alpha.allocate(pb, "alpha");
+    beta.allocate(pb, "beta");
 
-    anemoi_power_three_gadget<FieldT> d(pb, inputs, output, "d");
+    // create gadget
+    anemoi_power_three_gadget<FieldT> d(pb, x, y, alpha, beta, "d");
+    // generate contraints
     d.generate_r1cs_constraints();
+    // witness values
+    pb.val(x) = 2;
+    pb.val(alpha) = 2;
+    pb.val(beta) = 5;
 
-    for (size_t w = 0; w < 1ul << n; ++w) {
-        for (size_t j = 0; j < n; ++j) {
-            pb.val(inputs[j]) = FieldT((w & (1ul << j)) ? 1 : 0);
-        }
+    // generate witness
+    d.generate_r1cs_witness();
 
-        d.generate_r1cs_witness();
-
-#ifdef DEBUG
-        printf("positive test for %zu\n", w);
-#endif
-        ASSERT_EQ(pb.val(output), (w ? FieldT::one() : FieldT::zero()));
-        ASSERT_TRUE(pb.is_satisfied());
-
-#ifdef DEBUG
-        printf("negative test for %zu\n", w);
-#endif
-        pb.val(output) = (w ? FieldT::zero() : FieldT::one());
-        ASSERT_FALSE(pb.is_satisfied());
-    }
+    ASSERT_EQ(pb.val(y), 21);
+    ASSERT_TRUE(pb.is_satisfied());
 
     libff::print_time("anemoi_power_three_gadget tests successful");
 }

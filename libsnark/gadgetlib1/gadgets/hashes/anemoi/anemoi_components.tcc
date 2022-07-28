@@ -20,35 +20,35 @@ namespace libsnark
 template<typename FieldT>
 void anemoi_power_three_gadget<FieldT>::generate_r1cs_constraints()
 {
-    linear_combination<FieldT> sum = pb_sum(inputs);
-
-    // inv * sum = output
+    // x*x = a
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(inv, sum, output),
-        FMT(this->annotation_prefix, " inv*sum=output"));
-
-    // (1-output) * sum = 0
+        r1cs_constraint<FieldT>(x, x, a),
+        FMT(this->annotation_prefix, " x*x=a"));
+    // a*x = b
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(FieldT::one() - output, sum, FieldT::zero()),
-        FMT(this->annotation_prefix, " (1-output)*sum=0"));
+        r1cs_constraint<FieldT>(a, x, b),
+        FMT(this->annotation_prefix, " a*x=b"));
+    // b*alpha = c
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(b, alpha, c),
+        FMT(this->annotation_prefix, " b*alpha=c"));
+    // 1*(c+beta) = y
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(1, c + beta, y),
+        FMT(this->annotation_prefix, " 1*(c+beta)=y"));
 }
 
 template<typename FieldT>
 void anemoi_power_three_gadget<FieldT>::generate_r1cs_witness()
 {
-    FieldT sum = FieldT::zero();
-
-    for (size_t i = 0; i < inputs.size(); ++i) {
-        sum += this->pb.lc_val(inputs[i]);
-    }
-
-    if (sum.is_zero()) {
-        this->pb.val(inv) = FieldT::zero();
-        this->pb.val(output) = FieldT::zero();
-    } else {
-        this->pb.val(inv) = sum.inverse();
-        this->pb.val(output) = FieldT::one();
-    }
+    // x*x = a
+    this->pb.val(a) = this->pb.val(x) * this->pb.val(x);
+    // a*x = b
+    this->pb.val(b) = this->pb.val(a) * this->pb.val(x);
+    // b*alpha = c
+    this->pb.val(c) = this->pb.val(b) * this->pb.val(alpha);
+    // 1*(c+beta) = y
+    this->pb.val(y) = this->pb.val(c) + this->pb.val(beta);
 }
 
 } // namespace libsnark
