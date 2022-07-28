@@ -20,37 +20,46 @@
 namespace libsnark
 {
 
-/*
-  the gadgets below are Fp specific:
-  I * X = R
-  (1-R) * X = 0
-
-  if X = 0 then R = 0
-  if X != 0 then R = 1 and I = X^{-1}
-*/
-
-/// Compute x^3
-/// (old) Output is 0 iff the sum of inputs is 0.  Output is 1 otherwise.
+/// Compute y = alpha x^3 + beta
+/// x: input
+/// y: output
+/// a,b,c: intermediate values
+/// alpha, beta: constants
 template<typename FieldT>
 class anemoi_power_three_gadget : public gadget<FieldT>
 {
 private:
-    pb_variable<FieldT> inv;
+    // intermediate values
+    pb_variable<FieldT> a;
+    pb_variable<FieldT> b;
+    pb_variable<FieldT> c;
 
 public:
-    const pb_linear_combination_array<FieldT> inputs;
-    const pb_variable<FieldT> output;
+    // input
+    const pb_variable<FieldT> x;
+    // output
+    const pb_variable<FieldT> y;
+    // constants
+    pb_variable<FieldT> alpha;
+    pb_variable<FieldT> beta;
 
     anemoi_power_three_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination_array<FieldT> &inputs,
-        const pb_variable<FieldT> &output,
+        const pb_variable<FieldT> &x,
+        const pb_variable<FieldT> &y,
+        const pb_variable<FieldT> &alpha,
+        const pb_variable<FieldT> &beta,
         const std::string &annotation_prefix = "")
-        : gadget<FieldT>(pb, annotation_prefix), inputs(inputs), output(output)
+        : gadget<FieldT>(pb, annotation_prefix)
+        , x(x)
+        , y(y)
+        , alpha(alpha)
+        , beta(beta)
     {
-        assert(inputs.size() >= 1);
-        inv.allocate(pb, FMT(this->annotation_prefix, " inv"));
-    }
+        a.allocate(this->pb, "a");
+        b.allocate(this->pb, "b");
+        c.allocate(this->pb, "c");
+    };
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
