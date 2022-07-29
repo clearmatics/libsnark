@@ -20,6 +20,48 @@
 namespace libsnark
 {
 
+/// Compute y = alpha x^2 + beta
+/// x: input
+/// y: output
+/// a,b: intermediate values
+/// alpha, beta: constants
+template<typename FieldT> class anemoi_power_two_gadget : public gadget<FieldT>
+{
+private:
+    // intermediate values
+    pb_variable<FieldT> a;
+    pb_variable<FieldT> b;
+
+public:
+    // input
+    const pb_variable<FieldT> x;
+    // output
+    const pb_variable<FieldT> y;
+    // constants
+    pb_variable<FieldT> alpha;
+    pb_variable<FieldT> beta;
+
+    anemoi_power_two_gadget(
+        protoboard<FieldT> &pb,
+        const pb_variable<FieldT> &x,
+        const pb_variable<FieldT> &y,
+        const pb_variable<FieldT> &alpha,
+        const pb_variable<FieldT> &beta,
+        const std::string &annotation_prefix = "")
+        : gadget<FieldT>(pb, annotation_prefix)
+        , x(x)
+        , y(y)
+        , alpha(alpha)
+        , beta(beta)
+    {
+        a.allocate(this->pb, "a");
+        b.allocate(this->pb, "b");
+    };
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
 /// Compute y = alpha x^3 + beta
 /// x: input
 /// y: output
