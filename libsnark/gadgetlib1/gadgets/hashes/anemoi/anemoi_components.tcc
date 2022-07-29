@@ -18,6 +18,34 @@ namespace libsnark
 {
 
 template<typename FieldT>
+void anemoi_power_two_gadget<FieldT>::generate_r1cs_constraints()
+{
+    // x*x = a
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(x, x, a),
+        FMT(this->annotation_prefix, " x*x=a"));
+    // a*x = b
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(a, x, b),
+        FMT(this->annotation_prefix, " a*x=b"));
+    // 1*(b+beta) = y
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(1, b + beta, y),
+        FMT(this->annotation_prefix, " 1*(b+beta)=y"));
+}
+
+template<typename FieldT>
+void anemoi_power_two_gadget<FieldT>::generate_r1cs_witness()
+{
+    // x*x = a
+    this->pb.val(a) = this->pb.val(x) * this->pb.val(x);
+    // a*x = b
+    this->pb.val(b) = this->pb.val(a) * this->pb.val(x);
+    // 1*(b+beta) = y
+    this->pb.val(y) = this->pb.val(b) + this->pb.val(beta);
+}
+
+template<typename FieldT>
 void anemoi_power_three_gadget<FieldT>::generate_r1cs_constraints()
 {
     // x*x = a

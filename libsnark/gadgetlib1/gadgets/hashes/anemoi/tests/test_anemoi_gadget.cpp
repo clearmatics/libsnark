@@ -15,6 +15,42 @@
 
 using namespace libsnark;
 
+template<typename FieldT> void test_anemoi_power_two_gadget(const size_t n)
+{
+    printf("testing anemoi_power_two_gadget on all %zu bit strings\n", n);
+
+    protoboard<FieldT> pb;
+    pb_variable<FieldT> x;
+    pb_variable<FieldT> y;
+    pb_variable<FieldT> alpha;
+    pb_variable<FieldT> beta;
+
+    // input
+    x.allocate(pb, "x");
+    // output
+    y.allocate(pb, "y");
+    // constants
+    alpha.allocate(pb, "alpha");
+    beta.allocate(pb, "beta");
+
+    // create gadget
+    anemoi_power_two_gadget<FieldT> d(pb, x, y, alpha, beta, "d");
+    // generate contraints
+    d.generate_r1cs_constraints();
+    // witness values
+    pb.val(x) = 2;
+    pb.val(alpha) = 2;
+    pb.val(beta) = 5;
+
+    // generate witness
+    d.generate_r1cs_witness();
+
+    ASSERT_EQ(pb.val(y), 13);
+    ASSERT_TRUE(pb.is_satisfied());
+
+    libff::print_time("anemoi_power_two_gadget tests successful");
+}
+
 template<typename FieldT> void test_anemoi_power_three_gadget(const size_t n)
 {
     printf("testing anemoi_power_three_gadget on all %zu bit strings\n", n);
@@ -56,4 +92,5 @@ int main(void)
     libff::start_profiling();
     libff::default_ec_pp::init_public_params();
     test_anemoi_power_three_gadget<libff::Fr<libff::default_ec_pp>>(10);
+    test_anemoi_power_two_gadget<libff::Fr<libff::default_ec_pp>>(10);
 }
