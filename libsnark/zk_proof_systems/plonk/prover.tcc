@@ -443,13 +443,9 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     polynomial<Field> remainder;
     libfqfft::_polynomial_division(
         t_poly_long, remainder, t_poly_long, round_zero_out.zh_poly);
-    try {
-        bool b_zero_remainder = libfqfft::_is_zero(remainder);
-        if (!b_zero_remainder) {
-            throw std::logic_error("Non-zero remainder in polynomial division");
-        }
-    } catch (const std::logic_error &e) {
-        std::cout << "Error: " << e.what() << "\n";
+    bool b_zero_remainder = libfqfft::_is_zero(remainder);
+    if (!b_zero_remainder) {
+        throw std::logic_error("Non-zero remainder in polynomial division");
     }
 
     // break this->t_poly_long into three parts: lo, mid, hi, each of
