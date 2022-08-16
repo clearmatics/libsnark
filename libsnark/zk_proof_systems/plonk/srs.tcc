@@ -74,8 +74,82 @@ plonk_keypair<ppT>::plonk_keypair(
 
 /// transcript_hasher constructor
 template<typename ppT>
-transcript_hasher<ppT>::transcript_hasher(size_t &istep) : istep(istep)
+transcript_hasher<ppT>::transcript_hasher(std::vector<uint8_t> &buffer)
+    : buffer(std::move(buffer))
 {
+}
+
+/// clear the buffer (for now only for testing)
+template<typename ppT> void transcript_hasher<ppT>::buffer_clear()
+{
+    this->buffer.clear();
+}
+
+/// get buffer size
+template<typename ppT> size_t transcript_hasher<ppT>::buffer_size()
+{
+    return this->buffer.size();
+}
+
+/// add an Fr element to the transcript buffer for hashing
+template<typename ppT>
+void transcript_hasher<ppT>::add_element(const libff::Fr<ppT> &element)
+{
+    // convert the Fr element into a string
+    std::string str;
+    {
+        std::ostringstream ss;
+        libff::field_write<libff::encoding_binary, libff::form_plain>(
+            element, ss);
+        str = ss.str();
+    }
+    // copy the string as a sequence of uint8_t elements at the end of
+    // the buffer
+    std::copy(str.begin(), str.end(), std::back_inserter(this->buffer));
+}
+
+/// add the coordinates of a G1 curve point to the transcript buffer for hashing
+template<typename ppT>
+void transcript_hasher<ppT>::add_element(const libff::G1<ppT> &element)
+{
+    libff::G1<ppT> element_aff(element);
+    element_aff.to_affine_coordinates();
+
+    // convert the affine coordinates of the curve point into a string
+    std::string str;
+    {
+        std::ostringstream ss;
+        libff::group_write<
+            libff::encoding_binary,
+            libff::form_plain,
+            libff::compression_off>(element_aff, ss);
+        str = ss.str();
+    }
+    // copy the string as a sequence of uint8_t elements at the end of
+    // the buffer
+    std::copy(str.begin(), str.end(), std::back_inserter(this->buffer));
+}
+
+/// add the coordinates of a G2 curve point to the transcript buffer for hashing
+template<typename ppT>
+void transcript_hasher<ppT>::add_element(const libff::G2<ppT> &element)
+{
+    libff::G2<ppT> element_aff(element);
+    element_aff.to_affine_coordinates();
+
+    // convert the affine coordinates of the curve point into a string
+    std::string str;
+    {
+        std::ostringstream ss;
+        libff::group_write<
+            libff::encoding_binary,
+            libff::form_plain,
+            libff::compression_off>(element_aff, ss);
+        str = ss.str();
+    }
+    // copy the string as a sequence of uint8_t elements at the end of
+    // the buffer
+    std::copy(str.begin(), str.end(), std::back_inserter(this->buffer));
 }
 
 /// dummy implementation of get_hash that directly returns the
@@ -84,8 +158,14 @@ transcript_hasher<ppT>::transcript_hasher(size_t &istep) : istep(istep)
 /// BLAKE, etc.
 template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
 {
-    assert((this->istep >= 0) && (this->istep <= 5));
     using Field = libff::Fr<ppT>;
+
+    size_t buffer_len = this->buffer.size();
+    // DEBUG
+    printf("[%s:%d] len %7d\n", __FILE__, __LINE__, (int)buffer_len);
+
+    // vector of valid lengths (\attention specific to BLS12-381)
+    std::vector<size_t> length{288, 320, 416, 704, 896, 1120};
 
     Field beta = Field("3710899868510394644410941212967766116886736137326022751"
                        "891187938298987182388");
@@ -99,38 +179,73 @@ template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
                      "55175653098691426347");
     Field u = Field("1781751143954696684632449211212056577828855388109883650570"
                     "6049265393896966778");
-    if (this->istep == 0) {
-        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
-        this->istep++;
+    // beta
+    if (buffer_len == length[0]) {
+        printf(
+            "[%s:%d] buffer_len %d: beta\n",
+            __FILE__,
+            __LINE__,
+            (int)buffer_len);
         return beta;
     }
-    if (this->istep == 1) {
-        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
-        this->istep++;
+    // gamma
+    if (buffer_len == length[1]) {
+        printf(
+            "[%s:%d] buffer_len %d: gamma\n",
+            __FILE__,
+            __LINE__,
+            (int)buffer_len);
         return gamma;
     }
-    if (this->istep == 2) {
-        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
-        this->istep++;
+    // alpha
+    if (buffer_len == length[2]) {
+        printf(
+            "[%s:%d] buffer_len %d: alpha\n",
+            __FILE__,
+            __LINE__,
+            (int)buffer_len);
         return alpha;
     }
-    if (this->istep == 3) {
-        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
-        this->istep++;
+    // zeta
+    if (buffer_len == length[3]) {
+        printf(
+            "[%s:%d] buffer_len %d: zeta\n",
+            __FILE__,
+            __LINE__,
+            (int)buffer_len);
         return zeta;
     }
-    if (this->istep == 4) {
-        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
-        this->istep++;
+    // nu
+    if (buffer_len == length[4]) {
+        printf(
+            "[%s:%d] buffer_len %d: nu\n", __FILE__, __LINE__, (int)buffer_len);
         return nu;
     }
-    if (this->istep == 5) {
+    // u
+    if (buffer_len == length[5]) {
         // reset step to 0
-        printf("[%s:%d] istep %d\n", __FILE__, __LINE__, (int)istep);
-        this->istep = 0;
+        printf(
+            "[%s:%d] buffer_len %d: u + clear()\n",
+            __FILE__,
+            __LINE__,
+            (int)buffer_len);
+        this->buffer.clear();
         return u;
     }
-    // error
+    bool b_valid_length =
+        ((buffer_len == length[0]) || (buffer_len == length[1]) ||
+         (buffer_len == length[2]) || (buffer_len == length[3]) ||
+         (buffer_len == length[4]) || (buffer_len == length[5]));
+    try {
+        if (!b_valid_length) {
+            throw std::logic_error(
+                "Error: invalid length of transcript hasher buffer");
+        }
+    } catch (const std::logic_error &e) {
+        std::cout << "Error: " << e.what() << "\n";
+    }
+    assert(b_valid_length);
+    // If we are here, then the hasher buffer has invalid length so return error
     return 0;
 }
 

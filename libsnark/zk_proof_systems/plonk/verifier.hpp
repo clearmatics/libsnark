@@ -186,6 +186,7 @@ public:
     /// pi-SNARK. TODO: fixed to the test vectors for now
     ///
     /// INPUT
+    /// \param[in] proof: SNARK proof produced by the prover
     /// \param[in] transcript_hasher: hashes of the communication
     ///            transcript after prover rounds 1,2,3,4,5.
     ///
@@ -198,7 +199,8 @@ public:
     ///             v in [GWC19])
     /// \param[out] u: multipoint evaluation challenge - hash of
     ///             transcript
-    static step_four_out_t<ppT> step_four(transcript_hasher<ppT> &hasher);
+    static step_four_out_t<ppT> step_four(
+        const plonk_proof<ppT> &proof, transcript_hasher<ppT> &hasher);
 
     /// Verifier Step 5: compute zero polynomial evaluation
     ///

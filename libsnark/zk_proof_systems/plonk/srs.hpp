@@ -184,21 +184,93 @@ public:
 };
 
 /// transcript hasher interface
+///
+/// the hasher works in the Prover as follows:
+///
+/// round 1
+///
+///     add_element(buffer, a_eval_exp)
+///     add_element(buffer, b_eval_exp)
+///     add_element(buffer, c_eval_exp)
+///     // buffer = first_output
+///
+/// round 2
+///
+///     beta = hash(str(buffer) + "0")
+///     gamma = hash(str(buffer) + "1")
+///
+///     acc_eval = evaluate_in_exponent(CRS, accumulator_poly.to_coeffs())
+///
+///     add_element(buffer, acc_eval)
+///     // buffer = first_output + second_output
+///
+/// round 3
+///
+///     alpha = hash(str(buffer))
+///
+///     add_element(buffer, t_lo_eval_exp)
+///     add_element(buffer, t_mid_eval_exp)
+///     add_element(buffer, t_hi_eval_exp)
+///     // buffer = first_output + second_output + third_output
+///
+/// round 4
+///
+///     zeta = hash(str(buffer))
+///
+///     add_element(buffer, a_zeta)
+///     add_element(buffer, b_zeta)
+///     add_element(buffer, c_zeta)
+///     add_element(buffer, S_0_zeta)
+///     add_element(buffer, S_1_zeta)
+///     add_element(buffer, accumulator_shift_zeta)
+///     add_element(buffer, t_zeta)
+///     add_element(buffer, r_zeta)
+///     // buffer = first_output + second_output + third_output + fourth_output
+///
+/// round 5
+///
+///     nu = hash(str(buffer))
+///
+///     W_zeta_eval_exp = evaluate_in_exponent(CRS, W_zeta.to_coeffs())
+///     W_zeta_omega_eval_exp = evaluate_in_exponent(CRS,
+///     W_zeta_omega.to_coeffs())
+///
+///     add_element(buffer, W_zeta_eval_exp)
+///     add_element(buffer, W_zeta_omega_eval_exp)
+///
+///     // buffer = first_output + second_output + third_output + fourth_output
+///     + fifth_output
+///
+///     u = hash(str(buffer))
+///
 template<typename ppT> class transcript_hasher
 {
 private:
-    // the current step of the hasher
-    size_t istep;
+    // buffer accumulating data to be hashed
+    std::vector<uint8_t> buffer;
 
 public:
     void add_element(const libff::Fr<ppT> &element);
     void add_element(const libff::G1<ppT> &element);
     void add_element(const libff::G2<ppT> &element);
 
+    // TODO: use next declaration to implement an actual hash function
+    // e.g.  BLAKE (from Aztec barretenberg implementation):
+    // https://github.com/AztecProtocol/barretenberg/blob/master/barretenberg/src/aztec/plonk/transcript/transcript.cpp#L33
+    //
+    // std::array<uint8_t, Blake2sHasher::PRNG_OUTPUT_SIZE>
+    // Blake2sHasher::hash(std::vector<uint8_t> const& buffer)
+
     libff::Fr<ppT> get_hash();
 
+    // clear the buffer (for now only for testing)
+    void buffer_clear();
+
+    // get buffer size
+    size_t buffer_size();
+
     // constructor
-    transcript_hasher(size_t &istep);
+    transcript_hasher(std::vector<uint8_t> &buffer);
 };
 
 } // namespace libsnark

@@ -93,12 +93,16 @@ round_one_out_t<ppT>::round_one_out_t(
 /// \param[out] W_polys_blinded_at_secret_g1: the blinded witness
 ///             polynomials evaluated at the secret input denoted
 ///             [a]_1, [b]_1, [c]_1 in [GWC19]
+/// \param[out] transcript_hasher: accumulates the communication
+///             transcript into a buffer to be hashed after prover
+///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
 template<typename ppT>
 round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     const round_zero_out_t<ppT> &round_zero_out,
     const std::vector<libff::Fr<ppT>> &blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
-    const srs<ppT> &srs)
+    const srs<ppT> &srs,
+    transcript_hasher<ppT> &hasher)
 {
     using Field = libff::Fr<ppT>;
     const size_t nwitness = NUM_HSETS;
@@ -140,6 +144,11 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     plonk_evaluate_polys_at_secret_G1<ppT>(
         srs.secret_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
 
+    // add outputs from Round 1 to the hash buffer
+    hasher.add_element(W_polys_blinded_at_secret_g1[a]);
+    hasher.add_element(W_polys_blinded_at_secret_g1[b]);
+    hasher.add_element(W_polys_blinded_at_secret_g1[c]);
+
     round_one_out_t<ppT> round_one_out(
         std::move(W_polys),
         std::move(W_polys_blinded),
@@ -170,6 +179,9 @@ round_two_out_t<ppT>::round_two_out_t(
 /// \param[out] z_poly: blinded accumulator poly z(x)
 /// \param[out] z_poly_at_secret_g1: blinded accumulator poly z(x)
 ///             evaluated at secret
+/// \param[out] transcript_hasher: accumulates the communication
+///             transcript into a buffer to be hashed after prover
+///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
 template<typename ppT>
 round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     const libff::Fr<ppT> &beta,
@@ -177,7 +189,8 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     const round_zero_out_t<ppT> &round_zero_out,
     const std::vector<libff::Fr<ppT>> blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
-    const srs<ppT> &srs)
+    const srs<ppT> &srs,
+    transcript_hasher<ppT> &hasher)
 {
     using Field = libff::Fr<ppT>;
 
@@ -204,6 +217,9 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     libfqfft::_polynomial_addition<Field>(z_poly, z1_blind_poly, A_poly);
     z_poly_at_secret_g1 =
         plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, z_poly);
+
+    // add outputs from Round 2 to the hash buffer
+    hasher.add_element(z_poly_at_secret_g1);
 
     round_two_out_t<ppT> round_two_out(
         std::move(z_poly), std::move(z_poly_at_secret_g1));
@@ -246,6 +262,9 @@ round_three_out_t<ppT>::round_three_out_t(
 ///             input zeta i.e. t(zeta)
 /// \param[out] z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted
 ///             by w
+/// \param[out] transcript_hasher: accumulates the communication
+///             transcript into a buffer to be hashed after prover
+///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
 template<typename ppT>
 round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     const libff::Fr<ppT> &alpha,
@@ -254,7 +273,8 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     const round_zero_out_t<ppT> &round_zero_out,
     const round_one_out_t<ppT> &round_one_out,
     const round_two_out_t<ppT> &round_two_out,
-    const srs<ppT> &srs)
+    const srs<ppT> &srs,
+    transcript_hasher<ppT> &hasher)
 {
     using Field = libff::Fr<ppT>;
     int num_hgen = NUM_HSETS;
@@ -462,6 +482,11 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
             srs.secret_powers_g1, t_poly[i]);
     }
 
+    // add outputs from Round 3 to the hash buffer
+    hasher.add_element(t_poly_at_secret_g1[lo]);
+    hasher.add_element(t_poly_at_secret_g1[mid]);
+    hasher.add_element(t_poly_at_secret_g1[hi]);
+
     round_three_out_t<ppT> round_three_out(
         std::move(z_poly_xomega),
         std::move(t_poly),
@@ -522,12 +547,16 @@ round_four_out_t<ppT>::round_four_out_t(
 ///             Python reference implementation \[PlonkPy] does, so we
 ///             do the same in order to match the test vectors. TODO
 ///             can remove t_zeta in the future
+/// \param[out] transcript_hasher: accumulates the communication
+///             transcript into a buffer to be hashed after prover
+///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
 template<typename ppT>
 round_four_out_t<ppT> plonk_prover<ppT>::round_four(
     const libff::Fr<ppT> &zeta,
     const round_one_out_t<ppT> &round_one_out,
     const round_three_out_t<ppT> &round_three_out,
-    const srs<ppT> &srs)
+    const srs<ppT> &srs,
+    transcript_hasher<ppT> &hasher)
 {
     using Field = libff::Fr<ppT>;
 
@@ -556,6 +585,14 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
         round_three_out.z_poly_xomega.size(),
         round_three_out.z_poly_xomega,
         zeta);
+
+    // add outputs from Round 4 to the hash buffer
+    hasher.add_element(a_zeta);
+    hasher.add_element(b_zeta);
+    hasher.add_element(c_zeta);
+    hasher.add_element(S_0_zeta);
+    hasher.add_element(S_1_zeta);
+    hasher.add_element(z_poly_xomega_zeta);
 
     round_four_out_t<ppT> round_four_out(
         std::move(a_zeta),
@@ -625,6 +662,9 @@ round_five_out_t<ppT>::round_five_out_t(
 /// \param[out] W_zeta_omega_at_secret: commitment to opening proof
 ///             polynomial W_{zeta omega}(x) at secert input
 ///             i.e. [W_{zeta omega}(secret)]_1
+/// \param[out] transcript_hasher: accumulates the communication
+///             transcript into a buffer to be hashed after prover
+///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
 template<typename ppT>
 round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     const libff::Fr<ppT> &alpha,
@@ -637,7 +677,8 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     const round_two_out_t<ppT> &round_two_out,
     const round_three_out_t<ppT> &round_three_out,
     const round_four_out_t<ppT> &round_four_out,
-    const srs<ppT> &srs)
+    const srs<ppT> &srs,
+    transcript_hasher<ppT> &hasher)
 {
     using Field = libff::Fr<ppT>;
     polynomial<Field> remainder;
@@ -909,6 +950,11 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     W_zeta_omega_at_secret = plonk_evaluate_poly_at_secret_G1<ppT>(
         srs.secret_powers_g1, W_zeta_omega);
 
+    // add outputs from Round 5 to the hash buffer
+    hasher.add_element(r_zeta);
+    hasher.add_element(W_zeta_at_secret);
+    hasher.add_element(W_zeta_omega_at_secret);
+
     round_five_out_t<ppT> round_five_out(
         std::move(r_zeta),
         std::move(W_zeta_at_secret),
@@ -1005,28 +1051,40 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
 
     // Prover Round 1
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
-    round_one_out_t<ppT> round_one_out =
-        plonk_prover::round_one(round_zero_out, blind_scalars, witness, srs);
+    round_one_out_t<ppT> round_one_out = plonk_prover::round_one(
+        round_zero_out, blind_scalars, witness, srs, hasher);
 
     printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
-    // - beta, gamma: permutation challenges - hashes of transcript of round 1
+    // - beta: permutation challenges - hashes of transcript of round
+    // 1 (\attention the original protocl appends a 0, while we don't
+    // append anyhting to avoid making a copy of the buffer)
     const libff::Fr<ppT> beta = hasher.get_hash();
+    // - gamma: permutation challenges - hashes of transcript of round
+    // 1 with 1 appended
+    hasher.add_element(libff::Fr<ppT>::one());
     const libff::Fr<ppT> gamma = hasher.get_hash();
 
     round_two_out_t<ppT> round_two_out = plonk_prover::round_two(
-        beta, gamma, round_zero_out, blind_scalars, witness, srs);
+        beta, gamma, round_zero_out, blind_scalars, witness, srs, hasher);
 
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
     // - alpha: quotient challenge - hash of transcript of rounds 1,2
     const libff::Fr<ppT> alpha = hasher.get_hash();
     round_three_out_t<ppT> round_three_out = plonk_prover::round_three(
-        alpha, beta, gamma, round_zero_out, round_one_out, round_two_out, srs);
+        alpha,
+        beta,
+        gamma,
+        round_zero_out,
+        round_one_out,
+        round_two_out,
+        srs,
+        hasher);
 
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
     // - zeta: evaluation challenge - hash of transcriptof rounds 1,2,3
     const libff::Fr<ppT> zeta = hasher.get_hash();
-    round_four_out_t<ppT> round_four_out =
-        plonk_prover::round_four(zeta, round_one_out, round_three_out, srs);
+    round_four_out_t<ppT> round_four_out = plonk_prover::round_four(
+        zeta, round_one_out, round_three_out, srs, hasher);
 
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
     /// - nu: opening challenge -- hash of transcript (denoted by v in
@@ -1043,7 +1101,8 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
         round_two_out,
         round_three_out,
         round_four_out,
-        srs);
+        srs,
+        hasher);
 
     // TODO: activate this part when we implement actual hashing of
     // communication transcripts

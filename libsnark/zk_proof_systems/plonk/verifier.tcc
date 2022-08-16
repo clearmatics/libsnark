@@ -100,6 +100,7 @@ step_four_out_t<ppT>::step_four_out_t(
 /// pi-SNARK. TODO: fixed to the test vectors for now
 ///
 /// INPUT
+/// \param[in] proof: SNARK proof produced by the prover
 /// \param[in] transcript_hasher: hashes of the communication
 ///            transcript after prover rounds 1,2,3,4,5.
 ///
@@ -114,14 +115,52 @@ step_four_out_t<ppT>::step_four_out_t(
 ///             transcript
 template<typename ppT>
 step_four_out_t<ppT> plonk_verifier<ppT>::step_four(
-    transcript_hasher<ppT> &hasher)
+    const plonk_proof<ppT> &proof, transcript_hasher<ppT> &hasher)
 {
+    // add outputs from Round 1 to the hash buffer
+    hasher.add_element(proof.W_polys_blinded_at_secret_g1[a]);
+    hasher.add_element(proof.W_polys_blinded_at_secret_g1[b]);
+    hasher.add_element(proof.W_polys_blinded_at_secret_g1[c]);
+    // - beta: permutation challenge - hashes of transcript of round
+    // 1 (\attention the original protocl appends a 0, while we don't
+    // append anyhting to avoid making a copy of the buffer)
     libff::Fr<ppT> beta = hasher.get_hash();
+    // - gamma: permutation challenge - hashes of transcript of round
+    // 1 with 1 appended
+    hasher.add_element(libff::Fr<ppT>::one());
     libff::Fr<ppT> gamma = hasher.get_hash();
+
+    // add outputs from Round 2 to the hash buffer
+    hasher.add_element(proof.z_poly_at_secret_g1);
+    // - alpha: quotient challenge - hash of transcript of rounds 1,2
     libff::Fr<ppT> alpha = hasher.get_hash();
+
+    // add outputs from Round 3 to the hash buffer
+    hasher.add_element(proof.t_poly_at_secret_g1[lo]);
+    hasher.add_element(proof.t_poly_at_secret_g1[mid]);
+    hasher.add_element(proof.t_poly_at_secret_g1[hi]);
+    // - zeta: evaluation challenge - hash of transcriptof rounds 1,2,3
     libff::Fr<ppT> zeta = hasher.get_hash();
+
+    // add outputs from Round 4 to the hash buffer
+    hasher.add_element(proof.a_zeta);
+    hasher.add_element(proof.b_zeta);
+    hasher.add_element(proof.c_zeta);
+    hasher.add_element(proof.S_0_zeta);
+    hasher.add_element(proof.S_1_zeta);
+    hasher.add_element(proof.z_poly_xomega_zeta);
+    // - nu: opening challenge -- hash of transcript (denoted by v in
+    //   [GWC19])
     libff::Fr<ppT> nu = hasher.get_hash();
+
+    // add outputs from Round 5 to the hash buffer
+    hasher.add_element(proof.r_zeta);
+    hasher.add_element(proof.W_zeta_at_secret);
+    hasher.add_element(proof.W_zeta_omega_at_secret);
+    // u: multipoint evaluation challenge -- hash of transcript from
+    // rounds 1,2,3,4,5
     libff::Fr<ppT> u = hasher.get_hash();
+
     // step 4 output
     step_four_out_t<ppT> step_four_out(beta, gamma, alpha, zeta, nu, u);
 
@@ -621,7 +660,7 @@ bool plonk_verifier<ppT>::verify_proof(
     // Verifier Step 4: compute challenges hashed transcript as in
     // prover description, from the common inputs, public input, and
     // elements of pi-SNARK (fixed to the test vectors for now)
-    const step_four_out_t<ppT> step_four_out = this->step_four(hasher);
+    const step_four_out_t<ppT> step_four_out = this->step_four(proof, hasher);
 
     // Verifier Step 5: compute zero polynomial evaluation
     const step_five_out_t<ppT> step_five_out =
