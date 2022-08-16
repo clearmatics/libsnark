@@ -269,11 +269,15 @@ public:
     /// \param[out] W_polys_blinded_at_secret_g1: the blinded witness
     ///             polynomials evaluated at the secret input denoted
     ///             [a]_1, [b]_1, [c]_1 in [GWC19]
+    /// \param[out] transcript_hasher: accumulates the communication
+    ///             transcript into a buffer to be hashed after prover
+    ///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
     static round_one_out_t<ppT> round_one(
         const round_zero_out_t<ppT> &round_zero_out,
         const std::vector<libff::Fr<ppT>> &blind_scalars,
         const std::vector<libff::Fr<ppT>> &witness,
-        const srs<ppT> &srs);
+        const srs<ppT> &srs,
+        transcript_hasher<ppT> &hasher);
 
     /// Prover Round 2
     ///
@@ -289,13 +293,17 @@ public:
     /// \param[out] z_poly: blinded accumulator poly z(x)
     /// \param[out] z_poly_at_secret_g1: blinded accumulator poly z(x)
     ///             evaluated at secret
+    /// \param[out] transcript_hasher: accumulates the communication
+    ///             transcript into a buffer to be hashed after prover
+    ///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
     static round_two_out_t<ppT> round_two(
         const libff::Fr<ppT> &beta,
         const libff::Fr<ppT> &gamma,
         const round_zero_out_t<ppT> &round_zero_out,
         const std::vector<libff::Fr<ppT>> blind_scalars,
         const std::vector<libff::Fr<ppT>> &witness,
-        const srs<ppT> &srs);
+        const srs<ppT> &srs,
+        transcript_hasher<ppT> &hasher);
 
     /// Prover Round 3
     ///
@@ -318,6 +326,9 @@ public:
     ///             input zeta i.e. t(zeta)
     /// \param[out] z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted
     ///             by w
+    /// \param[out] transcript_hasher: accumulates the communication
+    ///             transcript into a buffer to be hashed after prover
+    ///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
     static round_three_out_t<ppT> round_three(
         const libff::Fr<ppT> &alpha,
         const libff::Fr<ppT> &beta,
@@ -325,7 +336,8 @@ public:
         const round_zero_out_t<ppT> &round_zero_out,
         const round_one_out_t<ppT> &round_one_out,
         const round_two_out_t<ppT> &round_two_out,
-        const srs<ppT> &srs);
+        const srs<ppT> &srs,
+        transcript_hasher<ppT> &hasher);
 
     /// Prover Round 4
     ///
@@ -358,11 +370,15 @@ public:
     ///             Python reference implementation does, so we do the
     ///             same in order to match the test vectors. TODO can
     ///             remove t_zeta in the future
+    /// \param[out] transcript_hasher: accumulates the communication
+    ///             transcript into a buffer to be hashed after prover
+    ///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
     static round_four_out_t<ppT> round_four(
         const libff::Fr<ppT> &zeta,
         const round_one_out_t<ppT> &round_one_out,
         const round_three_out_t<ppT> &round_three_out,
-        const srs<ppT> &srs);
+        const srs<ppT> &srs,
+        transcript_hasher<ppT> &hasher);
 
     /// Prover Round 5
     ///
@@ -408,6 +424,9 @@ public:
     /// \param[out] W_zeta_omega_at_secret: commitment to opening proof
     ///             polynomial W_{zeta omega}(x) at secert input
     ///             i.e. [W_{zeta omega}(secret)]_1
+    /// \param[out] transcript_hasher: accumulates the communication
+    ///             transcript into a buffer to be hashed after prover
+    ///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
     static round_five_out_t<ppT> round_five(
         const libff::Fr<ppT> &alpha,
         const libff::Fr<ppT> &beta,
@@ -419,7 +438,8 @@ public:
         const round_two_out_t<ppT> &round_two_out,
         const round_three_out_t<ppT> &round_three_out,
         const round_four_out_t<ppT> &round_four_out,
-        const srs<ppT> &srs);
+        const srs<ppT> &srs,
+        transcript_hasher<ppT> &hasher);
 
     /// Prover compute SNARK proof
     ///
