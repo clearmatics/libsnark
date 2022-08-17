@@ -77,6 +77,25 @@ template<typename ppT>
 transcript_hasher<ppT>::transcript_hasher(std::vector<uint8_t> &buffer)
     : buffer(std::move(buffer))
 {
+    // test array containing the expected hash values of the communication
+    // transcript i.e. the communication challenges (in this order): beta,
+    // gamma, alpha, zeta, nu, u WARNING! specific to curve BLS12-381
+    this->hash_values = {
+        libff::Fr<ppT>("3710899868510394644410941212967766116886736137326022751"
+                       "891187938298987182388"), // beta
+        libff::Fr<ppT>("110379303840831945879077096653321168432672740458288022"
+                       "49545114995763715746939"), // gamma
+        libff::Fr<ppT>("379799789992747238930717819864848384921111623418803600"
+                       "22719385400306128734648"), // alpha
+        libff::Fr<ppT>("4327197228921839935583364394550235027071910395980312641"
+                       "5018065799136107272465"), // zeta
+        libff::Fr<ppT>(
+            "275158598338697752421507265080923414294782807831923791651"
+            "55175653098691426347"), // nu
+        libff::Fr<ppT>(
+            "1781751143954696684632449211212056577828855388109883650570"
+            "6049265393896966778"), // u
+    };
 }
 
 /// clear the buffer (for now only for testing)
@@ -158,80 +177,15 @@ void transcript_hasher<ppT>::add_element(const libff::G2<ppT> &element)
 /// BLAKE, etc.
 template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
 {
-    using Field = libff::Fr<ppT>;
-
     size_t buffer_len = this->buffer.size();
     // DEBUG
     printf("[%s:%d] len %7d\n", __FILE__, __LINE__, (int)buffer_len);
 
     // vector of valid lengths (\attention specific to BLS12-381)
-    std::vector<size_t> length{288, 320, 416, 704, 896, 1120};
+    const std::vector<size_t> length{288, 320, 416, 704, 896, 1120};
 
-    Field beta = Field("3710899868510394644410941212967766116886736137326022751"
-                       "891187938298987182388");
-    Field gamma = Field("110379303840831945879077096653321168432672740458288022"
-                        "49545114995763715746939");
-    Field alpha = Field("379799789992747238930717819864848384921111623418803600"
-                        "22719385400306128734648");
-    Field zeta = Field("4327197228921839935583364394550235027071910395980312641"
-                       "5018065799136107272465");
-    Field nu = Field("275158598338697752421507265080923414294782807831923791651"
-                     "55175653098691426347");
-    Field u = Field("1781751143954696684632449211212056577828855388109883650570"
-                    "6049265393896966778");
-    // beta
-    if (buffer_len == length[0]) {
-        printf(
-            "[%s:%d] buffer_len %d: beta\n",
-            __FILE__,
-            __LINE__,
-            (int)buffer_len);
-        return beta;
-    }
-    // gamma
-    if (buffer_len == length[1]) {
-        printf(
-            "[%s:%d] buffer_len %d: gamma\n",
-            __FILE__,
-            __LINE__,
-            (int)buffer_len);
-        return gamma;
-    }
-    // alpha
-    if (buffer_len == length[2]) {
-        printf(
-            "[%s:%d] buffer_len %d: alpha\n",
-            __FILE__,
-            __LINE__,
-            (int)buffer_len);
-        return alpha;
-    }
-    // zeta
-    if (buffer_len == length[3]) {
-        printf(
-            "[%s:%d] buffer_len %d: zeta\n",
-            __FILE__,
-            __LINE__,
-            (int)buffer_len);
-        return zeta;
-    }
-    // nu
-    if (buffer_len == length[4]) {
-        printf(
-            "[%s:%d] buffer_len %d: nu\n", __FILE__, __LINE__, (int)buffer_len);
-        return nu;
-    }
-    // u
-    if (buffer_len == length[5]) {
-        // reset step to 0
-        printf(
-            "[%s:%d] buffer_len %d: u + clear()\n",
-            __FILE__,
-            __LINE__,
-            (int)buffer_len);
-        this->buffer.clear();
-        return u;
-    }
+    // If we are here, then the hasher buffer has invalid length so throw an
+    // exception
     bool b_valid_length =
         ((buffer_len == length[0]) || (buffer_len == length[1]) ||
          (buffer_len == length[2]) || (buffer_len == length[3]) ||
@@ -244,9 +198,71 @@ template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
     } catch (const std::logic_error &e) {
         std::cout << "Error: " << e.what() << "\n";
     }
+    if (!b_valid_length) {
+        printf(
+            "[%s:%d] Error: invalid length of transcript hasher buffer\n",
+            __FILE__,
+            __LINE__);
+    }
     assert(b_valid_length);
-    // If we are here, then the hasher buffer has invalid length so return error
-    return 0;
+
+    libff::Fr<ppT> challenge = 0;
+
+    // beta
+    if (buffer_len == length[0]) {
+        printf(
+            "[%s:%d] buffer_len %d: beta\n",
+            __FILE__,
+            __LINE__,
+            (int)buffer_len);
+        challenge = this->hash_values[0]; // beta
+    }
+    // gamma
+    if (buffer_len == length[1]) {
+        printf(
+            "[%s:%d] buffer_len %d: gamma\n",
+            __FILE__,
+            __LINE__,
+            (int)buffer_len);
+        challenge = this->hash_values[1]; // gamma
+    }
+    // alpha
+    if (buffer_len == length[2]) {
+        printf(
+            "[%s:%d] buffer_len %d: alpha\n",
+            __FILE__,
+            __LINE__,
+            (int)buffer_len);
+        challenge = this->hash_values[2]; // alpha
+    }
+    // zeta
+    if (buffer_len == length[3]) {
+        printf(
+            "[%s:%d] buffer_len %d: zeta\n",
+            __FILE__,
+            __LINE__,
+            (int)buffer_len);
+        challenge = this->hash_values[3]; // zeta
+    }
+    // nu
+    if (buffer_len == length[4]) {
+        printf(
+            "[%s:%d] buffer_len %d: nu\n", __FILE__, __LINE__, (int)buffer_len);
+        challenge = this->hash_values[4]; // nu
+    }
+    // u
+    if (buffer_len == length[5]) {
+        // reset step to 0
+        printf(
+            "[%s:%d] buffer_len %d: u + clear()\n",
+            __FILE__,
+            __LINE__,
+            (int)buffer_len);
+        this->buffer.clear();
+        challenge = this->hash_values[5]; // u
+    }
+
+    return challenge;
 }
 
 /// Compute a universal srs (usrs). It is composed *only* of encoded

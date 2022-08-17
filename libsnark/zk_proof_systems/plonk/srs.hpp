@@ -248,6 +248,9 @@ template<typename ppT> class transcript_hasher
 private:
     // buffer accumulating data to be hashed
     std::vector<uint8_t> buffer;
+    // array containing the hash values of the communication transcript
+    // i.e. the six challenges (in this order): beta, gamma, alpha, zeta, nu, u
+    std::array<libff::Fr<ppT>, 6> hash_values;
 
 public:
     void add_element(const libff::Fr<ppT> &element);
