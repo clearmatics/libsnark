@@ -116,6 +116,9 @@ public:
     /// [\alpha]_2
     std::vector<libff::G2<ppT>> secret_powers_g2;
 
+    /// the 0-th polynomial of the Lagrange basis
+    polynomial<Field> L_basis_zero;
+
     /// the libfqfft domain
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain;
 
@@ -131,6 +134,7 @@ public:
         const libff::Fr<ppT> &k2,
         std::vector<libff::G1<ppT>> &&secret_powers_g1,
         std::vector<libff::G2<ppT>> &&secret_powers_g2,
+        const polynomial<Field> &L_basis_zero,
         std::shared_ptr<libfqfft::evaluation_domain<Field>> domain);
 };
 
