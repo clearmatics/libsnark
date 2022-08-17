@@ -20,7 +20,6 @@
 
 namespace libsnark
 {
-
 #define PLONK_MAX_DEGREE 245
 
 // Manipulate elements of a valid proof to assert that proof
