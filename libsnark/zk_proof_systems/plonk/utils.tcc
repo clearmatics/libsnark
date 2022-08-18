@@ -96,17 +96,21 @@ void plonk_interpolate_polynomial_from_points(
 /// values L, R, M, O and C for each gate; the number of columns is
 /// equal to the number of gates. L_basis is the Lagrange basis.
 template<typename FieldT>
-void plonk_compute_selector_polynomials(
-    const std::vector<std::vector<FieldT>> &gates_matrix_transpose,
-    std::vector<polynomial<FieldT>> &Q_polys)
+std::vector<polynomial<FieldT>> plonk_compute_selector_polynomials(
+    const size_t &num_gates,
+    const size_t &num_qpolys,
+    const std::vector<std::vector<FieldT>> &gates_matrix_transpose)
 {
-    assert(gates_matrix_transpose.size() == Q_polys.size());
-    assert(gates_matrix_transpose[0].size() == Q_polys[0].size());
-    size_t num_qpolys = gates_matrix_transpose.size();
+    assert(gates_matrix_transpose.size() == num_qpolys);
+    assert(gates_matrix_transpose[0].size() == num_gates);
+
+    std::vector<polynomial<FieldT>> Q_polys;
+    Q_polys.resize(num_qpolys, polynomial<FieldT>(num_gates));
     for (size_t i = 0; i < num_qpolys; ++i) {
         std::vector<FieldT> q_vec = gates_matrix_transpose[i];
         plonk_interpolate_polynomial_from_points<FieldT>(q_vec, Q_polys[i]);
     }
+    return Q_polys;
 };
 
 template<typename FieldT>
@@ -353,24 +357,24 @@ FieldT plonk_compute_accumulator_factor(
 
 // - A: accumulator vector
 template<typename FieldT>
-void plonk_compute_accumulator(
+std::vector<FieldT> plonk_compute_accumulator(
     const size_t num_gates,
     const FieldT beta,
     const FieldT gamma,
     const std::vector<FieldT> &witness,
     const std::vector<FieldT> &H_gen, // H, Hk1, Hk2
-    const std::vector<FieldT> &H_gen_permute,
-    std::vector<FieldT> &A)
+    const std::vector<FieldT> &H_gen_permute)
 {
     assert(num_gates);
     assert(witness.size() == (NUM_HSETS * num_gates));
     assert(H_gen.size() == (NUM_HSETS * num_gates));
     assert(H_gen_permute.size() == (NUM_HSETS * num_gates));
-    assert(A.size() == num_gates);
+    std::vector<FieldT> A(num_gates, FieldT(0));
     for (size_t i = 0; i < num_gates; ++i) {
         A[i] = plonk_compute_accumulator_factor(
             i, num_gates, beta, gamma, witness, H_gen, H_gen_permute, A);
     }
+    return A;
 }
 
 } // namespace libsnark
