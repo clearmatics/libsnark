@@ -254,7 +254,6 @@ template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
             __FILE__,
             __LINE__,
             (int)buffer_len);
-        this->buffer.clear();
         challenge = this->hash_values[5]; // u
     }
 
