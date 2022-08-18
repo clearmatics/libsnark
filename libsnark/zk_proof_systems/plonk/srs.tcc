@@ -156,7 +156,6 @@ srs<ppT> plonk_srs_derive_from_usrs(
         libfqfft::get_evaluation_domain<libff::Fr<ppT>>(circuit.num_gates);
 
     // compute 0-th Lagrange basis vector via inverse FFT
-    // see \ref plonk_compute_lagrange_basis()
     polynomial<libff::Fr<ppT>> u(circuit.num_gates, libff::Fr<ppT>(0));
     u[0] = libff::Fr<ppT>(1);
     domain->iFFT(u);
