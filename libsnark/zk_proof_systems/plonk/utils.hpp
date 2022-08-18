@@ -47,30 +47,6 @@ enum omega_id { base, base_k1, base_k2 };
 /// print the elements of a vector
 template<typename FieldT> void print_vector(const std::vector<FieldT> &v);
 
-/// Compute the Lagrange basis polynomials for interpolating sets of
-/// n points
-///
-/// INPUT:
-///
-/// \param[in] npoints - number of points
-/// \param[in] domain - libfqfft domain (\see
-///            libfqfft::get_evaluation_domain)
-///
-/// OUTPUT:
-///
-/// \param[out] L[0..n-1][0..n-1]: Lagrange basis over the n roots of
-///             unity omega_0, ..., omega_{n-1} i.e. L[omega_i] = [a0,
-///             a1, ..., a_{n-1}] is a vector representing the
-///             coefficients of the i-th Lagrange polynomial L_i(x) =
-///             a0+a1x+a2x^2+..+a_{n-1}x^{n-1} s.t. L_i(x=omega_i)=1
-///             and L_i(x\neq{omega_i)})=0
-///
-/// \note uses libfqfft iFFT for the interpolation
-template<typename FieldT>
-std::vector<polynomial<FieldT>> plonk_compute_lagrange_basis(
-    const size_t &npoints,
-    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain);
-
 /// Interpolate a polynomial from a set of points through inverse FFT
 ///
 /// INPUT:
