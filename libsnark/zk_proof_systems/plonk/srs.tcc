@@ -187,9 +187,7 @@ template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
     // If we are here, then the hasher buffer has invalid length so throw an
     // exception
     bool b_valid_length =
-        ((buffer_len == length[0]) || (buffer_len == length[1]) ||
-         (buffer_len == length[2]) || (buffer_len == length[3]) ||
-         (buffer_len == length[4]) || (buffer_len == length[5]));
+        (0 != std::count(length.begin(), length.end(), buffer_len));
     if (!b_valid_length) {
         throw std::logic_error(
             "Error: invalid length of transcript hasher buffer");
