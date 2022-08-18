@@ -1104,19 +1104,6 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
         srs,
         hasher);
 
-    // TODO: activate this part when we implement actual hashing of
-    // communication transcripts
-#if 0
-    // u: multipoint evaluation challenge -- hash of transcript from
-    // rounds 1,2,3,4,5
-    const libff::Fr<ppT> u = hasher.get_hash();
-#else
-    // do the hash anyway in order to keep the correct count of the
-    // hasher istep member (which resets to 0 only after the last hash
-    // is performed which is hash of u)
-    hasher.get_hash();
-#endif
-
     // construct proof
     plonk_proof<ppT> proof(
         round_one_out.W_polys_blinded_at_secret_g1,
