@@ -83,9 +83,6 @@ public:
     /// vanilla Plonk proposal [GWC19])
     size_t num_qpolys;
 
-    /// Lagrange basis
-    std::vector<polynomial<Field>> L_basis;
-
     /// Public input polynomial
     polynomial<Field> PI_poly;
 
@@ -119,9 +116,14 @@ public:
     /// [\alpha]_2
     std::vector<libff::G2<ppT>> secret_powers_g2;
 
+    /// the 0-th polynomial of the Lagrange basis
+    polynomial<Field> L_basis_zero;
+
+    /// the libfqfft domain
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain;
+
     srs(const size_t &num_gates,
         const size_t &num_qpolys,
-        const std::vector<polynomial<Field>> &L_basis,
         const polynomial<Field> &PI_poly,
         const std::vector<polynomial<Field>> &Q_polys,
         const std::vector<polynomial<Field>> &S_polys,
@@ -131,7 +133,9 @@ public:
         const libff::Fr<ppT> &k1,
         const libff::Fr<ppT> &k2,
         std::vector<libff::G1<ppT>> &&secret_powers_g1,
-        std::vector<libff::G2<ppT>> &&secret_powers_g2);
+        std::vector<libff::G2<ppT>> &&secret_powers_g2,
+        const polynomial<Field> &L_basis_zero,
+        std::shared_ptr<libfqfft::evaluation_domain<Field>> domain);
 };
 
 template<typename ppT>

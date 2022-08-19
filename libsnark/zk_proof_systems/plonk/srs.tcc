@@ -29,7 +29,6 @@ template<typename ppT>
 srs<ppT>::srs(
     const size_t &num_gates,
     const size_t &num_qpolys,
-    const std::vector<polynomial<Field>> &L_basis,
     const polynomial<Field> &PI_poly,
     const std::vector<polynomial<Field>> &Q_polys,
     const std::vector<polynomial<Field>> &S_polys,
@@ -39,10 +38,11 @@ srs<ppT>::srs(
     const libff::Fr<ppT> &k1,
     const libff::Fr<ppT> &k2,
     std::vector<libff::G1<ppT>> &&secret_powers_g1,
-    std::vector<libff::G2<ppT>> &&secret_powers_g2)
+    std::vector<libff::G2<ppT>> &&secret_powers_g2,
+    const polynomial<Field> &L_basis_zero,
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain)
     : num_gates(num_gates)
     , num_qpolys(num_qpolys)
-    , L_basis(L_basis)
     , PI_poly(PI_poly)
     , Q_polys(Q_polys)
     , S_polys(S_polys)
@@ -53,6 +53,8 @@ srs<ppT>::srs(
     , k2(k2)
     , secret_powers_g1(secret_powers_g1)
     , secret_powers_g2(secret_powers_g2)
+    , L_basis_zero(L_basis_zero)
+    , domain(domain)
 {
 }
 
@@ -150,10 +152,18 @@ srs<ppT> plonk_srs_derive_from_usrs(
         secret_powers_g2.push_back(usrs.secret_powers_g2[i]);
     }
 
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain =
+        libfqfft::get_evaluation_domain<libff::Fr<ppT>>(circuit.num_gates);
+
+    // compute 0-th Lagrange basis vector via inverse FFT
+    polynomial<libff::Fr<ppT>> u(circuit.num_gates, libff::Fr<ppT>(0));
+    u[0] = libff::Fr<ppT>(1);
+    domain->iFFT(u);
+    polynomial<libff::Fr<ppT>> L_basis_zero = u;
+
     srs<ppT> srs(
         circuit.num_gates,
         circuit.num_qpolys,
-        circuit.L_basis,
         circuit.PI_poly,
         circuit.Q_polys,
         circuit.S_polys,
@@ -163,7 +173,9 @@ srs<ppT> plonk_srs_derive_from_usrs(
         circuit.k1,
         circuit.k2,
         std::move(secret_powers_g1),
-        std::move(secret_powers_g2));
+        std::move(secret_powers_g2),
+        std::move(L_basis_zero),
+        domain);
 
     return srs;
 }

@@ -23,7 +23,6 @@ template<typename ppT>
 circuit_t<ppT>::circuit_t(
     size_t num_gates,
     size_t num_qpolys,
-    std::vector<polynomial<Field>> &&L_basis,
     polynomial<Field> &&PI_poly,
     std::vector<polynomial<Field>> &&Q_polys,
     std::vector<polynomial<Field>> &&S_polys,
@@ -34,7 +33,6 @@ circuit_t<ppT>::circuit_t(
     libff::Fr<ppT> &&k2)
     : num_gates(num_gates)
     , num_qpolys(num_qpolys)
-    , L_basis(L_basis)
     , PI_poly(PI_poly)
     , Q_polys(Q_polys)
     , S_polys(S_polys)
