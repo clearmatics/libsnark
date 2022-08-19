@@ -8,8 +8,8 @@
 #ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_EXAMPLE_TCC_
 #define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_EXAMPLE_TCC_
 
-/// Instantiation of the test vector values from the Python implementation
-/// of the Plonk protocol. \see example.hpp .
+// Instantiation of the test vector values from the Python implementation
+// of the Plonk protocol. \see example.hpp .
 
 namespace libsnark
 {
