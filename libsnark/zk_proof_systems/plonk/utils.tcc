@@ -9,13 +9,13 @@
 #ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_TCC_
 #define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_TCC_
 
-/// Implementation of interfaces for a ppzkSNARK for Plonk. See
-/// utils.hpp .
+// Implementation of interfaces for a ppzkSNARK for Plonk. See
+// utils.hpp .
 
 namespace libsnark
 {
 
-/// print the elements of a vector
+// print the elements of a vector
 template<typename FieldT> void print_vector(const std::vector<FieldT> &v)
 {
     for (size_t i = 0; i < v.size(); ++i) {
@@ -24,25 +24,61 @@ template<typename FieldT> void print_vector(const std::vector<FieldT> &v)
     }
 }
 
-/// Interpolate a polynomial from a set of points through inverse FFT
-///
-/// INPUT:
-///
-/// \param[in] f_points[0..n-1]: a set of points (0,y0), (1,y1),
-///            ... (n-1,y_{n-1}) s.t. y0=f_points[0], y1=f_points[1],
-///            ... which we want to interpolate as a polynomial
-///
-/// OUTPUT:
-///
-/// \param[out] f_poly[0..n-1]: the coefficients [a0, a1, ..., a_{n-1}]
-///             of the polynomial f(x) interpolating the set of points
-///             f_points. For example if f_poly[0..n-1] = [a0, a1, ...,
-///             a_{n-1}] then this represents the polynomial f(x) =
-///             a0+a1x+a1x^2+...+a_{n-1}x^{n-1} such that
-///             f(omega_i)=f_points[i], where omega_0, ..., omega_{n-1}
-///             are the n roots of unity.
-///
-/// \note uses libfqfft iFFT for the interpolation
+// Compute the Lagrange basis polynomials for interpolating sets of
+// n points
+//
+// INPUT:
+//
+// \param[in] npoints - number of points
+//
+// OUTPUT:
+//
+// \param[out] L[0..n-1][0..n-1]: Lagrange basis over the n roots of
+//             unity omega_0, ..., omega_{n-1} i.e. L[omega_i] = [a0,
+//             a1, ..., a_{n-1}] is a vector representing the
+//             coefficients of the i-th Lagrange polynomial L_i(x) =
+//             a0+a1x+a2x^2+..+a_{n-1}x^{n-1} s.t. L_i(x=omega_i)=1
+//             and L_i(x\neq{omega_i)})=0
+//
+// \note uses libfqfft iFFT for the interpolation
+template<typename FieldT>
+void plonk_compute_lagrange_basis(
+    const size_t npoints, std::vector<polynomial<FieldT>> &L)
+{
+    assert(L.size() != 0);
+    assert(L.size() == L[0].size());
+    assert(L.size() == npoints);
+
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain =
+        libfqfft::get_evaluation_domain<FieldT>(npoints);
+    for (size_t i = 0; i < npoints; ++i) {
+        polynomial<FieldT> u(npoints, FieldT(0));
+        u[i] = FieldT(1);
+        // compute i-th Lagrange basis vector via inverse FFT
+        domain->iFFT(u);
+        L[i] = u;
+    }
+}
+
+// Interpolate a polynomial from a set of points through inverse FFT
+//
+// INPUT:
+//
+// \param[in] f_points[0..n-1]: a set of points (0,y0), (1,y1),
+//            ... (n-1,y_{n-1}) s.t. y0=f_points[0], y1=f_points[1],
+//            ... which we want to interpolate as a polynomial
+//
+// OUTPUT:
+//
+// \param[out] f_poly[0..n-1]: the coefficients [a0, a1, ..., a_{n-1}]
+//             of the polynomial f(x) interpolating the set of points
+//             f_points. For example if f_poly[0..n-1] = [a0, a1, ...,
+//             a_{n-1}] then this represents the polynomial f(x) =
+//             a0+a1x+a1x^2+...+a_{n-1}x^{n-1} such that
+//             f(omega_i)=f_points[i], where omega_0, ..., omega_{n-1}
+//             are the n roots of unity.
+//
+// \note uses libfqfft iFFT for the interpolation
 template<typename FieldT>
 void plonk_interpolate_polynomial_from_points(
     const std::vector<FieldT> &f_points, polynomial<FieldT> &f_poly)
@@ -54,11 +90,11 @@ void plonk_interpolate_polynomial_from_points(
     domain->iFFT(f_poly);
 }
 
-/// Compute the selector polynomials of the given circuit (also
-/// called here "q-polynomials"). See Sect. 8.1.  The matrix
-/// gates_matrix_transpose has 5 rows, each corresponding to the
-/// values L, R, M, O and C for each gate; the number of columns is
-/// equal to the number of gates. L_basis is the Lagrange basis.
+// Compute the selector polynomials of the given circuit (also
+// called here "q-polynomials"). See Sect. 8.1.  The matrix
+// gates_matrix_transpose has 5 rows, each corresponding to the
+// values L, R, M, O and C for each gate; the number of columns is
+// equal to the number of gates. L_basis is the Lagrange basis.
 template<typename FieldT>
 std::vector<polynomial<FieldT>> plonk_compute_selector_polynomials(
     const size_t &num_gates,
@@ -84,12 +120,12 @@ void plonk_compute_public_input_polynomial(
     plonk_interpolate_polynomial_from_points<FieldT>(PI_points, PI_poly);
 };
 
-/// This function computes the sets H, k1H, k2H.  H is a
-/// multiplicative subgroup containing the n-th roots of unity in Fr,
-/// where \omega is a primitive n-th root of unity and a generator of
-/// H i.e H = {1, \omega, ..., \omega^{n-1}}. k1, k2 \in Fr are chosen
-/// such that H, H k1, H k2 are distinct cosets of H in Fr, and thus
-/// consist of 3n distinct elements. \see [GWC19] pp26 (top).
+// This function computes the sets H, k1H, k2H.  H is a
+// multiplicative subgroup containing the n-th roots of unity in Fr,
+// where \omega is a primitive n-th root of unity and a generator of
+// H i.e H = {1, \omega, ..., \omega^{n-1}}. k1, k2 \in Fr are chosen
+// such that H, H k1, H k2 are distinct cosets of H in Fr, and thus
+// consist of 3n distinct elements. \see [GWC19] pp26 (top).
 template<typename FieldT>
 void plonk_compute_roots_of_unity_omega(
     const size_t num_gates,
@@ -126,14 +162,14 @@ void plonk_compute_roots_of_unity_omega(
     }
 }
 
-/// This function computes the sets H, k1H, k2H, where H is a
-/// multiplicative subgroup containing the n-th roots of unity in Fr and
-/// \omega is a primitive n-th root of unity and a generator of
-/// H ie. H = {1, \omega, ..., \omega^{n-1}}. k1, k2 \in Fr are chosen
-/// such that H, H k1, H k2 are distinct cosets of H in Fr, and thus
-/// consist of 3n distinct elements. \see [GWC19] pp26 (top) and Sect. 8.
-///
-/// \note uses plonk_compute_roots_of_unity_omega
+// This function computes the sets H, k1H, k2H, where H is a
+// multiplicative subgroup containing the n-th roots of unity in Fr and
+// \omega is a primitive n-th root of unity and a generator of
+// H ie. H = {1, \omega, ..., \omega^{n-1}}. k1, k2 \in Fr are chosen
+// such that H, H k1, H k2 are distinct cosets of H in Fr, and thus
+// consist of 3n distinct elements. \see [GWC19] pp26 (top) and Sect. 8.
+//
+// \note uses plonk_compute_roots_of_unity_omega
 template<typename FieldT>
 void plonk_compute_cosets_H_k1H_k2H(
     const size_t num_gates,
@@ -161,10 +197,10 @@ void plonk_compute_cosets_H_k1H_k2H(
         omega[base_k2].begin(), omega[base_k2].end(), back_inserter(H_gen));
 }
 
-/// permute the multiplicative subgroup H according to the wire
-/// permutation: (see [GWC19] Sect. 8), \see
-/// plonk_compute_roots_of_unity_omega, \see
-/// plonk_roots_of_unity_omega_to_subgroup_H
+// permute the multiplicative subgroup H according to the wire
+// permutation: (see [GWC19] Sect. 8), \see
+// plonk_compute_roots_of_unity_omega, \see
+// plonk_roots_of_unity_omega_to_subgroup_H
 template<typename FieldT>
 std::vector<FieldT> plonk_permute_subgroup_H(
     const std::vector<FieldT> &H_gen,
@@ -180,8 +216,8 @@ std::vector<FieldT> plonk_permute_subgroup_H(
     return H_gen_permute;
 }
 
-/// compute the permutation polynomials S_sigma_1, S_sigma_2,
-/// S_sigma_2 (see [GWC19], Sect. 8.1)
+// compute the permutation polynomials S_sigma_1, S_sigma_2,
+// S_sigma_2 (see [GWC19], Sect. 8.1)
 template<typename FieldT>
 std::vector<polynomial<FieldT>> plonk_compute_permutation_polynomials(
     const std::vector<FieldT> &H_gen_permute, const size_t num_gates)
@@ -222,21 +258,21 @@ libff::G1<ppT> plonk_multi_exp_G1(
     return product;
 }
 
-/// Evaluate a polynomial F at the encoded secret input
-/// \secret^i*G_1 ie. compute f(\secret)*G1 = [f(\secret)]_i
-///
-/// INPUT
-///
-/// \param[in] secret_powers_g1: \secret^i*G1:
-///            0\le{i}<max_degree(Q[j]): 0\le{j}<n f_poly: a
-///            polynomial
-///
-/// OUTPUT
-///
-/// \param[out] [f_poly(\secret)]_1, 0\le 1<n : the "encrypted"
-///             evaluation of the polynomial f_poly in the secret
-///             parameter \secret (the toxic waste) multiplied by the
-///             group generator G_1 i.e. compute f_poly(\secret)*G_1
+// Evaluate a polynomial F at the encoded secret input
+// \secret^i*G_1 ie. compute f(\secret)*G1 = [f(\secret)]_i
+//
+// INPUT
+//
+// \param[in] secret_powers_g1: \secret^i*G1:
+//            0\le{i}<max_degree(Q[j]): 0\le{j}<n f_poly: a
+//            polynomial
+//
+// OUTPUT
+//
+// \param[out] [f_poly(\secret)]_1, 0\le 1<n : the "encrypted"
+//             evaluation of the polynomial f_poly in the secret
+//             parameter \secret (the toxic waste) multiplied by the
+//             group generator G_1 i.e. compute f_poly(\secret)*G_1
 template<typename ppT>
 libff::G1<ppT> plonk_evaluate_poly_at_secret_G1(
     const std::vector<libff::G1<ppT>> &secret_powers_g1,
@@ -257,8 +293,8 @@ libff::G1<ppT> plonk_evaluate_poly_at_secret_G1(
     return f_poly_at_secret_g1;
 }
 
-/// Evaluate a list of polynomials in the encrypted secret input: see
-/// plonk_evaluate_poly_at_secret_G1
+// Evaluate a list of polynomials in the encrypted secret input: see
+// plonk_evaluate_poly_at_secret_G1
 template<typename ppT>
 void plonk_evaluate_polys_at_secret_G1(
     const std::vector<libff::G1<ppT>> &secret_powers_g1,
@@ -275,10 +311,10 @@ void plonk_evaluate_polys_at_secret_G1(
     }
 }
 
-/// Compute the factors in the product of the permutation polynomial
-/// z(X) in Prover Round 2. Note that accumulator A[0]=1 and A[i],
-/// i>0 is computed from values at i-1 for witness[i-1], H_gen[i-1],
-/// H_gen_permute[i-1]m etc.
+// Compute the factors in the product of the permutation polynomial
+// z(X) in Prover Round 2. Note that accumulator A[0]=1 and A[i],
+// i>0 is computed from values at i-1 for witness[i-1], H_gen[i-1],
+// H_gen_permute[i-1]m etc.
 template<typename FieldT>
 FieldT plonk_compute_accumulator_factor(
     const size_t i,

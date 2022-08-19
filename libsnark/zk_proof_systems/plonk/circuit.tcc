@@ -9,8 +9,8 @@
 #ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_TCC_
 #define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_CIRCUIT_TCC_
 
-/// Implementation of Common Preprocessed Input interfaces for a
-/// ppzkSNARK for Plonk. See circuit.hpp .
+// Implementation of Common Preprocessed Input interfaces for a
+// ppzkSNARK for Plonk. See circuit.hpp .
 
 namespace libsnark
 {
@@ -18,7 +18,7 @@ namespace libsnark
 // TODO: add here function for describing the target circuit through
 // the circuit_t structure
 
-/// stuct constructor
+// stuct constructor
 template<typename ppT>
 circuit_t<ppT>::circuit_t(
     size_t num_gates,
