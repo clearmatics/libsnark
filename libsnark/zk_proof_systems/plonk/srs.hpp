@@ -253,6 +253,9 @@ private:
     std::array<libff::Fr<ppT>, 6> hash_values;
 
 public:
+    // constructor
+    transcript_hasher(std::vector<uint8_t> &buffer);
+
     void add_element(const libff::Fr<ppT> &element);
     void add_element(const libff::G1<ppT> &element);
     void add_element(const libff::G2<ppT> &element);
@@ -271,9 +274,6 @@ public:
 
     // get buffer size
     size_t buffer_size();
-
-    // constructor
-    transcript_hasher(std::vector<uint8_t> &buffer);
 };
 
 } // namespace libsnark
