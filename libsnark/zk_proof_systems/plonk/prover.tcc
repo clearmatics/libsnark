@@ -9,13 +9,13 @@
 #ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PROVER_TCC_
 #define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_PROVER_TCC_
 
-/// Implementation of Prover interfaces for a ppzkSNARK for Plonk. See
-/// prover.hpp .
+// Implementation of Prover interfaces for a ppzkSNARK for Plonk. See
+// prover.hpp .
 
 namespace libsnark
 {
 
-/// Prover round 0 output constructor
+// Prover round 0 output constructor
 template<typename ppT>
 round_zero_out_t<ppT>::round_zero_out_t(
     const std::vector<libff::Fr<ppT>> &&zh_poly,
@@ -25,18 +25,18 @@ round_zero_out_t<ppT>::round_zero_out_t(
 {
 }
 
-/// Prover Round 0 initialization
-///
-/// Initialization
-///
-/// INPUT
-/// \param[in] srs: structured reference string containing also
-///            circuit-specific information
-///
-/// OUTPUT
-/// \param[out] zh_poly: vanishing polynomial
-/// \param[out] null_poly: 0 polynomial
-/// \param[out] neg_one_poly: -1 polynomial
+// Prover Round 0 initialization
+//
+// Initialization
+//
+// INPUT
+// \param[in] srs: structured reference string containing also
+//            circuit-specific information
+//
+// OUTPUT
+// \param[out] zh_poly: vanishing polynomial
+// \param[out] null_poly: 0 polynomial
+// \param[out] neg_one_poly: -1 polynomial
 template<typename ppT>
 round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> &srs)
 {
@@ -62,7 +62,7 @@ round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> &srs)
     return round_zero_out;
 }
 
-/// Prover round 1 output constructor
+// Prover round 1 output constructor
 template<typename ppT>
 round_one_out_t<ppT>::round_one_out_t(
     const std::vector<polynomial<libff::Fr<ppT>>> &&W_polys,
@@ -74,28 +74,28 @@ round_one_out_t<ppT>::round_one_out_t(
 {
 }
 
-/// Prover Round 1
-///
-/// INPUT
-/// \param[in] zh_poly: vanishing polynomial Zh (from round 0)
-/// \param[in] null_poly: 0 polynomial (from round 0)
-/// \param[in] neg_one_poly: -1 polynomial (from round 0)
-/// \param[in] blind_scalars: blinding scalars b1, b2, ..., b9 (only
-///            b1-b6 used in round 1)
-/// \param[in] witness: witness values
-/// \param[in] srs: structured reference string containing also
-///            circuit-specific information
-///
-/// OUTPUT
-/// \param[out] W_polys: witness polynomials (Lagrange interpolation
-///             of the witness values)
-/// \param[out] W_polys_blinded: blinded witness polynomials
-/// \param[out] W_polys_blinded_at_secret_g1: the blinded witness
-///             polynomials evaluated at the secret input denoted
-///             [a]_1, [b]_1, [c]_1 in [GWC19]
-/// \param[out] transcript_hasher: accumulates the communication
-///             transcript into a buffer to be hashed after prover
-///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
+// Prover Round 1
+//
+// INPUT
+// \param[in] zh_poly: vanishing polynomial Zh (from round 0)
+// \param[in] null_poly: 0 polynomial (from round 0)
+// \param[in] neg_one_poly: -1 polynomial (from round 0)
+// \param[in] blind_scalars: blinding scalars b1, b2, ..., b9 (only
+//            b1-b6 used in round 1)
+// \param[in] witness: witness values
+// \param[in] srs: structured reference string containing also
+//            circuit-specific information
+//
+// OUTPUT
+// \param[out] W_polys: witness polynomials (Lagrange interpolation
+//             of the witness values)
+// \param[out] W_polys_blinded: blinded witness polynomials
+// \param[out] W_polys_blinded_at_secret_g1: the blinded witness
+//             polynomials evaluated at the secret input denoted
+//             [a]_1, [b]_1, [c]_1 in [GWC19]
+// \param[out] transcript_hasher: accumulates the communication
+//             transcript into a buffer to be hashed after prover
+//             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
 template<typename ppT>
 round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     const round_zero_out_t<ppT> &round_zero_out,
@@ -157,7 +157,7 @@ round_one_out_t<ppT> plonk_prover<ppT>::round_one(
     return round_one_out;
 }
 
-/// Prover round 2 output
+// Prover round 2 output
 template<typename ppT>
 round_two_out_t<ppT>::round_two_out_t(
     polynomial<libff::Fr<ppT>> &&z_poly, libff::G1<ppT> &&z_poly_at_secret_g1)
@@ -165,23 +165,23 @@ round_two_out_t<ppT>::round_two_out_t(
 {
 }
 
-/// Prover Round 2
-///
-/// INPUT
-/// \param[in] zh_poly: vanishing polynomial Zh (from round 0)
-/// \param[in] blind_scalars: blinding scalars b1, b2, ..., b9 (only
-///            b7,b8,b9 used in round 2)
-/// \param[in] witness: witness values
-/// \param[in] srs: structured reference string containing also
-///            circuit-specific information
-///
-/// OUTPUT
-/// \param[out] z_poly: blinded accumulator poly z(x)
-/// \param[out] z_poly_at_secret_g1: blinded accumulator poly z(x)
-///             evaluated at secret
-/// \param[out] transcript_hasher: accumulates the communication
-///             transcript into a buffer to be hashed after prover
-///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
+// Prover Round 2
+//
+// INPUT
+// \param[in] zh_poly: vanishing polynomial Zh (from round 0)
+// \param[in] blind_scalars: blinding scalars b1, b2, ..., b9 (only
+//            b7,b8,b9 used in round 2)
+// \param[in] witness: witness values
+// \param[in] srs: structured reference string containing also
+//            circuit-specific information
+//
+// OUTPUT
+// \param[out] z_poly: blinded accumulator poly z(x)
+// \param[out] z_poly_at_secret_g1: blinded accumulator poly z(x)
+//             evaluated at secret
+// \param[out] transcript_hasher: accumulates the communication
+//             transcript into a buffer to be hashed after prover
+//             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
 template<typename ppT>
 round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     const libff::Fr<ppT> &beta,
@@ -227,7 +227,7 @@ round_two_out_t<ppT> plonk_prover<ppT>::round_two(
     return round_two_out;
 }
 
-/// Prover round 3 output constructor
+// Prover round 3 output constructor
 template<typename ppT>
 round_three_out_t<ppT>::round_three_out_t(
     std::vector<libff::Fr<ppT>> &&z_poly_xomega,
@@ -241,30 +241,30 @@ round_three_out_t<ppT>::round_three_out_t(
 {
 }
 
-/// Prover Round 3
-///
-/// INPUT
-/// \param[in] zh_poly: vanishing polynomial Zh (from Round 0)
-/// \param[in] W_polys_blinded: blinded witness polynomials (from
-///            Round 1)
-/// \param[in] beta, gamma: permutation challenges -- hashes of
-///            transcript (from round 2)
-/// \param[in] z_poly: blinded accumulator poly z(x) (from Round 2)
-/// \param[in] srs: structured reference string containing also
-///            circuit-specific information
-///
-/// OUTPUT
-/// \param[out] t_poly_long: the quotient polynomial t(x) (see Round
-///             3, pp28 [GWC19])
-/// \param[out] t_poly: t(x) divided in three parts t(x) = t_lo(x) +
-///             t_mid(x) x^n + t_hi(x) x^{2n}
-/// \param[out] t_poly_at_secret_g1: t(x) evaluated at the secret
-///             input zeta i.e. t(zeta)
-/// \param[out] z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted
-///             by w
-/// \param[out] transcript_hasher: accumulates the communication
-///             transcript into a buffer to be hashed after prover
-///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
+// Prover Round 3
+//
+// INPUT
+// \param[in] zh_poly: vanishing polynomial Zh (from Round 0)
+// \param[in] W_polys_blinded: blinded witness polynomials (from
+//            Round 1)
+// \param[in] beta, gamma: permutation challenges -- hashes of
+//            transcript (from round 2)
+// \param[in] z_poly: blinded accumulator poly z(x) (from Round 2)
+// \param[in] srs: structured reference string containing also
+//            circuit-specific information
+//
+// OUTPUT
+// \param[out] t_poly_long: the quotient polynomial t(x) (see Round
+//             3, pp28 [GWC19])
+// \param[out] t_poly: t(x) divided in three parts t(x) = t_lo(x) +
+//             t_mid(x) x^n + t_hi(x) x^{2n}
+// \param[out] t_poly_at_secret_g1: t(x) evaluated at the secret
+//             input zeta i.e. t(zeta)
+// \param[out] z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted
+//             by w
+// \param[out] transcript_hasher: accumulates the communication
+//             transcript into a buffer to be hashed after prover
+//             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
 template<typename ppT>
 round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     const libff::Fr<ppT> &alpha,
@@ -496,7 +496,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     return round_three_out;
 }
 
-/// Prover round 4 output constructor
+// Prover round 4 output constructor
 template<typename ppT>
 round_four_out_t<ppT>::round_four_out_t(
     libff::Fr<ppT> &&a_zeta,
@@ -516,40 +516,40 @@ round_four_out_t<ppT>::round_four_out_t(
 {
 }
 
-/// Prover Round 4
-///
-/// INPUT
-/// \param[in] W_polys_blinded: blinded witness polynomials (from
-///            Round 1)
-/// \param[in] z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted
-///            by w (from Round 3)
-/// \param[in] t_poly_long: the quotient polynomial t(x) (see Round 3,
-///            pp28 [GWC19]) (from Round 3)
-/// \param[in] srs: structured reference string containing also
-///            circuit-specific information
-///
-/// OUTPUT
-/// \param[out] a_zeta, b_zeta, c_zeta: the blinded witness
-///             polynomials a(x), b(x), c(x) (denoted by
-///             W_polys_blinded[] output from Round 1) evaluated at
-///             x=zeta i.e. a(z), b(z), c(z)
-/// \param[out] S_0_zeta, S_1_zeta: the permutation polynomials
-///             S_sigma_1(x), S_sigma_2(x) from the common
-///             preprocessed input (see [GWC19], Sect. 8.1) evaluated
-///             at x=zeta i.e. S_sigma_1(z), S_sigma_2(z)
-/// \param[out] z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x)
-///             shifted by w (output from Round 3) evaluated at x=zeta
-///             i.e. z(zeta*w)
-/// \param[out] t_zeta: the quotient polynomial t(x) output from Round
-///             3, see pp28 [GWC19]) evaluated at x=zeta
-///             i.e. t(z). IMPORTANT! the original Plonk proposal
-///             [GWC19] does not output this parameter t_zeta. The
-///             Python reference implementation \[PlonkPy] does, so we
-///             do the same in order to match the test vectors. TODO
-///             can remove t_zeta in the future
-/// \param[out] transcript_hasher: accumulates the communication
-///             transcript into a buffer to be hashed after prover
-///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
+// Prover Round 4
+//
+// INPUT
+// \param[in] W_polys_blinded: blinded witness polynomials (from
+//            Round 1)
+// \param[in] z_poly_xomega: the polynomial z(x*w) i.e. z(x) shifted
+//            by w (from Round 3)
+// \param[in] t_poly_long: the quotient polynomial t(x) (see Round 3,
+//            pp28 [GWC19]) (from Round 3)
+// \param[in] srs: structured reference string containing also
+//            circuit-specific information
+//
+// OUTPUT
+// \param[out] a_zeta, b_zeta, c_zeta: the blinded witness
+//             polynomials a(x), b(x), c(x) (denoted by
+//             W_polys_blinded[] output from Round 1) evaluated at
+//             x=zeta i.e. a(z), b(z), c(z)
+// \param[out] S_0_zeta, S_1_zeta: the permutation polynomials
+//             S_sigma_1(x), S_sigma_2(x) from the common
+//             preprocessed input (see [GWC19], Sect. 8.1) evaluated
+//             at x=zeta i.e. S_sigma_1(z), S_sigma_2(z)
+// \param[out] z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x)
+//             shifted by w (output from Round 3) evaluated at x=zeta
+//             i.e. z(zeta*w)
+// \param[out] t_zeta: the quotient polynomial t(x) output from Round
+//             3, see pp28 [GWC19]) evaluated at x=zeta
+//             i.e. t(z). IMPORTANT! the original Plonk proposal
+//             [GWC19] does not output this parameter t_zeta. The
+//             Python reference implementation \[PlonkPy] does, so we
+//             do the same in order to match the test vectors. TODO
+//             can remove t_zeta in the future
+// \param[out] transcript_hasher: accumulates the communication
+//             transcript into a buffer to be hashed after prover
+//             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
 template<typename ppT>
 round_four_out_t<ppT> plonk_prover<ppT>::round_four(
     const libff::Fr<ppT> &zeta,
@@ -606,7 +606,7 @@ round_four_out_t<ppT> plonk_prover<ppT>::round_four(
     return round_four_out;
 }
 
-/// Prover round 5 output constructor
+// Prover round 5 output constructor
 template<typename ppT>
 round_five_out_t<ppT>::round_five_out_t(
     libff::Fr<ppT> &&r_zeta,
@@ -618,53 +618,53 @@ round_five_out_t<ppT>::round_five_out_t(
 {
 }
 
-/// Prover Round 5
-///
-/// INPUT
-/// \param[in] beta, gamma: permutation challenges -- hashes of
-///            transcript (from round 2)
-/// \param[in] alpha: quotinet challenge -- hash of transcript (from
-///            round 3)
-/// \param[in] zeta: evaluation challenge -- hash of transcript (from
-///            round 4)
-/// \param[in] a_zeta, b_zeta, c_zeta: the blinded witness polynomials
-///            a(x), b(x), c(x) (denoted by W_polys_blinded[] output
-///            from Round 1) evaluated at x=zeta i.e. a(z), b(z), c(z)
-///            (from round 4)
-/// \param[in] S_0_zeta, S_1_zeta: the permutation polynomials
-///            S_sigma_1(x), S_sigma_2(x) from the common preprocessed
-///            input (see [GWC19], Sect. 8.1) evaluated at x=zeta
-///            i.e. S_sigma_1(z), S_sigma_2(z) (from round 4)
-/// \param[in] t_zeta: the quotient polynomial t(x) output from Round
-///            3, see pp28 [GWC19]) evaluated at x=zeta
-///            i.e. t(z). IMPORTANT! the original Plonk proposal
-///            [GWC19] does not output this parameter t_zeta. The
-///            Python reference implementation \[PlonkPy] does, so we
-///            do the same in order to match the test vectors. TODO
-///            can remove t_zeta in the future (from round 4)
-/// \param[in] z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x)
-///            shifted by w (output from Round 3) evaluated at x=zeta
-///            i.e. z(zeta*w) (from round 4)
-/// \param[in] W_polys_blinded: blinded witness polynomials (from
-///            round 1)
-/// \param[in] t_poly: t(x) divided in three parts t(x) = t_lo(x) +
-///            t_mid(x) x^n + t_hi(x) x^{2n} (from round 3)
-/// \param[in] z_poly: blinded accumulator poly z(x) (from round 2)
-/// \param[in] srs: structured reference string containing also
-///            circuit-specific information
-///
-/// OUTPUT
-/// \param[out] r_zeta: linearisation polynomial r(x) evaluated at
-///             x=zeta ie. r(zeta)
-/// \param[out] W_zeta_at_secret: commitment to opening proof
-///             polynomial W_zeta(x) at secert input
-///             i.e. [W_zeta(secret)]_1
-/// \param[out] W_zeta_omega_at_secret: commitment to opening proof
-///             polynomial W_{zeta omega}(x) at secert input
-///             i.e. [W_{zeta omega}(secret)]_1
-/// \param[out] transcript_hasher: accumulates the communication
-///             transcript into a buffer to be hashed after prover
-///             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
+// Prover Round 5
+//
+// INPUT
+// \param[in] beta, gamma: permutation challenges -- hashes of
+//            transcript (from round 2)
+// \param[in] alpha: quotinet challenge -- hash of transcript (from
+//            round 3)
+// \param[in] zeta: evaluation challenge -- hash of transcript (from
+//            round 4)
+// \param[in] a_zeta, b_zeta, c_zeta: the blinded witness polynomials
+//            a(x), b(x), c(x) (denoted by W_polys_blinded[] output
+//            from Round 1) evaluated at x=zeta i.e. a(z), b(z), c(z)
+//            (from round 4)
+// \param[in] S_0_zeta, S_1_zeta: the permutation polynomials
+//            S_sigma_1(x), S_sigma_2(x) from the common preprocessed
+//            input (see [GWC19], Sect. 8.1) evaluated at x=zeta
+//            i.e. S_sigma_1(z), S_sigma_2(z) (from round 4)
+// \param[in] t_zeta: the quotient polynomial t(x) output from Round
+//            3, see pp28 [GWC19]) evaluated at x=zeta
+//            i.e. t(z). IMPORTANT! the original Plonk proposal
+//            [GWC19] does not output this parameter t_zeta. The
+//            Python reference implementation \[PlonkPy] does, so we
+//            do the same in order to match the test vectors. TODO
+//            can remove t_zeta in the future (from round 4)
+// \param[in] z_poly_xomega_zeta: the polynomial z(x*w) i.e. z(x)
+//            shifted by w (output from Round 3) evaluated at x=zeta
+//            i.e. z(zeta*w) (from round 4)
+// \param[in] W_polys_blinded: blinded witness polynomials (from
+//            round 1)
+// \param[in] t_poly: t(x) divided in three parts t(x) = t_lo(x) +
+//            t_mid(x) x^n + t_hi(x) x^{2n} (from round 3)
+// \param[in] z_poly: blinded accumulator poly z(x) (from round 2)
+// \param[in] srs: structured reference string containing also
+//            circuit-specific information
+//
+// OUTPUT
+// \param[out] r_zeta: linearisation polynomial r(x) evaluated at
+//             x=zeta ie. r(zeta)
+// \param[out] W_zeta_at_secret: commitment to opening proof
+//             polynomial W_zeta(x) at secert input
+//             i.e. [W_zeta(secret)]_1
+// \param[out] W_zeta_omega_at_secret: commitment to opening proof
+//             polynomial W_{zeta omega}(x) at secert input
+//             i.e. [W_{zeta omega}(secret)]_1
+// \param[out] transcript_hasher: accumulates the communication
+//             transcript into a buffer to be hashed after prover
+//             rounds 1,2,3,4,5 (cf. fiat-shamir heuristic).
 template<typename ppT>
 round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     const libff::Fr<ppT> &alpha,
@@ -993,51 +993,51 @@ plonk_proof<ppT>::plonk_proof(
 {
 }
 
-/// Prover compute SNARK proof
-///
-/// Pi ([a]_1, [b]_1, [c]_1, [z]_1,
-///     [t_lo]_1, [t_mi]_1, [t_hi]_1,
-///     \bar{a}, \bar{b}, \bar{c},
-///     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
-///     [W_zeta]_1, [W_{zeta omega}]_1
-///     r_zeta)
-///
-/// \note in the reference Python implementation \[PlonkPy], r_zeta
-/// (the evaluation of the linearlization polynomial r(X) at zeta from
-/// Prover round 5) is added to the pi-SNARK proof. In the paper this
-/// is omitted, which seems to make the proof shorter by 1 element at
-/// the epxense of a slightly heavier computation on the verifier's
-/// side. Here we follow the reference implementation \[PlonkPy] to
-/// make sure we match the test values. TODO: once all test vectors
-/// are verified, we may remove r_zeta from the proof to be fully
-/// compliant with the paper.
-///
-/// Mapping code-to-paper quantities
-///
-/// \param W_polys_blinded_at_secret_g1[a, b, c]: [a]_1, [b]_1, [c]_1
-///        (from Round 1)
-/// \param z_poly_at_secret_g1: [z]_1 (from Round 2)
-/// \param t_poly_at_secret_g1[lo, mi, hi]: [t_lo]_1, [t_mi]_1,
-///        [t_hi]_1 (from Round 3)
-/// \param a_zeta, b_zeta, c_zeta, S_0_zeta, S_1_zeta,
-///        z_poly_xomega_zeta: \bar{a}, \bar{b}, \bar{c},
-///        \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w} (from Round 4)
-/// \param W_zeta_at_secret, W_zeta_omega_at_secret: [W_zeta]_1,
-///        [W_{zeta omega}]_1 (from Round 5)
-///
-/// INPUT
-/// \param[in] srs: structured reference string containing also
-///            circuit-specific information
-/// \param[in] witness: all internal values and public input
-///            corresponding to the given circuit
-/// \param[in] blind_scalars: random blinding scalars b1, b2, ..., b9
-///            used in prover rounds 1 and 2 (see Sect. 8.3, roumds
-///            1,2 [GWC19])
-/// \param[in] transcript_hasher: hashes of the communication
-///            transcript after prover rounds 1,2,3,4,5.
-///
-/// OUTPUT
-/// \param[out] proof: SNARK proof Pi (see above)
+// Prover compute SNARK proof
+//
+// Pi ([a]_1, [b]_1, [c]_1, [z]_1,
+//     [t_lo]_1, [t_mi]_1, [t_hi]_1,
+//     \bar{a}, \bar{b}, \bar{c},
+//     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
+//     [W_zeta]_1, [W_{zeta omega}]_1
+//     r_zeta)
+//
+// \note in the reference Python implementation \[PlonkPy], r_zeta
+// (the evaluation of the linearlization polynomial r(X) at zeta from
+// Prover round 5) is added to the pi-SNARK proof. In the paper this
+// is omitted, which seems to make the proof shorter by 1 element at
+// the epxense of a slightly heavier computation on the verifier's
+// side. Here we follow the reference implementation \[PlonkPy] to
+// make sure we match the test values. TODO: once all test vectors
+// are verified, we may remove r_zeta from the proof to be fully
+// compliant with the paper.
+//
+// Mapping code-to-paper quantities
+//
+// \param W_polys_blinded_at_secret_g1[a, b, c]: [a]_1, [b]_1, [c]_1
+//        (from Round 1)
+// \param z_poly_at_secret_g1: [z]_1 (from Round 2)
+// \param t_poly_at_secret_g1[lo, mi, hi]: [t_lo]_1, [t_mi]_1,
+//        [t_hi]_1 (from Round 3)
+// \param a_zeta, b_zeta, c_zeta, S_0_zeta, S_1_zeta,
+//        z_poly_xomega_zeta: \bar{a}, \bar{b}, \bar{c},
+//        \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w} (from Round 4)
+// \param W_zeta_at_secret, W_zeta_omega_at_secret: [W_zeta]_1,
+//        [W_{zeta omega}]_1 (from Round 5)
+//
+// INPUT
+// \param[in] srs: structured reference string containing also
+//            circuit-specific information
+// \param[in] witness: all internal values and public input
+//            corresponding to the given circuit
+// \param[in] blind_scalars: random blinding scalars b1, b2, ..., b9
+//            used in prover rounds 1 and 2 (see Sect. 8.3, roumds
+//            1,2 [GWC19])
+// \param[in] transcript_hasher: hashes of the communication
+//            transcript after prover rounds 1,2,3,4,5.
+//
+// OUTPUT
+// \param[out] proof: SNARK proof Pi (see above)
 template<typename ppT>
 plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
     const srs<ppT> &srs,
@@ -1087,8 +1087,8 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
         zeta, round_one_out, round_three_out, srs, hasher);
 
     printf("[%s:%d] Prover Round 5...\n", __FILE__, __LINE__);
-    /// - nu: opening challenge -- hash of transcript (denoted by v in
-    ///   [GWC19])
+    // - nu: opening challenge -- hash of transcript (denoted by v in
+    //   [GWC19])
     const libff::Fr<ppT> nu = hasher.get_hash();
     round_five_out_t<ppT> round_five_out = plonk_prover::round_five(
         alpha,
