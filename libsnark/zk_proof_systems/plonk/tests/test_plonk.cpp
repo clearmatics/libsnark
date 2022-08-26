@@ -205,7 +205,7 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     // TODO: write unit test for plonk_roots_of_unity_omega_to_subgroup_H
 #ifdef DEBUG_PLONK
     printf("[%s:%d] H_gen\n", __FILE__, __LINE__);
-    print_vector(H_gen);
+    libff::print_vector(H_gen);
     for (int i = 0; i < (int)H_gen.size(); ++i) {
         assert(H_gen[i] == example.H_gen[i]);
     }
@@ -217,7 +217,7 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     // TODO: write unit test for plonk_permute_subgroup_H
 #ifdef DEBUG_PLONK
     printf("[%s:%d] H_gen_permute\n", __FILE__, __LINE__);
-    print_vector(H_gen_permute);
+    libff::print_vector(H_gen_permute);
     for (size_t i = 0; i < H_gen_permute.size(); ++i) {
         assert(H_gen_permute[i] == example.H_gen_permute[i]);
     }
@@ -259,7 +259,7 @@ void test_plonk_compute_accumulator(
 
     // initialize hard-coded values from example circuit
     printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
-    print_vector(A_poly);
+    libff::print_vector(A_poly);
     ASSERT_EQ(A_poly, example.A_poly);
 }
 
@@ -275,12 +275,12 @@ void test_plonk_prover_round_one(
         round_zero_out, blind_scalars, witness, srs);
     for (int i = 0; i < (int)NUM_HSETS; ++i) {
         printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, (int)i);
-        print_vector(round_one_out.W_polys[i]);
+        libff::print_vector(round_one_out.W_polys[i]);
         ASSERT_EQ(round_one_out.W_polys[i], example.W_polys[i]);
     }
     for (int i = 0; i < (int)NUM_HSETS; ++i) {
         printf("[%s:%d] W_polys_blinded[%d]\n", __FILE__, __LINE__, i);
-        print_vector(round_one_out.W_polys_blinded[i]);
+        libff::print_vector(round_one_out.W_polys_blinded[i]);
         ASSERT_EQ(round_one_out.W_polys_blinded[i], example.W_polys_blinded[i]);
     }
     printf("[%s:%d] Output from Round 1\n", __FILE__, __LINE__);
@@ -312,7 +312,7 @@ void test_plonk_prover_round_two(
     round_two_out_t<ppT> round_two_out = plonk_prover<ppT>::round_two(
         beta, gamma, round_zero_out, blind_scalars, witness, srs);
     printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
-    print_vector(round_two_out.z_poly);
+    libff::print_vector(round_two_out.z_poly);
     ASSERT_EQ(round_two_out.z_poly, example.z_poly);
     printf("[%s:%d] Output from Round 2\n", __FILE__, __LINE__);
     printf("[%s:%d] z_poly_at_secret_g1\n", __FILE__, __LINE__);
@@ -338,11 +338,11 @@ void test_plonk_prover_round_three(
         alpha, beta, gamma, round_zero_out, round_one_out, round_two_out, srs);
     printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
     printf("[%s:%d] t_poly_long\n", __FILE__, __LINE__);
-    print_vector(round_three_out.t_poly_long);
+    libff::print_vector(round_three_out.t_poly_long);
     ASSERT_EQ(round_three_out.t_poly_long, example.t_poly_long);
     for (int i = 0; i < (int)NUM_HSETS; ++i) {
         printf("[%s:%d] t_poly[%d]\n", __FILE__, __LINE__, i);
-        print_vector(round_three_out.t_poly[i]);
+        libff::print_vector(round_three_out.t_poly[i]);
         ASSERT_EQ(round_three_out.t_poly[i], example.t_poly[i]);
     }
     for (int i = 0; i < (int)NUM_HSETS; ++i) {
