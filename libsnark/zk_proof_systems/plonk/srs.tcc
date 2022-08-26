@@ -73,10 +73,10 @@ plonk_keypair<ppT>::plonk_keypair(
 }
 
 // transcript_hasher constructor
-template<typename ppT>
-transcript_hasher<ppT>::transcript_hasher(std::vector<uint8_t> &buffer)
-    : buffer(std::move(buffer))
+template<typename ppT> transcript_hasher<ppT>::transcript_hasher()
 {
+    // initialize to empty vector
+    this->buffer.clear();
     // test array containing the expected hash values of the communication
     // transcript i.e. the communication challenges (in this order): beta,
     // gamma, alpha, zeta, nu, u WARNING! specific to curve BLS12-381

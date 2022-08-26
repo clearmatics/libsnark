@@ -254,7 +254,7 @@ private:
 
 public:
     // constructor
-    transcript_hasher(std::vector<uint8_t> &buffer);
+    transcript_hasher();
 
     void add_element(const libff::Fr<ppT> &element);
     void add_element(const libff::G1<ppT> &element);

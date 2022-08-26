@@ -490,8 +490,7 @@ template<typename ppT> void test_plonk_prover_rounds()
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
     // initialize hasher
-    std::vector<uint8_t> buffer;
-    transcript_hasher<ppT> hasher(buffer);
+    transcript_hasher<ppT> hasher;
 
     // Prover Round 0 (initialization)
     round_zero_out_t<ppT> round_zero_out = plonk_prover<ppT>::round_zero(srs);
@@ -692,8 +691,7 @@ template<typename ppT> void test_plonk_prover()
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
     // initialize hasher
-    std::vector<uint8_t> buffer;
-    transcript_hasher<ppT> hasher(buffer);
+    transcript_hasher<ppT> hasher;
 
     // initialize prover
     plonk_prover<ppT> prover;
@@ -970,8 +968,7 @@ template<typename ppT> void test_plonk_verifier_steps()
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
     // initialize hasher
-    std::vector<uint8_t> buffer;
-    transcript_hasher<ppT> hasher(buffer);
+    transcript_hasher<ppT> hasher;
 
     // initialize prover
     plonk_prover<ppT> prover;
@@ -1075,8 +1072,7 @@ template<typename ppT> void test_plonk_verifier()
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
     // initialize hasher
-    std::vector<uint8_t> buffer;
-    transcript_hasher<ppT> hasher(buffer);
+    transcript_hasher<ppT> hasher;
 
     // initialize prover
     plonk_prover<ppT> prover;
