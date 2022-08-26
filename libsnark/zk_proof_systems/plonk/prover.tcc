@@ -1104,6 +1104,16 @@ plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
         srs,
         hasher);
 
+    // u: multipoint evaluation challenge -- hash of transcript from
+    // rounds 1,2,3,4,5
+    const libff::Fr<ppT> u = hasher.get_hash();
+    // get_hash may update the internal state of the
+    // transcript_hasher, depending on the implementation, therefore
+    // the prover and verifier must make exactly the same calls to
+    // both add_element and get_hash. that's why here we are computing
+    // u even if we are not using it.
+    libff::UNUSED(u);
+
     // construct proof
     plonk_proof<ppT> proof(
         round_one_out.W_polys_blinded_at_secret_g1,
