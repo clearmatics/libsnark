@@ -22,29 +22,22 @@ template<typename FieldT> void test_anemoi_power_two_gadget(const size_t n)
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
     pb_variable<FieldT> y;
-    pb_variable<FieldT> alpha;
-    pb_variable<FieldT> beta;
 
     // input
     x.allocate(pb, "x");
     // output
     y.allocate(pb, "y");
-    // constants
-    alpha.allocate(pb, "alpha");
-    beta.allocate(pb, "beta");
 
     // create gadget
-    anemoi_power_two_gadget<FieldT> d(pb, x, y, alpha, beta, "d");
+    anemoi_power_two_gadget<FieldT> d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
-    // witness values
+    // set input value
     pb.val(x) = 2;
-    pb.val(alpha) = 2;
-    pb.val(beta) = 5;
-
-    // generate witness
+    // generate witness for the given input
     d.generate_r1cs_witness();
 
+    // the expected output is 13 for input 2
     ASSERT_EQ(pb.val(y), 13);
     ASSERT_TRUE(pb.is_satisfied());
 
@@ -58,29 +51,22 @@ template<typename FieldT> void test_anemoi_power_three_gadget(const size_t n)
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
     pb_variable<FieldT> y;
-    pb_variable<FieldT> alpha;
-    pb_variable<FieldT> beta;
 
     // input
     x.allocate(pb, "x");
     // output
     y.allocate(pb, "y");
-    // constants
-    alpha.allocate(pb, "alpha");
-    beta.allocate(pb, "beta");
 
     // create gadget
-    anemoi_power_three_gadget<FieldT> d(pb, x, y, alpha, beta, "d");
+    anemoi_power_three_gadget<FieldT> d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
-    // witness values
+    // set input value
     pb.val(x) = 2;
-    pb.val(alpha) = 2;
-    pb.val(beta) = 5;
-
-    // generate witness
+    // generate witness for the given input
     d.generate_r1cs_witness();
 
+    // the expected output is 21 for input 2
     ASSERT_EQ(pb.val(y), 21);
     ASSERT_TRUE(pb.is_satisfied());
 
@@ -91,6 +77,6 @@ int main(void)
 {
     libff::start_profiling();
     libff::default_ec_pp::init_public_params();
-    test_anemoi_power_three_gadget<libff::Fr<libff::default_ec_pp>>(10);
     test_anemoi_power_two_gadget<libff::Fr<libff::default_ec_pp>>(10);
+    test_anemoi_power_three_gadget<libff::Fr<libff::default_ec_pp>>(10);
 }
