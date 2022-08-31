@@ -23,39 +23,28 @@ namespace libsnark
 /// Compute y = alpha x^2 + beta
 /// x: input
 /// y: output
-/// a,b: intermediate values
 /// alpha, beta: constants
 template<typename FieldT> class anemoi_power_two_gadget : public gadget<FieldT>
 {
 private:
-    // intermediate values
-    pb_variable<FieldT> a;
-    pb_variable<FieldT> b;
+    // constants
+    FieldT alpha;
+    FieldT beta;
 
 public:
-    // input
-    const pb_variable<FieldT> x;
-    // output
-    const pb_variable<FieldT> y;
-    // constants
-    pb_variable<FieldT> alpha;
-    pb_variable<FieldT> beta;
+    // input/output
+    const pb_variable<FieldT> input;
+    const pb_variable<FieldT> output;
 
     anemoi_power_two_gadget(
         protoboard<FieldT> &pb,
-        const pb_variable<FieldT> &x,
-        const pb_variable<FieldT> &y,
-        const pb_variable<FieldT> &alpha,
-        const pb_variable<FieldT> &beta,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "")
-        : gadget<FieldT>(pb, annotation_prefix)
-        , x(x)
-        , y(y)
-        , alpha(alpha)
-        , beta(beta)
+        : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
     {
-        a.allocate(this->pb, "a");
-        b.allocate(this->pb, "b");
+        alpha = FieldT(2);
+        beta = FieldT(5);
     };
 
     void generate_r1cs_constraints();
@@ -65,42 +54,32 @@ public:
 /// Compute y = alpha x^3 + beta
 /// x: input
 /// y: output
-/// a,b,c: intermediate values
 /// alpha, beta: constants
 template<typename FieldT>
 class anemoi_power_three_gadget : public gadget<FieldT>
 {
 private:
-    // intermediate values
-    pb_variable<FieldT> a;
-    pb_variable<FieldT> b;
-    pb_variable<FieldT> c;
+    /// internal (i.e. intermediate) variable
+    pb_variable<FieldT> internal;
+    /// constants
+    FieldT alpha;
+    FieldT beta;
 
 public:
-    // input
-    const pb_variable<FieldT> x;
-    // output
-    const pb_variable<FieldT> y;
-    // constants
-    pb_variable<FieldT> alpha;
-    pb_variable<FieldT> beta;
+    /// input/output
+    const pb_variable<FieldT> input;
+    const pb_variable<FieldT> output;
 
     anemoi_power_three_gadget(
         protoboard<FieldT> &pb,
-        const pb_variable<FieldT> &x,
-        const pb_variable<FieldT> &y,
-        const pb_variable<FieldT> &alpha,
-        const pb_variable<FieldT> &beta,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "")
-        : gadget<FieldT>(pb, annotation_prefix)
-        , x(x)
-        , y(y)
-        , alpha(alpha)
-        , beta(beta)
+        : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
     {
-        a.allocate(this->pb, "a");
-        b.allocate(this->pb, "b");
-        c.allocate(this->pb, "c");
+        alpha = FieldT(2);
+        beta = FieldT(5);
+        internal.allocate(pb, FMT(this->annotation_prefix, " internal"));
     };
 
     void generate_r1cs_constraints();
