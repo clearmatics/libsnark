@@ -40,12 +40,7 @@ public:
         protoboard<FieldT> &pb,
         const pb_variable<FieldT> &input,
         const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix = "")
-        : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
-    {
-        alpha = FieldT(2);
-        beta = FieldT(5);
-    };
+        const std::string &annotation_prefix = "");
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -74,13 +69,7 @@ public:
         protoboard<FieldT> &pb,
         const pb_variable<FieldT> &input,
         const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix = "")
-        : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
-    {
-        alpha = FieldT(2);
-        beta = FieldT(5);
-        internal.allocate(pb, FMT(this->annotation_prefix, " internal"));
-    };
+        const std::string &annotation_prefix = "");
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
