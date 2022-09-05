@@ -97,7 +97,6 @@ template<typename ppT> struct round_zero_out_t {
     /// - neg_one_poly: -1 polynomial (from round 0)
     polynomial<libff::Fr<ppT>> neg_one_poly;
 
-    /// stuct constructor
     round_zero_out_t(
         const std::vector<libff::Fr<ppT>> &&zh_poly,
         const polynomial<libff::Fr<ppT>> &&null_poly,
@@ -119,7 +118,6 @@ template<typename ppT> struct round_one_out_t {
     ///   [GWC19]
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
 
-    /// stuct constructor
     round_one_out_t(
         const std::vector<polynomial<libff::Fr<ppT>>> &&W_polys,
         const std::vector<std::vector<libff::Fr<ppT>>> &&W_polys_blinded,
@@ -136,7 +134,6 @@ template<typename ppT> struct round_two_out_t {
     /// secret
     libff::G1<ppT> z_poly_at_secret_g1;
 
-    /// stuct constructor
     round_two_out_t(
         polynomial<libff::Fr<ppT>> &&z_poly,
         libff::G1<ppT> &&z_poly_at_secret_g1);
@@ -160,7 +157,6 @@ template<typename ppT> struct round_three_out_t {
     ///   i.e. t(zeta)
     std::vector<libff::G1<ppT>> t_poly_at_secret_g1;
 
-    /// stuct constructor
     round_three_out_t(
         std::vector<libff::Fr<ppT>> &&z_poly_xomega,
         std::vector<polynomial<libff::Fr<ppT>>> &&t_poly,
@@ -195,7 +191,7 @@ template<typename ppT> struct round_four_out_t {
     ///   same in order to match the test vectors. TODO can remove t_zeta
     ///   in the future
     libff::Fr<ppT> t_zeta;
-    /// stuct constructor
+
     round_four_out_t(
         libff::Fr<ppT> &&a_zeta,
         libff::Fr<ppT> &&b_zeta,
@@ -221,7 +217,6 @@ template<typename ppT> struct round_five_out_t {
     ///   W_{zeta omega}(x) at secert input i.e. [W_{zeta omega}(secret)]_1
     libff::G1<ppT> W_zeta_omega_at_secret;
 
-    /// struct constructor
     round_five_out_t(
         libff::Fr<ppT> &&r_zeta,
         libff::G1<ppT> &&W_zeta_at_secret,
