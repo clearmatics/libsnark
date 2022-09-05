@@ -63,6 +63,11 @@ public:
         std::vector<libff::G2<ppT>> &&secret_powers_g2);
 };
 
+/// Compute a universal srs (usrs). It is composed *only* of encoded
+/// powers of the secret value in the group generator. Therefore a usrs
+/// is independent of any particular circuit.
+///
+/// \note only for debug
 template<typename ppT>
 usrs<ppT> plonk_usrs_derive_from_secret(
     const libff::Fr<ppT> &secret, const size_t max_degree);
@@ -138,6 +143,13 @@ public:
         std::shared_ptr<libfqfft::evaluation_domain<Field>> domain);
 };
 
+/// Derive the (plain) SRS from the circuit description and the
+/// USRS. The (plain) SRS is a specialization of the USRS for one
+/// particular circuit i.e.
+///
+/// usrs = <encoded powers of secret>
+/// srs = (proving_key, verificataion_key) = derive(usrs,
+/// circuit_description)
 template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
     const usrs<ppT> &usrs, const circuit_t<ppT> &circuit);
@@ -253,11 +265,15 @@ private:
     std::array<libff::Fr<ppT>, 6> hash_values;
 
 public:
-    // constructor
     transcript_hasher();
 
+    // add an Fr element to the transcript buffer for hashing
     void add_element(const libff::Fr<ppT> &element);
+    // add the coordinates of a G1 curve point to the transcript buffer for
+    // hashing
     void add_element(const libff::G1<ppT> &element);
+    // add the coordinates of a G2 curve point to the transcript buffer for
+    // hashing
     void add_element(const libff::G2<ppT> &element);
 
     // TODO: use next declaration to implement an actual hash function
@@ -267,6 +283,10 @@ public:
     // std::array<uint8_t, Blake2sHasher::PRNG_OUTPUT_SIZE>
     // Blake2sHasher::hash(std::vector<uint8_t> const& buffer)
 
+    // dummy implementation of get_hash that directly returns the
+    // expected hard-coded hashes for the purposes of unit testing TODO
+    // to be replaced by a call to a proper hash function e.g. SHA2,
+    // BLAKE, etc.
     libff::Fr<ppT> get_hash();
 
     // clear the buffer (for now only for testing)

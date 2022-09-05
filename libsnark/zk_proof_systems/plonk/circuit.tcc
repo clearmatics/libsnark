@@ -18,7 +18,6 @@ namespace libsnark
 // TODO: add here function for describing the target circuit through
 // the circuit_t structure
 
-// stuct constructor
 template<typename ppT>
 circuit_t<ppT>::circuit_t(
     size_t num_gates,
