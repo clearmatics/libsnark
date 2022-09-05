@@ -17,6 +17,18 @@
 namespace libsnark
 {
 
+template<typename FieldT>
+anemoi_power_two_gadget<FieldT>::anemoi_power_two_gadget(
+    protoboard<FieldT> &pb,
+    const pb_variable<FieldT> &input,
+    const pb_variable<FieldT> &output,
+    const std::string &annotation_prefix)
+    : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
+{
+    alpha = FieldT(2);
+    beta = FieldT(5);
+}
+
 // A R1CS constraint is a formal expression of the form
 //
 //                < A , X > * < B , X > = < C , X > ,
@@ -80,6 +92,19 @@ void anemoi_power_two_gadget<FieldT>::generate_r1cs_witness()
     this->pb.val(output) =
         this->alpha * this->pb.val(input) * this->pb.val(input) + this->beta;
 }
+
+template<typename FieldT>
+anemoi_power_three_gadget<FieldT>::anemoi_power_three_gadget(
+    protoboard<FieldT> &pb,
+    const pb_variable<FieldT> &input,
+    const pb_variable<FieldT> &output,
+    const std::string &annotation_prefix)
+    : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
+{
+    alpha = FieldT(2);
+    beta = FieldT(5);
+    internal.allocate(pb, FMT(this->annotation_prefix, " internal"));
+};
 
 // R1CS constraints for the operation y = alpha x^3 + beta with
 // x=input, y=output. This operation is represented with two
