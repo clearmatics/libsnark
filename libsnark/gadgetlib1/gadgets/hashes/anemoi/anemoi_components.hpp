@@ -20,16 +20,21 @@
 namespace libsnark
 {
 
-/// Compute y = alpha x^2 + beta
+#define ANEMOI_BLS12_381_CONST_ALPHA 5
+#define ANEMOI_BLS12_381_CONST_BETA 2 // = G1
+#define ANEMOI_BLS12_381_CONST_GAMMA 5 // TODO: value by spec is 0
+#define ANEMOI_BLS12_381_CONST_DELTA 0 // TODO: value by spec is G1.inv()
+
+/// Compute y = const_a x^2 + const_b
 /// x: input
 /// y: output
-/// alpha, beta: constants
+/// const_a, const_b: constants
 template<typename FieldT> class anemoi_power_two_gadget : public gadget<FieldT>
 {
 private:
     // constants
-    FieldT alpha;
-    FieldT beta;
+    FieldT const_a;
+    FieldT const_b;
 
 public:
     // input/output
@@ -46,10 +51,10 @@ public:
     void generate_r1cs_witness();
 };
 
-/// Compute y = alpha x^3 + beta
+/// Compute y = const_a x^3 + const_b
 /// x: input
 /// y: output
-/// alpha, beta: constants
+/// const_a, const_b: constants
 template<typename FieldT>
 class anemoi_power_three_gadget : public gadget<FieldT>
 {
@@ -57,8 +62,8 @@ private:
     /// internal (i.e. intermediate) variable
     pb_variable<FieldT> internal;
     /// constants
-    FieldT alpha;
-    FieldT beta;
+    FieldT const_a;
+    FieldT const_b;
 
 public:
     /// input/output
