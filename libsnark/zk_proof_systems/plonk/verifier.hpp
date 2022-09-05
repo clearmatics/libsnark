@@ -66,7 +66,6 @@ template<typename ppT> struct verifier_preprocessed_input_t {
     std::vector<libff::G1<ppT>> Q_polys_at_secret_g1;
     std::vector<libff::G1<ppT>> S_polys_at_secret_g1;
 
-    /// struct constructor
     verifier_preprocessed_input_t(
         std::vector<libff::G1<ppT>> &&Q_polys_at_secret_g1,
         std::vector<libff::G1<ppT>> &&S_polys_at_secret_g1);

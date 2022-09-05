@@ -15,7 +15,6 @@
 namespace libsnark
 {
 
-// class usrs constructor
 template<typename ppT>
 usrs<ppT>::usrs(
     std::vector<libff::G1<ppT>> &&secret_powers_g1,
@@ -24,7 +23,6 @@ usrs<ppT>::usrs(
 {
 }
 
-// class srs constructor
 template<typename ppT>
 srs<ppT>::srs(
     const size_t &num_gates,
@@ -58,13 +56,11 @@ srs<ppT>::srs(
 {
 }
 
-// class plonk_verification_key
 template<typename ppT>
 plonk_verification_key<ppT>::plonk_verification_key(
     std::vector<libff::G2<ppT>> &&secret_powers_g2)
     : secret_powers_g2(std::move(secret_powers_g2)){};
 
-// class plonk_keypair constructor
 template<typename ppT>
 plonk_keypair<ppT>::plonk_keypair(
     plonk_proving_key<ppT> &&pk, plonk_verification_key<ppT> &&vk)
@@ -72,7 +68,6 @@ plonk_keypair<ppT>::plonk_keypair(
 {
 }
 
-// transcript_hasher constructor
 template<typename ppT> transcript_hasher<ppT>::transcript_hasher()
 {
     // initialize to empty vector
@@ -98,19 +93,16 @@ template<typename ppT> transcript_hasher<ppT>::transcript_hasher()
     };
 }
 
-// clear the buffer (for now only for testing)
 template<typename ppT> void transcript_hasher<ppT>::buffer_clear()
 {
     this->buffer.clear();
 }
 
-// get buffer size
 template<typename ppT> size_t transcript_hasher<ppT>::buffer_size()
 {
     return this->buffer.size();
 }
 
-// add an Fr element to the transcript buffer for hashing
 template<typename ppT>
 void transcript_hasher<ppT>::add_element(const libff::Fr<ppT> &element)
 {
@@ -127,7 +119,6 @@ void transcript_hasher<ppT>::add_element(const libff::Fr<ppT> &element)
     std::copy(str.begin(), str.end(), std::back_inserter(this->buffer));
 }
 
-// add the coordinates of a G1 curve point to the transcript buffer for hashing
 template<typename ppT>
 void transcript_hasher<ppT>::add_element(const libff::G1<ppT> &element)
 {
@@ -149,7 +140,6 @@ void transcript_hasher<ppT>::add_element(const libff::G1<ppT> &element)
     std::copy(str.begin(), str.end(), std::back_inserter(this->buffer));
 }
 
-// add the coordinates of a G2 curve point to the transcript buffer for hashing
 template<typename ppT>
 void transcript_hasher<ppT>::add_element(const libff::G2<ppT> &element)
 {
@@ -171,10 +161,6 @@ void transcript_hasher<ppT>::add_element(const libff::G2<ppT> &element)
     std::copy(str.begin(), str.end(), std::back_inserter(this->buffer));
 }
 
-// dummy implementation of get_hash that directly returns the
-// expected hard-coded hashes for the purposes of unit testing TODO
-// to be replaced by a call to a proper hash function e.g. SHA2,
-// BLAKE, etc.
 template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
 {
     size_t buffer_len = this->buffer.size();
@@ -258,11 +244,6 @@ template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
     return challenge;
 }
 
-// Compute a universal srs (usrs). It is composed *only* of encoded
-// powers of the secret value in the group generator. Therefore a usrs
-// is independent of any particular circuit.
-//
-// \note only for debug
 template<typename ppT>
 usrs<ppT> plonk_usrs_derive_from_secret(
     const libff::Fr<ppT> &secret, const size_t max_degree)
@@ -301,13 +282,6 @@ usrs<ppT> plonk_usrs_derive_from_secret(
     return usrs<ppT>(std::move(secret_powers_g1), std::move(secret_powers_g2));
 }
 
-// Derive the (plain) SRS from the circuit description and the
-// USRS. The (plain) SRS is a specialization of the USRS for one
-// particular circuit i.e.
-//
-// usrs = <encoded powers of secret>
-// srs = (proving_key, verificataion_key) = derive(usrs,
-// circuit_description)
 template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
     const usrs<ppT> &usrs, const circuit_t<ppT> &circuit)

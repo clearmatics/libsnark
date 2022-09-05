@@ -15,7 +15,6 @@
 namespace libsnark
 {
 
-// struct verifier_preprocessed_input_t constructor
 template<typename ppT>
 verifier_preprocessed_input_t<ppT>::verifier_preprocessed_input_t(
     std::vector<libff::G1<ppT>> &&Q_polys_at_secret_g1,
@@ -25,17 +24,6 @@ verifier_preprocessed_input_t<ppT>::verifier_preprocessed_input_t(
 {
 }
 
-// Verifier precomputation
-//
-// INPUT
-// \param[in] srs: structured reference string
-//
-// OUTPUT
-// \param[out] Q_polys_at_secret_g1: circuit selector polynomials Q evaluated
-// at
-//   the secret input
-// \param[out] S_polys_at_secret_g1: permutation polynomials S evaluated at the
-//   secret input
 template<typename ppT>
 verifier_preprocessed_input_t<ppT> plonk_verifier<ppT>::preprocessed_input(
     const srs<ppT> &srs)
@@ -55,34 +43,20 @@ verifier_preprocessed_input_t<ppT> plonk_verifier<ppT>::preprocessed_input(
     return preprocessed_input;
 }
 
-// Verifier Step 1: validate that elements belong to group G1
-//
-// \attention This validation MUST be done by the caller. Empty
-// function here for consistency with the description in [GWC19]
 template<typename ppT>
 void plonk_verifier<ppT>::step_one(const plonk_proof<ppT> &proof)
 {
 }
 
-// Verifier Step 2: validate that elements belong to scalar field Fr
-//
-// \attention This validation MUST be done by the caller. Empty
-// function here for consistency with the description in [GWC19]
 template<typename ppT>
 void plonk_verifier<ppT>::step_two(const plonk_proof<ppT> &proof)
 {
 }
 
-// Verifier Step 3: validate that the public input belongs to scalar
-// field Fr
-//
-// \attention This validation MUST be done by the caller. Empty
-// function here for consistency with the description in [GWC19]
 template<typename ppT> void plonk_verifier<ppT>::step_three(const srs<ppT> &srs)
 {
 }
 
-// struct step_four_out_t constructor
 template<typename ppT>
 step_four_out_t<ppT>::step_four_out_t(
     libff::Fr<ppT> &beta,
@@ -95,24 +69,6 @@ step_four_out_t<ppT>::step_four_out_t(
 {
 }
 
-// Verifier Step 4: compute challenges hashed transcript as in prover
-// description, from the common inputs, public input, and elements of
-// pi-SNARK. TODO: fixed to the test vectors for now
-//
-// INPUT
-// \param[in] proof: SNARK proof produced by the prover
-// \param[in] transcript_hasher: hashes of the communication
-//            transcript after prover rounds 1,2,3,4,5.
-//
-// OUTPUT
-// \param[out] beta, gamma: permutation challenges - hashes of
-//             transcript
-// \param[out] alpha: quotinet challenge - hash of transcript
-// \param[out] zeta: evaluation challenge - hash of transcript
-// \param[out] nu: opening challenge - hash of transcript (denoted by
-//             v in [GWC19])
-// \param[out] u: multipoint evaluation challenge - hash of
-//             transcript
 template<typename ppT>
 step_four_out_t<ppT> plonk_verifier<ppT>::step_four(
     const plonk_proof<ppT> &proof, transcript_hasher<ppT> &hasher)
@@ -167,24 +123,12 @@ step_four_out_t<ppT> plonk_verifier<ppT>::step_four(
     return step_four_out;
 }
 
-// struct step_five_out_t constructor
 template<typename ppT>
 step_five_out_t<ppT>::step_five_out_t(libff::Fr<ppT> &&zh_zeta)
     : zh_zeta(zh_zeta)
 {
 }
 
-// Verifier Step 5: compute zero polynomial evaluation
-//
-// INPUT
-// \param[in] zeta: evaluation challenge -- hash of transcript (from
-//            step 4)
-// \param[in] srs: structured reference string containing also
-//            circuit-specific information
-//
-// OUTPUT
-// \param[out] zh_zeta: evaluation of vanishing polynomial Zh at
-//             x=zeta i.e. Zh(zeta)
 template<typename ppT>
 step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
@@ -197,25 +141,12 @@ step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
     return step_five_out;
 }
 
-// struct step_six_out_t constructor
 template<typename ppT>
 step_six_out_t<ppT>::step_six_out_t(libff::Fr<ppT> &&L_0_zeta)
     : L_0_zeta(L_0_zeta)
 {
 }
 
-// Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
-// Note: the paper counts the L-polynomials from 1; we count from 0
-//
-// INPUT
-// \param[in] zeta: evaluation challenge -- hash of transcript (from
-//            step 4)
-// \param[in] srs: structured reference string containing also
-//            circuit-specific information
-//
-// OUTPUT
-// \param[out] L_0_zeta: Lagrange polynomial evaluation of polynomial
-//             L1 at x=zeta i.e. L1(zeta)
 template<typename ppT>
 step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
@@ -226,25 +157,12 @@ step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
     return step_six_out;
 }
 
-// struct step_seven_out_t constructor
 template<typename ppT>
 step_seven_out_t<ppT>::step_seven_out_t(libff::Fr<ppT> &&PI_zeta)
     : PI_zeta(PI_zeta)
 {
 }
 
-// Verifier Step 7: compute public input polynomial evaluation
-// PI(zeta)
-//
-// INPUT
-// \param[in] zeta: evaluation challenge -- hash of transcript (from
-//            step 4)
-// \param[in] srs: structured reference string containing also
-//            circuit-specific information
-//
-// OUTPUT
-// \param[out] PI_zeta: public input polynomial PI evaluated at
-//             x=zeta i.e. PI(zeta)
 template<typename ppT>
 step_seven_out_t<ppT> plonk_verifier<ppT>::step_seven(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
@@ -256,40 +174,12 @@ step_seven_out_t<ppT> plonk_verifier<ppT>::step_seven(
     return step_seven_out;
 }
 
-// struct step_eight_out_t constructor
 template<typename ppT>
 step_eight_out_t<ppT>::step_eight_out_t(libff::Fr<ppT> &&r_prime_zeta)
     : r_prime_zeta(r_prime_zeta)
 {
 }
 
-// Verifier Step 8: compute quotient polynomial evaluation r'(zeta) =
-// r(zeta) - r0, where r0 is a constant term \note follows the Python
-// reference implementation, which slightly deviates from the paper
-// due to the presence of the r_zeta term in the proof (not present
-// in the paper).  In particular, the reference code computes and
-// uses r'(zeta) in step 8, while the paper uses r0. In addition, the
-// reference code divides r'(zeta) by the vanishing polynomial at
-// zeta zh_zeta, while the paper does not do that (see also Step 9).
-//
-// INPUT
-// \param[in] beta, gamma: permutation challenges -- hashes of
-//            transcript (from step 4)
-// \param[in] alpha: quotinet challenge -- hash of transcript (from
-//            step 4)
-// \param[in] zeta: evaluation challenge -- hash of transcript (from
-//            step 4)
-// \param[in] zh_zeta: evaluation of vanishing polynomial Zh at
-//            x=zeta i.e. Zh(zeta) (from step 5)
-// \param[in] L_0_zeta: Lagrange polynomial evaluation of polynomial
-//            L1 at x=zeta i.e. L1(zeta) (from step 6)
-// \param[in] PI_zeta: public input polynomial PI evaluated at x=zeta
-//            i.e. PI(zeta) (from step 7)
-// \param[in] proof: SNARK proof produced by the prover
-//
-// OUTPUT
-// \param[out] r_prime_zeta: quotient polynomial evaluation r'(zeta)
-//             = r(zeta) - r0, where r0 is a constant term
 template<typename ppT>
 step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
     const step_four_out_t<ppT> &step_four_out,
@@ -322,47 +212,11 @@ step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
     return step_eight_out;
 }
 
-// struct step_nine_out_t constructor
 template<typename ppT>
 step_nine_out_t<ppT>::step_nine_out_t(libff::G1<ppT> &&D1) : D1(D1)
 {
 }
 
-// Verifier Step 9: compute first part of batched polynomial
-// commitment [D]_1 Note: the reference implemention differs from the
-// paper -- it does not add the following term to D1, but to F1 (Step
-// 10): -Zh(zeta)([t_lo]_1 + zeta^n [t_mid]_1 + zeta^2n
-// [t_hi]_1). Instead ([t_lo]_1 + zeta^n [t_mid]_1 + zeta^2n
-// [t_hi]_1) is added to F1 in Step 10 and the multiplication by
-// Zh(zeta) is accounted for by dividing by Zh(zeta) of r'(zeta) in
-// Step 8.
-//
-// INPUT
-// \param[in] beta, gamma: permutation challenges -- hashes of
-//            transcript (from step 4)
-// \param[in] alpha: quotinet challenge -- hash of transcript (from
-//            step 4)
-// \param[in] zeta: evaluation challenge -- hash of transcript (from
-//            step 4)
-// \param[in] nu: opening challenge -- hash of transcript (denoted by
-//            v in [GWC19]) (from step 4)
-// \param[in] u: multipoint evaluation challenge -- hash of
-//            transcript (from step 4)
-// \param[in] L_0_zeta: Lagrange polynomial evaluation of polynomial
-//            L1 at x=zeta i.e. L1(zeta) (from step 6)
-// \param[in] Q_polys_at_secret_g1: circuit selector polynomials Q
-//            evaluated at the secret input (from verifier
-//            preprocessed input)
-// \param[in] S_polys_at_secret_g1: permutation polynomials S
-//            evaluated at the secret input (from verifier
-//            preprocessed input)
-// \param[in] proof: SNARK proof produced by the prover
-// \param[in] preprocessed_input: verifier preprocessed input
-// \param[in] srs: structured reference string containing also
-//            circuit-specific information
-//
-// OUTPUT
-// \param[out] D1: first part of batched polynomial commitment [D]_1
 template<typename ppT>
 step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
     const step_four_out_t<ppT> &step_four_out,
@@ -430,36 +284,11 @@ step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
     return step_nine_out;
 }
 
-// struct step_ten_out_t constructor
 template<typename ppT>
 step_ten_out_t<ppT>::step_ten_out_t(libff::G1<ppT> &&F1) : F1(F1)
 {
 }
 
-// Verifier Step 10: compute full batched polynomial commitment [F]_1
-// = [D]_1 + v [a]_1 + v^2 [b]_1 + v^3 [c]_1 + v^4 [s_sigma_1]_1 +
-// v^5 [s_sigma_2]_1 Note: to [F]_1 the erefernce code also adds the
-// term ([t_lo]_1 + zeta^n [t_mid]_1 + zeta^2n [t_hi]_1) which is
-// addedto [D]_1 in the paper (see commenst to Steps 8,9)
-//
-// INPUT
-// \param[in] zeta: evaluation challenge -- hash of transcript (from
-//            step 4)
-// \param[in] nu: opening challenge -- hash of transcript (denoted by
-//            v in [GWC19]) (from step 4)
-// \param[in] u: multipoint evaluation challenge -- hash of
-//            transcript (from step 4)
-// \param[in] D1: first part of batched polynomial commitment [D]_1
-//            (from step 9)
-// \param[in] S_polys_at_secret_g1: permutation polynomials S
-//            evaluated at the secret input (from verifier
-//            preprocessed input)
-// \param[in] proof: SNARK proof produced by the prover
-// \param[in] srs: structured reference string containing also
-//            circuit-specific information
-//
-// OUTPUT
-// \param[out] F1: full batched polynomial commitment [F]_1
 template<typename ppT>
 step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
     const step_four_out_t<ppT> &step_four_out,
@@ -504,25 +333,11 @@ step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
     return step_ten_out;
 }
 
-// struct step_eleven_out_t constructor
 template<typename ppT>
 step_eleven_out_t<ppT>::step_eleven_out_t(libff::G1<ppT> &&E1) : E1(E1)
 {
 }
 
-// Verifier Step 11: compute group-encoded batch evaluation [E]_1
-//
-// INPUT
-// \param[in] nu: opening challenge -- hash of transcript (denoted by
-//            v in [GWC19]) (from step 4)
-// \param[in] u: multipoint evaluation challenge -- hash of
-//            transcript (from step 4)
-// \param[in] r_prime_zeta: quotient polynomial evaluation r'(zeta) =
-//            r(zeta) - r0, where r0 is a constant term (from step 8)
-// \param[in] proof: SNARK proof produced by the prover
-//
-// OUTPUT
-// \param[out] E1: group-encoded batch evaluation [E]_1
 template<typename ppT>
 step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
     const step_four_out_t<ppT> &step_four_out,
@@ -550,33 +365,6 @@ step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
     return step_eleven_out;
 }
 
-// Verifier Step 12: batch validate all evaluations
-//
-// Checks the following equality
-//
-// e( [W_zeta]_1 + u [W_{zeta srs.omega_roots}]_1, [x]_2 ) * e( -zeta
-// [W_zeta ]_1 - u zeta srs.omega_roots [W_{zeta srs.omega_roots}]_1
-// - [F]_1 + [E]_1, [1]_2 ) = Field(1)
-//
-// Denoted as:
-//
-// e(first_lhs, second_lhs) * e(first_rhs, second_rhs) = 1
-//
-// INPUT
-// \param[in] zeta: evaluation challenge -- hash of transcript (from
-//            step 4)
-// \param[in] u: multipoint evaluation challenge -- hash of
-//            transcript (from step 4)
-// \param[in] F1: full batched polynomial commitment [F]_1 (from step
-//            10)
-// \param[in] E1: group-encoded batch evaluation [E]_1 (from step 11)
-// \param[in] proof: SNARK proof produced by the prover
-// \param[in] srs: structured reference string
-// \param[in] srs: structured reference string containing also
-//            circuit-specific information
-//
-// OUTPUT
-// \param[out] boolean 1/0 = valid/invalid proof
 template<typename ppT>
 bool plonk_verifier<ppT>::step_twelve(
     const step_four_out_t<ppT> &step_four_out,
@@ -620,26 +408,6 @@ bool plonk_verifier<ppT>::step_twelve(
     return b_accept;
 }
 
-// \attention The first three steps (as given in [GWC19] -- see
-// below) MUST be executed by the caller:
-//
-// - Verifier Step 1: validate that elements belong to group G1
-// - Verifier Step 2: validate that elements belong to scalar field
-//   Fr
-// - Verifier Step 3: validate that the public input belongs to
-//   scalar field Fr
-// .
-// Therefore verification starts from Step 4 of [GWC19]
-//
-// INPUT
-// \param[in] proof: SNARK proof produced by the prover
-// \param[in] srs: structured reference string containing also
-//            circuit-specific information
-// \param[in] transcript_hasher: hashes of the communication
-//            transcript after prover rounds 1,2,3,4,5.
-//
-// OUTPUT
-// \param[out] boolean 1/0 = valid/invalid proof
 template<typename ppT>
 bool plonk_verifier<ppT>::verify_proof(
     const plonk_proof<ppT> &proof,
