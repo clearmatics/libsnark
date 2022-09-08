@@ -20,19 +20,19 @@
 namespace libsnark
 {
 
-#define ANEMOI_BLS12_381_CONST_ALPHA 5
+#define FLYSTEL_BLS12_381_ALPHA 5
 // equals to G1
-#define ANEMOI_BLS12_381_CONST_BETA 2
+#define FLYSTEL_BLS12_381_BETA 2
 // TODO: value by spec is 0
-#define ANEMOI_BLS12_381_CONST_GAMMA 5
+#define FLYSTEL_BLS12_381_GAMMA 5
 // TODO: value by spec is G1.inv()
-#define ANEMOI_BLS12_381_CONST_DELTA 0
+#define FLYSTEL_BLS12_381_DELTA 0
 
 /// Compute y = const_a x^2 + const_b
 /// x: input
 /// y: output
 /// const_a, const_b: constants
-template<typename FieldT> class anemoi_power_two_gadget : public gadget<FieldT>
+template<typename FieldT> class flystel_power_two_gadget : public gadget<FieldT>
 {
 private:
     // constants
@@ -44,7 +44,7 @@ public:
     const pb_variable<FieldT> input;
     const pb_variable<FieldT> output;
 
-    anemoi_power_two_gadget(
+    flystel_power_two_gadget(
         protoboard<FieldT> &pb,
         const pb_variable<FieldT> &input,
         const pb_variable<FieldT> &output,
@@ -59,7 +59,7 @@ public:
 /// y: output
 /// const_a, const_b: constants
 template<typename FieldT>
-class anemoi_power_three_gadget : public gadget<FieldT>
+class flystel_power_three_gadget : public gadget<FieldT>
 {
 private:
     /// internal (i.e. intermediate) variable
@@ -73,7 +73,7 @@ public:
     const pb_variable<FieldT> input;
     const pb_variable<FieldT> output;
 
-    anemoi_power_three_gadget(
+    flystel_power_three_gadget(
         protoboard<FieldT> &pb,
         const pb_variable<FieldT> &input,
         const pb_variable<FieldT> &output,

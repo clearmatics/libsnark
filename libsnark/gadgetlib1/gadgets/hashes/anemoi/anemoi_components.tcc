@@ -17,15 +17,42 @@
 namespace libsnark
 {
 
+/*
+class flystel_power_two_round_1_gadget : public flystel_power_two_gadget
+{
+flystel_power_two_round_1_gadget(
+rotoboard<FieldT> &pb,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix = "")
+  : flystel_power_two_gadget(..., ...ALPHA, ... BETA, ...)
+  {
+  }
+}
+
+class flystel_power_two_round_2_gadget : public flystel_power_two_gadget
+{
+flystel_power_two_round_2_gadget(
+rotoboard<FieldT> &pb,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix = "")
+  : flystel_power_two_gadget(..., flystel_constants_selector<ppT>::BETA, ...
+flystel_constants_selector<ppT>::GAMMA, ...)
+  {
+  }
+}
+*/
+
 template<typename FieldT>
-anemoi_power_two_gadget<FieldT>::anemoi_power_two_gadget(
+flystel_power_two_gadget<FieldT>::flystel_power_two_gadget(
     protoboard<FieldT> &pb,
     const pb_variable<FieldT> &input,
     const pb_variable<FieldT> &output,
     const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
-    , const_a(ANEMOI_BLS12_381_CONST_BETA)
-    , const_b(ANEMOI_BLS12_381_CONST_GAMMA)
+    , const_a(FLYSTEL_BLS12_381_BETA)
+    , const_b(FLYSTEL_BLS12_381_GAMMA)
     , input(input)
     , output(output)
 {
@@ -57,7 +84,7 @@ anemoi_power_two_gadget<FieldT>::anemoi_power_two_gadget(
 //
 // where A =(0, const_a, 0), B=(0, 1, 0) and C =(-const_b, 0, 1)
 template<typename FieldT>
-void anemoi_power_two_gadget<FieldT>::generate_r1cs_constraints()
+void flystel_power_two_gadget<FieldT>::generate_r1cs_constraints()
 {
     // Constraint has the form:
     //   const_a * input^2 + const_b = output
@@ -71,7 +98,7 @@ void anemoi_power_two_gadget<FieldT>::generate_r1cs_constraints()
 // compute a witness y for a given input x for the computation y =
 // const_a x^2 + const_b, where x=input, y=output
 template<typename FieldT>
-void anemoi_power_two_gadget<FieldT>::generate_r1cs_witness()
+void flystel_power_two_gadget<FieldT>::generate_r1cs_witness()
 {
     // y = const_a x^2 + const_b
     this->pb.val(output) =
@@ -80,7 +107,7 @@ void anemoi_power_two_gadget<FieldT>::generate_r1cs_witness()
 }
 
 template<typename FieldT>
-anemoi_power_three_gadget<FieldT>::anemoi_power_three_gadget(
+flystel_power_three_gadget<FieldT>::flystel_power_three_gadget(
     protoboard<FieldT> &pb,
     const pb_variable<FieldT> &input,
     const pb_variable<FieldT> &output,
@@ -88,8 +115,8 @@ anemoi_power_three_gadget<FieldT>::anemoi_power_three_gadget(
     : gadget<FieldT>(pb, annotation_prefix)
     , internal(pb_variable_allocate<FieldT>(
           pb, FMT(this->annotation_prefix, " internal")))
-    , const_a(ANEMOI_BLS12_381_CONST_BETA)
-    , const_b(ANEMOI_BLS12_381_CONST_GAMMA)
+    , const_a(FLYSTEL_BLS12_381_BETA)
+    , const_b(FLYSTEL_BLS12_381_GAMMA)
     , input(input)
     , output(output)
 {
@@ -112,7 +139,7 @@ anemoi_power_three_gadget<FieldT>::anemoi_power_three_gadget(
 // where A0=(0, const_a, 0, 0), B0=(0, 1, 0, 0), C0=(0, 0, 1, 0) and
 // A1=(0, 0, 1, 0), B1=(0, 1, 0, 0), C1=(-const_b, 0, 0, 1)
 template<typename FieldT>
-void anemoi_power_three_gadget<FieldT>::generate_r1cs_constraints()
+void flystel_power_three_gadget<FieldT>::generate_r1cs_constraints()
 {
     // (const_a * input) * input = internal
     this->pb.add_r1cs_constraint(
@@ -125,7 +152,7 @@ void anemoi_power_three_gadget<FieldT>::generate_r1cs_constraints()
 }
 
 template<typename FieldT>
-void anemoi_power_three_gadget<FieldT>::generate_r1cs_witness()
+void flystel_power_three_gadget<FieldT>::generate_r1cs_witness()
 {
     // x_internal = const_a x * x
     this->pb.val(internal) =
