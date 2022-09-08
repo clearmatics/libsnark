@@ -158,8 +158,6 @@ void transcript_hasher<ppT>::add_element(const libff::G2<ppT> &element)
 template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
 {
     size_t buffer_len = this->buffer.size();
-    // DEBUG
-    printf("[%s:%d] len %7d\n", __FILE__, __LINE__, (int)buffer_len);
 
     // vector of valid lengths (\attention specific to BLS12-381)
     const std::vector<size_t> length{288, 320, 416, 704, 896, 1120};
@@ -172,13 +170,6 @@ template<typename ppT> libff::Fr<ppT> transcript_hasher<ppT>::get_hash()
         throw std::logic_error(
             "Error: invalid length of transcript hasher buffer");
     }
-    if (!b_valid_length) {
-        printf(
-            "[%s:%d] Error: invalid length of transcript hasher buffer\n",
-            __FILE__,
-            __LINE__);
-    }
-    assert(b_valid_length);
 
     libff::Fr<ppT> challenge = 0;
 
