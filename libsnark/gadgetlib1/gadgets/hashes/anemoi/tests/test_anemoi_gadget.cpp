@@ -73,10 +73,40 @@ template<typename FieldT> void test_flystel_power_three_gadget(const size_t n)
     libff::print_time("flystel_power_three_gadget tests successful");
 }
 
+template<typename FieldT> void test_flystel_power_five_gadget(const size_t n)
+{
+    printf("testing flystel_power_five_gadget on all %zu bit strings\n", n);
+
+    protoboard<FieldT> pb;
+    pb_variable<FieldT> x;
+    pb_variable<FieldT> y;
+
+    // input
+    x.allocate(pb, "x");
+    // output
+    y.allocate(pb, "y");
+
+    // create gadget
+    flystel_power_five_gadget<FieldT> d(pb, x, y, "d");
+    // generate contraints
+    d.generate_r1cs_constraints();
+    // set input value
+    pb.val(x) = 2;
+    // generate witness for the given input
+    d.generate_r1cs_witness();
+
+    // the expected output is 32 for input 2
+    ASSERT_EQ(pb.val(y), 32);
+    ASSERT_TRUE(pb.is_satisfied());
+
+    libff::print_time("flystel_power_five_gadget tests successful");
+}
+
 int main(void)
 {
     libff::start_profiling();
     libff::default_ec_pp::init_public_params();
     test_flystel_power_two_gadget<libff::Fr<libff::default_ec_pp>>(10);
     test_flystel_power_three_gadget<libff::Fr<libff::default_ec_pp>>(10);
+    test_flystel_power_five_gadget<libff::Fr<libff::default_ec_pp>>(10);
 }

@@ -162,6 +162,65 @@ void flystel_power_three_gadget<FieldT>::generate_r1cs_witness()
         this->pb.val(internal) * this->pb.val(input) + this->const_b;
 }
 
+template<typename FieldT>
+flystel_power_five_gadget<FieldT>::flystel_power_five_gadget(
+    protoboard<FieldT> &pb,
+    const pb_variable<FieldT> &input,
+    const pb_variable<FieldT> &output,
+    const std::string &annotation_prefix)
+    : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
+{
+    internal[0].allocate(this->pb, " internal 1");
+    internal[1].allocate(this->pb, " internal 2");
+}
+
+// R1CS constraints for the operation y = x^5 with x=input,
+// y=output. This operation is represented with three multiplications
+// as y = (temp * temp * x), temp = x * x. Equivalently:
+//
+// x1 * x1 = x2
+// x2 * x2 = x3
+// x1 * x3 = x4
+//
+// for the variables vector X = (x0=1, x1=input, x2=internal,
+// x3=internal, x4=output). The above system is represented with 3
+// R1CS constraints resp.:
+//
+// < A0 , X > * < B0 , X > = < C0 , X > ,
+// < A1 , X > * < B1 , X > = < C1 , X > ,
+// < A2 , X > * < B2 , X > = < C2 , X >
+//
+// where A0=(01000), B0=(01000), C0=(00100); A1=(00100), B0=(00100),
+// C0=(00010) and A2=(01000), B2=(00010), C2=(00001)
+template<typename FieldT>
+void flystel_power_five_gadget<FieldT>::generate_r1cs_constraints()
+{
+    // x1*x1 = x2
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(input, input, internal[0]),
+        FMT(this->annotation_prefix, " x * x = x^2"));
+    // x2*x2 = x3
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(internal[0], internal[0], internal[1]),
+        FMT(this->annotation_prefix, " x^2 * x^2 = x^4"));
+    // x1*x3 = x4
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(input, internal[1], output),
+        FMT(this->annotation_prefix, " x^1 * x^4 = x^5"));
+}
+
+template<typename FieldT>
+void flystel_power_five_gadget<FieldT>::generate_r1cs_witness()
+{
+    // x2 = x1 * x1
+    this->pb.val(internal[0]) = (this->pb.val(input)) * this->pb.val(input);
+    // x3 = x2 * x2
+    this->pb.val(internal[1]) =
+        (this->pb.val(internal[0])) * this->pb.val(internal[0]);
+    // y = x1 * x3
+    this->pb.val(output) = this->pb.val(input) * this->pb.val(internal[1]);
+}
+
 } // namespace libsnark
 
 #endif // LIBSNARK_GADGETLIB1_GADGETS_HASHES_ANEMOI_COMPONENTS_TCC_

@@ -20,6 +20,8 @@
 namespace libsnark
 {
 
+// TODO: template-ize the following constants
+
 #define FLYSTEL_BLS12_381_ALPHA 5
 // equals to G1
 #define FLYSTEL_BLS12_381_BETA 2
@@ -74,6 +76,31 @@ public:
     const pb_variable<FieldT> output;
 
     flystel_power_three_gadget(
+        protoboard<FieldT> &pb,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix = "");
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
+/// Compute y = x^5
+/// x: input
+/// y: output
+template<typename FieldT>
+class flystel_power_five_gadget : public gadget<FieldT>
+{
+private:
+    /// internal (i.e. intermediate) variable: x2,x3
+    std::array<pb_variable<FieldT>, 2> internal;
+
+public:
+    /// input/output: x1,x4
+    const pb_variable<FieldT> input;
+    const pb_variable<FieldT> output;
+
+    flystel_power_five_gadget(
         protoboard<FieldT> &pb,
         const pb_variable<FieldT> &input,
         const pb_variable<FieldT> &output,
