@@ -73,19 +73,19 @@ template<typename ppT> struct verifier_preprocessed_input_t {
 
 /// Verifier step 4 output
 template<typename ppT> struct step_four_out_t {
-    libff::Fr<ppT> beta;
-    libff::Fr<ppT> gamma;
-    libff::Fr<ppT> alpha;
-    libff::Fr<ppT> zeta;
-    libff::Fr<ppT> nu;
-    libff::Fr<ppT> u;
+    const libff::Fr<ppT> beta;
+    const libff::Fr<ppT> gamma;
+    const libff::Fr<ppT> alpha;
+    const libff::Fr<ppT> zeta;
+    const libff::Fr<ppT> nu;
+    const libff::Fr<ppT> u;
     step_four_out_t(
-        libff::Fr<ppT> &beta,
-        libff::Fr<ppT> &gamma,
-        libff::Fr<ppT> &alpha,
-        libff::Fr<ppT> &zeta,
-        libff::Fr<ppT> &nu,
-        libff::Fr<ppT> &u);
+        const libff::Fr<ppT> &beta,
+        const libff::Fr<ppT> &gamma,
+        const libff::Fr<ppT> &alpha,
+        const libff::Fr<ppT> &zeta,
+        const libff::Fr<ppT> &nu,
+        const libff::Fr<ppT> &u);
 };
 
 /// Verifier step 5 output
