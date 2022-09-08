@@ -107,6 +107,28 @@ void flystel_power_two_gadget<FieldT>::generate_r1cs_witness()
 }
 
 template<typename FieldT>
+flystel_Qi_power_two_gadget<FieldT>::flystel_Qi_power_two_gadget(
+    protoboard<FieldT> &pb,
+    const pb_variable<FieldT> &input,
+    const pb_variable<FieldT> &output,
+    const std::string &annotation_prefix)
+    : flystel_power_two_gadget<FieldT>(
+          pb, FLYSTEL_BLS12_381_BETA, FLYSTEL_BLS12_381_GAMMA, input, output)
+{
+}
+
+template<typename FieldT>
+flystel_Qf_power_two_gadget<FieldT>::flystel_Qf_power_two_gadget(
+    protoboard<FieldT> &pb,
+    const pb_variable<FieldT> &input,
+    const pb_variable<FieldT> &output,
+    const std::string &annotation_prefix)
+    : flystel_power_two_gadget<FieldT>(
+          pb, FLYSTEL_BLS12_381_BETA, FLYSTEL_BLS12_381_DELTA, input, output)
+{
+}
+
+template<typename FieldT>
 flystel_power_three_gadget<FieldT>::flystel_power_three_gadget(
     protoboard<FieldT> &pb,
     const pb_variable<FieldT> &input,
@@ -172,6 +194,28 @@ flystel_power_five_gadget<FieldT>::flystel_power_five_gadget(
 {
     internal[0].allocate(this->pb, " internal 1");
     internal[1].allocate(this->pb, " internal 2");
+}
+
+template<typename FieldT>
+flystel_Qi_power_three_gadget<FieldT>::flystel_Qi_power_three_gadget(
+    protoboard<FieldT> &pb,
+    const pb_variable<FieldT> &input,
+    const pb_variable<FieldT> &output,
+    const std::string &annotation_prefix)
+    : flystel_power_three_gadget<FieldT>(
+          pb, FLYSTEL_BLS12_381_BETA, FLYSTEL_BLS12_381_GAMMA, input, output)
+{
+}
+
+template<typename FieldT>
+flystel_Qf_power_three_gadget<FieldT>::flystel_Qf_power_three_gadget(
+    protoboard<FieldT> &pb,
+    const pb_variable<FieldT> &input,
+    const pb_variable<FieldT> &output,
+    const std::string &annotation_prefix)
+    : flystel_power_three_gadget<FieldT>(
+          pb, FLYSTEL_BLS12_381_BETA, FLYSTEL_BLS12_381_GAMMA, input, output)
+{
 }
 
 // R1CS constraints for the operation y = x^5 with x=input,

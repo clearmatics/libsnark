@@ -56,6 +56,30 @@ public:
     void generate_r1cs_witness();
 };
 
+/// Flystel Qi function for prime fields:
+/// Qi(x) = beta x^2 + gamma
+template<typename FieldT>
+class flystel_Qi_power_two_gadget : public flystel_power_two_gadget<FieldT>
+{
+    flystel_Qi_power_two_gadget(
+        protoboard<FieldT> &pb,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix = "");
+};
+
+/// Flystel Qf function for prime fields:
+/// Qf(x) = beta x^2 + delta
+template<typename FieldT>
+class flystel_Qf_power_two_gadget : public flystel_power_two_gadget<FieldT>
+{
+    flystel_Qf_power_two_gadget(
+        protoboard<FieldT> &pb,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix = "");
+};
+
 /// Compute y = const_a x^3 + const_b
 /// x: input
 /// y: output
@@ -83,6 +107,30 @@ public:
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
+};
+
+/// Flystel Qi function for binary fields:
+/// Qi(x) = beta x^3 + gamma
+template<typename FieldT>
+class flystel_Qi_power_three_gadget : public flystel_power_three_gadget<FieldT>
+{
+    flystel_Qi_power_three_gadget(
+        protoboard<FieldT> &pb,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix = "");
+};
+
+/// Flystel Qf function for binary fields:
+/// Qf(x) = beta x^3 + delta
+template<typename FieldT>
+class flystel_Qf_power_three_gadget : public flystel_power_three_gadget<FieldT>
+{
+    flystel_Qf_power_three_gadget(
+        protoboard<FieldT> &pb,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix = "");
 };
 
 /// Compute y = x^5
