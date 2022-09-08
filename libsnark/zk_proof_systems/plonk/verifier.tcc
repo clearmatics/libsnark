@@ -59,12 +59,12 @@ template<typename ppT> void plonk_verifier<ppT>::step_three(const srs<ppT> &srs)
 
 template<typename ppT>
 step_four_out_t<ppT>::step_four_out_t(
-    libff::Fr<ppT> &beta,
-    libff::Fr<ppT> &gamma,
-    libff::Fr<ppT> &alpha,
-    libff::Fr<ppT> &zeta,
-    libff::Fr<ppT> &nu,
-    libff::Fr<ppT> &u)
+    const libff::Fr<ppT> &beta,
+    const libff::Fr<ppT> &gamma,
+    const libff::Fr<ppT> &alpha,
+    const libff::Fr<ppT> &zeta,
+    const libff::Fr<ppT> &nu,
+    const libff::Fr<ppT> &u)
     : beta(beta), gamma(gamma), alpha(alpha), zeta(zeta), nu(nu), u(u)
 {
 }
