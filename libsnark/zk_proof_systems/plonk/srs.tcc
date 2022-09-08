@@ -70,26 +70,20 @@ plonk_keypair<ppT>::plonk_keypair(
 
 template<typename ppT> transcript_hasher<ppT>::transcript_hasher()
 {
+    plonk_example example;
+
     // initialize to empty vector
     this->buffer.clear();
     // test array containing the expected hash values of the communication
     // transcript i.e. the communication challenges (in this order): beta,
     // gamma, alpha, zeta, nu, u WARNING! specific to curve BLS12-381
     this->hash_values = {
-        libff::Fr<ppT>("3710899868510394644410941212967766116886736137326022751"
-                       "891187938298987182388"), // beta
-        libff::Fr<ppT>("110379303840831945879077096653321168432672740458288022"
-                       "49545114995763715746939"), // gamma
-        libff::Fr<ppT>("379799789992747238930717819864848384921111623418803600"
-                       "22719385400306128734648"), // alpha
-        libff::Fr<ppT>("4327197228921839935583364394550235027071910395980312641"
-                       "5018065799136107272465"), // zeta
-        libff::Fr<ppT>(
-            "275158598338697752421507265080923414294782807831923791651"
-            "55175653098691426347"), // nu
-        libff::Fr<ppT>(
-            "1781751143954696684632449211212056577828855388109883650570"
-            "6049265393896966778"), // u
+        example.beta,
+        example.gamma,
+        example.alpha,
+        example.zeta,
+        example.nu,
+        example.u,
     };
 }
 
