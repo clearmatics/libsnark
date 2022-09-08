@@ -15,9 +15,9 @@
 
 using namespace libsnark;
 
-template<typename FieldT> void test_anemoi_power_two_gadget(const size_t n)
+template<typename FieldT> void test_flystel_power_two_gadget(const size_t n)
 {
-    printf("testing anemoi_power_two_gadget on all %zu bit strings\n", n);
+    printf("testing flystel_power_two_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
@@ -29,7 +29,7 @@ template<typename FieldT> void test_anemoi_power_two_gadget(const size_t n)
     y.allocate(pb, "y");
 
     // create gadget
-    anemoi_power_two_gadget<FieldT> d(pb, x, y, "d");
+    flystel_power_two_gadget<FieldT> d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value
@@ -41,12 +41,12 @@ template<typename FieldT> void test_anemoi_power_two_gadget(const size_t n)
     ASSERT_EQ(pb.val(y), 13);
     ASSERT_TRUE(pb.is_satisfied());
 
-    libff::print_time("anemoi_power_two_gadget tests successful");
+    libff::print_time("flystel_power_two_gadget tests successful");
 }
 
-template<typename FieldT> void test_anemoi_power_three_gadget(const size_t n)
+template<typename FieldT> void test_flystel_power_three_gadget(const size_t n)
 {
-    printf("testing anemoi_power_three_gadget on all %zu bit strings\n", n);
+    printf("testing flystel_power_three_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
@@ -58,7 +58,7 @@ template<typename FieldT> void test_anemoi_power_three_gadget(const size_t n)
     y.allocate(pb, "y");
 
     // create gadget
-    anemoi_power_three_gadget<FieldT> d(pb, x, y, "d");
+    flystel_power_three_gadget<FieldT> d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value
@@ -70,13 +70,13 @@ template<typename FieldT> void test_anemoi_power_three_gadget(const size_t n)
     ASSERT_EQ(pb.val(y), 21);
     ASSERT_TRUE(pb.is_satisfied());
 
-    libff::print_time("anemoi_power_three_gadget tests successful");
+    libff::print_time("flystel_power_three_gadget tests successful");
 }
 
 int main(void)
 {
     libff::start_profiling();
     libff::default_ec_pp::init_public_params();
-    test_anemoi_power_two_gadget<libff::Fr<libff::default_ec_pp>>(10);
-    test_anemoi_power_three_gadget<libff::Fr<libff::default_ec_pp>>(10);
+    test_flystel_power_two_gadget<libff::Fr<libff::default_ec_pp>>(10);
+    test_flystel_power_three_gadget<libff::Fr<libff::default_ec_pp>>(10);
 }
