@@ -24,9 +24,9 @@ verifier_preprocessed_input_t<ppT>::verifier_preprocessed_input_t(
 {
 }
 
-template<typename ppT>
-verifier_preprocessed_input_t<ppT> plonk_verifier<ppT>::preprocessed_input(
-    const srs<ppT> &srs)
+template<typename ppT, class transcript_hasher>
+verifier_preprocessed_input_t<ppT> plonk_verifier<ppT, transcript_hasher>::
+    preprocessed_input(const srs<ppT> &srs)
 {
     std::vector<libff::G1<ppT>> Q_polys_at_secret_g1;
     Q_polys_at_secret_g1.resize(srs.Q_polys.size());
@@ -43,17 +43,20 @@ verifier_preprocessed_input_t<ppT> plonk_verifier<ppT>::preprocessed_input(
     return preprocessed_input;
 }
 
-template<typename ppT>
-void plonk_verifier<ppT>::step_one(const plonk_proof<ppT> &proof)
+template<typename ppT, class transcript_hasher>
+void plonk_verifier<ppT, transcript_hasher>::step_one(
+    const plonk_proof<ppT> &proof)
 {
 }
 
-template<typename ppT>
-void plonk_verifier<ppT>::step_two(const plonk_proof<ppT> &proof)
+template<typename ppT, class transcript_hasher>
+void plonk_verifier<ppT, transcript_hasher>::step_two(
+    const plonk_proof<ppT> &proof)
 {
 }
 
-template<typename ppT> void plonk_verifier<ppT>::step_three(const srs<ppT> &srs)
+template<typename ppT, class transcript_hasher>
+void plonk_verifier<ppT, transcript_hasher>::step_three(const srs<ppT> &srs)
 {
 }
 
@@ -69,9 +72,9 @@ step_four_out_t<ppT>::step_four_out_t(
 {
 }
 
-template<typename ppT>
-step_four_out_t<ppT> plonk_verifier<ppT>::step_four(
-    const plonk_proof<ppT> &proof, transcript_hasher<ppT> &hasher)
+template<typename ppT, class transcript_hasher>
+step_four_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_four(
+    const plonk_proof<ppT> &proof, transcript_hasher &hasher)
 {
     // add outputs from Round 1 to the hash buffer
     hasher.add_element(proof.W_polys_blinded_at_secret_g1[a]);
@@ -129,8 +132,8 @@ step_five_out_t<ppT>::step_five_out_t(libff::Fr<ppT> &&zh_zeta)
 {
 }
 
-template<typename ppT>
-step_five_out_t<ppT> plonk_verifier<ppT>::step_five(
+template<typename ppT, class transcript_hasher>
+step_five_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_five(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
     libff::Fr<ppT> zh_zeta;
@@ -147,8 +150,8 @@ step_six_out_t<ppT>::step_six_out_t(libff::Fr<ppT> &&L_0_zeta)
 {
 }
 
-template<typename ppT>
-step_six_out_t<ppT> plonk_verifier<ppT>::step_six(
+template<typename ppT, class transcript_hasher>
+step_six_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_six(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
     libff::Fr<ppT> L_0_zeta = libfqfft::evaluate_polynomial<Field>(
@@ -163,8 +166,8 @@ step_seven_out_t<ppT>::step_seven_out_t(libff::Fr<ppT> &&PI_zeta)
 {
 }
 
-template<typename ppT>
-step_seven_out_t<ppT> plonk_verifier<ppT>::step_seven(
+template<typename ppT, class transcript_hasher>
+step_seven_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_seven(
     const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
 {
     libff::Fr<ppT> PI_zeta;
@@ -180,8 +183,8 @@ step_eight_out_t<ppT>::step_eight_out_t(libff::Fr<ppT> &&r_prime_zeta)
 {
 }
 
-template<typename ppT>
-step_eight_out_t<ppT> plonk_verifier<ppT>::step_eight(
+template<typename ppT, class transcript_hasher>
+step_eight_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_eight(
     const step_four_out_t<ppT> &step_four_out,
     const step_five_out_t<ppT> &step_five_out,
     const step_six_out_t<ppT> &step_six_out,
@@ -217,8 +220,8 @@ step_nine_out_t<ppT>::step_nine_out_t(libff::G1<ppT> &&D1) : D1(D1)
 {
 }
 
-template<typename ppT>
-step_nine_out_t<ppT> plonk_verifier<ppT>::step_nine(
+template<typename ppT, class transcript_hasher>
+step_nine_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_nine(
     const step_four_out_t<ppT> &step_four_out,
     const step_six_out_t<ppT> &step_six_out,
     const plonk_proof<ppT> &proof,
@@ -289,8 +292,8 @@ step_ten_out_t<ppT>::step_ten_out_t(libff::G1<ppT> &&F1) : F1(F1)
 {
 }
 
-template<typename ppT>
-step_ten_out_t<ppT> plonk_verifier<ppT>::step_ten(
+template<typename ppT, class transcript_hasher>
+step_ten_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_ten(
     const step_four_out_t<ppT> &step_four_out,
     const step_nine_out_t<ppT> &step_nine_out,
     const plonk_proof<ppT> &proof,
@@ -338,8 +341,8 @@ step_eleven_out_t<ppT>::step_eleven_out_t(libff::G1<ppT> &&E1) : E1(E1)
 {
 }
 
-template<typename ppT>
-step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
+template<typename ppT, class transcript_hasher>
+step_eleven_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_eleven(
     const step_four_out_t<ppT> &step_four_out,
     const step_eight_out_t<ppT> &step_eight_out,
     const plonk_proof<ppT> &proof)
@@ -365,8 +368,8 @@ step_eleven_out_t<ppT> plonk_verifier<ppT>::step_eleven(
     return step_eleven_out;
 }
 
-template<typename ppT>
-bool plonk_verifier<ppT>::step_twelve(
+template<typename ppT, class transcript_hasher>
+bool plonk_verifier<ppT, transcript_hasher>::step_twelve(
     const step_four_out_t<ppT> &step_four_out,
     const step_ten_out_t<ppT> &step_ten_out,
     const step_eleven_out_t<ppT> &step_eleven_out,
@@ -408,11 +411,11 @@ bool plonk_verifier<ppT>::step_twelve(
     return b_accept;
 }
 
-template<typename ppT>
-bool plonk_verifier<ppT>::verify_proof(
+template<typename ppT, class transcript_hasher>
+bool plonk_verifier<ppT, transcript_hasher>::verify_proof(
     const plonk_proof<ppT> &proof,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
     // compute verifier preprocessed input
     const verifier_preprocessed_input_t<ppT> preprocessed_input =

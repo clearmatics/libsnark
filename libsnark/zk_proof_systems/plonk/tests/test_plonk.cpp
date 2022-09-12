@@ -8,6 +8,7 @@
 
 #include "libsnark/zk_proof_systems/plonk/circuit.hpp"
 #include "libsnark/zk_proof_systems/plonk/prover.hpp"
+#include "libsnark/zk_proof_systems/plonk/tests/bls12_381_test_vector_transcript_hasher.hpp"
 #include "libsnark/zk_proof_systems/plonk/verifier.hpp"
 
 #include <algorithm>
@@ -33,14 +34,14 @@ namespace libsnark
 //     \bar{S_sigma1}, \bar{S_sigma2}, \bar{z_w},
 //     [W_zeta]_1, [W_{zeta omega_roots}]_1
 //     r_zeta (*))
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_verify_invalid_proof(
     const plonk_proof<ppT> &valid_proof,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
     // initialize verifier
-    plonk_verifier<ppT> verifier;
+    plonk_verifier<ppT, transcript_hasher> verifier;
     bool b_accept = true;
 
     // random element on the curve initialized to zero
@@ -274,17 +275,18 @@ void test_plonk_compute_accumulator(
     ASSERT_EQ(A_poly, example.A_poly);
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_prover_round_one(
     const plonk_example &example,
     const round_zero_out_t<ppT> &round_zero_out,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
-    round_one_out_t<ppT> round_one_out = plonk_prover<ppT>::round_one(
-        round_zero_out, blind_scalars, witness, srs, hasher);
+    round_one_out_t<ppT> round_one_out =
+        plonk_prover<ppT, transcript_hasher>::round_one(
+            round_zero_out, blind_scalars, witness, srs, hasher);
     for (int i = 0; i < (int)NUM_HSETS; ++i) {
         printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, (int)i);
         libff::print_vector(round_one_out.W_polys[i]);
@@ -311,7 +313,7 @@ void test_plonk_prover_round_one(
     }
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_prover_round_two(
     const plonk_example &example,
     const libff::Fr<ppT> &beta,
@@ -320,10 +322,11 @@ void test_plonk_prover_round_two(
     const std::vector<libff::Fr<ppT>> &blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
-    round_two_out_t<ppT> round_two_out = plonk_prover<ppT>::round_two(
-        beta, gamma, round_zero_out, blind_scalars, witness, srs, hasher);
+    round_two_out_t<ppT> round_two_out =
+        plonk_prover<ppT, transcript_hasher>::round_two(
+            beta, gamma, round_zero_out, blind_scalars, witness, srs, hasher);
     printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
     libff::print_vector(round_two_out.z_poly);
     ASSERT_EQ(round_two_out.z_poly, example.z_poly);
@@ -336,7 +339,7 @@ void test_plonk_prover_round_two(
     ASSERT_EQ(z_poly_at_secret_g1_aff.Y, example.z_poly_at_secret_g1[1]);
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_prover_round_three(
     const plonk_example &example,
     const libff::Fr<ppT> &alpha,
@@ -346,17 +349,18 @@ void test_plonk_prover_round_three(
     const round_one_out_t<ppT> &round_one_out,
     const round_two_out_t<ppT> &round_two_out,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
-    round_three_out_t<ppT> round_three_out = plonk_prover<ppT>::round_three(
-        alpha,
-        beta,
-        gamma,
-        round_zero_out,
-        round_one_out,
-        round_two_out,
-        srs,
-        hasher);
+    round_three_out_t<ppT> round_three_out =
+        plonk_prover<ppT, transcript_hasher>::round_three(
+            alpha,
+            beta,
+            gamma,
+            round_zero_out,
+            round_one_out,
+            round_two_out,
+            srs,
+            hasher);
     printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
     printf("[%s:%d] t_poly_long\n", __FILE__, __LINE__);
     libff::print_vector(round_three_out.t_poly_long);
@@ -377,17 +381,18 @@ void test_plonk_prover_round_three(
     }
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_prover_round_four(
     const plonk_example &example,
     const libff::Fr<ppT> &zeta,
     const round_one_out_t<ppT> &round_one_out,
     const round_three_out_t<ppT> &round_three_out,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
-    round_four_out_t<ppT> round_four_out = plonk_prover<ppT>::round_four(
-        zeta, round_one_out, round_three_out, srs, hasher);
+    round_four_out_t<ppT> round_four_out =
+        plonk_prover<ppT, transcript_hasher>::round_four(
+            zeta, round_one_out, round_three_out, srs, hasher);
     // Prover Round 4 output check against test vectors
     printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
     printf("a_zeta ");
@@ -413,7 +418,7 @@ void test_plonk_prover_round_four(
     ASSERT_EQ(round_four_out.z_poly_xomega_zeta, example.z_poly_xomega_zeta);
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_prover_round_five(
     const plonk_example &example,
     const libff::Fr<ppT> &alpha,
@@ -427,21 +432,22 @@ void test_plonk_prover_round_five(
     const round_three_out_t<ppT> &round_three_out,
     const round_four_out_t<ppT> &round_four_out,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
-    round_five_out_t<ppT> round_five_out = plonk_prover<ppT>::round_five(
-        alpha,
-        beta,
-        gamma,
-        zeta,
-        nu,
-        round_zero_out,
-        round_one_out,
-        round_two_out,
-        round_three_out,
-        round_four_out,
-        srs,
-        hasher);
+    round_five_out_t<ppT> round_five_out =
+        plonk_prover<ppT, transcript_hasher>::round_five(
+            alpha,
+            beta,
+            gamma,
+            zeta,
+            nu,
+            round_zero_out,
+            round_one_out,
+            round_two_out,
+            round_three_out,
+            round_four_out,
+            srs,
+            hasher);
 
     printf("[%s:%d] Outputs from Prover round 5\n", __FILE__, __LINE__);
     printf("r_zeta ");
@@ -464,7 +470,7 @@ void test_plonk_prover_round_five(
 
 /// \attention the example class is defined specifically for the BLS12-381
 /// curve, so make sure we are using this curve
-template<typename ppT> void test_plonk_prover_rounds()
+template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
 {
     using Field = libff::Fr<ppT>;
 
@@ -490,22 +496,24 @@ template<typename ppT> void test_plonk_prover_rounds()
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
     // initialize hasher
-    transcript_hasher<ppT> hasher;
+    transcript_hasher hasher;
 
     // Prover Round 0 (initialization)
-    round_zero_out_t<ppT> round_zero_out = plonk_prover<ppT>::round_zero(srs);
+    round_zero_out_t<ppT> round_zero_out =
+        plonk_prover<ppT, transcript_hasher>::round_zero(srs);
 
     // --- Unit test Prover Round 1 ---
     // reset buffer at the start of the round (needed for testing only)
     printf("[%s:%d] Unit test Prover Round 1...\n", __FILE__, __LINE__);
-    test_plonk_prover_round_one<ppT>(
+    test_plonk_prover_round_one<ppT, transcript_hasher>(
         example, round_zero_out, witness, srs, hasher);
 
     // --- Unit test Prover Round 2 ---
     // reset buffer at the start of the round (needed for testing only)
     printf("[%s:%d] Unit test Prover Round 2...\n", __FILE__, __LINE__);
-    round_one_out_t<ppT> round_one_out = plonk_prover<ppT>::round_one(
-        round_zero_out, blind_scalars, witness, srs, hasher);
+    round_one_out_t<ppT> round_one_out =
+        plonk_prover<ppT, transcript_hasher>::round_one(
+            round_zero_out, blind_scalars, witness, srs, hasher);
     // clear hash buffer
     hasher.buffer_clear();
     // add outputs from Round 1 to the hash buffer
@@ -515,7 +523,7 @@ template<typename ppT> void test_plonk_prover_rounds()
     const libff::Fr<ppT> beta = hasher.get_hash();
     hasher.add_element(libff::Fr<ppT>::one());
     const libff::Fr<ppT> gamma = hasher.get_hash();
-    test_plonk_prover_round_two<ppT>(
+    test_plonk_prover_round_two<ppT, transcript_hasher>(
         example,
         beta,
         gamma,
@@ -531,8 +539,9 @@ template<typename ppT> void test_plonk_prover_rounds()
     // --- Unit test Prover Round 3 ---
     // reset buffer at the start of the round (needed for testing only)
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
-    round_two_out_t<ppT> round_two_out = plonk_prover<ppT>::round_two(
-        beta, gamma, round_zero_out, blind_scalars, witness, srs, hasher);
+    round_two_out_t<ppT> round_two_out =
+        plonk_prover<ppT, transcript_hasher>::round_two(
+            beta, gamma, round_zero_out, blind_scalars, witness, srs, hasher);
     // clear hash buffer
     hasher.buffer_clear();
     // add outputs from Round 1 to the hash buffer
@@ -543,7 +552,7 @@ template<typename ppT> void test_plonk_prover_rounds()
     // add outputs from Round 2 to the hash buffer
     hasher.add_element(round_two_out.z_poly_at_secret_g1);
     const libff::Fr<ppT> alpha = hasher.get_hash();
-    test_plonk_prover_round_three<ppT>(
+    test_plonk_prover_round_three<ppT, transcript_hasher>(
         example,
         alpha,
         beta,
@@ -556,15 +565,16 @@ template<typename ppT> void test_plonk_prover_rounds()
 
     // --- Unit test Prover Round 4 ---
     printf("[%s:%d] Prover Round 4...\n", __FILE__, __LINE__);
-    round_three_out_t<ppT> round_three_out = plonk_prover<ppT>::round_three(
-        alpha,
-        beta,
-        gamma,
-        round_zero_out,
-        round_one_out,
-        round_two_out,
-        srs,
-        hasher);
+    round_three_out_t<ppT> round_three_out =
+        plonk_prover<ppT, transcript_hasher>::round_three(
+            alpha,
+            beta,
+            gamma,
+            round_zero_out,
+            round_one_out,
+            round_two_out,
+            srs,
+            hasher);
     // clear hash buffer
     hasher.buffer_clear();
     // add outputs from Round 1 to the hash buffer
@@ -579,13 +589,14 @@ template<typename ppT> void test_plonk_prover_rounds()
     hasher.add_element(round_three_out.t_poly_at_secret_g1[mid]);
     hasher.add_element(round_three_out.t_poly_at_secret_g1[hi]);
     const libff::Fr<ppT> zeta = hasher.get_hash();
-    test_plonk_prover_round_four<ppT>(
+    test_plonk_prover_round_four<ppT, transcript_hasher>(
         example, zeta, round_one_out, round_three_out, srs, hasher);
 
     // --- Unit test Prover Round 5 ---
     printf("[%s:%d] Unit test Prover Round 5...\n", __FILE__, __LINE__);
-    round_four_out_t<ppT> round_four_out = plonk_prover<ppT>::round_four(
-        zeta, round_one_out, round_three_out, srs, hasher);
+    round_four_out_t<ppT> round_four_out =
+        plonk_prover<ppT, transcript_hasher>::round_four(
+            zeta, round_one_out, round_three_out, srs, hasher);
     // clear hash buffer
     hasher.buffer_clear();
     // add outputs from Round 1 to the hash buffer
@@ -607,7 +618,7 @@ template<typename ppT> void test_plonk_prover_rounds()
     hasher.add_element(round_four_out.S_1_zeta);
     hasher.add_element(round_four_out.z_poly_xomega_zeta);
     const libff::Fr<ppT> nu = hasher.get_hash();
-    test_plonk_prover_round_five<ppT>(
+    test_plonk_prover_round_five<ppT, transcript_hasher>(
         example,
         alpha,
         beta,
@@ -666,7 +677,7 @@ template<typename ppT> void test_plonk_srs()
 
 /// \attention the example class is defined specifically for the BLS12-381
 /// curve, so make sure we are using this curve
-template<typename ppT> void test_plonk_prover()
+template<typename ppT, class transcript_hasher> void test_plonk_prover()
 {
     using Field = libff::Fr<ppT>;
 
@@ -691,10 +702,10 @@ template<typename ppT> void test_plonk_prover()
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
     // initialize hasher
-    transcript_hasher<ppT> hasher;
+    transcript_hasher hasher;
 
     // initialize prover
-    plonk_prover<ppT> prover;
+    plonk_prover<ppT, transcript_hasher> prover;
     // compute proof
     plonk_proof<ppT> proof =
         prover.compute_proof(srs, witness, blind_scalars, hasher);
@@ -746,13 +757,13 @@ template<typename ppT> void test_plonk_prover()
 
 /// \attention the example class is defined specifically for the BLS12-381
 /// curve, so make sure we are using this curve
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_verifier_preprocessed_input(
     const plonk_example &example, const srs<ppT> &srs)
 {
     // compute verifier preprocessed input
     const verifier_preprocessed_input_t<ppT> preprocessed_input =
-        plonk_verifier<ppT>::preprocessed_input(srs);
+        plonk_verifier<ppT, transcript_hasher>::preprocessed_input(srs);
 
     for (int i = 0; i < (int)srs.Q_polys.size(); ++i) {
         printf("srs.Q_polys_at_secret_G1[%d] \n", i);
@@ -774,46 +785,46 @@ void test_plonk_verifier_preprocessed_input(
     }
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_verifier_step_five(
     const plonk_example &example,
     const step_four_out_t<ppT> &step_four_out,
     const srs<ppT> &srs)
 {
     const step_five_out_t<ppT> step_five_out =
-        plonk_verifier<ppT>::step_five(step_four_out, srs);
+        plonk_verifier<ppT, transcript_hasher>::step_five(step_four_out, srs);
     printf("[%s:%d] zh_zeta ", __FILE__, __LINE__);
     step_five_out.zh_zeta.print();
     ASSERT_EQ(step_five_out.zh_zeta, example.zh_zeta);
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_verifier_step_six(
     const plonk_example &example,
     const step_four_out_t<ppT> &step_four_out,
     const srs<ppT> &srs)
 {
     const step_six_out_t<ppT> step_six_out =
-        plonk_verifier<ppT>::step_six(step_four_out, srs);
+        plonk_verifier<ppT, transcript_hasher>::step_six(step_four_out, srs);
     printf("L_0_zeta ");
     step_six_out.L_0_zeta.print();
     ASSERT_EQ(step_six_out.L_0_zeta, example.L_0_zeta);
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_verifier_step_seven(
     const plonk_example &example,
     const step_four_out_t<ppT> &step_four_out,
     const srs<ppT> &srs)
 {
     const step_seven_out_t<ppT> step_seven_out =
-        plonk_verifier<ppT>::step_seven(step_four_out, srs);
+        plonk_verifier<ppT, transcript_hasher>::step_seven(step_four_out, srs);
     printf("PI_zeta ");
     step_seven_out.PI_zeta.print();
     ASSERT_EQ(step_seven_out.PI_zeta, example.PI_zeta);
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_verifier_step_eight(
     const plonk_example &example,
     const step_four_out_t<ppT> &step_four_out,
@@ -823,12 +834,12 @@ void test_plonk_verifier_step_eight(
     const plonk_proof<ppT> &proof)
 {
     const step_eight_out_t<ppT> step_eight_out =
-        plonk_verifier<ppT>::step_eight(
+        plonk_verifier<ppT, transcript_hasher>::step_eight(
             step_four_out, step_five_out, step_six_out, step_seven_out, proof);
     ASSERT_EQ(step_eight_out.r_prime_zeta, example.r_prime_zeta);
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_verifier_step_nine(
     const plonk_example &example,
     const step_four_out_t<ppT> &step_four_out,
@@ -837,8 +848,9 @@ void test_plonk_verifier_step_nine(
     const verifier_preprocessed_input_t<ppT> &preprocessed_input,
     const srs<ppT> &srs)
 {
-    step_nine_out_t<ppT> step_nine_out = plonk_verifier<ppT>::step_nine(
-        step_four_out, step_six_out, proof, preprocessed_input, srs);
+    step_nine_out_t<ppT> step_nine_out =
+        plonk_verifier<ppT, transcript_hasher>::step_nine(
+            step_four_out, step_six_out, proof, preprocessed_input, srs);
     step_nine_out.D1.print();
     libff::G1<ppT> D1_aff(step_nine_out.D1);
     D1_aff.to_affine_coordinates();
@@ -846,7 +858,7 @@ void test_plonk_verifier_step_nine(
     ASSERT_EQ(D1_aff.Y, example.D1[1]);
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_verifier_step_ten(
     const plonk_example &example,
     const step_four_out_t<ppT> &step_four_out,
@@ -855,8 +867,9 @@ void test_plonk_verifier_step_ten(
     const verifier_preprocessed_input_t<ppT> &preprocessed_input,
     const srs<ppT> &srs)
 {
-    step_ten_out_t<ppT> step_ten_out = plonk_verifier<ppT>::step_ten(
-        step_four_out, step_nine_out, proof, preprocessed_input, srs);
+    step_ten_out_t<ppT> step_ten_out =
+        plonk_verifier<ppT, transcript_hasher>::step_ten(
+            step_four_out, step_nine_out, proof, preprocessed_input, srs);
     printf("[%s:%d] F1\n", __FILE__, __LINE__);
     step_ten_out.F1.print();
     libff::G1<ppT> F1_aff(step_ten_out.F1);
@@ -865,7 +878,7 @@ void test_plonk_verifier_step_ten(
     ASSERT_EQ(F1_aff.Y, example.F1[1]);
 }
 
-template<typename ppT>
+template<typename ppT, class transcript_hasher>
 void test_plonk_verifier_step_eleven(
     const plonk_example &example,
     const step_four_out_t<ppT> &step_four_out,
@@ -873,7 +886,8 @@ void test_plonk_verifier_step_eleven(
     const plonk_proof<ppT> &proof)
 {
     const step_eleven_out_t<ppT> step_eleven_out =
-        plonk_verifier<ppT>::step_eleven(step_four_out, step_eight_out, proof);
+        plonk_verifier<ppT, transcript_hasher>::step_eleven(
+            step_four_out, step_eight_out, proof);
     printf("[%s:%d] E1\n", __FILE__, __LINE__);
     step_eleven_out.E1.print();
     libff::G1<ppT> E1_aff(step_eleven_out.E1);
@@ -943,7 +957,7 @@ void test_plonk_verifier_pairing(
 
 /// \attention the example class is defined specifically for the BLS12-381
 /// curve, so make sure we are using this curve
-template<typename ppT> void test_plonk_verifier_steps()
+template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
 {
     using Field = libff::Fr<ppT>;
 
@@ -968,42 +982,46 @@ template<typename ppT> void test_plonk_verifier_steps()
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
     // initialize hasher
-    transcript_hasher<ppT> hasher;
+    transcript_hasher hasher;
 
     // initialize prover
-    plonk_prover<ppT> prover;
+    plonk_prover<ppT, transcript_hasher> prover;
     // compute proof
     plonk_proof<ppT> proof =
         prover.compute_proof(srs, witness, blind_scalars, hasher);
 
-    // clear the hasher buffer in order to re-use the same transcript_hasher
-    // object for the verifier
+    // clear the hasher buffer in order to re-use the same
+    // transcript_hasher object for the verifier
     hasher.buffer_clear();
 
     // Unit test verifier preprocessed input
-    test_plonk_verifier_preprocessed_input(example, srs);
+    test_plonk_verifier_preprocessed_input<ppT, transcript_hasher>(
+        example, srs);
 
     // compute step 4
     const step_four_out_t<ppT> step_four_out =
-        plonk_verifier<ppT>::step_four(proof, hasher);
+        plonk_verifier<ppT, transcript_hasher>::step_four(proof, hasher);
 
     // unit test verifier step 5
-    test_plonk_verifier_step_five(example, step_four_out, srs);
+    test_plonk_verifier_step_five<ppT, transcript_hasher>(
+        example, step_four_out, srs);
 
     // unit test verifier step 6
-    test_plonk_verifier_step_six(example, step_four_out, srs);
+    test_plonk_verifier_step_six<ppT, transcript_hasher>(
+        example, step_four_out, srs);
 
     // unit test verifier step 7
-    test_plonk_verifier_step_seven(example, step_four_out, srs);
+    test_plonk_verifier_step_seven<ppT, transcript_hasher>(
+        example, step_four_out, srs);
 
     // unit test verifier step 8
     const step_five_out_t<ppT> step_five_out =
-        plonk_verifier<ppT>::step_five(step_four_out, srs);
+        plonk_verifier<ppT, transcript_hasher>::step_five(step_four_out, srs);
     const step_six_out_t<ppT> step_six_out =
-        plonk_verifier<ppT>::step_six(step_four_out, srs);
+        plonk_verifier<ppT, transcript_hasher>::step_six(step_four_out, srs);
     const step_seven_out_t<ppT> step_seven_out =
-        plonk_verifier<ppT>::step_seven(step_four_out, srs);
-    test_plonk_verifier_step_eight(
+        plonk_verifier<ppT, transcript_hasher>::step_seven(step_four_out, srs);
+    test_plonk_verifier_step_eight<ppT, transcript_hasher>(
         example,
         step_four_out,
         step_five_out,
@@ -1013,28 +1031,31 @@ template<typename ppT> void test_plonk_verifier_steps()
 
     // unit test verifier step 9
     const verifier_preprocessed_input_t<ppT> preprocessed_input =
-        plonk_verifier<ppT>::preprocessed_input(srs);
-    test_plonk_verifier_step_nine(
+        plonk_verifier<ppT, transcript_hasher>::preprocessed_input(srs);
+    test_plonk_verifier_step_nine<ppT, transcript_hasher>(
         example, step_four_out, step_six_out, proof, preprocessed_input, srs);
 
     // unit test verifier step 10
-    step_nine_out_t<ppT> step_nine_out = plonk_verifier<ppT>::step_nine(
-        step_four_out, step_six_out, proof, preprocessed_input, srs);
-    test_plonk_verifier_step_ten(
+    step_nine_out_t<ppT> step_nine_out =
+        plonk_verifier<ppT, transcript_hasher>::step_nine(
+            step_four_out, step_six_out, proof, preprocessed_input, srs);
+    test_plonk_verifier_step_ten<ppT, transcript_hasher>(
         example, step_four_out, step_nine_out, proof, preprocessed_input, srs);
 
     // unit test verifier step 11
     const step_eight_out_t<ppT> step_eight_out =
-        plonk_verifier<ppT>::step_eight(
+        plonk_verifier<ppT, transcript_hasher>::step_eight(
             step_four_out, step_five_out, step_six_out, step_seven_out, proof);
-    test_plonk_verifier_step_eleven(
+    test_plonk_verifier_step_eleven<ppT, transcript_hasher>(
         example, step_four_out, step_eight_out, proof);
 
     // unit test verifier pairing (step 12)
-    step_ten_out_t<ppT> step_ten_out = plonk_verifier<ppT>::step_ten(
-        step_four_out, step_nine_out, proof, preprocessed_input, srs);
+    step_ten_out_t<ppT> step_ten_out =
+        plonk_verifier<ppT, transcript_hasher>::step_ten(
+            step_four_out, step_nine_out, proof, preprocessed_input, srs);
     const step_eleven_out_t<ppT> step_eleven_out =
-        plonk_verifier<ppT>::step_eleven(step_four_out, step_eight_out, proof);
+        plonk_verifier<ppT, transcript_hasher>::step_eleven(
+            step_four_out, step_eight_out, proof);
     test_plonk_verifier_pairing(
         example,
         step_four_out.zeta,
@@ -1047,7 +1068,7 @@ template<typename ppT> void test_plonk_verifier_steps()
 
 /// \attention the example class is defined specifically for the BLS12-381
 /// curve, so make sure we are using this curve
-template<typename ppT> void test_plonk_verifier()
+template<typename ppT, class transcript_hasher> void test_plonk_verifier()
 {
     using Field = libff::Fr<ppT>;
 
@@ -1072,26 +1093,26 @@ template<typename ppT> void test_plonk_verifier()
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
 
     // initialize hasher
-    transcript_hasher<ppT> hasher;
+    transcript_hasher hasher;
 
     // initialize prover
-    plonk_prover<ppT> prover;
+    plonk_prover<ppT, transcript_hasher> prover;
     // compute proof
     plonk_proof<ppT> proof =
         prover.compute_proof(srs, witness, blind_scalars, hasher);
 
-    // clear the hasher buffer in order to re-use the same transcript_hasher
-    // object for the verifier
+    // clear the hasher buffer in order to re-use the same
+    // transcript_hasher object for the verifier
     hasher.buffer_clear();
 
     // initialize verifier
-    plonk_verifier<ppT> verifier;
+    plonk_verifier<ppT, transcript_hasher> verifier;
     // verify proof
     bool b_valid_proof = verifier.verify_proof(proof, srs, hasher);
     ASSERT_TRUE(b_valid_proof);
 
-    // clear the hasher buffer in order to re-use the same transcript_hasher
-    // object
+    // clear the hasher buffer in order to re-use the same
+    // transcript_hasher object
     hasher.buffer_clear();
     // assert that proof verification fails when the proof is
     // manipulated
@@ -1101,10 +1122,18 @@ template<typename ppT> void test_plonk_verifier()
 TEST(TestPlonk, BLS12_381)
 {
     test_plonk_srs<libff::bls12_381_pp>();
-    test_plonk_prover_rounds<libff::bls12_381_pp>();
-    test_plonk_prover<libff::bls12_381_pp>();
-    test_plonk_verifier_steps<libff::bls12_381_pp>();
-    test_plonk_verifier<libff::bls12_381_pp>();
+    test_plonk_prover_rounds<
+        libff::bls12_381_pp,
+        bls12_381_test_vector_transcript_hasher>();
+    test_plonk_prover<
+        libff::bls12_381_pp,
+        bls12_381_test_vector_transcript_hasher>();
+    test_plonk_verifier_steps<
+        libff::bls12_381_pp,
+        bls12_381_test_vector_transcript_hasher>();
+    test_plonk_verifier<
+        libff::bls12_381_pp,
+        bls12_381_test_vector_transcript_hasher>();
 }
 
 } // namespace libsnark
