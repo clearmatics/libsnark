@@ -224,7 +224,8 @@ template<typename ppT> struct round_five_out_t {
 };
 
 /// Plonk prover. Computes object of class plonk_proof.
-template<typename ppT> class plonk_prover
+template<typename ppT, class transcript_hasher> class plonk_prover
+// template<typename ppT> class plonk_prover
 {
     using Field = libff::Fr<ppT>;
 
@@ -272,7 +273,7 @@ public:
         const std::vector<libff::Fr<ppT>> &blind_scalars,
         const std::vector<libff::Fr<ppT>> &witness,
         const srs<ppT> &srs,
-        transcript_hasher<ppT> &hasher);
+        transcript_hasher &hasher);
 
     /// Prover Round 2
     ///
@@ -298,7 +299,7 @@ public:
         const std::vector<libff::Fr<ppT>> blind_scalars,
         const std::vector<libff::Fr<ppT>> &witness,
         const srs<ppT> &srs,
-        transcript_hasher<ppT> &hasher);
+        transcript_hasher &hasher);
 
     /// Prover Round 3
     ///
@@ -332,7 +333,7 @@ public:
         const round_one_out_t<ppT> &round_one_out,
         const round_two_out_t<ppT> &round_two_out,
         const srs<ppT> &srs,
-        transcript_hasher<ppT> &hasher);
+        transcript_hasher &hasher);
 
     /// Prover Round 4
     ///
@@ -373,7 +374,7 @@ public:
         const round_one_out_t<ppT> &round_one_out,
         const round_three_out_t<ppT> &round_three_out,
         const srs<ppT> &srs,
-        transcript_hasher<ppT> &hasher);
+        transcript_hasher &hasher);
 
     /// Prover Round 5
     ///
@@ -434,7 +435,7 @@ public:
         const round_three_out_t<ppT> &round_three_out,
         const round_four_out_t<ppT> &round_four_out,
         const srs<ppT> &srs,
-        transcript_hasher<ppT> &hasher);
+        transcript_hasher &hasher);
 
     /// Prover compute SNARK proof
     ///
@@ -485,7 +486,7 @@ public:
         const srs<ppT> &srs,
         const std::vector<Field> &witness,
         const std::vector<libff::Fr<ppT>> &blind_scalars,
-        transcript_hasher<ppT> &hasher);
+        transcript_hasher &hasher);
 };
 
 } // namespace libsnark
