@@ -141,7 +141,7 @@ template<typename ppT> struct step_eleven_out_t {
 };
 
 /// Plonk verifier. Verifies object of class plonk_proof.
-template<typename ppT> class plonk_verifier
+template<typename ppT, class transcript_hasher> class plonk_verifier
 {
     using Field = libff::Fr<ppT>;
 
@@ -199,7 +199,7 @@ public:
     /// \param[out] u: multipoint evaluation challenge - hash of
     ///             transcript
     static step_four_out_t<ppT> step_four(
-        const plonk_proof<ppT> &proof, transcript_hasher<ppT> &hasher);
+        const plonk_proof<ppT> &proof, transcript_hasher &hasher);
 
     /// Verifier Step 5: compute zero polynomial evaluation
     ///
@@ -426,7 +426,7 @@ public:
     bool verify_proof(
         const plonk_proof<ppT> &proof,
         const srs<ppT> &srs,
-        transcript_hasher<ppT> &hasher);
+        transcript_hasher &hasher);
 };
 
 } // namespace libsnark

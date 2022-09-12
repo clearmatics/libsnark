@@ -24,8 +24,9 @@ round_zero_out_t<ppT>::round_zero_out_t(
 {
 }
 
-template<typename ppT>
-round_zero_out_t<ppT> plonk_prover<ppT>::round_zero(const srs<ppT> &srs)
+template<typename ppT, class transcript_hasher>
+round_zero_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_zero(
+    const srs<ppT> &srs)
 {
     using Field = libff::Fr<ppT>;
 
@@ -60,13 +61,13 @@ round_one_out_t<ppT>::round_one_out_t(
 {
 }
 
-template<typename ppT>
-round_one_out_t<ppT> plonk_prover<ppT>::round_one(
+template<typename ppT, class transcript_hasher>
+round_one_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_one(
     const round_zero_out_t<ppT> &round_zero_out,
     const std::vector<libff::Fr<ppT>> &blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
     using Field = libff::Fr<ppT>;
     const size_t nwitness = NUM_HSETS;
@@ -128,15 +129,15 @@ round_two_out_t<ppT>::round_two_out_t(
 {
 }
 
-template<typename ppT>
-round_two_out_t<ppT> plonk_prover<ppT>::round_two(
+template<typename ppT, class transcript_hasher>
+round_two_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_two(
     const libff::Fr<ppT> &beta,
     const libff::Fr<ppT> &gamma,
     const round_zero_out_t<ppT> &round_zero_out,
     const std::vector<libff::Fr<ppT>> blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
     using Field = libff::Fr<ppT>;
 
@@ -186,8 +187,8 @@ round_three_out_t<ppT>::round_three_out_t(
 {
 }
 
-template<typename ppT>
-round_three_out_t<ppT> plonk_prover<ppT>::round_three(
+template<typename ppT, class transcript_hasher>
+round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     const libff::Fr<ppT> &alpha,
     const libff::Fr<ppT> &beta,
     const libff::Fr<ppT> &gamma,
@@ -195,7 +196,7 @@ round_three_out_t<ppT> plonk_prover<ppT>::round_three(
     const round_one_out_t<ppT> &round_one_out,
     const round_two_out_t<ppT> &round_two_out,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
     using Field = libff::Fr<ppT>;
     int num_hgen = NUM_HSETS;
@@ -436,13 +437,13 @@ round_four_out_t<ppT>::round_four_out_t(
 {
 }
 
-template<typename ppT>
-round_four_out_t<ppT> plonk_prover<ppT>::round_four(
+template<typename ppT, class transcript_hasher>
+round_four_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_four(
     const libff::Fr<ppT> &zeta,
     const round_one_out_t<ppT> &round_one_out,
     const round_three_out_t<ppT> &round_three_out,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
     using Field = libff::Fr<ppT>;
 
@@ -503,8 +504,8 @@ round_five_out_t<ppT>::round_five_out_t(
 {
 }
 
-template<typename ppT>
-round_five_out_t<ppT> plonk_prover<ppT>::round_five(
+template<typename ppT, class transcript_hasher>
+round_five_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_five(
     const libff::Fr<ppT> &alpha,
     const libff::Fr<ppT> &beta,
     const libff::Fr<ppT> &gamma,
@@ -516,7 +517,7 @@ round_five_out_t<ppT> plonk_prover<ppT>::round_five(
     const round_three_out_t<ppT> &round_three_out,
     const round_four_out_t<ppT> &round_four_out,
     const srs<ppT> &srs,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
     using Field = libff::Fr<ppT>;
     polynomial<Field> remainder;
@@ -830,12 +831,12 @@ plonk_proof<ppT>::plonk_proof(
 {
 }
 
-template<typename ppT>
-plonk_proof<ppT> plonk_prover<ppT>::compute_proof(
+template<typename ppT, class transcript_hasher>
+plonk_proof<ppT> plonk_prover<ppT, transcript_hasher>::compute_proof(
     const srs<ppT> &srs,
     const std::vector<Field> &witness,
     const std::vector<libff::Fr<ppT>> &blind_scalars,
-    transcript_hasher<ppT> &hasher)
+    transcript_hasher &hasher)
 {
     // Prover Round 0 (initialization)
     printf("[%s:%d] Prover Round 0...\n", __FILE__, __LINE__);
