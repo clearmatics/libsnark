@@ -121,58 +121,33 @@ libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
 
     libff::Fr<libff::bls12_381_pp> challenge = 0;
 
-    // beta
-    if (buffer_len == length[0]) {
-        printf(
-            "[%s:%d] buffer_len %d: beta\n",
-            __FILE__,
-            __LINE__,
-            (int)buffer_len);
-        challenge = this->hash_values[0]; // beta
+    // map the index length=0,1...5 to the challenge string=beta,
+    // gamma, ...; used to print explicitly the challenge string for debug
+    std::map<size_t, std::string> challenge_str;
+    challenge_str[0] = "beta";
+    challenge_str[1] = "gamma";
+    challenge_str[2] = "alpha";
+    challenge_str[3] = "zeta";
+    challenge_str[4] = "nu";
+    challenge_str[5] = "u";
+
+    // find the mathcing index
+    size_t i = 0;
+    while (buffer_len != length[i]) {
+        ++i;
+        if (i >= length.size()) {
+            throw std::logic_error(
+                "Error: invalid index of transcript hasher buffer");
+        }
     }
-    // gamma
-    if (buffer_len == length[1]) {
-        printf(
-            "[%s:%d] buffer_len %d: gamma\n",
-            __FILE__,
-            __LINE__,
-            (int)buffer_len);
-        challenge = this->hash_values[1]; // gamma
-    }
-    // alpha
-    if (buffer_len == length[2]) {
-        printf(
-            "[%s:%d] buffer_len %d: alpha\n",
-            __FILE__,
-            __LINE__,
-            (int)buffer_len);
-        challenge = this->hash_values[2]; // alpha
-    }
-    // zeta
-    if (buffer_len == length[3]) {
-        printf(
-            "[%s:%d] buffer_len %d: zeta\n",
-            __FILE__,
-            __LINE__,
-            (int)buffer_len);
-        challenge = this->hash_values[3]; // zeta
-    }
-    // nu
-    if (buffer_len == length[4]) {
-        printf(
-            "[%s:%d] buffer_len %d: nu\n", __FILE__, __LINE__, (int)buffer_len);
-        challenge = this->hash_values[4]; // nu
-    }
-    // u
-    if (buffer_len == length[5]) {
-        // reset step to 0
-        printf(
-            "[%s:%d] buffer_len %d: u + clear()\n",
-            __FILE__,
-            __LINE__,
-            (int)buffer_len);
-        challenge = this->hash_values[5]; // u
-    }
+
+    printf(
+        "[%s:%d] buffer_len %d: %s\n",
+        __FILE__,
+        __LINE__,
+        (int)buffer_len,
+        challenge_str[i].c_str());
+    challenge = this->hash_values[i]; // beta
 
     return challenge;
 }
