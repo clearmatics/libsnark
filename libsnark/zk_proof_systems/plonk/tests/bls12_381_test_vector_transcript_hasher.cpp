@@ -123,13 +123,8 @@ libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
 
     // map the index length=0,1...5 to the challenge string=beta,
     // gamma, ...; used to print explicitly the challenge string for debug
-    std::map<size_t, std::string> challenge_str;
-    challenge_str[0] = "beta";
-    challenge_str[1] = "gamma";
-    challenge_str[2] = "alpha";
-    challenge_str[3] = "zeta";
-    challenge_str[4] = "nu";
-    challenge_str[5] = "u";
+    std::vector<std::string> challenge_str = {
+        "beta", "gamma", "alpha", "zeta", "nu", "u"};
 
     // find the mathcing index
     size_t i = 0;
