@@ -16,6 +16,8 @@ namespace libsnark
 
 bls12_381_test_vector_transcript_hasher::
     bls12_381_test_vector_transcript_hasher()
+    : length_array({288, 320, 416, 704, 896, 1120})
+    , challenge_array({"beta", "gamma", "alpha", "zeta", "nu", "u"})
 {
     plonk_example example;
 
@@ -107,19 +109,11 @@ libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
 {
     size_t buffer_len = this->buffer.size();
 
-    // vector of valid lengths (\attention specific to BLS12-381)
-    const std::vector<size_t> length{288, 320, 416, 704, 896, 1120};
-
-    // map the index length=0,1...5 to the challenge string=beta,
-    // gamma, ...; used to print explicitly the challenge string for debug
-    std::vector<std::string> challenge_str = {
-        "beta", "gamma", "alpha", "zeta", "nu", "u"};
-
     // find the matching index
     size_t i = 0;
-    while (buffer_len != length[i]) {
+    while (buffer_len != length_array[i]) {
         ++i;
-        if (i >= length.size()) {
+        if (i >= length_array.size()) {
             // If we are here, then the hasher buffer has invalid length so
             // throw an exception
             throw std::logic_error(
@@ -132,7 +126,7 @@ libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
         __FILE__,
         __LINE__,
         (int)buffer_len,
-        challenge_str[i].c_str());
+        challenge_array[i].c_str());
 
     const libff::Fr<libff::bls12_381_pp> challenge = hash_values[i]; // beta
 
