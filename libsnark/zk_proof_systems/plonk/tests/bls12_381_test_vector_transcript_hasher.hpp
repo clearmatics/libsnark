@@ -80,6 +80,11 @@ private:
     // array containing the hash values of the communication transcript
     // i.e. the six challenges (in this order): beta, gamma, alpha, zeta, nu, u
     std::array<libff::Fr<libff::bls12_381_pp>, 6> hash_values;
+    // vector of valid lengths (\attention specific to BLS12-381)
+    const std::array<size_t, 6> length_array;
+    // map the index length=0,1...5 to the challenge string=beta,
+    // gamma, ...; used to print explicitly the challenge string for debug
+    const std::array<std::string, 6> challenge_array;
 
 public:
     bls12_381_test_vector_transcript_hasher();
@@ -93,7 +98,7 @@ public:
     // hashing
     void add_element(const libff::G2<libff::bls12_381_pp> &element);
 
-    // TODO: use next declaration to implement an actual hash function
+    // TODO: use following declaration to implement an actual hash function
     // e.g.  BLAKE (from Aztec barretenberg implementation):
     // https://github.com/AztecProtocol/barretenberg/blob/master/barretenberg/src/aztec/plonk/transcript/transcript.cpp#L33
     //
