@@ -110,8 +110,6 @@ libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
     // vector of valid lengths (\attention specific to BLS12-381)
     const std::vector<size_t> length{288, 320, 416, 704, 896, 1120};
 
-    libff::Fr<libff::bls12_381_pp> challenge = 0;
-
     // map the index length=0,1...5 to the challenge string=beta,
     // gamma, ...; used to print explicitly the challenge string for debug
     std::vector<std::string> challenge_str = {
@@ -135,7 +133,9 @@ libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
         __LINE__,
         (int)buffer_len,
         challenge_str[i].c_str());
-    challenge = this->hash_values[i]; // beta
+
+    const libff::Fr<libff::bls12_381_pp> challenge =
+        this->hash_values[i]; // beta
 
     return challenge;
 }
