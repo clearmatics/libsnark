@@ -110,15 +110,6 @@ libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
     // vector of valid lengths (\attention specific to BLS12-381)
     const std::vector<size_t> length{288, 320, 416, 704, 896, 1120};
 
-    // If we are here, then the hasher buffer has invalid length so throw an
-    // exception
-    bool b_valid_length =
-        (0 != std::count(length.begin(), length.end(), buffer_len));
-    if (!b_valid_length) {
-        throw std::logic_error(
-            "Error: invalid length of transcript hasher buffer");
-    }
-
     libff::Fr<libff::bls12_381_pp> challenge = 0;
 
     // map the index length=0,1...5 to the challenge string=beta,
@@ -126,13 +117,15 @@ libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
     std::vector<std::string> challenge_str = {
         "beta", "gamma", "alpha", "zeta", "nu", "u"};
 
-    // find the mathcing index
+    // find the matching index
     size_t i = 0;
     while (buffer_len != length[i]) {
         ++i;
         if (i >= length.size()) {
+            // If we are here, then the hasher buffer has invalid length so
+            // throw an exception
             throw std::logic_error(
-                "Error: invalid index of transcript hasher buffer");
+                "Error: invalid length of transcript hasher buffer");
         }
     }
 
