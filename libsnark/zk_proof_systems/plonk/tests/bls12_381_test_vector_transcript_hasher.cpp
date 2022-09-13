@@ -134,8 +134,7 @@ libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
         (int)buffer_len,
         challenge_str[i].c_str());
 
-    const libff::Fr<libff::bls12_381_pp> challenge =
-        this->hash_values[i]; // beta
+    const libff::Fr<libff::bls12_381_pp> challenge = hash_values[i]; // beta
 
     return challenge;
 }
