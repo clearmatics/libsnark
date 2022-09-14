@@ -12,7 +12,12 @@
 namespace libsnark
 {
 
-/// transcript hasher interface specific to the BLS12-381 curve
+/// Implementation of the transcript hasher interface (see
+/// transcript_hasher.hpp), returning hard-coded test vector values
+/// for the plonk proof system on a specific circuit, using the
+/// BLS12-381 curve. Also performs a simple check on the transcript to
+/// be hashed to verify correct operation of the plonk prover and
+/// verifier.
 ///
 /// the hasher works in the Prover as follows:
 ///
@@ -68,7 +73,7 @@ namespace libsnark
 ///     add_element(buffer, W_zeta_omega_eval_exp)
 ///
 ///     // buffer = first_output + second_output + third_output + fourth_output
-///     + fifth_output
+///     // + fifth_output
 ///
 ///     u = hash(str(buffer))
 ///
@@ -97,13 +102,6 @@ public:
     // add the coordinates of a G2 curve point to the transcript buffer for
     // hashing
     void add_element(const libff::G2<libff::bls12_381_pp> &element);
-
-    // TODO: use following declaration to implement an actual hash function
-    // e.g.  BLAKE (from Aztec barretenberg implementation):
-    // https://github.com/AztecProtocol/barretenberg/blob/master/barretenberg/src/aztec/plonk/transcript/transcript.cpp#L33
-    //
-    // std::array<uint8_t, Blake2sHasher::PRNG_OUTPUT_SIZE>
-    // Blake2sHasher::hash(std::vector<uint8_t> const& buffer)
 
     // dummy implementation of get_hash that directly returns the
     // expected hard-coded hashes for the purposes of unit testing TODO
