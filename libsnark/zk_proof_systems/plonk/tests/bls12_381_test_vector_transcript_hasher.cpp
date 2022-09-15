@@ -19,14 +19,16 @@ bls12_381_test_vector_transcript_hasher::
     : length_array({288, 320, 416, 704, 896, 1120})
     , challenge_array({"beta", "gamma", "alpha", "zeta", "nu", "u"})
 {
+    assert(length_array.size() == challenge_array.size());
+
     plonk_example example;
 
     // initialize to empty vector
-    this->buffer.clear();
+    buffer.clear();
     // test array containing the expected hash values of the communication
     // transcript i.e. the communication challenges (in this order): beta,
     // gamma, alpha, zeta, nu, u WARNING! specific to curve BLS12-381
-    this->hash_values = {
+    hash_values = {
         example.beta,
         example.gamma,
         example.alpha,
@@ -107,30 +109,25 @@ void bls12_381_test_vector_transcript_hasher::add_element(
 libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
     get_hash()
 {
-    size_t buffer_len = this->buffer.size();
+    const size_t buffer_len = this->buffer.size();
 
-    // find the matching index
-    size_t i = 0;
-    while (buffer_len != length_array[i]) {
-        ++i;
-        if (i >= length_array.size()) {
-            // If we are here, then the hasher buffer has invalid length so
-            // throw an exception
-            throw std::logic_error(
-                "Error: invalid length of transcript hasher buffer");
+    // find the matching index and return the corresponding challenge.
+    for (size_t i = 0; i < length_array.size(); ++i) {
+        if (buffer_len == length_array[i]) {
+            printf(
+                "[%s:%d] buffer_len %d: %s\n",
+                __FILE__,
+                __LINE__,
+                (int)buffer_len,
+                challenge_array[i].c_str());
+
+            return hash_values[i];
         }
     }
 
-    printf(
-        "[%s:%d] buffer_len %d: %s\n",
-        __FILE__,
-        __LINE__,
-        (int)buffer_len,
-        challenge_array[i].c_str());
-
-    const libff::Fr<libff::bls12_381_pp> challenge = hash_values[i]; // beta
-
-    return challenge;
+    // If we are here, then the hasher buffer has invalid length so
+    // throw an exception
+    throw std::logic_error("Error: invalid length of transcript hasher buffer");
 }
 
 } // namespace libsnark
