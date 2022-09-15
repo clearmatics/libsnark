@@ -126,6 +126,7 @@ public:
 /// y1 = Q_delta(x1) + power_five(x0-x1)
 ///
 /// \note: in the paper (x0,x1)->(y0,y1) is denoted with (y,v)->(x,u)
+// template<typename FieldT, FieldT beta, FieldT gamma, DeildT delta>
 template<typename FieldT>
 class flystel_closed_prime_field_gadget : public gadget<FieldT>
 {
@@ -144,6 +145,45 @@ public:
     flystel_power_five_gadget<FieldT> power_five;
 
     flystel_closed_prime_field_gadget(
+        protoboard<FieldT> &pb,
+        const std::array<pb_variable<FieldT>, 2> &input,
+        const std::array<pb_variable<FieldT>, 2> &output,
+        const std::string &annotation_prefix = "");
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
+/// One round of the Anemoi permutation mapping (Fr)^{2l} -> (Fr)^{2l}
+///
+/// NumStateColumns_L : l parameter - number of columns in the
+///                     state. each column is composed of 2 elements
+///                     in F_r. One Flystel Sbox accepts 1 column as
+///                     input. There are l Flystel-s in 1 round of the
+///                     Anemoi permutation applied in parallel.
+///
+/// x0,x1: input
+/// y0,y1: output
+///
+// template<typename FieldT, FieldT beta, FieldT gamma, FieldT delta>
+template<typename FieldT, size_t NumStateColumns_L>
+class anemoi_permutation_round_prime_field_gadget : public gadget<FieldT>
+{
+private:
+    // internal (i.e. intermediate) variables: v3,v4,v5
+    std::array<pb_variable<FieldT>, 4> internal;
+
+public:
+    // (v1,v2)=(x0,x1)
+    std::array<pb_variable<FieldT>, 2> input;
+    // (v7,v8)=(y0,y1)
+    std::array<pb_variable<FieldT>, 2> output;
+
+    flystel_Q_gamma_prime_field_gadget<FieldT> Q_gamma;
+    flystel_Q_delta_prime_field_gadget<FieldT> Q_delta;
+    flystel_power_five_gadget<FieldT> power_five;
+
+    anemoi_permutation_round_prime_field_gadget(
         protoboard<FieldT> &pb,
         const std::array<pb_variable<FieldT>, 2> &input,
         const std::array<pb_variable<FieldT>, 2> &output,

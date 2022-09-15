@@ -6,6 +6,7 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
+//#include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
 #include <libff/common/default_types/ec_pp.hpp>
 #include <libff/common/profiling.hpp>
 #include <libff/common/utils.hpp>
@@ -109,4 +110,5 @@ int main(void)
     test_flystel_power_two_gadget<libff::Fr<libff::default_ec_pp>>(10);
     test_flystel_power_three_gadget<libff::Fr<libff::default_ec_pp>>(10);
     test_flystel_power_five_gadget<libff::Fr<libff::default_ec_pp>>(10);
+    //    test_flystel_power_two_gadget<libff::bls12_381_Fr>(10);
 }
