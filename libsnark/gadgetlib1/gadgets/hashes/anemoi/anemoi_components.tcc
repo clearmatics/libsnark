@@ -17,8 +17,8 @@
 namespace libsnark
 {
 
-template<typename FieldT>
-flystel_power_two_gadget<FieldT>::flystel_power_two_gadget(
+template<typename FieldT, FieldT Const_A, FieldT Const_B>
+flystel_power_two_gadget<FieldT, Const_A, Const_B>::flystel_power_two_gadget(
     protoboard<FieldT> &pb,
     const pb_variable<FieldT> &input,
     const pb_variable<FieldT> &output,
@@ -56,8 +56,9 @@ flystel_power_two_gadget<FieldT>::flystel_power_two_gadget(
 // < A , X > * < B , X > = < C , X >
 //
 // where A =(0, const_a, 0), B=(0, 1, 0) and C =(-const_b, 0, 1)
-template<typename FieldT>
-void flystel_power_two_gadget<FieldT>::generate_r1cs_constraints()
+template<typename FieldT, FieldT Const_A, FieldT Const_B>
+void flystel_power_two_gadget<FieldT, Const_A, Const_B>::
+    generate_r1cs_constraints()
 {
     // Constraint has the form:
     //   const_a * input^2 + const_b = output
@@ -70,8 +71,8 @@ void flystel_power_two_gadget<FieldT>::generate_r1cs_constraints()
 
 // compute a witness y for a given input x for the computation y =
 // const_a x^2 + const_b, where x=input, y=output
-template<typename FieldT>
-void flystel_power_two_gadget<FieldT>::generate_r1cs_witness()
+template<typename FieldT, FieldT Const_A, FieldT Const_B>
+void flystel_power_two_gadget<FieldT, Const_A, Const_B>::generate_r1cs_witness()
 {
     // y = const_a x^2 + const_b
     this->pb.val(output) =
@@ -79,24 +80,26 @@ void flystel_power_two_gadget<FieldT>::generate_r1cs_witness()
         this->const_b;
 }
 
-template<typename FieldT>
-flystel_Q_gamma_prime_field_gadget<FieldT>::flystel_Q_gamma_prime_field_gadget(
-    protoboard<FieldT> &pb,
-    const pb_variable<FieldT> &input,
-    const pb_variable<FieldT> &output,
-    const std::string &annotation_prefix)
-    : flystel_power_two_gadget<FieldT>(
+template<typename FieldT, FieldT Const_A, FieldT Const_B>
+flystel_Q_gamma_prime_field_gadget<FieldT, Const_A, Const_B>::
+    flystel_Q_gamma_prime_field_gadget(
+        protoboard<FieldT> &pb,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix)
+    : flystel_power_two_gadget<FieldT, Const_A, Const_B>(
           pb, FLYSTEL_BLS12_381_BETA, FLYSTEL_BLS12_381_GAMMA, input, output)
 {
 }
 
-template<typename FieldT>
-flystel_Q_delta_prime_field_gadget<FieldT>::flystel_Q_delta_prime_field_gadget(
-    protoboard<FieldT> &pb,
-    const pb_variable<FieldT> &input,
-    const pb_variable<FieldT> &output,
-    const std::string &annotation_prefix)
-    : flystel_power_two_gadget<FieldT>(
+template<typename FieldT, FieldT Const_A, FieldT Const_B>
+flystel_Q_delta_prime_field_gadget<FieldT, Const_A, Const_B>::
+    flystel_Q_delta_prime_field_gadget(
+        protoboard<FieldT> &pb,
+        const pb_variable<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix)
+    : flystel_power_two_gadget<FieldT, Const_A, Const_B>(
           pb, FLYSTEL_BLS12_381_BETA, FLYSTEL_BLS12_381_DELTA, input, output)
 {
 }
@@ -240,14 +243,25 @@ void flystel_power_five_gadget<FieldT>::generate_r1cs_witness()
     this->pb.val(output) = this->pb.val(input) * this->pb.val(internal[1]);
 }
 
-template<typename FieldT>
-flystel_closed_prime_field_gadget<FieldT>::flystel_closed_prime_field_gadget(
-    protoboard<FieldT> &pb,
-    const std::array<pb_variable<FieldT>, 2> &input,
-    const std::array<pb_variable<FieldT>, 2> &output,
-    const std::string &annotation_prefix)
-    : flystel_Q_gamma_prime_field_gadget<FieldT>(pb, input[0], internal[0])
-    , flystel_Q_delta_prime_field_gadget<FieldT>(pb, input[1], internal[2])
+template<
+    typename FieldT,
+    FieldT Const_Beta,
+    FieldT Const_Gamma,
+    FieldT Const_Delta>
+flystel_closed_prime_field_gadget<
+    FieldT,
+    Const_Beta,
+    Const_Gamma,
+    Const_Delta>::
+    flystel_closed_prime_field_gadget(
+        protoboard<FieldT> &pb,
+        const std::array<pb_variable<FieldT>, 2> &input,
+        const std::array<pb_variable<FieldT>, 2> &output,
+        const std::string &annotation_prefix)
+    : flystel_Q_gamma_prime_field_gadget<FieldT, Const_Beta, Const_Gamma>(
+          pb, input[0], internal[0])
+    , flystel_Q_delta_prime_field_gadget<FieldT, Const_Beta, Const_Delta>(
+          pb, input[1], internal[2])
     , flystel_power_five_gadget<FieldT>(pb, input[0] - input[1], internal[1])
 {
     internal[0].allocate(this->pb, " v3");
@@ -265,16 +279,32 @@ flystel_closed_prime_field_gadget<FieldT>::flystel_closed_prime_field_gadget(
 // The function generates the constraints for the three gadgets:
 // Q_gamma, Q_delta, power_five by calling their corresponding
 // generate_r1cs_constraints() methods
-template<typename FieldT>
-void flystel_closed_prime_field_gadget<FieldT>::generate_r1cs_constraints()
+template<
+    typename FieldT,
+    FieldT Const_Beta,
+    FieldT Const_Gamma,
+    FieldT Const_Delta>
+void flystel_closed_prime_field_gadget<
+    FieldT,
+    Const_Beta,
+    Const_Gamma,
+    Const_Delta>::generate_r1cs_constraints()
 {
     Q_gamma.generate_r1cs_constraints();
     Q_delta.generate_r1cs_constraints();
     power_five.generate_r1cs_constraints();
 }
 
-template<typename FieldT>
-void flystel_closed_prime_field_gadget<FieldT>::generate_r1cs_witness()
+template<
+    typename FieldT,
+    FieldT Const_Beta,
+    FieldT Const_Gamma,
+    FieldT Const_Delta>
+void flystel_closed_prime_field_gadget<
+    FieldT,
+    Const_Beta,
+    Const_Gamma,
+    Const_Delta>::generate_r1cs_witness()
 {
     Q_gamma.generate_r1cs_witness();
     Q_delta.generate_r1cs_witness();

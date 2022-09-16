@@ -33,10 +33,13 @@ namespace libsnark
 // --- Prime fields ---
 
 /// Compute y = const_a x^2 + const_b
+/// The constants const_a and const_b are curve/field dependent and
+/// are so added in the template
+///
 /// x: input
 /// y: output
-/// const_a, const_b: constants
-template<typename FieldT> class flystel_power_two_gadget : public gadget<FieldT>
+template<typename FieldT, FieldT Const_A, FieldT Const_B>
+class flystel_power_two_gadget : public gadget<FieldT>
 {
 private:
     // constants
@@ -60,9 +63,9 @@ public:
 
 /// Flystel Qi function for prime fields:
 /// Qi(x) = beta x^2 + gamma
-template<typename FieldT>
+template<typename FieldT, FieldT Const_A, FieldT Const_B>
 class flystel_Q_gamma_prime_field_gadget
-    : public flystel_power_two_gadget<FieldT>
+    : public flystel_power_two_gadget<FieldT, Const_A, Const_B>
 {
     flystel_Q_gamma_prime_field_gadget(
         protoboard<FieldT> &pb,
@@ -73,9 +76,9 @@ class flystel_Q_gamma_prime_field_gadget
 
 /// Flystel Qf function for prime fields:
 /// Qf(x) = beta x^2 + delta
-template<typename FieldT>
+template<typename FieldT, FieldT Const_A, FieldT Const_B>
 class flystel_Q_delta_prime_field_gadget
-    : public flystel_power_two_gadget<FieldT>
+    : public flystel_power_two_gadget<FieldT, Const_A, Const_B>
 {
     flystel_Q_delta_prime_field_gadget(
         protoboard<FieldT> &pb,
@@ -127,7 +130,11 @@ public:
 ///
 /// \note: in the paper (x0,x1)->(y0,y1) is denoted with (y,v)->(x,u)
 // template<typename FieldT, FieldT beta, FieldT gamma, DeildT delta>
-template<typename FieldT>
+template<
+    typename FieldT,
+    FieldT Const_Beta,
+    FieldT Const_Gamma,
+    FieldT Const_Delta>
 class flystel_closed_prime_field_gadget : public gadget<FieldT>
 {
 private:
@@ -140,8 +147,8 @@ public:
     // (v7,v8)=(y0,y1)
     std::array<pb_variable<FieldT>, 2> output;
 
-    flystel_Q_gamma_prime_field_gadget<FieldT> Q_gamma;
-    flystel_Q_delta_prime_field_gadget<FieldT> Q_delta;
+    flystel_Q_gamma_prime_field_gadget<FieldT, Const_Beta, Const_Gamma> Q_gamma;
+    flystel_Q_delta_prime_field_gadget<FieldT, Const_Beta, Const_Delta> Q_delta;
     flystel_power_five_gadget<FieldT> power_five;
 
     flystel_closed_prime_field_gadget(
@@ -166,7 +173,12 @@ public:
 /// y0,y1: output
 ///
 // template<typename FieldT, FieldT beta, FieldT gamma, FieldT delta>
-template<typename FieldT, size_t NumStateColumns_L>
+template<
+    typename FieldT,
+    FieldT Const_Beta,
+    FieldT Const_Gamma,
+    FieldT Const_Delta,
+    size_t NumStateColumns_L>
 class anemoi_permutation_round_prime_field_gadget : public gadget<FieldT>
 {
 private:
@@ -174,19 +186,20 @@ private:
     std::array<pb_variable<FieldT>, 4> internal;
 
 public:
-    // (v1,v2)=(x0,x1)
-    std::array<pb_variable<FieldT>, 2> input;
-    // (v7,v8)=(y0,y1)
-    std::array<pb_variable<FieldT>, 2> output;
+    std::array<pb_variable<FieldT>, 2 * NumStateColumns_L> input;
+    std::array<pb_variable<FieldT>, 2 * NumStateColumns_L> output;
 
-    flystel_Q_gamma_prime_field_gadget<FieldT> Q_gamma;
-    flystel_Q_delta_prime_field_gadget<FieldT> Q_delta;
-    flystel_power_five_gadget<FieldT> power_five;
+    flystel_closed_prime_field_gadget<
+        FieldT,
+        Const_Beta,
+        Const_Gamma,
+        Const_Delta>
+        flystel;
 
     anemoi_permutation_round_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const std::array<pb_variable<FieldT>, 2> &input,
-        const std::array<pb_variable<FieldT>, 2> &output,
+        const std::array<pb_variable<FieldT>, (2 * NumStateColumns_L)> &input,
+        const std::array<pb_variable<FieldT>, (2 * NumStateColumns_L)> &output,
         const std::string &annotation_prefix = "");
 
     void generate_r1cs_constraints();
