@@ -9,6 +9,8 @@
 #ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_BLS12_381_TEST_VECTOR_TRANSCRIPT_HASHER_CPP_
 #define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_BLS12_381_TEST_VECTOR_TRANSCRIPT_HASHER_CPP_
 
+#include "libsnark/zk_proof_systems/plonk/tests/bls12_381_test_vector_transcript_hasher.hpp"
+
 // Implementation of the transcript hasher interface specific to the BLS12-381
 // curve. See bls12_381_test_vector_transcript_hasher.hpp
 namespace libsnark
