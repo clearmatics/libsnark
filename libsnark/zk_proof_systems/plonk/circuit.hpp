@@ -11,6 +11,8 @@
 
 #include "libsnark/zk_proof_systems/plonk/utils.hpp"
 
+#include <libff/algebra/curves/public_params.hpp>
+
 /// Declaration of Common Preprocessed Input data structures for a
 /// specific arithmetic circuit.
 ///

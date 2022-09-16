@@ -31,8 +31,6 @@
 #include "libsnark/zk_proof_systems/plonk/circuit.hpp"
 
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
-#include <libff/algebra/scalar_multiplication/multiexp.hpp>
-#include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
 #include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
 
 namespace libsnark
@@ -306,7 +304,5 @@ public:
 };
 
 } // namespace libsnark
-
-#include <libsnark/zk_proof_systems/plonk/tests/example.tcc>
 
 #endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_EXAMPLE_HPP_
