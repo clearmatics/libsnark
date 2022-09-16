@@ -10,6 +10,7 @@
 
 // Instantiation of the test vector values from the Python implementation
 // of the Plonk protocol. \see example.hpp .
+#include "libsnark/zk_proof_systems/plonk/tests/example.hpp"
 
 namespace libsnark
 {

@@ -12,6 +12,8 @@
 #include "libsnark/zk_proof_systems/plonk/tests/example.hpp"
 
 #include <libff/algebra/curves/public_params.hpp>
+#include <libff/algebra/scalar_multiplication/multiexp.hpp>
+#include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
 #include <memory>
 
 // enable debug checks. in particular enable comparisons to test
