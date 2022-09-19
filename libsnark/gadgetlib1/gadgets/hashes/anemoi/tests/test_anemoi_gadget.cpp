@@ -16,17 +16,10 @@
 
 using namespace libsnark;
 
-template<typename T, const T x> void foo()
-{
-    //    printf("[%s:%d] %s() x %d\n", __FILE__, __LINE__, __FUNCTION__, x);
-}
-
-// template<typename FieldT, FieldT Const_A, FieldT Const_B>
-template<typename FieldT, const FieldT A>
-void test_flystel_power_two_gadget(const size_t n)
+template<typename FieldT>
+void test_flystel_Q_gamma_prime_field_gadget(const size_t n)
 {
     printf("testing flystel_power_two_gadget on all %zu bit strings\n", n);
-#if 0
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
     pb_variable<FieldT> y;
@@ -37,7 +30,10 @@ void test_flystel_power_two_gadget(const size_t n)
     y.allocate(pb, "y");
 
     // create gadget
-    flystel_power_two_gadget<FieldT, Const_A, Const_B> d(pb, x, y, "d");
+    flystel_Q_gamma_prime_field_gadget<
+        FieldT,
+        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
+        d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value
@@ -48,11 +44,11 @@ void test_flystel_power_two_gadget(const size_t n)
     // the expected output is 13 for input 2
     ASSERT_EQ(pb.val(y), 13);
     ASSERT_TRUE(pb.is_satisfied());
-#endif
     libff::print_time("flystel_power_two_gadget tests successful");
 }
 
-template<typename FieldT> void test_flystel_power_three_gadget(const size_t n)
+template<typename FieldT>
+void test_flystel_Q_gamma_binary_field_gadge(const size_t n)
 {
     printf("testing flystel_power_three_gadget on all %zu bit strings\n", n);
 
@@ -66,7 +62,10 @@ template<typename FieldT> void test_flystel_power_three_gadget(const size_t n)
     y.allocate(pb, "y");
 
     // create gadget
-    flystel_power_three_gadget<FieldT> d(pb, x, y, "d");
+    flystel_Q_gamma_binary_field_gadget<
+        FieldT,
+        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
+        d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value
@@ -81,9 +80,9 @@ template<typename FieldT> void test_flystel_power_three_gadget(const size_t n)
     libff::print_time("flystel_power_three_gadget tests successful");
 }
 
-template<typename FieldT> void test_flystel_power_five_gadget(const size_t n)
+template<typename FieldT> void test_flystel_E_power_five_gadget(const size_t n)
 {
-    printf("testing flystel_power_five_gadget on all %zu bit strings\n", n);
+    printf("testing flystel_E_power_five_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
@@ -95,7 +94,7 @@ template<typename FieldT> void test_flystel_power_five_gadget(const size_t n)
     y.allocate(pb, "y");
 
     // create gadget
-    flystel_power_five_gadget<FieldT> d(pb, x, y, "d");
+    flystel_E_power_five_gadget<FieldT> d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value
@@ -107,36 +106,30 @@ template<typename FieldT> void test_flystel_power_five_gadget(const size_t n)
     ASSERT_EQ(pb.val(y), 32);
     ASSERT_TRUE(pb.is_satisfied());
 
-    libff::print_time("flystel_power_five_gadget tests successful");
+    libff::print_time("flystel_E_power_five_gadget tests successful");
 }
 
 int main(void)
 {
     libff::start_profiling();
+
     //    libff::default_ec_pp::init_public_params();
+    //    using FieldT = libff::Fr<libff::default_ec_pp>;
+
     libff::bls12_381_pp::init_public_params();
-    //    using Field = libff::Fr<libff::default_ec_pp>;
-    using Field = libff::Fr<libff::bls12_381_pp>;
-    //    const Field temp = Field(2);
-    //    Field temp_inv = temp.inverse();
-    //    Field a = Field::random_element();
+    using FieldT = libff::Fr<libff::bls12_381_pp>;
+
     // for BLS12-381
     // beta = g = first multiplicative generator = 7.
     // delta = g^(-1)
     // 14981678621464625851270783002338847382197300714436467949315331057125308909861
-    Field a = Field(7);
-    Field a_inv = a.inverse();
-    assert((a * a_inv) == Field::one());
-    a_inv.print();
+    //    Field a = Field(7);
+    //    Field a_inv = a.inverse();
+    //    assert((a * a_inv) == Field::one());
+    //    a_inv.print();
 
-    //    const int x = 76;
-    //    foo<int, x>();
-    //    test_flystel_power_two_gadget<Field, temp>(10);
-    // test_flystel_power_two_gadget<
-    //        libff::Fr<libff::default_ec_pp>,
-    //        FLYSTEL_BLS12_381_BETA,
-    //        FLYSTEL_BLS12_381_GAMMA>(10);
-    //    test_flystel_power_three_gadget<libff::Fr<libff::default_ec_pp>>(10);
-    //    test_flystel_power_five_gadget<libff::Fr<libff::default_ec_pp>>(10);
+    test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
+    test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
+    test_flystel_E_power_five_gadget<FieldT>(10);
     //    //    test_flystel_power_two_gadget<libff::bls12_381_Fr>(10);
 }
