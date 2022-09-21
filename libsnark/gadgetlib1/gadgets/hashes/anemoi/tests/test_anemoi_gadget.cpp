@@ -138,10 +138,8 @@ int main(void)
     a.mod.print();
     printf("\n");
 #endif
-#if 1
     test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
     test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
     test_flystel_E_power_five_gadget<FieldT>(10);
-#endif
     //    //    test_flystel_power_two_gadget<libff::bls12_381_Fr>(10);
 }
