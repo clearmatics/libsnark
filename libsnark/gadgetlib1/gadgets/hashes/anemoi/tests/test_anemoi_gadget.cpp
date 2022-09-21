@@ -6,12 +6,14 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
+#include <libff/algebra/curves/bls12_381/bls12_381_init.hpp>
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
 #include <libff/common/default_types/ec_pp.hpp>
 #include <libff/common/profiling.hpp>
 #include <libff/common/utils.hpp>
 #include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_components.hpp>
+#include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_constants.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
 
 using namespace libsnark;
@@ -123,13 +125,23 @@ int main(void)
     // beta = g = first multiplicative generator = 7.
     // delta = g^(-1)
     // 14981678621464625851270783002338847382197300714436467949315331057125308909861
-    //    Field a = Field(7);
-    //    Field a_inv = a.inverse();
-    //    assert((a * a_inv) == Field::one());
-    //    a_inv.print();
-
+    // Fr modulus
+    // 52435875175126190479447740508185965837690552500527637822603658699938581184513
+#if 0
+    FieldT a = FieldT(7);
+    FieldT a_inv = a.inverse();
+    assert((a * a_inv) == FieldT::one());
+    printf("a_inv      ");
+    a_inv.print();
+    printf("\n");
+    printf("Fr modulus ");
+    a.mod.print();
+    printf("\n");
+#endif
+#if 1
     test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
     test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
     test_flystel_E_power_five_gadget<FieldT>(10);
+#endif
     //    //    test_flystel_power_two_gadget<libff::bls12_381_Fr>(10);
 }
