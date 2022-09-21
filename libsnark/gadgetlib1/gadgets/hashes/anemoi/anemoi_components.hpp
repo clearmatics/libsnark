@@ -27,12 +27,12 @@ namespace libsnark
 // gamma = 0
 
 // constants used for debug
-#define DEBUG_FLYSTEL_ALPHA FLYSTEL_ALPHA
+#define DEBUG_FLYSTEL_ALPHA 5
 #define DEBUG_FLYSTEL_BETA 2
 #define DEBUG_FLYSTEL_GAMMA 5
 #define DEBUG_FLYSTEL_DELTA 0
 
-/// Flystel Qf function for prime fields:
+/// Flystel Q_gamma function for prime fields:
 /// Qf(x) = beta x^2 + gamma
 /// x: input
 /// y: output
@@ -46,12 +46,12 @@ private:
 
 public:
     // input/output
-    const pb_variable<FieldT> input;
+    const pb_linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_Q_gamma_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_variable<FieldT> &input,
+        const pb_linear_combination<FieldT> input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -59,7 +59,7 @@ public:
     void generate_r1cs_witness();
 };
 
-/// Flystel Qf function for prime fields:
+/// Flystel Q_delta function for prime fields:
 /// Qf(x) = beta x^2 + delta
 /// x: input
 /// y: output
@@ -73,12 +73,12 @@ private:
 
 public:
     // input/output
-    const pb_variable<FieldT> input;
+    const pb_linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_Q_delta_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_variable<FieldT> &input,
+        const pb_linear_combination<FieldT> input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -86,7 +86,7 @@ public:
     void generate_r1cs_witness();
 };
 
-/// Flystel Qi function for binary fields:
+/// Flystel Q_gamma function for binary fields:
 /// Qi(x) = beta x^3 + gamma
 ///
 /// Compute y = beta x^3 + gamma
@@ -105,12 +105,47 @@ private:
 
 public:
     /// input/output
-    const pb_variable<FieldT> input;
+    const pb_linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_Q_gamma_binary_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_variable<FieldT> &input,
+        const pb_linear_combination<FieldT> input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix = "");
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
+// TODO: add class flystel_Q_delta_binary_field_gadget : public gadget<FieldT>
+// ...
+
+/// Flystel Q_delta function for binary fields:
+/// Qi(x) = beta x^3 + delta
+///
+/// Compute y = beta x^3 + delta
+/// x: input
+/// y: output
+/// beta, delta: constants
+template<typename FieldT, size_t generator>
+class flystel_Q_delta_binary_field_gadget : public gadget<FieldT>
+{
+private:
+    /// internal (i.e. intermediate) variable
+    pb_variable<FieldT> internal;
+    /// constants
+    const FieldT beta;
+    const FieldT delta;
+
+public:
+    /// input/output
+    const pb_linear_combination<FieldT> input;
+    const pb_variable<FieldT> output;
+
+    flystel_Q_delta_binary_field_gadget(
+        protoboard<FieldT> &pb,
+        const pb_linear_combination<FieldT> input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -130,12 +165,12 @@ private:
 
 public:
     /// input/output: x1,x4
-    const pb_variable<FieldT> input;
+    const pb_linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_E_power_five_gadget(
         protoboard<FieldT> &pb,
-        const pb_variable<FieldT> &input,
+        const pb_linear_combination<FieldT> input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
