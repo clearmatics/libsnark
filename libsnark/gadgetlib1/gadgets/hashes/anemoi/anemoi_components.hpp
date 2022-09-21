@@ -1,8 +1,6 @@
 /** @file
  *****************************************************************************
 
- Declaration of interfaces for top-level SHA256 gadgets.
-
  *****************************************************************************
  * @author     This file is part of libsnark, developed by SCIPR Lab
  *             and contributors (see AUTHORS).
@@ -190,6 +188,11 @@ public:
     void generate_r1cs_witness();
 };
 
+// get the MDS matrix from the number of columns 2,3 or 4
+template<typename FieldT, size_t NumStateColumns_L>
+std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L>
+anemoi_permutation_get_mds(const FieldT g);
+
 /// One round of the Anemoi permutation mapping (Fr)^{2l} -> (Fr)^{2l}
 ///
 /// NumStateColumns_L : l parameter - number of columns in the
@@ -210,10 +213,8 @@ private:
     std::array<FieldT, NumStateColumns_L> c_const;
     // array of D round constants
     std::array<FieldT, NumStateColumns_L> d_const;
-    // matrix M_x
-    std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L> M_X;
-    // matrix M_y
-    std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L> M_Y;
+    // matrix M
+    std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L> M;
     // array of Flystel S-boxes
     std::array<
         flystel_closed_prime_field_gadget<FieldT, generator>,

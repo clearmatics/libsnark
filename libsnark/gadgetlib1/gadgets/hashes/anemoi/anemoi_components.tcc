@@ -303,6 +303,35 @@ void flystel_closed_prime_field_gadget<FieldT, generator>::
     power_five.generate_r1cs_witness();
 }
 
+template<typename FieldT, size_t NumStateColumns_L>
+std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L>
+anemoi_permutation_get_mds(const FieldT g)
+{
+    std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L> M;
+    const FieldT g2 = g * g;
+    if (NumStateColumns_L == 2) {
+        M = {{1, g}, {g, g2 + 1}};
+        return M;
+    }
+    if (NumStateColumns_L == 3) {
+        M = {{g + 1, 1, g + 1}, {1, 1, g}, {g, 1, 1}};
+        return M;
+    }
+    if (NumStateColumns_L == 4) {
+        M = {
+            {g + 1, 1, g2, g2},
+            {1, g + 1, g2 + g, g2},
+            {g, g, g + 1, 1},
+            {g + 1, g, 1, g + 1}};
+        return M;
+    }
+    // If we are here, then the number of columns NumStateColumns_L has invalid
+    // value outside of the set {2,3,4}
+    throw std::logic_error(
+        "Error: invalid number of columns %d . Must be 2,3 or 4 .",
+        NumStateColumns_L);
+}
+
 template<typename FieldT, size_t generator, size_t NumStateColumns_L>
 anemoi_permutation_round_prime_field_gadget<
     FieldT,
