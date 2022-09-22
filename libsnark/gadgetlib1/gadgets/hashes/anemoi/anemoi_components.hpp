@@ -51,7 +51,7 @@ public:
 
     flystel_Q_gamma_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> input,
+        const pb_linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -78,7 +78,7 @@ public:
 
     flystel_Q_delta_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> input,
+        const pb_linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -110,16 +110,13 @@ public:
 
     flystel_Q_gamma_binary_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> input,
+        const pb_linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
-
-// TODO: add class flystel_Q_delta_binary_field_gadget : public gadget<FieldT>
-// ...
 
 /// Flystel Q_delta function for binary fields:
 /// Qi(x) = beta x^3 + delta
@@ -145,7 +142,7 @@ public:
 
     flystel_Q_delta_binary_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> input,
+        const pb_linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -170,7 +167,7 @@ public:
 
     flystel_E_power_five_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> input,
+        const pb_linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -200,23 +197,29 @@ template<typename FieldT, size_t generator>
 class flystel_closed_prime_field_gadget : public gadget<FieldT>
 {
 private:
-    // internal (i.e. intermediate) variables: v3,v4,v5
-    std::array<pb_variable<FieldT>, 4> internal;
+    // internal (i.e. intermediate) variables
+    pb_variable<FieldT> a0;
+    pb_variable<FieldT> a1;
+    pb_variable<FieldT> a2;
 
 public:
     // (v1,v2)=(x0,x1)
-    std::array<pb_variable<FieldT>, 2> input;
+    const pb_linear_combination<FieldT> input_x0;
+    const pb_linear_combination<FieldT> input_x1;
     // (v7,v8)=(y0,y1)
-    std::array<pb_variable<FieldT>, 2> output;
+    const pb_linear_combination<FieldT> output_y0;
+    const pb_linear_combination<FieldT> output_y1;
 
     flystel_Q_gamma_prime_field_gadget<FieldT, generator> Q_gamma;
     flystel_Q_delta_prime_field_gadget<FieldT, generator> Q_delta;
-    flystel_E_power_five_gadget<FieldT> power_five;
+    flystel_E_power_five_gadget<FieldT> E_power_five;
 
     flystel_closed_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const std::array<pb_variable<FieldT>, 2> &input,
-        const std::array<pb_variable<FieldT>, 2> &output,
+        const pb_linear_combination<FieldT> &x0,
+        const pb_linear_combination<FieldT> &x1,
+        const pb_linear_combination<FieldT> &y0,
+        const pb_linear_combination<FieldT> &y1,
         const std::string &annotation_prefix = "");
 
     void generate_r1cs_constraints();
@@ -226,7 +229,7 @@ public:
 // get the MDS matrix from the number of columns 2,3 or 4
 template<typename FieldT, size_t NumStateColumns_L>
 std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L>
-anemoi_permutation_get_mds(const FieldT g);
+anemoi_permutation_mds(const FieldT g);
 
 /// One round of the Anemoi permutation mapping (Fr)^{2l} -> (Fr)^{2l}
 ///
