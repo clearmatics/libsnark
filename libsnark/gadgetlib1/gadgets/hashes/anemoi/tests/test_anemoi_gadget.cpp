@@ -111,6 +111,38 @@ template<typename FieldT> void test_flystel_E_power_five_gadget(const size_t n)
     libff::print_time("flystel_E_power_five_gadget tests successful");
 }
 
+template<typename FieldT>
+void test_flystel_closed_prime_field_gadget(const size_t n)
+{
+    printf(
+        "testing flystel_closed_prime_field_gadget on all %zu bit strings\n",
+        n);
+
+    protoboard<FieldT> pb;
+    //    std::array<pb_variable<FieldT>, 2> x;
+    //    std::array<pb_variable<FieldT>, 2> y;
+    //    std::array<pb_linear_combination<FieldT>, 2> x;
+    //    std::array<pb_linear_combination<FieldT>, 2> y;
+    pb_linear_combination<FieldT> x0;
+    pb_linear_combination<FieldT> x1;
+    pb_linear_combination<FieldT> y0;
+    pb_linear_combination<FieldT> y1;
+#if 0
+    // input
+    x[0].allocate(pb, "x0");
+    x[1].allocate(pb, "x1");
+    // output
+    y[0].allocate(pb, "y0");
+    y[1].allocate(pb, "y1");
+#endif
+    flystel_closed_prime_field_gadget<
+        FieldT,
+        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
+        d(pb, x0, x1, y0, y1, "flystel");
+
+    libff::print_time("flystel_E_power_five_gadget tests successful");
+}
+
 int main(void)
 {
     libff::start_profiling();
@@ -141,5 +173,5 @@ int main(void)
     test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
     test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
     test_flystel_E_power_five_gadget<FieldT>(10);
-    //    //    test_flystel_power_two_gadget<libff::bls12_381_Fr>(10);
+    test_flystel_closed_prime_field_gadget<FieldT>(10);
 }

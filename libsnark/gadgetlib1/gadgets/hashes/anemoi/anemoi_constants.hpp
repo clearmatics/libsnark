@@ -13,6 +13,7 @@
 namespace libsnark
 {
 // TODO: specialize by the field type + cast to the field
+// see     setup_sha3_constants();
 #if 0
 // l = 1
 FieldT C1[1][19] = {

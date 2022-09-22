@@ -50,7 +50,7 @@ template<typename FieldT, size_t generator>
 flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     flystel_Q_gamma_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> input,
+        const pb_linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
@@ -96,7 +96,7 @@ template<typename FieldT, size_t generator>
 flystel_Q_delta_prime_field_gadget<FieldT, generator>::
     flystel_Q_delta_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> input,
+        const pb_linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
@@ -158,7 +158,7 @@ template<typename FieldT, size_t generator>
 flystel_Q_gamma_binary_field_gadget<FieldT, generator>::
     flystel_Q_gamma_binary_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> input,
+        const pb_linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
@@ -211,7 +211,7 @@ template<typename FieldT, size_t generator>
 flystel_Q_delta_binary_field_gadget<FieldT, generator>::
     flystel_Q_delta_binary_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> input,
+        const pb_linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
@@ -277,7 +277,7 @@ void flystel_Q_delta_binary_field_gadget<FieldT, generator>::
 template<typename FieldT>
 flystel_E_power_five_gadget<FieldT>::flystel_E_power_five_gadget(
     protoboard<FieldT> &pb,
-    const pb_linear_combination<FieldT> input,
+    const pb_linear_combination<FieldT> &input,
     const pb_variable<FieldT> &output,
     const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
@@ -314,44 +314,54 @@ void flystel_E_power_five_gadget<FieldT>::generate_r1cs_witness()
     this->pb.val(internal[1]) =
         (this->pb.val(internal[0])) * this->pb.val(internal[0]);
     // y = x1 * x3
-    this->pb.val(output) = this->pb.lc_val(input) * this->pb.val(internal[1]);
+    this->pb.val(output) =
+        this->pb.lc_val(input) * this->pb.val(internal[1]);
 }
 
 template<typename FieldT, size_t generator>
 flystel_closed_prime_field_gadget<FieldT, generator>::
     flystel_closed_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const std::array<pb_variable<FieldT>, 2> &input,
-        const std::array<pb_variable<FieldT>, 2> &output,
+        const pb_linear_combination<FieldT> &x0,
+        const pb_linear_combination<FieldT> &x1,
+        const pb_linear_combination<FieldT> &y0,
+        const pb_linear_combination<FieldT> &y1,
         const std::string &annotation_prefix)
-    : flystel_Q_gamma_prime_field_gadget<FieldT, generator>(
-          pb, input[0], internal[0])
-    , flystel_Q_delta_prime_field_gadget<FieldT, generator>(
-          pb, input[1], internal[2])
-    , flystel_E_power_five_gadget<FieldT>(pb, input[0] - input[1], internal[1])
+    : gadget<FieldT>(pb, annotation_prefix)
+    , input_x0(x0)
+    , input_x1(x1)
+    , output_y0(y0)
+    , output_y1(y1)
+    , Q_gamma(pb, x1, a0, annotation_prefix)
+    , Q_delta(pb, y1, a2, annotation_prefix)
+    , E_power_five(pb, x1 - y1, a1, annotation_prefix)
 {
-    internal[0].allocate(this->pb, " v3");
-    internal[1].allocate(this->pb, " v4");
-    internal[2].allocate(this->pb, " v5");
+    a0.allocate(this->pb, " a0");
+    a1.allocate(this->pb, " a1");
+    a2.allocate(this->pb, " a2");
 }
 
 // R1CS constraints for the operation
 //
-// y0 = Q_gamma(x0) + power_five(x0-x1)
-// y1 = Q_delta(x1) + power_five(x0-x1)
+// x0 = Q_gamma(x1) + power_five(x1-y1)
+// y0 = Q_delta(y1) + power_five(x1-y1)
 //
 // x0=input[0], x1=input[1], y0=output[0], y1=output[1].
 //
 // The function generates the constraints for the three gadgets:
 // Q_gamma, Q_delta, power_five by calling their corresponding
 // generate_r1cs_constraints() methods
+//
+// \attention one of the the outputs of this evaluation x0 is also an
+// input to the flystel S-box since here the flystel is evaluated in its closed
+// form i.e. when all inputs x,x1 and outputs y0,y1 are known
 template<typename FieldT, size_t generator>
 void flystel_closed_prime_field_gadget<FieldT, generator>::
     generate_r1cs_constraints()
 {
     Q_gamma.generate_r1cs_constraints();
     Q_delta.generate_r1cs_constraints();
-    power_five.generate_r1cs_constraints();
+    E_power_five.generate_r1cs_constraints();
 }
 
 template<typename FieldT, size_t generator>
@@ -360,12 +370,12 @@ void flystel_closed_prime_field_gadget<FieldT, generator>::
 {
     Q_gamma.generate_r1cs_witness();
     Q_delta.generate_r1cs_witness();
-    power_five.generate_r1cs_witness();
+    E_power_five.generate_r1cs_witness();
 }
 
 template<typename FieldT, size_t NumStateColumns_L>
 std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L>
-anemoi_permutation_get_mds(const FieldT g)
+anemoi_permutation_mds(const FieldT g)
 {
     std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L> M;
     const FieldT g2 = g * g;
