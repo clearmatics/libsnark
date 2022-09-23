@@ -119,27 +119,42 @@ void test_flystel_closed_prime_field_gadget(const size_t n)
         n);
 
     protoboard<FieldT> pb;
-    //    std::array<pb_variable<FieldT>, 2> x;
-    //    std::array<pb_variable<FieldT>, 2> y;
-    //    std::array<pb_linear_combination<FieldT>, 2> x;
-    //    std::array<pb_linear_combination<FieldT>, 2> y;
-    pb_linear_combination<FieldT> x0;
-    pb_linear_combination<FieldT> x1;
-    pb_linear_combination<FieldT> y0;
-    pb_linear_combination<FieldT> y1;
-#if 0
+
     // input
-    x[0].allocate(pb, "x0");
-    x[1].allocate(pb, "x1");
+    pb_variable<FieldT> x0;
+    pb_variable<FieldT> x1;
+    x0.allocate(pb, "x0");
+    x1.allocate(pb, "x1");
+
     // output
-    y[0].allocate(pb, "y0");
-    y[1].allocate(pb, "y1");
-#endif
+    pb_variable<FieldT> y0;
+    pb_variable<FieldT> y1;
+    y0.allocate(pb, "y0");
+    y1.allocate(pb, "y1");
+
     flystel_closed_prime_field_gadget<
         FieldT,
         FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
         d(pb, x0, x1, y0, y1, "flystel");
 
+    // generate contraints
+    d.generate_r1cs_constraints();
+    // set input values
+    pb.val(x1) = 3;
+    pb.val(y1) = 1;
+
+    //    x0.print();
+
+    // generate witness for the given input
+    d.generate_r1cs_witness();
+
+#if 0    
+    // expected outputs
+    ASSERT_EQ(pb.val(x0), 55);
+    ASSERT_EQ(pb.val(y0), 34);
+
+    ASSERT_TRUE(pb.is_satisfied());
+#endif
     libff::print_time("flystel_E_power_five_gadget tests successful");
 }
 

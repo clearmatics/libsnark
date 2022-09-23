@@ -334,7 +334,8 @@ flystel_closed_prime_field_gadget<FieldT, generator>::
     , output_y1(y1)
     , Q_gamma(pb, x1, a0, annotation_prefix)
     , Q_delta(pb, y1, a2, annotation_prefix)
-    , E_power_five(pb, x1 - y1, a1, annotation_prefix)
+    , E_power_five(
+          pb, pb_linear_combination<FieldT>(pb, x1 - y1), a1, annotation_prefix)
 {
     a0.allocate(this->pb, " a0");
     a1.allocate(this->pb, " a1");
@@ -368,9 +369,17 @@ template<typename FieldT, size_t generator>
 void flystel_closed_prime_field_gadget<FieldT, generator>::
     generate_r1cs_witness()
 {
+    //    input_x0.evaluate(this->pb);
+    input_x1.evaluate(this->pb);
+    //    output_y0.evaluate(this->pb);
+    output_y1.evaluate(this->pb);
+
     Q_gamma.generate_r1cs_witness();
     Q_delta.generate_r1cs_witness();
     E_power_five.generate_r1cs_witness();
+
+    this->pb.lc_val(input_x0) = this->pb.val(a0) + this->pb.val(a1);
+    this->pb.lc_val(output_y0) = this->pb.val(a1) + this->pb.val(a2);
 }
 
 template<typename FieldT, size_t NumStateColumns_L>
