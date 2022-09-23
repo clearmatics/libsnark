@@ -137,6 +137,13 @@ pb_linear_combination<FieldT>::pb_linear_combination(
 }
 
 template<typename FieldT>
+pb_linear_combination<FieldT>::pb_linear_combination(
+    protoboard<FieldT> &pb, const linear_combination<FieldT> &lc)
+{
+    assign(pb, lc);
+}
+
+template<typename FieldT>
 void pb_linear_combination<FieldT>::assign(
     protoboard<FieldT> &pb, const linear_combination<FieldT> &lc)
 {
