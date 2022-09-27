@@ -328,18 +328,18 @@ flystel_closed_prime_field_gadget<FieldT, generator>::
         const pb_linear_combination<FieldT> &y1,
         const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
+    , a0(pb_variable_allocate(pb, FMT(annotation_prefix, " a0"))
+    , a1(pb_variable_allocate(pb, FMT(annotation_prefix, " a1"))
+    , a2(pb_variable_allocate(pb, FMT(annotation_prefix, " a2"))
     , input_x0(x0)
     , input_x1(x1)
     , output_y0(y0)
     , output_y1(y1)
-    , Q_gamma(pb, x1, a0, annotation_prefix)
-    , Q_delta(pb, y1, a2, annotation_prefix)
+    , Q_gamma(pb, x1, a0, FMT(annotation_prefix, " Q_gamma"))
+    , Q_delta(pb, y1, a2, FMT(annotation_prefix, " Q_delta"))
     , E_power_five(
           pb, pb_linear_combination<FieldT>(pb, x1 - y1), a1, annotation_prefix)
 {
-    a0.allocate(this->pb, " a0");
-    a1.allocate(this->pb, " a1");
-    a2.allocate(this->pb, " a2");
 }
 
 // R1CS constraints for the operation

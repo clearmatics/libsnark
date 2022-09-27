@@ -204,8 +204,8 @@ private:
 
 public:
     // (v1,v2)=(x0,x1)
-    const pb_linear_combination<FieldT> input_x0;
-    const pb_linear_combination<FieldT> input_x1;
+    const linear_combination<FieldT> input_x0;
+    const linear_combination<FieldT> input_x1;
     // (v7,v8)=(y0,y1)
     const pb_linear_combination<FieldT> output_y0;
     const pb_linear_combination<FieldT> output_y1;
