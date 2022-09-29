@@ -16,8 +16,26 @@ namespace libsnark
 {
 
 #define FLYSTEL_DEBUG
-
 #define FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR 7
+// alpha constant used in the Flystel E transformation. note that
+// alpha is independent of the choice of the curve, but 1/alpha (see
+// below) depends on the curve (mores specifically -- on the modulus r of
+// its scalar field Fr)
+#define FLYSTEL_ALPHA_FIVE 5
+// the mapping f(x)=x^a=y: x,y \in Fr applied in the Flystel E
+// transformation (where a is alpha) is invertible if 1/a exists. then
+// f^-1(y)=y^1/a=x. 1/a exists if gcd(a,r-1)=1 where r is the modulus
+// of Fr. 1/a can be found with the extended Euclidean algorithm which
+// finds u,v s.t. ua+v(r-1)=1 mod (r-1)=ua and so u=1/a. parameter
+// FLYSTEL_ALPHA_FIVE_INVERSE gives the value of u=1/a for a=5 for the
+// curve BLS12-381 precomputed using the Sage command
+// inverse_mod(alpha, r-1). TODO: write a function anemoi_parameters()
+// specialized by ppT that loads the precomputed constants (including
+// alpha and the multiplicative subgroup generator
+// FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR) for any curve
+#define FLYSTEL_ALPHA_FIVE_INVERSE                                             \
+    "209743500700504761917790962032743863350762210002110551290414634799754324" \
+    "73805"
 
 // original constants by specification
 // for BLS12-381
@@ -157,15 +175,42 @@ template<typename FieldT>
 class flystel_E_power_five_gadget : public gadget<FieldT>
 {
 private:
-    /// internal (i.e. intermediate) variable: x2,x3
-    std::array<pb_variable<FieldT>, 2> internal;
+    // internal (i.e. intermediate) variables
+    pb_variable<FieldT> a0;
+    pb_variable<FieldT> a1;
 
 public:
-    /// input/output: x1,x4
+    /// input/output
     const pb_linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_E_power_five_gadget(
+        protoboard<FieldT> &pb,
+        const pb_linear_combination<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix = "");
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
+/// Compute y = x^1/5
+/// x: input
+/// y: output
+template<typename FieldT>
+class flystel_E_root_five_gadget : public gadget<FieldT>
+{
+private:
+    // internal (i.e. intermediate) variables
+    pb_variable<FieldT> a0;
+    pb_variable<FieldT> a1;
+
+public:
+    /// input/output
+    const pb_linear_combination<FieldT> input;
+    const pb_variable<FieldT> output;
+
+    flystel_E_root_five_gadget(
         protoboard<FieldT> &pb,
         const pb_linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
@@ -204,8 +249,8 @@ private:
 
 public:
     // (v1,v2)=(x0,x1)
-    const linear_combination<FieldT> input_x0;
-    const linear_combination<FieldT> input_x1;
+    const pb_linear_combination<FieldT> input_x0;
+    const pb_linear_combination<FieldT> input_x1;
     // (v7,v8)=(y0,y1)
     const pb_linear_combination<FieldT> output_y0;
     const pb_linear_combination<FieldT> output_y1;
