@@ -222,24 +222,20 @@ public:
 
 /// Anemoi closed Flystel component for fields of prime characteristic
 ///
-/// x0,x1: input (y,v in the paper)
-/// y0,y1: output (x,u in the paper)
+/// x0,x1: input (x,y in the paper)
+/// y0,y1: output (u,v in the paper)
 ///
 /// The component performs the following computation:
 ///
-/// y0 = (beta x0^2 + gamma) + (x0-x1)^5
-/// y1 = (beta x1^2 + delta) + (x0-x1)^5
+/// a0 = (beta x1^2 + gamma) = Q_gamma(x1)
+/// a1 = (x0 - a0)^{1/alpha} = E_root_five(x0-a0)
+/// a2 = beta (x1-a1)^2 + delta = Q_delta(x1-a1)
+/// y0 = x0 - a0 + a2
+/// y1 = x1 - a1
 ///
-/// Using Q_gamma, Q_delta and power_five gadgets the above is
-/// equivalent to
-///
-/// y0 = Q_gamma(x0) + power_five(x0-x1)
-/// y1 = Q_delta(x1) + power_five(x0-x1)
-///
-/// \note: in the paper (x0,x1)->(y0,y1) is denoted with (y,v)->(x,u)
-// template<typename FieldT, FieldT beta, FieldT gamma, DeildT delta>
+/// \note: in the paper (x0,x1)->(y0,y1) is denoted with (x,y)->(u,v)
 template<typename FieldT, size_t generator>
-class flystel_closed_prime_field_gadget : public gadget<FieldT>
+class flystel_prime_field_gadget : public gadget<FieldT>
 {
 private:
     // internal (i.e. intermediate) variables
@@ -248,23 +244,23 @@ private:
     pb_variable<FieldT> a2;
 
 public:
-    // (v1,v2)=(x0,x1)
-    const pb_linear_combination<FieldT> input_x0;
-    const pb_linear_combination<FieldT> input_x1;
+    // (x0,x1)
+    const linear_combination<FieldT> input_x0;
+    const linear_combination<FieldT> input_x1;
     // (v7,v8)=(y0,y1)
-    const pb_linear_combination<FieldT> output_y0;
-    const pb_linear_combination<FieldT> output_y1;
+    linear_combination<FieldT> output_y0;
+    linear_combination<FieldT> output_y1;
 
     flystel_Q_gamma_prime_field_gadget<FieldT, generator> Q_gamma;
     flystel_Q_delta_prime_field_gadget<FieldT, generator> Q_delta;
-    flystel_E_power_five_gadget<FieldT> E_power_five;
+    flystel_E_root_five_gadget<FieldT> E_root_five;
 
-    flystel_closed_prime_field_gadget(
+    flystel_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> &x0,
-        const pb_linear_combination<FieldT> &x1,
-        const pb_linear_combination<FieldT> &y0,
-        const pb_linear_combination<FieldT> &y1,
+        const linear_combination<FieldT> &x0,
+        const linear_combination<FieldT> &x1,
+        const linear_combination<FieldT> &y0,
+        const linear_combination<FieldT> &y1,
         const std::string &annotation_prefix = "");
 
     void generate_r1cs_constraints();
@@ -299,9 +295,7 @@ private:
     // matrix M
     std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L> M;
     // array of Flystel S-boxes
-    std::array<
-        flystel_closed_prime_field_gadget<FieldT, generator>,
-        NumStateColumns_L>
+    std::array<flystel_prime_field_gadget<FieldT, generator>, NumStateColumns_L>
         flystel;
 
 public:

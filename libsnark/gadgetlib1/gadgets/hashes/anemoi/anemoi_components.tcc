@@ -377,67 +377,60 @@ void flystel_E_root_five_gadget<FieldT>::generate_r1cs_witness()
 }
 
 template<typename FieldT, size_t generator>
-flystel_closed_prime_field_gadget<FieldT, generator>::
-    flystel_closed_prime_field_gadget(
-        protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> &x0,
-        const pb_linear_combination<FieldT> &x1,
-        const pb_linear_combination<FieldT> &y0,
-        const pb_linear_combination<FieldT> &y1,
-        const std::string &annotation_prefix)
+flystel_prime_field_gadget<FieldT, generator>::flystel_prime_field_gadget(
+    protoboard<FieldT> &pb,
+    const linear_combination<FieldT> &x0,
+    const linear_combination<FieldT> &x1,
+    const linear_combination<FieldT> &y0,
+    const linear_combination<FieldT> &y1,
+    const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
     , a0(pb_variable_allocate(pb, FMT(annotation_prefix, " a0")))
-    //    , a1(pb_variable_allocate(pb, FMT(annotation_prefix, " a1"))
-    //    , a2(pb_variable_allocate(pb, FMT(annotation_prefix, " a2"))
+    , a1(pb_variable_allocate(pb, FMT(annotation_prefix, " a1")))
+    , a2(pb_variable_allocate(pb, FMT(annotation_prefix, " a2")))
     , input_x0(x0)
     , input_x1(x1)
     , output_y0(y0)
     , output_y1(y1)
-    , Q_gamma(pb, x1, a0, FMT(annotation_prefix, " Q_gamma"))
-    , Q_delta(pb, y1, a2, FMT(annotation_prefix, " Q_delta"))
-    , E_power_five(
-          pb, pb_linear_combination<FieldT>(pb, x1 - y1), a1, annotation_prefix)
+    , Q_gamma(
+          pb,
+          pb_linear_combination<FieldT>(pb, x1),
+          a0,
+          FMT(annotation_prefix, " Q_gamma"))
+    , Q_delta(
+          pb,
+          pb_linear_combination<FieldT>(pb, x1 - a1),
+          a2,
+          FMT(annotation_prefix, " Q_delta"))
+    , E_root_five(
+          pb, pb_linear_combination<FieldT>(pb, x0 - a0), a1, annotation_prefix)
 {
 }
 
-// R1CS constraints for the operation
-//
-// x0 = Q_gamma(x1) + power_five(x1-y1)
-// y0 = Q_delta(y1) + power_five(x1-y1)
-//
-// x0=input[0], x1=input[1], y0=output[0], y1=output[1].
-//
-// The function generates the constraints for the three gadgets:
-// Q_gamma, Q_delta, power_five by calling their corresponding
-// generate_r1cs_constraints() methods
-//
-// \attention one of the the outputs of this evaluation x0 is also an
-// input to the flystel S-box since here the flystel is evaluated in its closed
-// form i.e. when all inputs x,x1 and outputs y0,y1 are known
 template<typename FieldT, size_t generator>
-void flystel_closed_prime_field_gadget<FieldT, generator>::
-    generate_r1cs_constraints()
+void flystel_prime_field_gadget<FieldT, generator>::generate_r1cs_constraints()
 {
     Q_gamma.generate_r1cs_constraints();
     Q_delta.generate_r1cs_constraints();
-    E_power_five.generate_r1cs_constraints();
+    E_root_five.generate_r1cs_constraints();
 }
 
 template<typename FieldT, size_t generator>
-void flystel_closed_prime_field_gadget<FieldT, generator>::
-    generate_r1cs_witness()
+void flystel_prime_field_gadget<FieldT, generator>::generate_r1cs_witness()
 {
-    //    input_x0.evaluate(this->pb);
-    input_x1.evaluate(this->pb);
-    //    output_y0.evaluate(this->pb);
-    output_y1.evaluate(this->pb);
-
     Q_gamma.generate_r1cs_witness();
     Q_delta.generate_r1cs_witness();
-    E_power_five.generate_r1cs_witness();
+    E_root_five.generate_r1cs_witness();
 
-    this->pb.lc_val(input_x0) = this->pb.val(a0) + this->pb.val(a1);
-    this->pb.lc_val(output_y0) = this->pb.val(a1) + this->pb.val(a2);
+    //    this->pb.lc_val(pb_linear_combination<FieldT>(this->pb, output_y0)) =
+    //        this->pb.lc_val(pb_linear_combination<FieldT>(this->pb, input_x0))
+    //        - this->pb.val(a0) - this->pb.val(a2);
+    //    output_y0 = input_x0 - this->pb.val(a0) - this->pb.val(a2);
+    output_y0 = input_x0 - this->pb.val(a0) - this->pb.val(a2);
+    output_y1 = input_x1 - this->pb.val(a1);
+
+    //    output_y0 = input_x0 - this->pb.val(a0) + this->pb.val(a2);
+    //    output_y1 = input_x1 - this->pb.val(a1);
 }
 
 template<typename FieldT, size_t NumStateColumns_L>
