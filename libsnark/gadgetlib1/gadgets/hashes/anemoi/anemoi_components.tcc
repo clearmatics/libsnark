@@ -260,13 +260,12 @@ void flystel_Q_delta_binary_field_gadget<FieldT, generator>::
 // y=output. This operation is represented with three multiplications
 // as y = (temp * temp * x), temp = x * x. Equivalently:
 //
-// x1 * x1 = x2
-// x2 * x2 = x3
-// x1 * x3 = x4
+// x  * x  = a0
+// a0 * a0 = a1
+// x  * a1 =  y
 //
-// for the variables vector X = (x0=1, x1=input, x2=internal,
-// x3=internal, x4=output). The above system is represented with 3
-// R1CS constraints resp.:
+// for the variables vector X = (x0=1, x1=x, x2=a0, x3=a1, x4=y). The
+// above system is represented with 3 R1CS constraints resp.:
 //
 // < A0 , X > * < B0 , X > = < C0 , X > ,
 // < A1 , X > * < B1 , X > = < C1 , X > ,
@@ -282,8 +281,8 @@ flystel_E_power_five_gadget<FieldT>::flystel_E_power_five_gadget(
     const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
 {
-    internal[0].allocate(this->pb, " internal 1");
-    internal[1].allocate(this->pb, " internal 2");
+    a0.allocate(this->pb, " internal value a0");
+    a1.allocate(this->pb, " internal value a1");
 }
 
 template<typename FieldT>
@@ -291,15 +290,15 @@ void flystel_E_power_five_gadget<FieldT>::generate_r1cs_constraints()
 {
     // x1*x1 = x2
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(input, input, internal[0]),
+        r1cs_constraint<FieldT>(input, input, a0),
         FMT(this->annotation_prefix, " x * x = x^2"));
     // x2*x2 = x3
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(internal[0], internal[0], internal[1]),
+        r1cs_constraint<FieldT>(a0, a0, a1),
         FMT(this->annotation_prefix, " x^2 * x^2 = x^4"));
     // x1*x3 = x4
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(input, internal[1], output),
+        r1cs_constraint<FieldT>(input, a1, output),
         FMT(this->annotation_prefix, " x^1 * x^4 = x^5"));
 }
 
@@ -308,14 +307,73 @@ void flystel_E_power_five_gadget<FieldT>::generate_r1cs_witness()
 {
     input.evaluate(this->pb);
     // x2 = x1 * x1
-    this->pb.val(internal[0]) =
-        (this->pb.lc_val(input)) * this->pb.lc_val(input);
+    this->pb.val(a0) = (this->pb.lc_val(input)) * this->pb.lc_val(input);
     // x3 = x2 * x2
-    this->pb.val(internal[1]) =
-        (this->pb.val(internal[0])) * this->pb.val(internal[0]);
+    this->pb.val(a1) = (this->pb.val(a0)) * this->pb.val(a0);
     // y = x1 * x3
-    this->pb.val(output) =
-        this->pb.lc_val(input) * this->pb.val(internal[1]);
+    this->pb.val(output) = this->pb.lc_val(input) * this->pb.val(a1);
+}
+
+// R1CS constraints for the operation y = x^1/5 with x=input,
+// y=output. The constraints are computed using the equivalent
+// operation y^5=x (\see flystel_E_power_five_gadget). This operation
+// is represented with three multiplications as x = (temp * temp * y),
+// temp = y * y. Equivalently:
+//
+// y  *  y = a0
+// a0 * a0 = a1
+// y  * a1 = x
+//
+// for the variables vector X = (x0=1, x1=x, x2=a0, x3=a1, x4=y). The
+// above system is represented with 3 R1CS constraints resp.:
+//
+// < A0 , X > * < B0 , X > = < C0 , X > ,
+// < A1 , X > * < B1 , X > = < C1 , X > ,
+// < A2 , X > * < B2 , X > = < C2 , X >
+//
+// where A0=(01000), B0=(01000), C0=(00100); A1=(00100), B0=(00100),
+// C0=(00010) and A2=(01000), B2=(00010), C2=(00001)
+template<typename FieldT>
+flystel_E_root_five_gadget<FieldT>::flystel_E_root_five_gadget(
+    protoboard<FieldT> &pb,
+    const pb_linear_combination<FieldT> &input,
+    const pb_variable<FieldT> &output,
+    const std::string &annotation_prefix)
+    : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
+{
+    a0.allocate(this->pb, " internal value a0");
+    a1.allocate(this->pb, " internal value a1");
+}
+
+template<typename FieldT>
+void flystel_E_root_five_gadget<FieldT>::generate_r1cs_constraints()
+{
+    // y1*y1 = y2
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(output, output, a0),
+        FMT(this->annotation_prefix, " y * y = y^2"));
+    // y2*y2 = y3
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(a0, a0, a1),
+        FMT(this->annotation_prefix, " y^2 * y^2 = y^4"));
+    // y1*y3 = y4
+    this->pb.add_r1cs_constraint(
+        r1cs_constraint<FieldT>(output, a1, input),
+        FMT(this->annotation_prefix, " y * y^4 = y^5"));
+}
+
+template<typename FieldT>
+void flystel_E_root_five_gadget<FieldT>::generate_r1cs_witness()
+{
+    input.evaluate(this->pb);
+    FieldT x = this->pb.lc_val(input);
+    FieldT y = power(x, libff::bigint<5>(FLYSTEL_ALPHA_FIVE_INVERSE));
+    // x2 = x1 * x1
+    this->pb.val(a0) = y * y;
+    // x3 = x2 * x2
+    this->pb.val(a1) = (this->pb.val(a0)) * this->pb.val(a0);
+    // y = x1 * x3
+    this->pb.val(output) = y;
 }
 
 template<typename FieldT, size_t generator>
@@ -328,9 +386,9 @@ flystel_closed_prime_field_gadget<FieldT, generator>::
         const pb_linear_combination<FieldT> &y1,
         const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
-    , a0(pb_variable_allocate(pb, FMT(annotation_prefix, " a0"))
-    , a1(pb_variable_allocate(pb, FMT(annotation_prefix, " a1"))
-    , a2(pb_variable_allocate(pb, FMT(annotation_prefix, " a2"))
+    , a0(pb_variable_allocate(pb, FMT(annotation_prefix, " a0")))
+    //    , a1(pb_variable_allocate(pb, FMT(annotation_prefix, " a1"))
+    //    , a2(pb_variable_allocate(pb, FMT(annotation_prefix, " a2"))
     , input_x0(x0)
     , input_x1(x1)
     , output_y0(y0)

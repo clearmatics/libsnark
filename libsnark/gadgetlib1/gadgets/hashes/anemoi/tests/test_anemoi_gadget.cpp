@@ -111,6 +111,39 @@ template<typename FieldT> void test_flystel_E_power_five_gadget(const size_t n)
     libff::print_time("flystel_E_power_five_gadget tests successful");
 }
 
+template<typename FieldT> void test_flystel_E_root_five_gadget(const size_t n)
+{
+    printf("testing flystel_E_root_five_gadget on all %zu bit strings\n", n);
+
+    protoboard<FieldT> pb;
+    pb_variable<FieldT> x;
+    pb_variable<FieldT> y;
+
+    // input
+    x.allocate(pb, "x");
+    // output
+    y.allocate(pb, "y");
+
+    // create gadget
+    flystel_E_root_five_gadget<FieldT> d(pb, x, y, "d");
+    // generate contraints
+    d.generate_r1cs_constraints();
+    // set input value
+    pb.val(x) = 22;
+    // generate witness for the given input
+    d.generate_r1cs_witness();
+
+    // computed using Sage
+    FieldT y_expected = FieldT("10357913779704000956629425810748166374506105653"
+                               "828973721142406533896278368512");
+
+    // the expected output is 32 for input 2
+    ASSERT_EQ(pb.val(y), y_expected);
+    ASSERT_TRUE(pb.is_satisfied());
+
+    libff::print_time("flystel_E_root_five_gadget tests successful");
+}
+
 template<typename FieldT>
 void test_flystel_closed_prime_field_gadget(const size_t n)
 {
@@ -158,6 +191,28 @@ void test_flystel_closed_prime_field_gadget(const size_t n)
     libff::print_time("flystel_E_power_five_gadget tests successful");
 }
 
+template<typename FieldT> void test_root_five()
+{
+    // alpha_inv =
+    // 20974350070050476191779096203274386335076221000211055129041463479975432473805
+    //    FieldT x = FieldT::random_element();
+    //    FieldT y = power(x, 5);
+    //    x.print();
+    //    y.print();
+    FieldT x = 5;
+    FieldT x_mod_inv =
+        FieldT("2097435007005047619177909620327438633507622100021"
+               "1055129041463479975432473805");
+    printf("Fr modulus   \n");
+    x.mod.print();
+    printf("x + x_mod_inv\n");
+    FieldT z = x + x_mod_inv;
+    z.print();
+    printf("\n");
+    x.print();
+    x.inverse().print();
+}
+
 int main(void)
 {
     libff::start_profiling();
@@ -185,8 +240,10 @@ int main(void)
     a.mod.print();
     printf("\n");
 #endif
-    test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
-    test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
-    test_flystel_E_power_five_gadget<FieldT>(10);
-    test_flystel_closed_prime_field_gadget<FieldT>(10);
+    //    test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
+    //    test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
+    //    test_flystel_E_power_five_gadget<FieldT>(10);
+    test_flystel_E_root_five_gadget<FieldT>(10);
+    //    test_flystel_closed_prime_field_gadget<FieldT>(10);
+    //    test_root_five<FieldT>();
 }
