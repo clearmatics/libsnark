@@ -144,51 +144,64 @@ template<typename FieldT> void test_flystel_E_root_five_gadget(const size_t n)
     libff::print_time("flystel_E_root_five_gadget tests successful");
 }
 
-template<typename FieldT>
-void test_flystel_closed_prime_field_gadget(const size_t n)
+template<typename FieldT> void test_flystel_prime_field_gadget(const size_t n)
 {
-    printf(
-        "testing flystel_closed_prime_field_gadget on all %zu bit strings\n",
-        n);
+    printf("testing flystel_prime_field_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
 
     // input
+#if 0    
     pb_variable<FieldT> x0;
     pb_variable<FieldT> x1;
     x0.allocate(pb, "x0");
     x1.allocate(pb, "x1");
-
     // output
     pb_variable<FieldT> y0;
     pb_variable<FieldT> y1;
     y0.allocate(pb, "y0");
     y1.allocate(pb, "y1");
+#endif
+    const linear_combination<FieldT> x0 = 55;
+    const linear_combination<FieldT> x1 = 3;
+    linear_combination<FieldT> y0;
+    linear_combination<FieldT> y1;
 
-    flystel_closed_prime_field_gadget<
+    FieldT x0_val = x0.terms[0].coeff;
+    FieldT x1_val = x1.terms[0].coeff;
+
+    flystel_prime_field_gadget<
         FieldT,
         FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
         d(pb, x0, x1, y0, y1, "flystel");
 
     // generate contraints
     d.generate_r1cs_constraints();
-    // set input values
-    pb.val(x1) = 3;
-    pb.val(y1) = 1;
-
-    //    x0.print();
 
     // generate witness for the given input
     d.generate_r1cs_witness();
 
-#if 0    
-    // expected outputs
-    ASSERT_EQ(pb.val(x0), 55);
-    ASSERT_EQ(pb.val(y0), 34);
+    // a0 = 23
+    FieldT a0_expected = FieldT(23);
+    // a1 = 22^{1/5}
+    FieldT a1_expected =
+        FieldT("10357913779704000956629425810748166374506105653"
+               "828973721142406533896278368512");
+    // a2 = 2 (3-a1)^2
+    FieldT a2_expected =
+        FieldT(2) * (FieldT(3) - a1_expected) * (FieldT(3) - a1_expected);
+    // y0 = x0 - a0 + a2 = 22 + a2
+    FieldT y0_expected = x0_val - a0_expected + a2_expected;
+    // y1 = x1 - a1 = 3 - a1
+    FieldT y1_expected = x1_val - a1_expected;
 
+    std::vector<FieldT> y0_assignment({x0_val, -a0_expected, a2_expected});
+    std::vector<FieldT> y1_assignment({x1_val, -a1_expected});
+    ASSERT_EQ(y0.evaluate(y0_assignment), y0_expected);
+    ASSERT_EQ(y1.evaluate(y1_assignment), y1_expected);
     ASSERT_TRUE(pb.is_satisfied());
-#endif
-    libff::print_time("flystel_E_power_five_gadget tests successful");
+
+    libff::print_time("flystel_prime_field_gadget tests successful");
 }
 
 template<typename FieldT> void test_root_five()
@@ -240,10 +253,10 @@ int main(void)
     a.mod.print();
     printf("\n");
 #endif
-    //    test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
-    //    test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
-    //    test_flystel_E_power_five_gadget<FieldT>(10);
+    test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
+    test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
+    test_flystel_E_power_five_gadget<FieldT>(10);
     test_flystel_E_root_five_gadget<FieldT>(10);
-    //    test_flystel_closed_prime_field_gadget<FieldT>(10);
+    test_flystel_prime_field_gadget<FieldT>(10);
     //    test_root_five<FieldT>();
 }
