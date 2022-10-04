@@ -175,7 +175,7 @@ template<typename FieldT> void test_flystel_prime_field_gadget(const size_t n)
         FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
         d(pb, x0, x1, y0, y1, "flystel");
 
-    // generate contraints
+    // generate constraints
     d.generate_r1cs_constraints();
 
     // generate witness for the given input
@@ -226,6 +226,36 @@ template<typename FieldT> void test_root_five()
     x.inverse().print();
 }
 
+template<typename FieldT> void test_bug()
+{
+    protoboard<FieldT> pb;
+    pb_variable<FieldT> a0;
+    linear_combination<FieldT> x1 = 3;
+    pb_linear_combination<FieldT> x1_lc(pb, x1);
+
+    assert(x1_lc.is_variable == false);
+
+    FieldT x1_lc_val = pb.lc_val(x1_lc);
+
+    printf("[%s:%d] x1_lc print\n", __FILE__, __LINE__);
+    //    pb.lc_val(x1_lc).print();
+    x1_lc_val.print();
+
+#if 1
+    // create gadget
+    flystel_Q_gamma_prime_field_gadget<
+        FieldT,
+        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
+        d(pb, x1_lc, a0, "d");
+
+    // generate contraints
+    d.generate_r1cs_constraints();
+
+    // generate witness for the given input
+    d.generate_r1cs_witness();
+#endif
+}
+
 int main(void)
 {
     libff::start_profiling();
@@ -253,10 +283,13 @@ int main(void)
     a.mod.print();
     printf("\n");
 #endif
+#if 0    
     test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
     test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
     test_flystel_E_power_five_gadget<FieldT>(10);
     test_flystel_E_root_five_gadget<FieldT>(10);
     test_flystel_prime_field_gadget<FieldT>(10);
+#endif
+    test_bug<FieldT>();
     //    test_root_five<FieldT>();
 }

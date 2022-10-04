@@ -64,6 +64,8 @@ flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     , input(input)
     , output(output)
 {
+    printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
+    this->input.print();
 }
 
 template<typename FieldT, size_t generator>
@@ -86,10 +88,22 @@ void flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     generate_r1cs_witness()
 {
     input.evaluate(this->pb);
+
+    printf("[%s:%d] %s() xxx input ", __FILE__, __LINE__, __FUNCTION__);
+    this->input.print();
+
+    printf("[%s:%d] %s() yyy input ", __FILE__, __LINE__, __FUNCTION__);
+    this->pb.lc_val(input).print();
+
+    //    assert(this->input.is_variable == true);
+
     // y = beta x^2 + gamma
     this->pb.val(output) =
         this->beta * this->pb.lc_val(input) * this->pb.lc_val(input) +
         this->gamma;
+
+    printf("[%s:%d] %s() zzz output ", __FILE__, __LINE__, __FUNCTION__);
+    this->pb.val(output).print();
 }
 
 template<typename FieldT, size_t generator>
@@ -405,6 +419,12 @@ flystel_prime_field_gadget<FieldT, generator>::flystel_prime_field_gadget(
     , E_root_five(
           pb, pb_linear_combination<FieldT>(pb, x0 - a0), a1, annotation_prefix)
 {
+    printf("[%s:%d] %s() x0", __FILE__, __LINE__, __FUNCTION__);
+    this->input_x0.print();
+    printf("[%s:%d] %s() x1", __FILE__, __LINE__, __FUNCTION__);
+    this->input_x1.print();
+    printf("[%s:%d] %s() a0 ", __FILE__, __LINE__, __FUNCTION__);
+    this->pb.val(a0).print();
 }
 
 template<typename FieldT, size_t generator>
@@ -426,8 +446,18 @@ void flystel_prime_field_gadget<FieldT, generator>::generate_r1cs_witness()
     //        this->pb.lc_val(pb_linear_combination<FieldT>(this->pb, input_x0))
     //        - this->pb.val(a0) - this->pb.val(a2);
     //    output_y0 = input_x0 - this->pb.val(a0) - this->pb.val(a2);
+
     output_y0 = input_x0 - this->pb.val(a0) - this->pb.val(a2);
     output_y1 = input_x1 - this->pb.val(a1);
+
+    printf("[%s:%d] y0  ", __FILE__, __LINE__);
+    output_y0.print();
+    printf("[%s:%d] x0  ", __FILE__, __LINE__);
+    input_x0.print();
+    printf("[%s:%d] a0  ", __FILE__, __LINE__);
+    this->pb.val(a0).print();
+    printf("[%s:%d] a2  ", __FILE__, __LINE__);
+    this->pb.val(a2).print();
 
     //    output_y0 = input_x0 - this->pb.val(a0) + this->pb.val(a2);
     //    output_y1 = input_x1 - this->pb.val(a1);
