@@ -141,6 +141,7 @@ pb_linear_combination<FieldT>::pb_linear_combination(
     protoboard<FieldT> &pb, const linear_combination<FieldT> &lc)
 {
     assign(pb, lc);
+    assert(this->is_variable == false);
 }
 
 template<typename FieldT>
@@ -150,6 +151,7 @@ void pb_linear_combination<FieldT>::assign(
     assert(this->is_variable == false);
     this->index = pb.allocate_lc_index();
     this->terms = lc.terms;
+    assert(this->is_variable == false);
 }
 
 template<typename FieldT>
