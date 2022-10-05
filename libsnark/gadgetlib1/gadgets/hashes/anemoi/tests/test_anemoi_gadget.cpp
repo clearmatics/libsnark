@@ -239,10 +239,9 @@ template<typename ppT> void test_bug()
     pb_variable<FieldT> x2 = pb_variable_allocate(pb, "x2");
     pb_variable<FieldT> x3 = pb_variable_allocate(pb, "x3");
     pb_linear_combination<FieldT> lc;
-    lc.assign(pb, x1 + x2);
 
     flystel_Q_gamma_prime_field_gadget<FieldT, 2> d(
-        pb, lc, x3, "flystel_Q_gamma");
+        pb, x1 + x2, x3, "flystel_Q_gamma");
     d.generate_r1cs_constraints();
 
     // Generate witness

@@ -50,7 +50,7 @@ template<typename FieldT, size_t generator>
 flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     flystel_Q_gamma_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> &input,
+        const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
@@ -61,7 +61,7 @@ flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     , beta(FieldT(generator))
     , gamma(FieldT(0))
 #endif // #ifdef FLYSTEL_DEBUG
-    , input(input)
+    , input(pb, input)
     , output(output)
 {
     printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);

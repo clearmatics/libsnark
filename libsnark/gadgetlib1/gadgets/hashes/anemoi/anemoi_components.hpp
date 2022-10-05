@@ -69,7 +69,7 @@ public:
 
     flystel_Q_gamma_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> &input,
+        const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
