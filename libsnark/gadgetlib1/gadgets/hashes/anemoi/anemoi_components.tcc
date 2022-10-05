@@ -61,11 +61,9 @@ flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     , beta(FieldT(generator))
     , gamma(FieldT(0))
 #endif // #ifdef FLYSTEL_DEBUG
-    , input(pb, input)
+    , input(input)
     , output(output)
 {
-    printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
-    this->input.print();
 }
 
 template<typename FieldT, size_t generator>
@@ -76,6 +74,7 @@ void flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     //   beta * input^2 + gamma = output
     // which can be written as
     //   (beta * input) * input = output - gamma
+
     this->pb.add_r1cs_constraint(
         {input * beta, input, output - gamma},
         FMT(this->annotation_prefix, " beta * x = y - gamma"));
@@ -87,23 +86,12 @@ template<typename FieldT, size_t generator>
 void flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     generate_r1cs_witness()
 {
-    input.evaluate(this->pb);
+    // Extract the value of the input. Set:
+    //   output = beta * input^2 + gamma
 
-    printf("[%s:%d] %s() xxx input ", __FILE__, __LINE__, __FUNCTION__);
-    this->input.print();
-
-    printf("[%s:%d] %s() yyy input ", __FILE__, __LINE__, __FUNCTION__);
-    this->pb.lc_val(input).print();
-
-    //    assert(this->input.is_variable == true);
-
-    // y = beta x^2 + gamma
-    this->pb.val(output) =
-        this->beta * this->pb.lc_val(input) * this->pb.lc_val(input) +
-        this->gamma;
-
-    printf("[%s:%d] %s() zzz output ", __FILE__, __LINE__, __FUNCTION__);
-    this->pb.val(output).print();
+    const FieldT input_value =
+        input.evaluate(this->pb.full_variable_assignment());
+    this->pb.val(output) = this->beta * input_value * input_value + this->gamma;
 }
 
 template<typename FieldT, size_t generator>

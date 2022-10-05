@@ -64,7 +64,7 @@ private:
 
 public:
     // input/output
-    const pb_linear_combination<FieldT> input;
+    const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_Q_gamma_prime_field_gadget(
