@@ -229,9 +229,41 @@ template<typename FieldT> void test_root_five()
 template<typename FieldT> void test_bug()
 {
     protoboard<FieldT> pb;
+    //    pb_variable<FieldT> x1;
+    linear_combination<FieldT> x1_lc;
+    pb_linear_combination<FieldT> x1(pb, x1_lc);
     pb_variable<FieldT> a0;
+
+    // input
+    //    x1.allocate(pb, "x1");
+    // output
+    a0.allocate(pb, "a0");
+
+    // create gadget
+    flystel_Q_gamma_prime_field_gadget<
+        FieldT,
+        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
+        d(pb, x1, a0, "d");
+    // generate contraints
+    d.generate_r1cs_constraints();
+    // set input value
+    pb.lc_val(x1) = 3;
+    // generate witness for the given input
+    d.generate_r1cs_witness();
+
+    // the expected output is 13 for input 2
+    ASSERT_EQ(pb.val(a0), 23);
+    ASSERT_TRUE(pb.is_satisfied());
+}
+
+template<typename FieldT> void test_bug_two()
+{
+    protoboard<FieldT> pb;
+    pb_variable<FieldT> a0; // <-- allocate
     linear_combination<FieldT> x1 = 3;
-    pb_linear_combination<FieldT> x1_lc(pb, x1);
+    pb_linear_combination<FieldT> x1_lc(pb, x1); // <--- use assign
+
+    // assert(!a)
 
     assert(x1_lc.is_variable == false);
 
