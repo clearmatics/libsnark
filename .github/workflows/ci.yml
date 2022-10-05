@@ -45,7 +45,7 @@ jobs:
     - name: configure
       env:
         CXX: ${{ matrix.compiler }}
-        # CXXFLAGS: "-Werror"
+        CXXFLAGS: "-Werror"
         CI_CONFIG: Debug
       run: |
         if [ "$(uname)" == "Darwin" ] ; then
