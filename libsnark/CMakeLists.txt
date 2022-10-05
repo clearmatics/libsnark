@@ -143,6 +143,9 @@ libsnark_profile(profile_ram_zksnark zk_proof_systems/zksnark/ram_zksnark/profil
 if ("${IS_LIBSNARK_PARENT}")
   include(CTest)
 
+  # A target which builds all tests, even if they will not be run.
+  add_custom_target(build_tests)
+
   # libsnark_test(<test_name> <source_files> ...)
   function(libsnark_test TEST_NAME)
     message("TEST: ${TEST_NAME} ${ARGN}")
@@ -150,6 +153,7 @@ if ("${IS_LIBSNARK_PARENT}")
     target_link_libraries(${TEST_NAME} snark gtest_main)
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
     add_dependencies(check ${TEST_NAME})
+    add_dependencies(build_tests ${TEST_NAME})
   endfunction()
 
   libsnark_test(gadgetlib1_simple_test gadgetlib1/tests/gadgetlib1_test.cpp)
