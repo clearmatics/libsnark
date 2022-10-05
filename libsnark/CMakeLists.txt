@@ -136,7 +136,7 @@ libsnark_profile(profile_bacs_ppzksnark zk_proof_systems/ppzksnark/bacs_ppzksnar
 libsnark_profile(profile_r1cs_gg_ppzksnark zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/profiling/profile_r1cs_gg_ppzksnark.cpp)
 libsnark_profile(profile_ram_ppzksnark zk_proof_systems/ppzksnark/ram_ppzksnark/profiling/profile_ram_ppzksnark.cpp)
 libsnark_profile(profile_tbcs_ppzksnark relations/circuit_satisfaction_problems/tbcs/examples/tbcs_examples.cpp zk_proof_systems/ppzksnark/tbcs_ppzksnark/profiling/profile_tbcs_ppzksnark.cpp)
-libsnark_profile(profile_uscs_ppzksnark zk_proof_systems/ppzksnark/uscs_ppzksnark/profiling/profile_uscs_ppzksnark.cpp)
+# libsnark_profile(profile_uscs_ppzksnark zk_proof_systems/ppzksnark/uscs_ppzksnark/profiling/profile_uscs_ppzksnark.cpp)
 libsnark_profile(profile_ram_zksnark zk_proof_systems/zksnark/ram_zksnark/profiling/profile_ram_zksnark.cpp)
 
 # Tests
@@ -182,7 +182,6 @@ if ("${IS_LIBSNARK_PARENT}")
     relations/circuit_satisfaction_problems/tbcs/examples/tbcs_examples.cpp
     zk_proof_systems/ppzksnark/tbcs_ppzksnark/tests/test_tbcs_ppzksnark.cpp
     )
-  libsnark_test(zk_proof_systems_uscs_ppzksnark_test zk_proof_systems/ppzksnark/uscs_ppzksnark/tests/test_uscs_ppzksnark.cpp)
   libsnark_test(test_basic_gadgets gadgetlib1/tests/test_basic_gadgets.cpp)
   libsnark_test(test_knapsack_gadget gadgetlib1/gadgets/hashes/knapsack/tests/test_knapsack_gadget.cpp)
   libsnark_test(test_merkle_tree_gadgets gadgetlib1/gadgets/merkle_tree/tests/test_merkle_tree_gadgets.cpp)
@@ -202,6 +201,7 @@ if ("${IS_LIBSNARK_PARENT}")
   libsnark_test(test_kzg10_verifier_gadget gadgetlib1/tests/test_kzg10_verifier_gadget.cpp)
 
   # TODO (howardwu): Resolve runtime on targets:
+  # libsnark_test(zk_proof_systems_uscs_ppzksnark_test zk_proof_systems/ppzksnark/uscs_ppzksnark/tests/test_uscs_ppzksnark.cpp)
   # libsnark_test(gadgetlib1_fooram_test gadgetlib1/gadgets/cpu_checkers/foora# m/examples/test_fooram.cpp)
   # libsnark_test(zk_proof_systems_r1cs_mp_ppzkpcd_test zk_proof_systems/pcd/r1cs_pcd/r1cs_mp_ppzkpcd/tests/test_r1cs_mp_ppzkpcd.cpp)
   # libsnark_test(zk_proof_systems_r1cs_sp_ppzkpcd_test zk_proof_systems/pcd/r1cs_pcd/r1cs_sp_ppzkpcd/tests/test_r1cs_sp_ppzkpcd.cpp)

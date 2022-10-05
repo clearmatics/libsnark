@@ -4,36 +4,70 @@ on:
   push:
   pull_request:
 
-jobs:
-  build-ubuntu:
+env:
+  MACOS_BREW_PACKAGES: "autoconf automake boost cmake gmp openssl pkg-config libomp libtool"
+  HOMEBREW_NO_AUTO_UPDATE: 1
 
-    runs-on: ubuntu-20.04
+jobs:
+  build:
 
     strategy:
       matrix:
-        compiler: [g++]
-        build_type: [Debug, Release]
+        os: [ubuntu-20.04, macos-10.15]
+        # os: [macos-10.15]
+        cmake_flags: ["-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_BUILD_TYPE=Debug -DDEBUG=1", "-CMAKE_BUILD_TYPE=Release"]
+        # cmake_flags: ["-DCMAKE_BUILD_TYPE=Debug"]
+        include:
+          - compiler: clang
+            os: macos-10.15
+          - compiler: g++
+            os: ubuntu-20.04
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
     - name: format-check
+      if: matrix.os == 'ubuntu-20.04'
       run: |
         scripts/format
         git diff --no-ext-diff > format_errs
         head -n 20 format_errs
         [ `cat format_errs | wc -l` == "0" ]
-    - name: install-dependencies
+    - name: install-dependencies-ubuntu
+      if: matrix.os == 'ubuntu-20.04'
       run: |
         sudo apt-get update
         sudo apt-get install build-essential git libboost-all-dev cmake libgmp3-dev libssl-dev libprocps-dev pkg-config
+    - name: install-dependencies-macos
+      if: matrix.os == 'macos-10.15'
+      run: brew install ${MACOS_BREW_PACKAGES}
     - name: configure
       env:
         CXX: ${{ matrix.compiler }}
-        CXXFLAGS: "-Werror"
-      run: mkdir build && cd build && cmake -DDEBUG=1 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
+        # CXXFLAGS: "-Werror"
+        CI_CONFIG: Debug
+      run: |
+        if [ "$(uname)" == "Darwin" ] ; then
+          openssl_path=$(brew --prefix openssl)
+          export PKG_CONFIG_PATH="${openssl_path}/lib/pkgconfig"
+          export LIBRARY_PATH="${openssl_path}/lib"
+          export LDFLAGS="-L/usr/local/lib -L${openssl_path}/lib"
+          export CPPFLAGS="-I/usr/local/include -I${openssl_path}/include"
+          CXXFLAGS="${CXXFLAGS} -I${openssl_path}/include -Wno-deprecated-declarations"
+        fi
+
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=${CI_CONFIG} -DCMAKE_CXX_FLAGS="${CXXFLAGS}"
     - name: build
-      run: cd build && make -j $(($(nproc)+1))
-    - name: test
-      run: cd build && make check -j $(($(nproc)+1))
+      run: |
+        cd build
+        make all -j 3
+    - name: tests
+      if: matrix.os == 'ubuntu-20.04'
+      run: |
+        cd build
+        make check -j 3
