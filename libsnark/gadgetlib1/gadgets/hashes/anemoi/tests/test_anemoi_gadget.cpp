@@ -14,10 +14,11 @@
 #include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_components.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_constants.hpp>
-#include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
+#include <libsnark/zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/r1cs_gg_ppzksnark.hpp>
 
 using namespace libsnark;
 
+#if 0
 template<typename FieldT>
 void test_flystel_Q_gamma_prime_field_gadget(const size_t n)
 {
@@ -225,71 +226,56 @@ template<typename FieldT> void test_root_five()
     x.print();
     x.inverse().print();
 }
+#endif
 
-template<typename FieldT> void test_bug()
+template<typename ppT> void test_bug()
 {
+    using FieldT = libff::Fr<ppT>;
+
+    // Circuit showing x_3 = beta * (x_1+x_2)^2 + gamma
+
     protoboard<FieldT> pb;
-    pb_variable<FieldT> a0;
-    linear_combination<FieldT> x1 = 3;
-    pb_linear_combination<FieldT> x1_lc(pb, x1);
+    pb_variable<FieldT> x1 = pb_variable_allocate(pb, "x1");
+    pb_variable<FieldT> x2 = pb_variable_allocate(pb, "x2");
+    pb_variable<FieldT> x3 = pb_variable_allocate(pb, "x3");
+    pb_linear_combination<FieldT> lc;
+    lc.assign(pb, x1 + x2);
 
-    assert(x1_lc.is_variable == false);
-
-    FieldT x1_lc_val = pb.lc_val(x1_lc);
-
-    printf("[%s:%d] x1_lc print\n", __FILE__, __LINE__);
-    //    pb.lc_val(x1_lc).print();
-    x1_lc_val.print();
-
-#if 1
-    // create gadget
-    flystel_Q_gamma_prime_field_gadget<
-        FieldT,
-        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
-        d(pb, x1_lc, a0, "d");
-
-    // generate contraints
+    flystel_Q_gamma_prime_field_gadget<FieldT, 2> d(
+        pb, lc, x3, "flystel_Q_gamma");
     d.generate_r1cs_constraints();
 
-    // generate witness for the given input
+    // Generate witness
+    pb.val(x1) = FieldT(7);
+    pb.val(x2) = FieldT(11);
+
+    // Expect x3 = 2 * (7+11)^2 + 5 = 653
+    const FieldT expect_x3("653");
+
     d.generate_r1cs_witness();
-#endif
+    ASSERT_EQ(expect_x3, pb.val(x3));
+
+    // TODO: this can be a generic util function run on any test circuit.
+
+    {
+        ASSERT_TRUE(pb.is_satisfied());
+        const r1cs_gg_ppzksnark_keypair<ppT> keypair =
+            r1cs_gg_ppzksnark_generator<ppT>(pb.get_constraint_system(), true);
+        r1cs_primary_input<libff::Fr<ppT>> primary_input = pb.primary_input();
+        r1cs_auxiliary_input<libff::Fr<ppT>> auxiliary_input =
+            pb.auxiliary_input();
+        r1cs_gg_ppzksnark_proof<ppT> proof = r1cs_gg_ppzksnark_prover(
+            keypair.pk, primary_input, auxiliary_input, true);
+        ASSERT_TRUE(r1cs_gg_ppzksnark_verifier_strong_IC<ppT>(
+            keypair.vk, primary_input, proof));
+    }
 }
 
-int main(void)
+TEST(TestAnemoiGadget, TestBug) { test_bug<libff::bls12_381_pp>(); }
+
+int main(int argc, char **argv)
 {
-    libff::start_profiling();
-
-    //    libff::default_ec_pp::init_public_params();
-    //    using FieldT = libff::Fr<libff::default_ec_pp>;
-
     libff::bls12_381_pp::init_public_params();
-    using FieldT = libff::Fr<libff::bls12_381_pp>;
-
-    // for BLS12-381
-    // beta = g = first multiplicative generator = 7.
-    // delta = g^(-1)
-    // 14981678621464625851270783002338847382197300714436467949315331057125308909861
-    // Fr modulus
-    // 52435875175126190479447740508185965837690552500527637822603658699938581184513
-#if 0
-    FieldT a = FieldT(7);
-    FieldT a_inv = a.inverse();
-    assert((a * a_inv) == FieldT::one());
-    printf("a_inv      ");
-    a_inv.print();
-    printf("\n");
-    printf("Fr modulus ");
-    a.mod.print();
-    printf("\n");
-#endif
-#if 0    
-    test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
-    test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
-    test_flystel_E_power_five_gadget<FieldT>(10);
-    test_flystel_E_root_five_gadget<FieldT>(10);
-    test_flystel_prime_field_gadget<FieldT>(10);
-#endif
-    test_bug<FieldT>();
-    //    test_root_five<FieldT>();
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

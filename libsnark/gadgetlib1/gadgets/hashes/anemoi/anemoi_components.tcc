@@ -488,8 +488,8 @@ anemoi_permutation_mds(const FieldT g)
     // If we are here, then the number of columns NumStateColumns_L has invalid
     // value outside of the set {2,3,4}
     throw std::logic_error(
-        "Error: invalid number of columns %d . Must be 2,3 or 4 .",
-        NumStateColumns_L);
+        "Error: invalid number of columns " +
+        std::to_string(NumStateColumns_L) + ". Must be 2,3 or 4 .");
 }
 
 template<typename FieldT, size_t generator, size_t NumStateColumns_L>
@@ -501,7 +501,7 @@ anemoi_permutation_round_prime_field_gadget<
         protoboard<FieldT> &pb,
         std::array<pb_variable<FieldT>, 2 * NumStateColumns_L> &input,
         std::array<pb_variable<FieldT>, 2 * NumStateColumns_L> &output,
-        std::string &annotation_prefix)
+        const std::string &annotation_prefix)
     : input(input), output(output)
 {
 }
