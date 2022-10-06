@@ -14,9 +14,25 @@
 #include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_components.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_constants.hpp>
-#include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
+#include <libsnark/zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/r1cs_gg_ppzksnark.hpp>
+//#include
+//<libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
 
 using namespace libsnark;
+
+template<typename ppT>
+void test_pb_verify_circuit(protoboard<libff::Fr<ppT>> &pb)
+{
+    ASSERT_TRUE(pb.is_satisfied());
+    const r1cs_gg_ppzksnark_keypair<ppT> keypair =
+        r1cs_gg_ppzksnark_generator<ppT>(pb.get_constraint_system(), true);
+    r1cs_primary_input<libff::Fr<ppT>> primary_input = pb.primary_input();
+    r1cs_auxiliary_input<libff::Fr<ppT>> auxiliary_input = pb.auxiliary_input();
+    r1cs_gg_ppzksnark_proof<ppT> proof = r1cs_gg_ppzksnark_prover(
+        keypair.pk, primary_input, auxiliary_input, true);
+    ASSERT_TRUE(r1cs_gg_ppzksnark_verifier_strong_IC<ppT>(
+        keypair.vk, primary_input, proof));
+}
 
 template<typename FieldT>
 void test_flystel_Q_gamma_prime_field_gadget(const size_t n)
@@ -205,12 +221,6 @@ template<typename FieldT> void test_flystel_prime_field_gadget(const size_t n)
     // y1 = x1 - a1 = 3 - a1
     FieldT y1_expected = x1_val - a1_expected;
 
-    // template<typename FieldT> class linear_term
-    //{
-    // public:
-    //    var_index_t index;
-    //    FieldT coeff;
-
     //    std::vector<linear_term<FieldT>> terms;
     std::vector<FieldT> y0_assignment({x0_val, -a0_expected, a2_expected});
     std::vector<FieldT> y1_assignment({x1_val, -a1_expected});
@@ -249,14 +259,17 @@ template<typename FieldT> void test_root_five()
     x.inverse().print();
 }
 
-template<typename FieldT> void test_bug()
+template<typename ppT> void test_bug()
 {
-    protoboard<FieldT> pb;
-    linear_combination<FieldT> x1_lc;
-    pb_linear_combination<FieldT> x1(pb, x1_lc);
-    pb_variable<FieldT> a0;
+    using FieldT = libff::Fr<ppT>;
 
-    a0.allocate(pb, "a0");
+    protoboard<FieldT> pb;
+    pb_variable<FieldT> v1 = pb_variable_allocate(pb, "v1");
+    pb_variable<FieldT> v2 = pb_variable_allocate(pb, "v2");
+    pb_variable<FieldT> a0 = pb_variable_allocate(pb, "a0");
+    pb_linear_combination<FieldT> x1;
+
+    x1.assign(pb, v1 + v2);
 
     flystel_Q_gamma_prime_field_gadget<
         FieldT,
@@ -264,70 +277,50 @@ template<typename FieldT> void test_bug()
         d(pb, x1, a0, "flystel_Q_gamma");
     d.generate_r1cs_constraints();
 
-    //    pb.lc_val(x1) = FieldT(3);
-    pb.lc_val(x1) = 3;
+    pb.val(v1) = FieldT(3);
+    pb.val(v2) = FieldT(0);
+
+    const FieldT expect_a0("23");
 
     d.generate_r1cs_witness();
-    ASSERT_EQ(pb.val(a0), 23);
-    //    ASSERT_TRUE(pb.is_satisfied());
+    ASSERT_EQ(expect_a0, pb.val(a0));
+    ASSERT_TRUE(pb.is_satisfied());
+
+    //    test_pb_verify_circuit<ppT>(pb);
 }
 
-template<typename FieldT> void test_bug_two()
+template<typename ppT> void test_bug_dt()
 {
+    using FieldT = libff::Fr<ppT>;
+
+    // Circuit showing x_3 = beta * (x_1+x_2)^2 + gamma
+    FieldT x1 = FieldT(7);
+    FieldT x2 = FieldT(11);
+    linear_combination<FieldT> lc(x1 + x2);
+
     protoboard<FieldT> pb;
-    linear_combination<FieldT> x1_lc;
-    pb_linear_combination<FieldT> x1(pb, x1_lc);
-    pb_variable<FieldT> a0;
+    pb_variable<FieldT> x3 = pb_variable_allocate(pb, "x3");
+    pb_linear_combination<FieldT> pb_lc; //(pb, lc);
+    pb_lc.assign(pb, lc);
 
-    a0.allocate(pb, "a0");
-
-    flystel_Q_gamma_prime_field_gadget<
-        FieldT,
-        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
-        d(pb, x1, a0, "d");
+    flystel_Q_gamma_prime_field_gadget<FieldT, 2> d(
+        pb, pb_lc, x3, "flystel_Q_gamma");
     d.generate_r1cs_constraints();
 
-    pb.lc_val(x1) = 3;
+    // Expect x3 = 2 * (7+11)^2 + 5 = 653
+    const FieldT expect_x3("653");
 
     d.generate_r1cs_witness();
-    ASSERT_EQ(pb.val(a0), 23);
-    //    ASSERT_TRUE(pb.is_satisfied());
+    ASSERT_EQ(expect_x3, pb.val(x3));
+    ASSERT_TRUE(pb.is_satisfied());
+
+    //    test_pb_verify_circuit<ppT>(pb);
 }
 
-template<typename FieldT> void test_bug_one()
-{
-    protoboard<FieldT> pb;
-    pb_variable<FieldT> a0; // <-- allocate
-    linear_combination<FieldT> x1;
-    pb_linear_combination<FieldT> x1_lc(pb, x1); // <--- use assign
+TEST(TestAnemoiGadget, TestBug) { test_bug<libff::bls12_381_pp>(); }
+TEST(TestAnemoiGadget, TestBugDt) { test_bug_dt<libff::bls12_381_pp>(); }
 
-    // assert(!a)
-
-    assert(x1_lc.is_variable == false);
-
-    FieldT x1_lc_val = pb.lc_val(x1_lc);
-
-    printf("[%s:%d] x1_lc print\n", __FILE__, __LINE__);
-    //    pb.lc_val(x1_lc).print();
-    x1_lc_val.print();
-
-    // create gadget
-    flystel_Q_gamma_prime_field_gadget<
-        FieldT,
-        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
-        d(pb, x1_lc, a0, "d");
-
-    pb.lc_val(x1_lc) = 3;
-
-    // generate contraints
-    d.generate_r1cs_constraints();
-
-    // generate witness for the given input
-    d.generate_r1cs_witness();
-    ASSERT_EQ(pb.val(a0), 23);
-}
-
-int main(void)
+int main(int argc, char **argv)
 {
     libff::start_profiling();
 
@@ -335,7 +328,8 @@ int main(void)
     //    using FieldT = libff::Fr<libff::default_ec_pp>;
 
     libff::bls12_381_pp::init_public_params();
-    using FieldT = libff::Fr<libff::bls12_381_pp>;
+    using ppT = libff::bls12_381_pp;
+    using FieldT = libff::Fr<ppT>;
 
     // for BLS12-381
     // beta = g = first multiplicative generator = 7.
@@ -360,9 +354,13 @@ int main(void)
     test_flystel_E_power_five_gadget<FieldT>(10);
     test_flystel_E_root_five_gadget<FieldT>(10);
 #endif
-    test_flystel_prime_field_gadget<FieldT>(10);
-    //    test_bug<FieldT>();
+    //    test_flystel_prime_field_gadget<FieldT>(10);
+    //    test_bug<ppT>();
+    test_bug_dt<ppT>();
     //    test_bug_two<FieldT>();
     //    test_bug_one<FieldT>();
     //    test_root_five<FieldT>();
+    //    ::testing::InitGoogleTest(&argc, argv);
+    //    return RUN_ALL_TESTS();
+    return 0;
 }
