@@ -162,13 +162,14 @@ template<typename FieldT> void test_flystel_prime_field_gadget(const size_t n)
     y0.allocate(pb, "y0");
     y1.allocate(pb, "y1");
 #endif
-    const linear_combination<FieldT> x0 = 55;
-    const linear_combination<FieldT> x1 = 3;
+    linear_combination<FieldT> x0_lc;
+    linear_combination<FieldT> x1_lc;
+
+    pb_linear_combination<FieldT> x0(pb, x0_lc);
+    pb_linear_combination<FieldT> x1(pb, x1_lc);
+
     linear_combination<FieldT> y0;
     linear_combination<FieldT> y1;
-
-    FieldT x0_val = x0.terms[0].coeff;
-    FieldT x1_val = x1.terms[0].coeff;
 
     flystel_prime_field_gadget<
         FieldT,
@@ -178,8 +179,17 @@ template<typename FieldT> void test_flystel_prime_field_gadget(const size_t n)
     // generate constraints
     d.generate_r1cs_constraints();
 
+    //    const linear_combination<FieldT> x0 = 55;
+    //    const linear_combination<FieldT> x1 = 3;
+    //    pb.lc_val(x1_lc) = 3;
+    pb.lc_val(x0) = 55;
+    pb.lc_val(x1) = 3;
+
     // generate witness for the given input
     d.generate_r1cs_witness();
+
+    FieldT x0_val = pb.lc_val(x0); // x0_lc.terms[0].coeff;
+    FieldT x1_val = pb.lc_val(x1); // x1_lc.terms[0].coeff;
 
     // a0 = 23
     FieldT a0_expected = FieldT(23);
@@ -195,12 +205,25 @@ template<typename FieldT> void test_flystel_prime_field_gadget(const size_t n)
     // y1 = x1 - a1 = 3 - a1
     FieldT y1_expected = x1_val - a1_expected;
 
+    // template<typename FieldT> class linear_term
+    //{
+    // public:
+    //    var_index_t index;
+    //    FieldT coeff;
+
+    //    std::vector<linear_term<FieldT>> terms;
     std::vector<FieldT> y0_assignment({x0_val, -a0_expected, a2_expected});
     std::vector<FieldT> y1_assignment({x1_val, -a1_expected});
+
+    FieldT t1 = y0.evaluate(y0_assignment);
+    printf("[%s:%d] y0.evaluate ", __FILE__, __LINE__);
+    t1.print();
+    printf("[%s:%d] y0_expected ", __FILE__, __LINE__);
+    y0_expected.print();
+
     ASSERT_EQ(y0.evaluate(y0_assignment), y0_expected);
     ASSERT_EQ(y1.evaluate(y1_assignment), y1_expected);
     ASSERT_TRUE(pb.is_satisfied());
-
     libff::print_time("flystel_prime_field_gadget tests successful");
 }
 
@@ -229,38 +252,53 @@ template<typename FieldT> void test_root_five()
 template<typename FieldT> void test_bug()
 {
     protoboard<FieldT> pb;
-    //    pb_variable<FieldT> x1;
     linear_combination<FieldT> x1_lc;
     pb_linear_combination<FieldT> x1(pb, x1_lc);
     pb_variable<FieldT> a0;
 
-    // input
-    //    x1.allocate(pb, "x1");
-    // output
     a0.allocate(pb, "a0");
 
-    // create gadget
     flystel_Q_gamma_prime_field_gadget<
         FieldT,
         FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
-        d(pb, x1, a0, "d");
-    // generate contraints
+        d(pb, x1, a0, "flystel_Q_gamma");
     d.generate_r1cs_constraints();
-    // set input value
-    pb.lc_val(x1) = 3;
-    // generate witness for the given input
-    d.generate_r1cs_witness();
 
-    // the expected output is 13 for input 2
+    //    pb.lc_val(x1) = FieldT(3);
+    pb.lc_val(x1) = 3;
+
+    d.generate_r1cs_witness();
     ASSERT_EQ(pb.val(a0), 23);
-    ASSERT_TRUE(pb.is_satisfied());
+    //    ASSERT_TRUE(pb.is_satisfied());
 }
 
 template<typename FieldT> void test_bug_two()
 {
     protoboard<FieldT> pb;
+    linear_combination<FieldT> x1_lc;
+    pb_linear_combination<FieldT> x1(pb, x1_lc);
+    pb_variable<FieldT> a0;
+
+    a0.allocate(pb, "a0");
+
+    flystel_Q_gamma_prime_field_gadget<
+        FieldT,
+        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
+        d(pb, x1, a0, "d");
+    d.generate_r1cs_constraints();
+
+    pb.lc_val(x1) = 3;
+
+    d.generate_r1cs_witness();
+    ASSERT_EQ(pb.val(a0), 23);
+    //    ASSERT_TRUE(pb.is_satisfied());
+}
+
+template<typename FieldT> void test_bug_one()
+{
+    protoboard<FieldT> pb;
     pb_variable<FieldT> a0; // <-- allocate
-    linear_combination<FieldT> x1 = 3;
+    linear_combination<FieldT> x1;
     pb_linear_combination<FieldT> x1_lc(pb, x1); // <--- use assign
 
     // assert(!a)
@@ -273,19 +311,20 @@ template<typename FieldT> void test_bug_two()
     //    pb.lc_val(x1_lc).print();
     x1_lc_val.print();
 
-#if 1
     // create gadget
     flystel_Q_gamma_prime_field_gadget<
         FieldT,
         FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
         d(pb, x1_lc, a0, "d");
 
+    pb.lc_val(x1_lc) = 3;
+
     // generate contraints
     d.generate_r1cs_constraints();
 
     // generate witness for the given input
     d.generate_r1cs_witness();
-#endif
+    ASSERT_EQ(pb.val(a0), 23);
 }
 
 int main(void)
@@ -320,8 +359,10 @@ int main(void)
     test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
     test_flystel_E_power_five_gadget<FieldT>(10);
     test_flystel_E_root_five_gadget<FieldT>(10);
-    test_flystel_prime_field_gadget<FieldT>(10);
 #endif
-    test_bug<FieldT>();
+    test_flystel_prime_field_gadget<FieldT>(10);
+    //    test_bug<FieldT>();
+    //    test_bug_two<FieldT>();
+    //    test_bug_one<FieldT>();
     //    test_root_five<FieldT>();
 }
