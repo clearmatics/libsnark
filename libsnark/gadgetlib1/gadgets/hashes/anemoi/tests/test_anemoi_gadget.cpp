@@ -179,8 +179,8 @@ template<typename FieldT> void test_flystel_prime_field_gadget(const size_t n)
     // generate constraints
     d.generate_r1cs_constraints();
 
-    pb.val(x0) = 55;
-    pb.val(x1) = 3;
+    pb.val(x0) = FieldT(55);
+    pb.val(x1) = FieldT(3);
 
     // generate witness for the given input
     d.generate_r1cs_witness();

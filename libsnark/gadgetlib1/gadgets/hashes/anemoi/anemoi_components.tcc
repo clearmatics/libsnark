@@ -92,6 +92,7 @@ void flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     // y = beta x^2 + gamma
     this->pb.val(output) = this->beta * input_value * input_value + this->gamma;
 
+    printf("[%s:%d] flystel_Q_gamma_prime_field_gadget\n", __FILE__, __LINE__);
     printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
     input_value.print();
     printf("[%s:%d] %s() output ", __FILE__, __LINE__, __FUNCTION__);
@@ -142,6 +143,7 @@ void flystel_Q_delta_prime_field_gadget<FieldT, generator>::
     // y = beta x^2 + delta
     this->pb.val(output) = this->beta * input_value * input_value + this->delta;
 
+    printf("[%s:%d] flystel_Q_delta_prime_field_gadget\n", __FILE__, __LINE__);
     printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
     input_value.print();
     printf("[%s:%d] %s() output ", __FILE__, __LINE__, __FUNCTION__);
@@ -332,6 +334,7 @@ void flystel_E_power_five_gadget<FieldT>::generate_r1cs_witness()
     // y = x1 * x3
     this->pb.val(output) = input_value * this->pb.val(a1);
 
+    printf("[%s:%d] flystel_E_power_five_gadget\n", __FILE__, __LINE__);
     printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
     input_value.print();
     printf("[%s:%d] %s() output ", __FILE__, __LINE__, __FUNCTION__);
@@ -400,6 +403,7 @@ void flystel_E_root_five_gadget<FieldT>::generate_r1cs_witness()
     // y = x1 * x3
     this->pb.val(output) = y;
 
+    printf("[%s:%d] flystel_E_root_five_gadget\n", __FILE__, __LINE__);
     printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
     input_value.print();
     printf("[%s:%d] %s() output ", __FILE__, __LINE__, __FUNCTION__);
@@ -422,31 +426,22 @@ flystel_prime_field_gadget<FieldT, generator>::flystel_prime_field_gadget(
     , input_x1(x1)
     , output_y0(y0)
     , output_y1(y1)
-    , Q_gamma(
-          pb,
-          pb_linear_combination<FieldT>(pb, x1),
-          a0,
-          FMT(annotation_prefix, " Q_gamma"))
-    , Q_delta(
-          pb,
-          pb_linear_combination<FieldT>(pb, x1 - pb.val(a1)),
-          a2,
-          FMT(annotation_prefix, " Q_delta"))
-    , E_root_five(
-          pb,
-          pb_linear_combination<FieldT>(pb, x0 - pb.val(a0)),
-          a1,
-          annotation_prefix)
-//    , Q_gamma(pb, x1, a0, FMT(annotation_prefix, " Q_gamma"))
-//    , Q_delta(pb, x1 - a1, a2, FMT(annotation_prefix, " Q_delta"))
-//    , E_root_five(pb, x0 - a0, a1, FMT(annotation_prefix, " E_root_five"))
+    , Q_gamma(pb, x1, a0, FMT(annotation_prefix, " Q_gamma"))
+    , Q_delta(pb, x1 - a1, a2, FMT(annotation_prefix, " Q_delta"))
+    , E_root_five(pb, x0 - a0, a1, FMT(annotation_prefix, " E_root_five"))
 {
-    printf("[%s:%d] %s() x0", __FILE__, __LINE__, __FUNCTION__);
-    this->input_x0.print();
-    printf("[%s:%d] %s() x1", __FILE__, __LINE__, __FUNCTION__);
-    this->input_x1.print();
-    printf("[%s:%d] %s() a0 ", __FILE__, __LINE__, __FUNCTION__);
-    this->pb.val(a0).print();
+    const FieldT input_x0_value =
+        input_x0.evaluate(this->pb.full_variable_assignment());
+    const FieldT input_x1_value =
+        input_x1.evaluate(this->pb.full_variable_assignment());
+    const FieldT a0_value = this->pb.val(a0);
+
+    printf("[%s:%d] %s() x0 = ", __FILE__, __LINE__, __FUNCTION__);
+    input_x0_value.print();
+    printf("[%s:%d] %s() x1 = ", __FILE__, __LINE__, __FUNCTION__);
+    input_x1_value.print();
+    printf("[%s:%d] %s() a0 = ", __FILE__, __LINE__, __FUNCTION__);
+    a0_value.print();
 }
 
 template<typename FieldT, size_t generator>
@@ -461,25 +456,25 @@ template<typename FieldT, size_t generator>
 void flystel_prime_field_gadget<FieldT, generator>::generate_r1cs_witness()
 {
     Q_gamma.generate_r1cs_witness();
-    Q_delta.generate_r1cs_witness();
     E_root_five.generate_r1cs_witness();
+    Q_delta.generate_r1cs_witness();
 
-    //    this->pb.lc_val(pb_linear_combination<FieldT>(this->pb, output_y0)) =
-    //        this->pb.lc_val(pb_linear_combination<FieldT>(this->pb, input_x0))
-    //        - this->pb.val(a0) - this->pb.val(a2);
-    //    output_y0 = input_x0 - this->pb.val(a0) - this->pb.val(a2);
+    const FieldT input_x0_value =
+        input_x0.evaluate(this->pb.full_variable_assignment());
+    const FieldT input_x1_value =
+        input_x1.evaluate(this->pb.full_variable_assignment());
 
-    output_y0 = input_x0 - this->pb.val(a0) - this->pb.val(a2);
-    output_y1 = input_x1 - this->pb.val(a1);
+    output_y0 = input_x0_value - this->pb.val(a0) - this->pb.val(a2);
+    output_y1 = input_x1_value - this->pb.val(a1);
 
-    printf("[%s:%d] y0  ", __FILE__, __LINE__);
-    output_y0.print();
     printf("[%s:%d] x0  ", __FILE__, __LINE__);
-    input_x0.print();
+    input_x0_value.print();
     printf("[%s:%d] a0  ", __FILE__, __LINE__);
     this->pb.val(a0).print();
     printf("[%s:%d] a2  ", __FILE__, __LINE__);
     this->pb.val(a2).print();
+    //    printf("[%s:%d] y0  ", __FILE__, __LINE__);
+    //    output_y0.print();
 
     //    output_y0 = input_x0 - this->pb.val(a0) + this->pb.val(a2);
     //    output_y1 = input_x1 - this->pb.val(a1);
