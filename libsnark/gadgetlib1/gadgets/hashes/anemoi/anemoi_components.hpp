@@ -64,12 +64,12 @@ private:
 
 public:
     // input/output
-    const pb_linear_combination<FieldT> input;
+    const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_Q_gamma_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> &input,
+        const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -91,12 +91,12 @@ private:
 
 public:
     // input/output
-    const pb_linear_combination<FieldT> input;
+    const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_Q_delta_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> &input,
+        const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -123,12 +123,12 @@ private:
 
 public:
     /// input/output
-    const pb_linear_combination<FieldT> input;
+    const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_Q_gamma_binary_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> &input,
+        const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -155,12 +155,12 @@ private:
 
 public:
     /// input/output
-    const pb_linear_combination<FieldT> input;
+    const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_Q_delta_binary_field_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> &input,
+        const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -181,12 +181,12 @@ private:
 
 public:
     /// input/output
-    const pb_linear_combination<FieldT> input;
+    const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_E_power_five_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> &input,
+        const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
@@ -207,12 +207,12 @@ private:
 
 public:
     /// input/output
-    const pb_linear_combination<FieldT> input;
+    const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
     flystel_E_root_five_gadget(
         protoboard<FieldT> &pb,
-        const pb_linear_combination<FieldT> &input,
+        const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix = "");
 
