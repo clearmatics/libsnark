@@ -70,13 +70,9 @@ FieldT protoboard<FieldT>::val(const pb_variable<FieldT> &var) const
 template<typename FieldT>
 FieldT &protoboard<FieldT>::lc_val(const pb_linear_combination<FieldT> &lc)
 {
-    printf("[%s:%d] CHECKPOINT 1\n", __FILE__, __LINE__);
-    //    assert(lc.is_variable == false);
     if (lc.is_variable == true) {
-        printf("[%s:%d] CHECKPOINT 2\n", __FILE__, __LINE__);
         return this->val(pb_variable<FieldT>(lc.index));
     } else {
-        printf("[%s:%d] CHECKPOINT 3\n", __FILE__, __LINE__);
         assert(lc.index < lc_values.size());
         return lc_values[lc.index];
     }
