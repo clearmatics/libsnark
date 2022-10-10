@@ -244,12 +244,10 @@ private:
     pb_variable<FieldT> a2;
 
 public:
-    // (x0,x1)
     const linear_combination<FieldT> input_x0;
     const linear_combination<FieldT> input_x1;
-    // (v7,v8)=(y0,y1)
-    linear_combination<FieldT> output_y0;
-    linear_combination<FieldT> output_y1;
+    const pb_variable<FieldT> output_y0;
+    const pb_variable<FieldT> output_y1;
 
     flystel_Q_gamma_prime_field_gadget<FieldT, generator> Q_gamma;
     flystel_Q_delta_prime_field_gadget<FieldT, generator> Q_delta;
@@ -259,8 +257,8 @@ public:
         protoboard<FieldT> &pb,
         const linear_combination<FieldT> &x0,
         const linear_combination<FieldT> &x1,
-        const linear_combination<FieldT> &y0,
-        const linear_combination<FieldT> &y1,
+        const pb_variable<FieldT> &y0,
+        const pb_variable<FieldT> &y1,
         const std::string &annotation_prefix = "");
 
     void generate_r1cs_constraints();

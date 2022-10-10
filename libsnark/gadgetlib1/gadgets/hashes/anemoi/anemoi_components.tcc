@@ -415,8 +415,8 @@ flystel_prime_field_gadget<FieldT, generator>::flystel_prime_field_gadget(
     protoboard<FieldT> &pb,
     const linear_combination<FieldT> &x0,
     const linear_combination<FieldT> &x1,
-    const linear_combination<FieldT> &y0,
-    const linear_combination<FieldT> &y1,
+    const pb_variable<FieldT> &y0,
+    const pb_variable<FieldT> &y1,
     const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
     , a0(pb_variable_allocate(pb, FMT(annotation_prefix, " a0")))
@@ -464,8 +464,9 @@ void flystel_prime_field_gadget<FieldT, generator>::generate_r1cs_witness()
     const FieldT input_x1_value =
         input_x1.evaluate(this->pb.full_variable_assignment());
 
-    output_y0 = input_x0_value - this->pb.val(a0) - this->pb.val(a2);
-    output_y1 = input_x1_value - this->pb.val(a1);
+    this->pb.lc_val(output_y0) =
+        input_x0_value - this->pb.val(a0) + this->pb.val(a2);
+    this->pb.lc_val(output_y1) = input_x1_value - this->pb.val(a1);
 
     printf("[%s:%d] x0  ", __FILE__, __LINE__);
     input_x0_value.print();
@@ -473,11 +474,10 @@ void flystel_prime_field_gadget<FieldT, generator>::generate_r1cs_witness()
     this->pb.val(a0).print();
     printf("[%s:%d] a2  ", __FILE__, __LINE__);
     this->pb.val(a2).print();
-    //    printf("[%s:%d] y0  ", __FILE__, __LINE__);
-    //    output_y0.print();
-
-    //    output_y0 = input_x0 - this->pb.val(a0) + this->pb.val(a2);
-    //    output_y1 = input_x1 - this->pb.val(a1);
+    printf("[%s:%d] y0  ", __FILE__, __LINE__);
+    this->pb.lc_val(output_y0).print();
+    printf("[%s:%d] y1  ", __FILE__, __LINE__);
+    this->pb.lc_val(output_y1).print();
 }
 
 template<typename FieldT, size_t NumStateColumns_L>
@@ -496,10 +496,10 @@ anemoi_permutation_mds(const FieldT g)
     }
     if (NumStateColumns_L == 4) {
         M = {
-            {g + 1, 1, g2, g2},
-            {1, g + 1, g2 + g, g2},
-            {g, g, g + 1, 1},
-            {g + 1, g, 1, g + 1}};
+            {1, g2, g2, 1 + g},
+            {1 + g, g + g2, g2, 1 + 2 * g},
+            {g, 1 + g, 1, g},
+            {g, 1 + 2 * g, 1 + g, 1 + g}};
         return M;
     }
     // If we are here, then the number of columns NumStateColumns_L has invalid

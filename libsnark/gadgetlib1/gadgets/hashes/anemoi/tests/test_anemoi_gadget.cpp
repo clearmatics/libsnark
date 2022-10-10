@@ -34,9 +34,10 @@ void test_pb_verify_circuit(protoboard<libff::Fr<ppT>> &pb)
         keypair.vk, primary_input, proof));
 }
 
-template<typename FieldT>
+template<typename ppT>
 void test_flystel_Q_gamma_prime_field_gadget(const size_t n)
 {
+    using FieldT = libff::Fr<ppT>;
     printf("testing flystel_power_two_gadget on all %zu bit strings\n", n);
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
@@ -65,9 +66,10 @@ void test_flystel_Q_gamma_prime_field_gadget(const size_t n)
     libff::print_time("flystel_power_two_gadget tests successful");
 }
 
-template<typename FieldT>
+template<typename ppT>
 void test_flystel_Q_gamma_binary_field_gadge(const size_t n)
 {
+    using FieldT = libff::Fr<ppT>;
     printf("testing flystel_power_three_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
@@ -98,8 +100,9 @@ void test_flystel_Q_gamma_binary_field_gadge(const size_t n)
     libff::print_time("flystel_power_three_gadget tests successful");
 }
 
-template<typename FieldT> void test_flystel_E_power_five_gadget(const size_t n)
+template<typename ppT> void test_flystel_E_power_five_gadget(const size_t n)
 {
+    using FieldT = libff::Fr<ppT>;
     printf("testing flystel_E_power_five_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
@@ -127,8 +130,9 @@ template<typename FieldT> void test_flystel_E_power_five_gadget(const size_t n)
     libff::print_time("flystel_E_power_five_gadget tests successful");
 }
 
-template<typename FieldT> void test_flystel_E_root_five_gadget(const size_t n)
+template<typename ppT> void test_flystel_E_root_five_gadget(const size_t n)
 {
+    using FieldT = libff::Fr<ppT>;
     printf("testing flystel_E_root_five_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
@@ -160,8 +164,9 @@ template<typename FieldT> void test_flystel_E_root_five_gadget(const size_t n)
     libff::print_time("flystel_E_root_five_gadget tests successful");
 }
 
-template<typename FieldT> void test_flystel_prime_field_gadget(const size_t n)
+template<typename ppT> void test_flystel_prime_field_gadget(const size_t n)
 {
+    using FieldT = libff::Fr<ppT>;
     printf("testing flystel_prime_field_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
@@ -185,117 +190,18 @@ template<typename FieldT> void test_flystel_prime_field_gadget(const size_t n)
     // generate witness for the given input
     d.generate_r1cs_witness();
 
-#if 0    
+    FieldT y0_expect = FieldT(34);
+    FieldT y1_expect = FieldT(1);
 
-    FieldT x0_val = pb.lc_val(x0); // x0_lc.terms[0].coeff;
-    FieldT x1_val = pb.lc_val(x1); // x1_lc.terms[0].coeff;
-
-    // a0 = 23
-    FieldT a0_expected = FieldT(23);
-    // a1 = 22^{1/5}
-    FieldT a1_expected =
-        FieldT("10357913779704000956629425810748166374506105653"
-               "828973721142406533896278368512");
-    // a2 = 2 (3-a1)^2
-    FieldT a2_expected =
-        FieldT(2) * (FieldT(3) - a1_expected) * (FieldT(3) - a1_expected);
-    // y0 = x0 - a0 + a2 = 22 + a2
-    FieldT y0_expected = x0_val - a0_expected + a2_expected;
-    // y1 = x1 - a1 = 3 - a1
-    FieldT y1_expected = x1_val - a1_expected;
-
-    ASSERT_EQ(y0.evaluate(y0_assignment), y0_expected);
-    ASSERT_EQ(y1.evaluate(y1_assignment), y1_expected);
+    ASSERT_EQ(y0_expect, pb.val(y0));
+    ASSERT_EQ(y1_expect, pb.val(y1));
     ASSERT_TRUE(pb.is_satisfied());
-#endif
+
+    //    test_pb_verify_circuit<ppT>(pb);
 
     libff::print_time("flystel_prime_field_gadget tests successful");
 }
 
-template<typename FieldT> void test_root_five()
-{
-    // alpha_inv =
-    // 20974350070050476191779096203274386335076221000211055129041463479975432473805
-    //    FieldT x = FieldT::random_element();
-    //    FieldT y = power(x, 5);
-    //    x.print();
-    //    y.print();
-    FieldT x = 5;
-    FieldT x_mod_inv =
-        FieldT("2097435007005047619177909620327438633507622100021"
-               "1055129041463479975432473805");
-    printf("Fr modulus   \n");
-    x.mod.print();
-    printf("x + x_mod_inv\n");
-    FieldT z = x + x_mod_inv;
-    z.print();
-    printf("\n");
-    x.print();
-    x.inverse().print();
-}
-
-template<typename ppT> void test_bug()
-{
-    using FieldT = libff::Fr<ppT>;
-
-    protoboard<FieldT> pb;
-    pb_variable<FieldT> v1 = pb_variable_allocate(pb, "v1");
-    pb_variable<FieldT> v2 = pb_variable_allocate(pb, "v2");
-    pb_variable<FieldT> a0 = pb_variable_allocate(pb, "a0");
-    pb_linear_combination<FieldT> x1;
-
-    x1.assign(pb, v1 + v2);
-
-    flystel_Q_gamma_prime_field_gadget<
-        FieldT,
-        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
-        d(pb, x1, a0, "flystel_Q_gamma");
-    d.generate_r1cs_constraints();
-
-    pb.val(v1) = FieldT(3);
-    pb.val(v2) = FieldT(0);
-
-    const FieldT expect_a0("23");
-
-    d.generate_r1cs_witness();
-    ASSERT_EQ(expect_a0, pb.val(a0));
-    ASSERT_TRUE(pb.is_satisfied());
-
-    //    test_pb_verify_circuit<ppT>(pb);
-}
-
-template<typename ppT> void test_bug_dt()
-{
-    using FieldT = libff::Fr<ppT>;
-
-    // Circuit showing x_3 = beta * (x_1+x_2)^2 + gamma
-    FieldT x1 = FieldT(7);
-    FieldT x2 = FieldT(11);
-    linear_combination<FieldT> lc(x1 + x2);
-
-    protoboard<FieldT> pb;
-    pb_variable<FieldT> x3 = pb_variable_allocate(pb, "x3");
-    pb_linear_combination<FieldT> pb_lc; //(pb, lc);
-    pb_lc.assign(pb, lc);
-
-    flystel_Q_gamma_prime_field_gadget<FieldT, 2> d(
-        pb, pb_lc, x3, "flystel_Q_gamma");
-    d.generate_r1cs_constraints();
-
-    // Expect x3 = 2 * (7+11)^2 + 5 = 653
-    const FieldT expect_x3("653");
-
-    d.generate_r1cs_witness();
-    ASSERT_EQ(expect_x3, pb.val(x3));
-    ASSERT_TRUE(pb.is_satisfied());
-
-    //    test_pb_verify_circuit<ppT>(pb);
-}
-
-TEST(TestAnemoiGadget, TestBug) { test_bug<libff::bls12_381_pp>(); }
-TEST(TestAnemoiGadget, TestBugDt) { test_bug_dt<libff::bls12_381_pp>(); }
-
-// int main(int argc, char **argv)
 int main()
 {
     libff::start_profiling();
@@ -305,38 +211,11 @@ int main()
 
     libff::bls12_381_pp::init_public_params();
     using ppT = libff::bls12_381_pp;
-    using FieldT = libff::Fr<ppT>;
 
-    // for BLS12-381
-    // beta = g = first multiplicative generator = 7.
-    // delta = g^(-1)
-    // 14981678621464625851270783002338847382197300714436467949315331057125308909861
-    // Fr modulus
-    // 52435875175126190479447740508185965837690552500527637822603658699938581184513
-#if 0
-    FieldT a = FieldT(7);
-    FieldT a_inv = a.inverse();
-    assert((a * a_inv) == FieldT::one());
-    printf("a_inv      ");
-    a_inv.print();
-    printf("\n");
-    printf("Fr modulus ");
-    a.mod.print();
-    printf("\n");
-#endif
-#if 0    
-    test_flystel_Q_gamma_prime_field_gadget<FieldT>(10);
-    test_flystel_Q_gamma_binary_field_gadge<FieldT>(10);
-    test_flystel_E_power_five_gadget<FieldT>(10);
-    test_flystel_E_root_five_gadget<FieldT>(10);
-#endif
-    test_flystel_prime_field_gadget<FieldT>(10);
-    //    test_bug<ppT>();
-    //    test_bug_dt<ppT>();
-    //    test_bug_two<FieldT>();
-    //    test_bug_one<FieldT>();
-    //    test_root_five<FieldT>();
-    //    ::testing::InitGoogleTest(&argc, argv);
-    //    return RUN_ALL_TESTS();
+    test_flystel_Q_gamma_prime_field_gadget<ppT>(10);
+    test_flystel_Q_gamma_binary_field_gadge<ppT>(10);
+    test_flystel_E_power_five_gadget<ppT>(10);
+    test_flystel_E_root_five_gadget<ppT>(10);
+    test_flystel_prime_field_gadget<ppT>(10);
     return 0;
 }
