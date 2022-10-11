@@ -27,7 +27,6 @@ template<typename FieldT> struct uscs_example {
     uscs_auxiliary_input<FieldT> auxiliary_input;
 
     uscs_example<FieldT>() = default;
-    uscs_example<FieldT>(const uscs_example<FieldT> &other) = default;
     uscs_example<FieldT>(
         const uscs_constraint_system<FieldT> &constraint_system,
         const uscs_primary_input<FieldT> &primary_input,
