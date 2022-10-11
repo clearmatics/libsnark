@@ -46,7 +46,6 @@ jobs:
       env:
         CXX: ${{ matrix.compiler }}
         CXXFLAGS: "-Werror"
-        CI_CONFIG: Debug
       run: |
         if [ "$(uname)" == "Darwin" ] ; then
           openssl_path=$(brew --prefix openssl)
@@ -59,7 +58,7 @@ jobs:
 
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=${CI_CONFIG} -DCMAKE_CXX_FLAGS="${CXXFLAGS}"
+        cmake .. ${cmake_flags} -DCMAKE_CXX_FLAGS="${CXXFLAGS}"
     - name: build
       run: |
         cd build
