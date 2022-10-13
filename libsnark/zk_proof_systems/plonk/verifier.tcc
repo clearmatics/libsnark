@@ -43,23 +43,6 @@ verifier_preprocessed_input_t<ppT> plonk_verifier<ppT, transcript_hasher>::
     return preprocessed_input;
 }
 
-template<typename ppT, class transcript_hasher>
-void plonk_verifier<ppT, transcript_hasher>::step_one(
-    const plonk_proof<ppT> &proof)
-{
-}
-
-template<typename ppT, class transcript_hasher>
-void plonk_verifier<ppT, transcript_hasher>::step_two(
-    const plonk_proof<ppT> &proof)
-{
-}
-
-template<typename ppT, class transcript_hasher>
-void plonk_verifier<ppT, transcript_hasher>::step_three(const srs<ppT> &srs)
-{
-}
-
 template<typename ppT>
 step_four_out_t<ppT>::step_four_out_t(
     const libff::Fr<ppT> &beta,
