@@ -10,7 +10,7 @@ from constants import *
 load('anemoi.sage')
      
 def output_parameters():
-    instances = anemoi_instances()    
+    instances = anemoi_selected_instances()    
     for i in range(len(instances)):
 #    for i in range(1):
         A_str = instances[i][0]
