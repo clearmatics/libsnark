@@ -60,6 +60,40 @@ namespace libsnark
 #define DEBUG_FLYSTEL_GAMMA 5
 #define DEBUG_FLYSTEL_DELTA 0
 
+/// Instances of this class should expose the following Anemoi
+/// parameters for every supported curve (with example values for the curve
+/// BLS12_381:
+///
+/// - prime field      = True
+/// - mult generator g = 7
+/// - alpha            = 5
+/// - alpha_inv        =
+/// 20974350070050476191779096203274386335076221000211055129041463479975432473805
+/// - beta             = 7
+/// - gamma            = 0
+/// - delta            =
+/// 14981678621464625851270783002338847382197300714436467949315331057125308909861
+/// - quad_exponent    = 2
+///
+/// See
+/// scripts/anemoi-hash/parameters.sage for details.
+template<typename FieldT> class anemoi_parameters;
+
+template<> class anemoi_parameters<libff::bls12_381_Fr>
+{
+public:
+    using FieldT = libff::Fr<libff::bls12_381_pp>;
+    const bool b_prime_field;
+    const FieldT multiplicative_generator_g;
+    const FieldT alpha;
+    const FieldT alpha_inv;
+    const FieldT beta;
+    const FieldT gamma;
+    const FieldT delta;
+    const unsigned int quad_exponent;
+    anemoi_parameters();
+};
+
 /// Flystel Q_gamma function for prime fields:
 /// Qf(x) = beta x^2 + gamma
 /// x: input

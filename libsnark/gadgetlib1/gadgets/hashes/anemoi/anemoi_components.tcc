@@ -18,6 +18,22 @@
 namespace libsnark
 {
 
+anemoi_parameters<libff::bls12_381_Fr>::anemoi_parameters()
+    : b_prime_field(false)
+    , multiplicative_generator_g(libff::Fr<libff::bls12_381_pp>(7))
+    , alpha(libff::Fr<libff::bls12_381_pp>(5))
+    , alpha_inv(libff::Fr<libff::bls12_381_pp>(
+          "2097435007005047619177909620327438633507622100021105512"
+          "9041463479975432473805"))
+    , beta(libff::Fr<libff::bls12_381_pp>(7))
+    , gamma(libff::Fr<libff::bls12_381_pp>(0))
+    , delta(libff::Fr<libff::bls12_381_pp>(
+          "14981678621464625851270783002338847382197300714436467949315"
+          "331057125308909861"))
+    , quad_exponent(2)
+{
+}
+
 // R1CS constraints for the operation y = const_a x^2 + const_b with x = input,
 // y = output. This operation is realized by the components \ref
 // flystel_Q_gamma_prime_field_gadget and \ref
