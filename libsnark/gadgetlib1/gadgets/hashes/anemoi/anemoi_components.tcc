@@ -496,10 +496,10 @@ anemoi_permutation_mds(const FieldT g)
     }
     if (NumStateColumns_L == 4) {
         M = {
-            {1, g2, g2, 1 + g},
-            {1 + g, g + g2, g2, 1 + 2 * g},
-            {g, 1 + g, 1, g},
-            {g, 1 + 2 * g, 1 + g, 1 + g}};
+            {1, 1 + g, g, g},
+            {g2, g + g2, 1 + g, 1 + 2 * g},
+            {g2, g2, 1, 1 + g},
+            {1 + g, 1 + 2 * g, g, 1 + g}};
         return M;
     }
     // If we are here, then the number of columns NumStateColumns_L has invalid
