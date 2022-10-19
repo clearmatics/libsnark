@@ -18,22 +18,6 @@
 namespace libsnark
 {
 
-anemoi_parameters<libff::bls12_381_Fr>::anemoi_parameters()
-    : b_prime_field(false)
-    , multiplicative_generator_g(libff::Fr<libff::bls12_381_pp>(7))
-    , alpha(libff::Fr<libff::bls12_381_pp>(5))
-    , alpha_inv(libff::Fr<libff::bls12_381_pp>(
-          "2097435007005047619177909620327438633507622100021105512"
-          "9041463479975432473805"))
-    , beta(libff::Fr<libff::bls12_381_pp>(7))
-    , gamma(libff::Fr<libff::bls12_381_pp>(0))
-    , delta(libff::Fr<libff::bls12_381_pp>(
-          "14981678621464625851270783002338847382197300714436467949315"
-          "331057125308909861"))
-    , quad_exponent(2)
-{
-}
-
 // R1CS constraints for the operation y = const_a x^2 + const_b with x = input,
 // y = output. This operation is realized by the components \ref
 // flystel_Q_gamma_prime_field_gadget and \ref
@@ -50,28 +34,24 @@ anemoi_parameters<libff::bls12_381_Fr>::anemoi_parameters()
 //
 // where A =(0, const_a, 0), B=(0, 1, 0) and C =(-const_b, 0, 1)
 
-template<typename FieldT, size_t generator>
-flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
+// template<typename ppT, size_t generator>
+template<typename ppT, class parameters>
+flystel_Q_gamma_prime_field_gadget<ppT, parameters>::
     flystel_Q_gamma_prime_field_gadget(
-        protoboard<FieldT> &pb,
-        const linear_combination<FieldT> &input,
-        const pb_variable<FieldT> &output,
+        protoboard<libff::Fr<ppT>> &pb,
+        const linear_combination<libff::Fr<ppT>> &input,
+        const pb_variable<libff::Fr<ppT>> &output,
         const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix)
-#ifdef FLYSTEL_DEBUG
-    , beta(DEBUG_FLYSTEL_BETA)
-    , gamma(DEBUG_FLYSTEL_GAMMA)
-#else
-    , beta(FieldT(generator))
-    , gamma(FieldT(0))
-#endif // #ifdef FLYSTEL_DEBUG
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , beta(parameters::beta)
+    , gamma(parameters::gamma)
     , input(input)
     , output(output)
 {
 }
 
-template<typename FieldT, size_t generator>
-void flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+void flystel_Q_gamma_prime_field_gadget<ppT, parameters>::
     generate_r1cs_constraints()
 {
     // Constraint has the form:
@@ -85,38 +65,34 @@ void flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
 
 // compute a witness y for a given input x for the computation y =
 // beta x^2 + gamma
-template<typename FieldT, size_t generator>
-void flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+void flystel_Q_gamma_prime_field_gadget<ppT, parameters>::
     generate_r1cs_witness()
 {
+    using FieldT = libff::Fr<ppT>;
     const FieldT input_value =
         input.evaluate(this->pb.full_variable_assignment());
     // y = beta x^2 + gamma
     this->pb.val(output) = this->beta * input_value * input_value + this->gamma;
 }
 
-template<typename FieldT, size_t generator>
-flystel_Q_delta_prime_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+flystel_Q_delta_prime_field_gadget<ppT, parameters>::
     flystel_Q_delta_prime_field_gadget(
         protoboard<FieldT> &pb,
         const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
-#ifdef FLYSTEL_DEBUG
-    , beta(DEBUG_FLYSTEL_BETA)
-    , delta(DEBUG_FLYSTEL_DELTA)
-#elif
-    , beta(FieldT(generator))
-    , delta(FieldT(generator).inverse())
-#endif // #ifdef FLYSTEL_DEBUG
+    , beta(parameters::beta)
+    , delta(parameters::delta)
     , input(input)
     , output(output)
 {
 }
 
-template<typename FieldT, size_t generator>
-void flystel_Q_delta_prime_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+void flystel_Q_delta_prime_field_gadget<ppT, parameters>::
     generate_r1cs_constraints()
 {
     // Constraint has the form:
@@ -130,8 +106,8 @@ void flystel_Q_delta_prime_field_gadget<FieldT, generator>::
 
 // compute a witness y for a given input x for the computation y =
 // beta x^2 + delta, where x=input, y=output
-template<typename FieldT, size_t generator>
-void flystel_Q_delta_prime_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+void flystel_Q_delta_prime_field_gadget<ppT, parameters>::
     generate_r1cs_witness()
 {
     const FieldT input_value =
@@ -156,8 +132,8 @@ void flystel_Q_delta_prime_field_gadget<FieldT, generator>::
 //
 // where A0=(0, beta, 0, 0), B0=(0, 1, 0, 0), C0=(0, 0, 1, 0) and
 // A1=(0, 0, 1, 0), B1=(0, 1, 0, 0), C1=(-gamma, 0, 0, 1)
-template<typename FieldT, size_t generator>
-flystel_Q_gamma_binary_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+flystel_Q_gamma_binary_field_gadget<ppT, parameters>::
     flystel_Q_gamma_binary_field_gadget(
         protoboard<FieldT> &pb,
         const linear_combination<FieldT> &input,
@@ -166,20 +142,15 @@ flystel_Q_gamma_binary_field_gadget<FieldT, generator>::
     : gadget<FieldT>(pb, annotation_prefix)
     , internal(pb_variable_allocate<FieldT>(
           pb, FMT(this->annotation_prefix, " internal")))
-#ifdef FLYSTEL_DEBUG
-    , beta(DEBUG_FLYSTEL_BETA)
-    , gamma(DEBUG_FLYSTEL_GAMMA)
-#elif
-    , beta(FieldT(generator))
-    , gamma(FieldT(0))
-#endif // #ifdef FLYSTEL_DEBUG
+    , beta(parameters::beta)
+    , gamma(parameters::gamma)
     , input(input)
     , output(output)
 {
 }
 
-template<typename FieldT, size_t generator>
-void flystel_Q_gamma_binary_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+void flystel_Q_gamma_binary_field_gadget<ppT, parameters>::
     generate_r1cs_constraints()
 {
     // (beta * input) * input = internal
@@ -192,8 +163,8 @@ void flystel_Q_gamma_binary_field_gadget<FieldT, generator>::
         FMT(this->annotation_prefix, " x_square * x = y - gamma"));
 }
 
-template<typename FieldT, size_t generator>
-void flystel_Q_gamma_binary_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+void flystel_Q_gamma_binary_field_gadget<ppT, parameters>::
     generate_r1cs_witness()
 {
     const FieldT input_value =
@@ -208,8 +179,8 @@ void flystel_Q_gamma_binary_field_gadget<FieldT, generator>::
 // x=input, y=output. This operation is represented with two
 // multiplications as y-delta = ((beta x * x) * x).
 // \see flystel_Q_delta_binary_field_gadget
-template<typename FieldT, size_t generator>
-flystel_Q_delta_binary_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+flystel_Q_delta_binary_field_gadget<ppT, parameters>::
     flystel_Q_delta_binary_field_gadget(
         protoboard<FieldT> &pb,
         const linear_combination<FieldT> &input,
@@ -218,20 +189,15 @@ flystel_Q_delta_binary_field_gadget<FieldT, generator>::
     : gadget<FieldT>(pb, annotation_prefix)
     , internal(pb_variable_allocate<FieldT>(
           pb, FMT(this->annotation_prefix, " internal")))
-#ifdef FLYSTEL_DEBUG
-    , beta(DEBUG_FLYSTEL_BETA)
-    , delta(DEBUG_FLYSTEL_DELTA)
-#elif
-    , beta(FieldT(generator))
-    , delta(FieldT(0))
-#endif // #ifdef FLYSTEL_DEBUG
+    , beta(parameters::beta)
+    , delta(parameters::delta)
     , input(input)
     , output(output)
 {
 }
 
-template<typename FieldT, size_t generator>
-void flystel_Q_delta_binary_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+void flystel_Q_delta_binary_field_gadget<ppT, parameters>::
     generate_r1cs_constraints()
 {
     // (beta * input) * input = internal
@@ -244,8 +210,8 @@ void flystel_Q_delta_binary_field_gadget<FieldT, generator>::
         FMT(this->annotation_prefix, " x_square * x = y - delta"));
 }
 
-template<typename FieldT, size_t generator>
-void flystel_Q_delta_binary_field_gadget<FieldT, generator>::
+template<typename ppT, class parameters>
+void flystel_Q_delta_binary_field_gadget<ppT, parameters>::
     generate_r1cs_witness()
 {
     const FieldT input_value =
@@ -273,11 +239,11 @@ void flystel_Q_delta_binary_field_gadget<FieldT, generator>::
 //
 // where A0=(01000), B0=(01000), C0=(00100); A1=(00100), B0=(00100),
 // C0=(00010) and A2=(01000), B2=(00010), C2=(00001)
-template<typename FieldT>
-flystel_E_power_five_gadget<FieldT>::flystel_E_power_five_gadget(
-    protoboard<FieldT> &pb,
-    const linear_combination<FieldT> &input,
-    const pb_variable<FieldT> &output,
+template<typename ppT>
+flystel_E_power_five_gadget<ppT>::flystel_E_power_five_gadget(
+    protoboard<libff::Fr<ppT>> &pb,
+    const linear_combination<libff::Fr<ppT>> &input,
+    const pb_variable<libff::Fr<ppT>> &output,
     const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
     , a0(pb_variable_allocate(pb, FMT(annotation_prefix, " a0")))
@@ -287,8 +253,8 @@ flystel_E_power_five_gadget<FieldT>::flystel_E_power_five_gadget(
 {
 }
 
-template<typename FieldT>
-void flystel_E_power_five_gadget<FieldT>::generate_r1cs_constraints()
+template<typename ppT>
+void flystel_E_power_five_gadget<ppT>::generate_r1cs_constraints()
 {
     // x1*x1 = x2
     this->pb.add_r1cs_constraint(
@@ -304,8 +270,8 @@ void flystel_E_power_five_gadget<FieldT>::generate_r1cs_constraints()
         FMT(this->annotation_prefix, " x^1 * x^4 = x^5"));
 }
 
-template<typename FieldT>
-void flystel_E_power_five_gadget<FieldT>::generate_r1cs_witness()
+template<typename ppT>
+void flystel_E_power_five_gadget<ppT>::generate_r1cs_witness()
 {
     const FieldT input_value =
         input.evaluate(this->pb.full_variable_assignment());
@@ -336,11 +302,11 @@ void flystel_E_power_five_gadget<FieldT>::generate_r1cs_witness()
 //
 // where A0=(01000), B0=(01000), C0=(00100); A1=(00100), B0=(00100),
 // C0=(00010) and A2=(01000), B2=(00010), C2=(00001)
-template<typename FieldT>
-flystel_E_root_five_gadget<FieldT>::flystel_E_root_five_gadget(
-    protoboard<FieldT> &pb,
-    const linear_combination<FieldT> &input,
-    const pb_variable<FieldT> &output,
+template<typename ppT, class parameters>
+flystel_E_root_five_gadget<ppT, parameters>::flystel_E_root_five_gadget(
+    protoboard<libff::Fr<ppT>> &pb,
+    const linear_combination<libff::Fr<ppT>> &input,
+    const pb_variable<libff::Fr<ppT>> &output,
     const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
     , a0(pb_variable_allocate(pb, FMT(annotation_prefix, " a0")))
@@ -350,9 +316,10 @@ flystel_E_root_five_gadget<FieldT>::flystel_E_root_five_gadget(
 {
 }
 
-template<typename FieldT>
-void flystel_E_root_five_gadget<FieldT>::generate_r1cs_constraints()
+template<typename ppT, class parameters>
+void flystel_E_root_five_gadget<ppT, parameters>::generate_r1cs_constraints()
 {
+    using FieldT = libff::Fr<ppT>;
     // y1*y1 = y2
     this->pb.add_r1cs_constraint(
         r1cs_constraint<FieldT>(output, output, a0),
@@ -367,13 +334,14 @@ void flystel_E_root_five_gadget<FieldT>::generate_r1cs_constraints()
         FMT(this->annotation_prefix, " y * y^4 = y^5"));
 }
 
-template<typename FieldT>
-void flystel_E_root_five_gadget<FieldT>::generate_r1cs_witness()
+template<typename ppT, class parameters>
+void flystel_E_root_five_gadget<ppT, parameters>::generate_r1cs_witness()
 {
     const FieldT input_value =
         input.evaluate(this->pb.full_variable_assignment());
     FieldT x = input_value; // this->pb.lc_val(input);
-    FieldT y = power(x, libff::bigint<5>(FLYSTEL_ALPHA_FIVE_INVERSE));
+    FieldT y = power(x, parameters::alpha_inv);
+
     // x2 = x1 * x1
     this->pb.val(a0) = y * y;
     // x3 = x2 * x2
@@ -382,15 +350,15 @@ void flystel_E_root_five_gadget<FieldT>::generate_r1cs_witness()
     this->pb.val(output) = y;
 }
 
-template<typename FieldT, size_t generator>
-flystel_prime_field_gadget<FieldT, generator>::flystel_prime_field_gadget(
-    protoboard<FieldT> &pb,
-    const linear_combination<FieldT> &x0,
-    const linear_combination<FieldT> &x1,
-    const pb_variable<FieldT> &y0,
-    const pb_variable<FieldT> &y1,
+template<typename ppT, class parameters>
+flystel_prime_field_gadget<ppT, parameters>::flystel_prime_field_gadget(
+    protoboard<libff::Fr<ppT>> &pb,
+    const linear_combination<libff::Fr<ppT>> &x0,
+    const linear_combination<libff::Fr<ppT>> &x1,
+    const pb_variable<libff::Fr<ppT>> &y0,
+    const pb_variable<libff::Fr<ppT>> &y1,
     const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
     , a0(pb_variable_allocate(pb, FMT(annotation_prefix, " a0")))
     , a1(pb_variable_allocate(pb, FMT(annotation_prefix, " a1")))
     , a2(pb_variable_allocate(pb, FMT(annotation_prefix, " a2")))
@@ -404,16 +372,16 @@ flystel_prime_field_gadget<FieldT, generator>::flystel_prime_field_gadget(
 {
 }
 
-template<typename FieldT, size_t generator>
-void flystel_prime_field_gadget<FieldT, generator>::generate_r1cs_constraints()
+template<typename ppT, class parameters>
+void flystel_prime_field_gadget<ppT, parameters>::generate_r1cs_constraints()
 {
     Q_gamma.generate_r1cs_constraints();
     Q_delta.generate_r1cs_constraints();
     E_root_five.generate_r1cs_constraints();
 }
 
-template<typename FieldT, size_t generator>
-void flystel_prime_field_gadget<FieldT, generator>::generate_r1cs_witness()
+template<typename ppT, class parameters>
+void flystel_prime_field_gadget<ppT, parameters>::generate_r1cs_witness()
 {
     Q_gamma.generate_r1cs_witness();
     E_root_five.generate_r1cs_witness();
@@ -455,18 +423,6 @@ anemoi_permutation_mds(const FieldT g)
     // value outside of the set {2,3,4}
     throw std::logic_error(
         "Error: invalid number of columns. Must be 2,3 or 4 .");
-}
-
-template<typename FieldT, size_t generator, size_t NumStateColumns_L>
-anemoi_permutation_round_prime_field_gadget<
-    FieldT,
-    generator,
-    NumStateColumns_L>::
-    anemoi_permutation_round_prime_field_gadget(
-        std::array<pb_variable<FieldT>, 2 * NumStateColumns_L> &input,
-        std::array<pb_variable<FieldT>, 2 * NumStateColumns_L> &output)
-    : input(input), output(output)
-{
 }
 
 } // namespace libsnark

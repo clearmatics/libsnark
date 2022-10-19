@@ -19,6 +19,53 @@
 
 using namespace libsnark;
 
+template<typename ppT> class debug_parameters;
+
+template<> class debug_parameters<libff::bls12_381_pp>
+{
+public:
+    using ppT = libff::bls12_381_pp;
+    using FieldT = libff::Fr<ppT>;
+    static const bool b_prime_field = false;
+    static const libff::bigint<FieldT::num_limbs> multiplicative_generator_g;
+    static const libff::bigint<FieldT::num_limbs> alpha;
+    static const libff::bigint<FieldT::num_limbs> alpha_inv;
+    static const libff::bigint<FieldT::num_limbs> beta;
+    static const libff::bigint<FieldT::num_limbs> gamma;
+    static const libff::bigint<FieldT::num_limbs> delta;
+    static const libff::bigint<FieldT::num_limbs> quad_exponent;
+};
+
+const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
+    debug_parameters<libff::bls12_381_pp>::multiplicative_generator_g =
+        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("7");
+
+const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
+    debug_parameters<libff::bls12_381_pp>::alpha =
+        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("5");
+
+const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
+    debug_parameters<libff::bls12_381_pp>::alpha_inv =
+        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>(
+            "209743500700504761917790962032743863350762210002110551290414634799"
+            "75432473805");
+
+const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
+    debug_parameters<libff::bls12_381_pp>::beta =
+        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("2");
+
+const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
+    debug_parameters<libff::bls12_381_pp>::gamma =
+        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("5");
+
+const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
+    debug_parameters<libff::bls12_381_pp>::delta =
+        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("0");
+
+const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
+    debug_parameters<libff::bls12_381_pp>::quad_exponent =
+        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("2");
+
 template<typename ppT>
 void test_pb_verify_circuit(protoboard<libff::Fr<ppT>> &pb)
 {
@@ -33,7 +80,8 @@ void test_pb_verify_circuit(protoboard<libff::Fr<ppT>> &pb)
         keypair.vk, primary_input, proof));
 }
 
-template<typename ppT> void test_flystel_Q_gamma_prime_field_gadget()
+template<typename ppT, class parameters>
+void test_flystel_Q_gamma_prime_field_gadget()
 {
     using FieldT = libff::Fr<ppT>;
     protoboard<FieldT> pb;
@@ -46,10 +94,7 @@ template<typename ppT> void test_flystel_Q_gamma_prime_field_gadget()
     y.allocate(pb, "y");
 
     // create gadget
-    flystel_Q_gamma_prime_field_gadget<
-        FieldT,
-        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
-        d(pb, x, y, "d");
+    flystel_Q_gamma_prime_field_gadget<ppT, parameters> d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value
@@ -65,7 +110,8 @@ template<typename ppT> void test_flystel_Q_gamma_prime_field_gadget()
     libff::print_time("flystel_power_two_gadget tests successful");
 }
 
-template<typename ppT> void test_flystel_Q_gamma_binary_field_gadge()
+template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
+void test_flystel_Q_gamma_binary_field_gadget()
 {
     using FieldT = libff::Fr<ppT>;
 
@@ -79,10 +125,7 @@ template<typename ppT> void test_flystel_Q_gamma_binary_field_gadge()
     y.allocate(pb, "y");
 
     // create gadget
-    flystel_Q_gamma_binary_field_gadget<
-        FieldT,
-        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
-        d(pb, x, y, "d");
+    flystel_Q_gamma_binary_field_gadget<ppT, parameters> d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value
@@ -112,7 +155,7 @@ template<typename ppT> void test_flystel_E_power_five_gadget()
     y.allocate(pb, "y");
 
     // create gadget
-    flystel_E_power_five_gadget<FieldT> d(pb, x, y, "d");
+    flystel_E_power_five_gadget<ppT> d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value
@@ -128,7 +171,8 @@ template<typename ppT> void test_flystel_E_power_five_gadget()
     libff::print_time("flystel_E_power_five_gadget tests successful");
 }
 
-template<typename ppT> void test_flystel_E_root_five_gadget()
+template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
+void test_flystel_E_root_five_gadget()
 {
     using FieldT = libff::Fr<ppT>;
 
@@ -142,7 +186,7 @@ template<typename ppT> void test_flystel_E_root_five_gadget()
     y.allocate(pb, "y");
 
     // create gadget
-    flystel_E_root_five_gadget<FieldT> d(pb, x, y, "d");
+    flystel_E_root_five_gadget<ppT, parameters> d(pb, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value
@@ -162,7 +206,8 @@ template<typename ppT> void test_flystel_E_root_five_gadget()
     libff::print_time("flystel_E_root_five_gadget tests successful");
 }
 
-template<typename ppT> void test_flystel_prime_field_gadget()
+template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
+void test_flystel_prime_field_gadget()
 {
     using FieldT = libff::Fr<ppT>;
 
@@ -173,10 +218,8 @@ template<typename ppT> void test_flystel_prime_field_gadget()
     pb_variable<FieldT> y0 = pb_variable_allocate(pb, "y0");
     pb_variable<FieldT> y1 = pb_variable_allocate(pb, "y1");
 
-    flystel_prime_field_gadget<
-        FieldT,
-        FLYSTEL_MULTIPLICATIVE_SUBGROUP_GENERATOR>
-        d(pb, x0, x1, y0, y1, "flystel");
+    flystel_prime_field_gadget<ppT, parameters> d(
+        pb, x0, x1, y0, y1, "flystel");
 
     // generate constraints
     d.generate_r1cs_constraints();
@@ -204,12 +247,13 @@ template<typename ppT> void test_for_curve()
     // Execute all tests for the given curve.
 
     ppT::init_public_params();
+    using parameters = debug_parameters<ppT>;
 
-    test_flystel_Q_gamma_prime_field_gadget<ppT>();
-    test_flystel_Q_gamma_binary_field_gadge<ppT>();
+    test_flystel_Q_gamma_prime_field_gadget<ppT, parameters>();
+    test_flystel_Q_gamma_binary_field_gadget<ppT, parameters>();
     test_flystel_E_power_five_gadget<ppT>();
-    test_flystel_E_root_five_gadget<ppT>();
-    test_flystel_prime_field_gadget<ppT>();
+    test_flystel_E_root_five_gadget<ppT, parameters>();
+    test_flystel_prime_field_gadget<ppT, parameters>();
 }
 
 TEST(TestAnemoiGadget, BLS12_381) { test_for_curve<libff::bls12_381_pp>(); }
