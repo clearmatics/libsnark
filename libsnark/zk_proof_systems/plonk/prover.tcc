@@ -67,6 +67,7 @@ round_one_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_one(
     const std::vector<libff::Fr<ppT>> &blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain,
     transcript_hasher &hasher)
 {
     using Field = libff::Fr<ppT>;
@@ -85,7 +86,8 @@ round_one_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_one(
         typename std::vector<Field>::const_iterator end =
             witness.begin() + (i * srs.num_gates) + (srs.num_gates);
         std::vector<Field> W_points(begin, end);
-        plonk_interpolate_polynomial_from_points<Field>(W_points, W_polys[i]);
+        plonk_interpolate_polynomial_from_points<Field>(
+            W_points, W_polys[i], domain);
     }
 
     // represent the blinding scalars b1, b2, ..., b9 as polynomials
@@ -137,6 +139,7 @@ round_two_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_two(
     const std::vector<libff::Fr<ppT>> blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain,
     transcript_hasher &hasher)
 {
     using Field = libff::Fr<ppT>;
@@ -158,7 +161,7 @@ round_two_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_two(
         srs.num_gates, beta, gamma, witness, srs.H_gen, srs.H_gen_permute);
 
     polynomial<Field> A_poly(srs.num_gates);
-    plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly);
+    plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly, domain);
 
     // add blinding polynomial z_1 to the accumulator polynomial A_poly
     libfqfft::_polynomial_addition<Field>(z_poly, z1_blind_poly, A_poly);
@@ -838,6 +841,9 @@ plonk_proof<ppT> plonk_prover<ppT, transcript_hasher>::compute_proof(
     const std::vector<libff::Fr<ppT>> &blind_scalars,
     transcript_hasher &hasher)
 {
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain =
+        libfqfft::get_evaluation_domain<libff::Fr<ppT>>(srs.num_gates);
+
     // Prover Round 0 (initialization)
     printf("[%s:%d] Prover Round 0...\n", __FILE__, __LINE__);
     round_zero_out_t<ppT> round_zero_out = plonk_prover::round_zero(srs);
@@ -845,7 +851,7 @@ plonk_proof<ppT> plonk_prover<ppT, transcript_hasher>::compute_proof(
     // Prover Round 1
     printf("[%s:%d] Prover Round 1...\n", __FILE__, __LINE__);
     round_one_out_t<ppT> round_one_out = plonk_prover::round_one(
-        round_zero_out, blind_scalars, witness, srs, hasher);
+        round_zero_out, blind_scalars, witness, srs, domain, hasher);
 
     printf("[%s:%d] Prover Round 2...\n", __FILE__, __LINE__);
     // - beta: permutation challenges - hashes of transcript of round
@@ -858,7 +864,14 @@ plonk_proof<ppT> plonk_prover<ppT, transcript_hasher>::compute_proof(
     const libff::Fr<ppT> gamma = hasher.get_hash();
 
     round_two_out_t<ppT> round_two_out = plonk_prover::round_two(
-        beta, gamma, round_zero_out, blind_scalars, witness, srs, hasher);
+        beta,
+        gamma,
+        round_zero_out,
+        blind_scalars,
+        witness,
+        srs,
+        domain,
+        hasher);
 
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
     // - alpha: quotient challenge - hash of transcript of rounds 1,2

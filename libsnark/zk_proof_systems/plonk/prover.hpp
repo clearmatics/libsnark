@@ -273,6 +273,7 @@ public:
         const std::vector<libff::Fr<ppT>> &blind_scalars,
         const std::vector<libff::Fr<ppT>> &witness,
         const srs<ppT> &srs,
+        std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain,
         transcript_hasher &hasher);
 
     /// Prover Round 2
@@ -299,6 +300,7 @@ public:
         const std::vector<libff::Fr<ppT>> blind_scalars,
         const std::vector<libff::Fr<ppT>> &witness,
         const srs<ppT> &srs,
+        std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain,
         transcript_hasher &hasher);
 
     /// Prover Round 3
