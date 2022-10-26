@@ -13,17 +13,29 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-10.15]
+        os: [ubuntu-20.04, macos-11]
         cmake_flags: ["-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_BUILD_TYPE=Debug -DDEBUG=1", "-CMAKE_BUILD_TYPE=Release"]
         include:
           - compiler: clang
-            os: macos-10.15
+            os: macos-11
           - compiler: g++
             os: ubuntu-20.04
 
     runs-on: ${{ matrix.os }}
 
     steps:
+    - name: install-dependencies-ubuntu
+      if: matrix.os == 'ubuntu-20.04'
+      run: |
+        sudo apt-get update
+        sudo apt-get install build-essential git libboost-all-dev cmake libgmp3-dev libssl-dev libprocps-dev pkg-config
+    - name: install-dependencies-macos
+      if: matrix.os == 'macos-11'
+      run: |
+        brew link llvm@14
+        which clang
+        clang --version
+        brew install ${MACOS_BREW_PACKAGES}
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -34,14 +46,6 @@ jobs:
         git diff --no-ext-diff > format_errs
         head -n 20 format_errs
         [ `cat format_errs | wc -l` == "0" ]
-    - name: install-dependencies-ubuntu
-      if: matrix.os == 'ubuntu-20.04'
-      run: |
-        sudo apt-get update
-        sudo apt-get install build-essential git libboost-all-dev cmake libgmp3-dev libssl-dev libprocps-dev pkg-config
-    - name: install-dependencies-macos
-      if: matrix.os == 'macos-10.15'
-      run: brew install ${MACOS_BREW_PACKAGES}
     - name: configure
       env:
         CXX: ${{ matrix.compiler }}
