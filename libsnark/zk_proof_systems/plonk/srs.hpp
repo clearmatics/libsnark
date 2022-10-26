@@ -124,9 +124,6 @@ public:
     /// the 0-th polynomial of the Lagrange basis
     polynomial<Field> L_basis_zero;
 
-    /// the libfqfft domain
-    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain;
-
     srs(const size_t &num_gates,
         const size_t &num_qpolys,
         const polynomial<Field> &PI_poly,
@@ -139,8 +136,7 @@ public:
         const libff::Fr<ppT> &k2,
         std::vector<libff::G1<ppT>> &&secret_powers_g1,
         std::vector<libff::G2<ppT>> &&secret_powers_g2,
-        const polynomial<Field> &L_basis_zero,
-        std::shared_ptr<libfqfft::evaluation_domain<Field>> domain);
+        const polynomial<Field> &L_basis_zero);
 };
 
 /// Derive the (plain) SRS from the circuit description and the
