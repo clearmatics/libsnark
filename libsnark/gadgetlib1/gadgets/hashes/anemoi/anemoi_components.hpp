@@ -302,8 +302,7 @@ public:
 
     anemoi_permutation_round_prime_field_gadget(
         std::array<pb_variable<FieldT>, 2 * NumStateColumns_L> &input,
-        std::array<pb_variable<FieldT>, 2 * NumStateColumns_L> &output,
-        std::string &annotation_prefix);
+        std::array<pb_variable<FieldT>, 2 * NumStateColumns_L> &output);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
