@@ -213,7 +213,8 @@ public:
     /// \param[out] zh_zeta: evaluation of vanishing polynomial Zh at
     ///             x=zeta i.e. Zh(zeta)
     static step_five_out_t<ppT> step_five(
-        const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs);
+        const step_four_out_t<ppT> &step_four_out,
+        std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain);
 
     /// Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
     /// Note: the paper counts the L-polynomials from 1; we count from 0
