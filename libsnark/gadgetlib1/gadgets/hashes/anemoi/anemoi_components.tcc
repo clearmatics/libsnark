@@ -505,8 +505,7 @@ anemoi_permutation_mds(const FieldT g)
     // If we are here, then the number of columns NumStateColumns_L has invalid
     // value outside of the set {2,3,4}
     throw std::logic_error(
-        "Error: invalid number of columns %d . Must be 2,3 or 4 .",
-        NumStateColumns_L);
+        "Error: invalid number of columns. Must be 2,3 or 4 .");
 }
 
 template<typename FieldT, size_t generator, size_t NumStateColumns_L>
