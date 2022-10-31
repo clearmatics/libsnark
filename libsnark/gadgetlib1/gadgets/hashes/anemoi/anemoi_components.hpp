@@ -71,7 +71,7 @@ public:
         protoboard<FieldT> &pb,
         const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix = "");
+        const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -98,7 +98,7 @@ public:
         protoboard<FieldT> &pb,
         const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix = "");
+        const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -130,7 +130,7 @@ public:
         protoboard<FieldT> &pb,
         const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix = "");
+        const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -162,7 +162,7 @@ public:
         protoboard<FieldT> &pb,
         const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix = "");
+        const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -188,7 +188,7 @@ public:
         protoboard<FieldT> &pb,
         const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix = "");
+        const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -214,7 +214,7 @@ public:
         protoboard<FieldT> &pb,
         const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix = "");
+        const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -259,7 +259,7 @@ public:
         const linear_combination<FieldT> &x1,
         const pb_variable<FieldT> &y0,
         const pb_variable<FieldT> &y1,
-        const std::string &annotation_prefix = "");
+        const std::string &annotation_prefix);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
