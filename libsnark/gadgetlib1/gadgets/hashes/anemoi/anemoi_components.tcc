@@ -299,10 +299,12 @@ flystel_E_power_five_gadget<FieldT>::flystel_E_power_five_gadget(
     const linear_combination<FieldT> &input,
     const pb_variable<FieldT> &output,
     const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
+    : gadget<FieldT>(pb, annotation_prefix)
+    , a0(pb_variable_allocate(pb, FMT(annotation_prefix, " internal value a0")))
+    , a1(pb_variable_allocate(pb, FMT(annotation_prefix, " internal value a1")))
+    , input(input)
+    , output(output)
 {
-    a0.allocate(this->pb, " internal value a0");
-    a1.allocate(this->pb, " internal value a1");
 }
 
 template<typename FieldT>
@@ -366,10 +368,12 @@ flystel_E_root_five_gadget<FieldT>::flystel_E_root_five_gadget(
     const linear_combination<FieldT> &input,
     const pb_variable<FieldT> &output,
     const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix), input(input), output(output)
+    : gadget<FieldT>(pb, annotation_prefix)
+    , a0(pb_variable_allocate(pb, FMT(annotation_prefix, " a0")))
+    , a1(pb_variable_allocate(pb, FMT(annotation_prefix, " a1")))
+    , input(input)
+    , output(output)
 {
-    a0.allocate(this->pb, " internal value a0");
-    a1.allocate(this->pb, " internal value a1");
 }
 
 template<typename FieldT>

@@ -148,7 +148,7 @@ class flystel_Q_delta_binary_field_gadget : public gadget<FieldT>
 {
 private:
     /// internal (i.e. intermediate) variable
-    pb_variable<FieldT> internal;
+    const pb_variable<FieldT> internal;
     /// constants
     const FieldT beta;
     const FieldT delta;
@@ -176,8 +176,8 @@ class flystel_E_power_five_gadget : public gadget<FieldT>
 {
 private:
     // internal (i.e. intermediate) variables
-    pb_variable<FieldT> a0;
-    pb_variable<FieldT> a1;
+    const pb_variable<FieldT> a0;
+    const pb_variable<FieldT> a1;
 
 public:
     /// input/output
@@ -202,8 +202,8 @@ class flystel_E_root_five_gadget : public gadget<FieldT>
 {
 private:
     // internal (i.e. intermediate) variables
-    pb_variable<FieldT> a0;
-    pb_variable<FieldT> a1;
+    const pb_variable<FieldT> a0;
+    const pb_variable<FieldT> a1;
 
 public:
     /// input/output
@@ -239,9 +239,9 @@ class flystel_prime_field_gadget : public gadget<FieldT>
 {
 private:
     // internal (i.e. intermediate) variables
-    pb_variable<FieldT> a0;
-    pb_variable<FieldT> a1;
-    pb_variable<FieldT> a2;
+    const pb_variable<FieldT> a0;
+    const pb_variable<FieldT> a1;
+    const pb_variable<FieldT> a2;
 
 public:
     const linear_combination<FieldT> input_x0;
