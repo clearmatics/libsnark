@@ -18,19 +18,6 @@
 namespace libsnark
 {
 
-// A R1CS constraint is a formal expression of the form
-//
-//                < A , X > * < B , X > = < C , X > ,
-//
-// where X = (x_0,x_1,...,x_m) is a vector of formal variables and
-// A,B,C each consist of 1+m elements in <FieldT> and <A, X> = \sum_i
-// (a_i x_i) is the dot product between vectors A and X. Equivalently,
-// the vectors A,B,C are linear combinations of X.
-//
-// A R1CS constraint is used to construct a R1CS constraint system.
-//
-// See also class \ef r1cs_constraint
-
 // R1CS constraints for the operation y = const_a x^2 + const_b with x = input,
 // y = output. This operation is realized by the components \ref
 // flystel_Q_gamma_prime_field_gadget and \ref
