@@ -70,7 +70,7 @@ FieldT protoboard<FieldT>::val(const pb_variable<FieldT> &var) const
 template<typename FieldT>
 FieldT &protoboard<FieldT>::lc_val(const pb_linear_combination<FieldT> &lc)
 {
-    if (lc.is_variable == true) {
+    if (lc.is_variable) {
         return this->val(pb_variable<FieldT>(lc.index));
     } else {
         assert(lc.index < lc_values.size());
