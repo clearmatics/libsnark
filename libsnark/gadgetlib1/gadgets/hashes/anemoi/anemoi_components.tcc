@@ -70,7 +70,7 @@ void flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
 }
 
 // compute a witness y for a given input x for the computation y =
-// beta x^2 + gamma, where x=input, y=output
+// beta x^2 + gamma
 template<typename FieldT, size_t generator>
 void flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     generate_r1cs_witness()
@@ -139,7 +139,7 @@ void flystel_Q_delta_prime_field_gadget<FieldT, generator>::
 }
 
 // R1CS constraints for the operation y = beta x^3 + gamma with
-// x=input, y=output. This operation is represented with two
+// x=input, y=output. This operation is represented with three
 // multiplications as y-gamma = ((beta x * x) * x). Equivalently:
 //
 // beta x1 * x1 = x2
