@@ -198,7 +198,7 @@ template<typename ppT> void test_flystel_prime_field_gadget(const size_t n)
     ASSERT_EQ(y1_expect, pb.val(y1));
     ASSERT_TRUE(pb.is_satisfied());
 
-    //    test_pb_verify_circuit<ppT>(pb);
+    test_pb_verify_circuit<ppT>(pb);
 
     libff::print_time("flystel_prime_field_gadget tests successful");
 }
