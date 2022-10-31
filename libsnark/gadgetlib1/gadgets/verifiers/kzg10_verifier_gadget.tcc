@@ -14,6 +14,8 @@
 namespace libsnark
 {
 
+// kzg10_srs_variable
+
 template<typename ppT>
 kzg10_srs_variable<ppT>::kzg10_srs_variable(
     protoboard<libff::Fr<ppT>> &pb,
@@ -40,6 +42,60 @@ void kzg10_srs_variable<ppT>::generate_r1cs_witness(
     }
     alpha_g2.generate_r1cs_witness(srs.alpha_g2);
 }
+
+// kzg10_pairing_check_gadget
+
+template<typename ppT>
+kzg10_pairing_check_gadget<ppT>::kzg10_pairing_check_gadget(
+    protoboard<libff::Fr<ppT>> &pb,
+    const G1_variable<ppT> &A,
+    const G2_variable<ppT> &B,
+    const G1_variable<ppT> &C,
+    const libff::G2<other_curve<ppT>> &D,
+    pb_variable<libff::Fr<ppT>> &result,
+    const std::string annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , A_precomp()
+    , compute_A_precomp(
+          pb, A, A_precomp, FMT(annotation_prefix, " compute_A_precomp"))
+    , B_precomp()
+    , compute_B_precomp(
+          pb, B, B_precomp, FMT(annotation_prefix, " compute_B_precomp"))
+    , C_precomp()
+    , compute_C_precomp(
+          pb, C, C_precomp, FMT(annotation_prefix, " compute_C_precomp"))
+    , D_precomp(pb, D, FMT(annotation_prefix, " D_precomp"))
+    , check_pairing_equality(
+          pb,
+          A_precomp,
+          B_precomp,
+          C_precomp,
+          D_precomp,
+          result,
+          FMT(annotation_prefix, " check_pairing_equality"))
+
+{
+}
+
+template<typename ppT>
+void kzg10_pairing_check_gadget<ppT>::generate_r1cs_constraints()
+{
+    compute_A_precomp.generate_r1cs_constraints();
+    compute_B_precomp.generate_r1cs_constraints();
+    compute_C_precomp.generate_r1cs_constraints();
+    check_pairing_equality.generate_r1cs_constraints();
+}
+
+template<typename ppT>
+void kzg10_pairing_check_gadget<ppT>::generate_r1cs_witness()
+{
+    compute_A_precomp.generate_r1cs_witness();
+    compute_B_precomp.generate_r1cs_witness();
+    compute_C_precomp.generate_r1cs_witness();
+    check_pairing_equality.generate_r1cs_witness();
+}
+
+// kzg10_verifier_gadget
 
 template<typename ppT>
 kzg10_verifier_gadget<ppT>::kzg10_verifier_gadget(
@@ -90,31 +146,16 @@ kzg10_verifier_gadget<ppT>::kzg10_verifier_gadget(
           -poly_eval_in_G1.value,
           C,
           FMT(annotation_prefix, " compute_C"))
-
-    , A_precomp()
-    , compute_A_precomp(
-          pb, witness, A_precomp, FMT(annotation_prefix, " compute_A_precomp"))
-    , B_precomp()
-    , compute_B_precomp(
-          pb, B, B_precomp, FMT(annotation_prefix, " compute_B_precomp"))
-    , C_precomp()
-    , compute_C_precomp(
-          pb, C, C_precomp, FMT(annotation_prefix, " compute_C_precomp"))
-    , D_precomp(
-          pb,
-          libff::G2<other_curve<ppT>>::one(),
-          FMT(annotation_prefix, " D_precomp"))
-
     , check_result(pb_variable_allocate<FieldT>(
           pb, FMT(annotation_prefix, " check_result")))
-    , check_pairing_equality(
+    , pairing_check(
           pb,
-          A_precomp,
-          B_precomp,
-          C_precomp,
-          D_precomp,
+          witness,
+          B,
+          C,
+          libff::G2<other_curve<ppT>>::one(),
           check_result,
-          FMT(annotation_prefix, " check_pairing_equality"))
+          FMT(annotation_prefix, "pairing_check"))
 
     , group_elements_non_zero(pb_variable_allocate<FieldT>(
           pb, FMT(annotation_prefix, " group_elements_non_zero")))
@@ -129,10 +170,7 @@ void kzg10_verifier_gadget<ppT>::generate_r1cs_constraints()
     compute_B.generate_r1cs_constraints();
     compute_poly_eval_in_G1.generate_r1cs_constraints();
     compute_C.generate_r1cs_constraints();
-    compute_A_precomp.generate_r1cs_constraints();
-    compute_B_precomp.generate_r1cs_constraints();
-    compute_C_precomp.generate_r1cs_constraints();
-    check_pairing_equality.generate_r1cs_constraints();
+    pairing_check.generate_r1cs_constraints();
 
     // group_elements_non_zero =
     //   (1 - i_in_G2.is_identity) * (1 - poly_eval_in_G1.is_identity)
@@ -159,10 +197,7 @@ template<typename ppT> void kzg10_verifier_gadget<ppT>::generate_r1cs_witness()
     // compute_C.B = -poly_eval_in_G1.value.  Evaluate the result of negation.
     compute_C.B.Y.evaluate(this->pb);
     compute_C.generate_r1cs_witness();
-    compute_A_precomp.generate_r1cs_witness();
-    compute_B_precomp.generate_r1cs_witness();
-    compute_C_precomp.generate_r1cs_witness();
-    check_pairing_equality.generate_r1cs_witness();
+    pairing_check.generate_r1cs_witness();
 
     const FieldT group_elements_non_zero_val =
         (FieldT::one() - this->pb.lc_val(i_in_G2.is_identity)) *
