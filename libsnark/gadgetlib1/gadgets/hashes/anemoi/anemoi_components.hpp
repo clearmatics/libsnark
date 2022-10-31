@@ -11,6 +11,17 @@
 
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
 
+/// Implementation of the Anenoi arithmetization-oriented hash function
+///
+/// Reference:
+/// - \[BBCPSVW22]:
+///   Title: "New Design Techniques for Efficient
+///   Arithmetization-Oriented Hash Functions: Anemoi Permutations and
+///   Jive Compression Mode", Clemence Bouvier, Pierre Briaud, Pyrros
+///   Chaidos, Leo Perrin, Robin Salen, Vesselin Velichkov, Danny
+///   Willems, Cryptology ePrint Archive, Report 2022/840, 2019,
+///   <https://eprint.iacr.org/2022/840>
+
 namespace libsnark
 {
 
@@ -232,7 +243,7 @@ public:
 /// y0 = x0 - a0 + a2
 /// y1 = x1 - a1
 ///
-/// \note: in the paper (x0,x1)->(y0,y1) is denoted with (x,y)->(u,v)
+/// \note: in [BBCPSVW22] (x0,x1)->(y0,y1) is denoted with (x,y)->(u,v)
 template<typename FieldT, size_t generator>
 class flystel_prime_field_gadget : public gadget<FieldT>
 {
