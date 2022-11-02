@@ -68,12 +68,10 @@ template<typename FieldT, size_t generator>
 class flystel_Q_gamma_prime_field_gadget : public gadget<FieldT>
 {
 private:
-    // constants
     const FieldT beta;
     const FieldT gamma;
 
 public:
-    // input/output
     const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
@@ -95,12 +93,10 @@ template<typename FieldT, size_t generator>
 class flystel_Q_delta_prime_field_gadget : public gadget<FieldT>
 {
 private:
-    // constants
     const FieldT beta;
     const FieldT delta;
 
 public:
-    // input/output
     const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
@@ -125,14 +121,11 @@ template<typename FieldT, size_t generator>
 class flystel_Q_gamma_binary_field_gadget : public gadget<FieldT>
 {
 private:
-    /// internal (i.e. intermediate) variable
     const pb_variable<FieldT> internal;
-    /// constants
     const FieldT beta;
     const FieldT gamma;
 
 public:
-    /// input/output
     const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
@@ -157,14 +150,11 @@ template<typename FieldT, size_t generator>
 class flystel_Q_delta_binary_field_gadget : public gadget<FieldT>
 {
 private:
-    /// internal (i.e. intermediate) variable
     const pb_variable<FieldT> internal;
-    /// constants
     const FieldT beta;
     const FieldT delta;
 
 public:
-    /// input/output
     const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
@@ -190,7 +180,6 @@ private:
     const pb_variable<FieldT> a1;
 
 public:
-    /// input/output
     const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
@@ -216,7 +205,6 @@ private:
     const pb_variable<FieldT> a1;
 
 public:
-    /// input/output
     const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
