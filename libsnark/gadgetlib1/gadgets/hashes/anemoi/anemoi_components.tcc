@@ -52,8 +52,6 @@ flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
     , input(input)
     , output(output)
 {
-    printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
-    this->input.print();
 }
 
 template<typename FieldT, size_t generator>
@@ -79,12 +77,6 @@ void flystel_Q_gamma_prime_field_gadget<FieldT, generator>::
         input.evaluate(this->pb.full_variable_assignment());
     // y = beta x^2 + gamma
     this->pb.val(output) = this->beta * input_value * input_value + this->gamma;
-
-    printf("[%s:%d] flystel_Q_gamma_prime_field_gadget\n", __FILE__, __LINE__);
-    printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
-    input_value.print();
-    printf("[%s:%d] %s() output ", __FILE__, __LINE__, __FUNCTION__);
-    this->pb.val(output).print();
 }
 
 template<typename FieldT, size_t generator>
@@ -130,12 +122,6 @@ void flystel_Q_delta_prime_field_gadget<FieldT, generator>::
         input.evaluate(this->pb.full_variable_assignment());
     // y = beta x^2 + delta
     this->pb.val(output) = this->beta * input_value * input_value + this->delta;
-
-    printf("[%s:%d] flystel_Q_delta_prime_field_gadget\n", __FILE__, __LINE__);
-    printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
-    input_value.print();
-    printf("[%s:%d] %s() output ", __FILE__, __LINE__, __FUNCTION__);
-    this->pb.val(output).print();
 }
 
 // R1CS constraints for the operation y = beta x^3 + gamma with
@@ -200,11 +186,6 @@ void flystel_Q_gamma_binary_field_gadget<FieldT, generator>::
     this->pb.val(internal) = (this->beta * input_value) * input_value;
     // y = beta x^3 + gamma = x_internal * x + gamma
     this->pb.val(output) = this->pb.val(internal) * input_value + this->gamma;
-
-    printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
-    input_value.print();
-    printf("[%s:%d] %s() output ", __FILE__, __LINE__, __FUNCTION__);
-    this->pb.val(output).print();
 }
 
 // R1CS constraints for the operation y = beta x^3 + delta with
@@ -257,11 +238,6 @@ void flystel_Q_delta_binary_field_gadget<FieldT, generator>::
     this->pb.val(internal) = (this->beta * input_value) * input_value;
     // y = beta x^3 + delta = x_internal * x + delta
     this->pb.val(output) = this->pb.val(internal) * input_value + this->delta;
-
-    printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
-    input_value.print();
-    printf("[%s:%d] %s() output ", __FILE__, __LINE__, __FUNCTION__);
-    this->pb.val(output).print();
 }
 
 // R1CS constraints for the operation y = x^5 with x=input,
@@ -323,12 +299,6 @@ void flystel_E_power_five_gadget<FieldT>::generate_r1cs_witness()
     this->pb.val(a1) = (this->pb.val(a0)) * this->pb.val(a0);
     // y = x1 * x3
     this->pb.val(output) = input_value * this->pb.val(a1);
-
-    printf("[%s:%d] flystel_E_power_five_gadget\n", __FILE__, __LINE__);
-    printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
-    input_value.print();
-    printf("[%s:%d] %s() output ", __FILE__, __LINE__, __FUNCTION__);
-    this->pb.val(output).print();
 }
 
 // R1CS constraints for the operation y = x^1/5 with x=input,
@@ -394,12 +364,6 @@ void flystel_E_root_five_gadget<FieldT>::generate_r1cs_witness()
     this->pb.val(a1) = (this->pb.val(a0)) * this->pb.val(a0);
     // y = x1 * x3
     this->pb.val(output) = y;
-
-    printf("[%s:%d] flystel_E_root_five_gadget\n", __FILE__, __LINE__);
-    printf("[%s:%d] %s() input ", __FILE__, __LINE__, __FUNCTION__);
-    input_value.print();
-    printf("[%s:%d] %s() output ", __FILE__, __LINE__, __FUNCTION__);
-    this->pb.val(output).print();
 }
 
 template<typename FieldT, size_t generator>
@@ -422,18 +386,6 @@ flystel_prime_field_gadget<FieldT, generator>::flystel_prime_field_gadget(
     , Q_delta(pb, x1 - a1, a2, FMT(annotation_prefix, " Q_delta"))
     , E_root_five(pb, x0 - a0, a1, FMT(annotation_prefix, " E_root_five"))
 {
-    const FieldT input_x0_value =
-        input_x0.evaluate(this->pb.full_variable_assignment());
-    const FieldT input_x1_value =
-        input_x1.evaluate(this->pb.full_variable_assignment());
-    const FieldT a0_value = this->pb.val(a0);
-
-    printf("[%s:%d] %s() x0 = ", __FILE__, __LINE__, __FUNCTION__);
-    input_x0_value.print();
-    printf("[%s:%d] %s() x1 = ", __FILE__, __LINE__, __FUNCTION__);
-    input_x1_value.print();
-    printf("[%s:%d] %s() a0 = ", __FILE__, __LINE__, __FUNCTION__);
-    a0_value.print();
 }
 
 template<typename FieldT, size_t generator>
@@ -459,17 +411,6 @@ void flystel_prime_field_gadget<FieldT, generator>::generate_r1cs_witness()
     this->pb.lc_val(output_y0) =
         input_x0_value - this->pb.val(a0) + this->pb.val(a2);
     this->pb.lc_val(output_y1) = input_x1_value - this->pb.val(a1);
-
-    printf("[%s:%d] x0  ", __FILE__, __LINE__);
-    input_x0_value.print();
-    printf("[%s:%d] a0  ", __FILE__, __LINE__);
-    this->pb.val(a0).print();
-    printf("[%s:%d] a2  ", __FILE__, __LINE__);
-    this->pb.val(a2).print();
-    printf("[%s:%d] y0  ", __FILE__, __LINE__);
-    this->pb.lc_val(output_y0).print();
-    printf("[%s:%d] y1  ", __FILE__, __LINE__);
-    this->pb.lc_val(output_y1).print();
 }
 
 template<typename FieldT, size_t NumStateColumns_L>

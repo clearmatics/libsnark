@@ -35,11 +35,9 @@ void test_pb_verify_circuit(protoboard<libff::Fr<ppT>> &pb)
         keypair.vk, primary_input, proof));
 }
 
-template<typename ppT>
-void test_flystel_Q_gamma_prime_field_gadget(const size_t n)
+template<typename ppT> void test_flystel_Q_gamma_prime_field_gadget()
 {
     using FieldT = libff::Fr<ppT>;
-    printf("testing flystel_power_two_gadget on all %zu bit strings\n", n);
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
     pb_variable<FieldT> y;
@@ -67,11 +65,9 @@ void test_flystel_Q_gamma_prime_field_gadget(const size_t n)
     libff::print_time("flystel_power_two_gadget tests successful");
 }
 
-template<typename ppT>
-void test_flystel_Q_gamma_binary_field_gadge(const size_t n)
+template<typename ppT> void test_flystel_Q_gamma_binary_field_gadge()
 {
     using FieldT = libff::Fr<ppT>;
-    printf("testing flystel_power_three_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
@@ -101,10 +97,9 @@ void test_flystel_Q_gamma_binary_field_gadge(const size_t n)
     libff::print_time("flystel_power_three_gadget tests successful");
 }
 
-template<typename ppT> void test_flystel_E_power_five_gadget(const size_t n)
+template<typename ppT> void test_flystel_E_power_five_gadget()
 {
     using FieldT = libff::Fr<ppT>;
-    printf("testing flystel_E_power_five_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
@@ -131,10 +126,9 @@ template<typename ppT> void test_flystel_E_power_five_gadget(const size_t n)
     libff::print_time("flystel_E_power_five_gadget tests successful");
 }
 
-template<typename ppT> void test_flystel_E_root_five_gadget(const size_t n)
+template<typename ppT> void test_flystel_E_root_five_gadget()
 {
     using FieldT = libff::Fr<ppT>;
-    printf("testing flystel_E_root_five_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
     pb_variable<FieldT> x;
@@ -165,10 +159,9 @@ template<typename ppT> void test_flystel_E_root_five_gadget(const size_t n)
     libff::print_time("flystel_E_root_five_gadget tests successful");
 }
 
-template<typename ppT> void test_flystel_prime_field_gadget(const size_t n)
+template<typename ppT> void test_flystel_prime_field_gadget()
 {
     using FieldT = libff::Fr<ppT>;
-    printf("testing flystel_prime_field_gadget on all %zu bit strings\n", n);
 
     protoboard<FieldT> pb;
 
@@ -213,10 +206,10 @@ int main()
     libff::bls12_381_pp::init_public_params();
     using ppT = libff::bls12_381_pp;
 
-    test_flystel_Q_gamma_prime_field_gadget<ppT>(10);
-    test_flystel_Q_gamma_binary_field_gadge<ppT>(10);
-    test_flystel_E_power_five_gadget<ppT>(10);
-    test_flystel_E_root_five_gadget<ppT>(10);
-    test_flystel_prime_field_gadget<ppT>(10);
+    test_flystel_Q_gamma_prime_field_gadget<ppT>();
+    test_flystel_Q_gamma_binary_field_gadge<ppT>();
+    test_flystel_E_power_five_gadget<ppT>();
+    test_flystel_E_root_five_gadget<ppT>();
+    test_flystel_prime_field_gadget<ppT>();
     return 0;
 }
