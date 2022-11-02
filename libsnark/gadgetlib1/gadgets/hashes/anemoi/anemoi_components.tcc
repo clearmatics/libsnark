@@ -125,8 +125,8 @@ void flystel_Q_delta_prime_field_gadget<FieldT, generator>::
 }
 
 // R1CS constraints for the operation y = beta x^3 + gamma with
-// x=input, y=output. This operation is represented with three
-// multiplications as y-gamma = ((beta x * x) * x). Equivalently:
+// x=input, y=output, represented as y-gamma = ((beta x * x) *
+// x) or equivalently:
 //
 // beta x1 * x1 = x2
 // x2 * x1 = x3-gamma
