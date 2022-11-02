@@ -62,6 +62,8 @@ template<typename ppT> void test_flystel_Q_gamma_prime_field_gadget()
     // the expected output is 13 for input 2
     ASSERT_EQ(pb.val(y), 13);
     ASSERT_TRUE(pb.is_satisfied());
+    test_pb_verify_circuit<ppT>(pb);
+
     libff::print_time("flystel_power_two_gadget tests successful");
 }
 
@@ -93,6 +95,7 @@ template<typename ppT> void test_flystel_Q_gamma_binary_field_gadge()
     // the expected output is 21 for input 2
     ASSERT_EQ(pb.val(y), 21);
     ASSERT_TRUE(pb.is_satisfied());
+    test_pb_verify_circuit<ppT>(pb);
 
     libff::print_time("flystel_power_three_gadget tests successful");
 }
@@ -122,6 +125,7 @@ template<typename ppT> void test_flystel_E_power_five_gadget()
     // the expected output is 32 for input 2
     ASSERT_EQ(pb.val(y), 32);
     ASSERT_TRUE(pb.is_satisfied());
+    test_pb_verify_circuit<ppT>(pb);
 
     libff::print_time("flystel_E_power_five_gadget tests successful");
 }
@@ -155,6 +159,7 @@ template<typename ppT> void test_flystel_E_root_five_gadget()
     // the expected output is 32 for input 2
     ASSERT_EQ(pb.val(y), y_expected);
     ASSERT_TRUE(pb.is_satisfied());
+    test_pb_verify_circuit<ppT>(pb);
 
     libff::print_time("flystel_E_root_five_gadget tests successful");
 }
