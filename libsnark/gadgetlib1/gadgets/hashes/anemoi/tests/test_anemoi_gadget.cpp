@@ -16,8 +16,6 @@
 #include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_components.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_constants.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/r1cs_gg_ppzksnark.hpp>
-//#include
-//<libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
 
 using namespace libsnark;
 
