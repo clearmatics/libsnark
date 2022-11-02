@@ -199,20 +199,24 @@ template<typename ppT> void test_flystel_prime_field_gadget()
     libff::print_time("flystel_prime_field_gadget tests successful");
 }
 
-int main()
+template<typename ppT> void test_for_curve()
 {
-    libff::start_profiling();
+    // Execute all tests for the given curve.
 
-    //    libff::default_ec_pp::init_public_params();
-    //    using FieldT = libff::Fr<libff::default_ec_pp>;
-
-    libff::bls12_381_pp::init_public_params();
-    using ppT = libff::bls12_381_pp;
+    ppT::init_public_params();
 
     test_flystel_Q_gamma_prime_field_gadget<ppT>();
     test_flystel_Q_gamma_binary_field_gadge<ppT>();
     test_flystel_E_power_five_gadget<ppT>();
     test_flystel_E_root_five_gadget<ppT>();
     test_flystel_prime_field_gadget<ppT>();
-    return 0;
+}
+
+TEST(TestAnemoiGadget, BLS12_381) { test_for_curve<libff::bls12_381_pp>(); }
+
+int main(int argc, char **argv)
+{
+    libff::bls12_381_pp::init_public_params();
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
