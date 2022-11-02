@@ -126,7 +126,7 @@ class flystel_Q_gamma_binary_field_gadget : public gadget<FieldT>
 {
 private:
     /// internal (i.e. intermediate) variable
-    pb_variable<FieldT> internal;
+    const pb_variable<FieldT> internal;
     /// constants
     const FieldT beta;
     const FieldT gamma;
