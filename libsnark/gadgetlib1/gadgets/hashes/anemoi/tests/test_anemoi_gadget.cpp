@@ -6,6 +6,7 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#include <array>
 #include <gtest/gtest.h>
 #include <libff/algebra/curves/bls12_381/bls12_381_init.hpp>
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
@@ -245,6 +246,34 @@ void test_flystel_prime_field_gadget()
     libff::print_time("flystel_prime_field_gadget tests successful");
 }
 
+template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
+void test_anemoi_permutation_mds()
+{
+    using FieldT = libff::Fr<ppT>;
+    const FieldT g = anemoi_parameters<ppT>::multiplicative_generator_g;
+    {
+        std::array<std::array<FieldT, 2>, 2> M_expect = {{{1, 7}, {7, 50}}};
+        std::array<std::array<FieldT, 2>, 2> M =
+            anemoi_permutation_mds_2x2<ppT>(g);
+        ASSERT_EQ(M, M_expect);
+    }
+    {
+        std::array<std::array<FieldT, 3>, 3> M_expect = {
+            {{8, 1, 8}, {1, 1, 7}, {7, 1, 1}}};
+        std::array<std::array<FieldT, 3>, 3> M =
+            anemoi_permutation_mds_3x3<ppT>(g);
+        ASSERT_EQ(M, M_expect);
+    }
+    {
+        std::array<std::array<FieldT, 4>, 4> M_expect = {
+            {{1, 8, 7, 7}, {49, 56, 8, 15}, {49, 49, 1, 8}, {8, 15, 7, 8}}};
+        std::array<std::array<FieldT, 4>, 4> M =
+            anemoi_permutation_mds_4x4<ppT>(g);
+        ASSERT_EQ(M, M_expect);
+    }
+    libff::print_time("anemoi_permutation_mds tests successful");
+}
+
 template<typename ppT> void test_for_curve()
 {
     // Execute all tests for the given curve.
@@ -257,6 +286,7 @@ template<typename ppT> void test_for_curve()
     test_flystel_E_power_five_gadget<ppT>();
     test_flystel_E_root_five_gadget<ppT, parameters>();
     test_flystel_prime_field_gadget<ppT, parameters>();
+    test_anemoi_permutation_mds<ppT, parameters>();
 }
 
 TEST(TestAnemoiGadget, BLS12_381) { test_for_curve<libff::bls12_381_pp>(); }

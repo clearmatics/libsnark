@@ -189,10 +189,16 @@ public:
     void generate_r1cs_witness();
 };
 
-// get the MDS matrix from the number of columns 2,3 or 4
-template<typename FieldT, size_t NumStateColumns_L>
-std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L>
-anemoi_permutation_mds(const FieldT g);
+// get the MDS matrix for each allowed dimension: 2,3 or 4
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 2>, 2> anemoi_permutation_mds_2x2(
+    const libff::Fr<ppT> g);
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 3>, 3> anemoi_permutation_mds_3x3(
+    const libff::Fr<ppT> g);
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 4>, 4> anemoi_permutation_mds_4x4(
+    const libff::Fr<ppT> g);
 
 } // namespace libsnark
 

@@ -320,32 +320,38 @@ void flystel_prime_field_gadget<ppT, parameters>::generate_r1cs_witness()
     this->pb.lc_val(output_y1) = input_x1_value - this->pb.val(a1);
 }
 
-template<typename FieldT, size_t NumStateColumns_L>
-std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L>
-anemoi_permutation_mds(const FieldT g)
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 2>, 2> anemoi_permutation_mds_2x2(
+    const libff::Fr<ppT> g)
 {
-    std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L> M;
+    using FieldT = libff::Fr<ppT>;
     const FieldT g2 = g * g;
-    if (NumStateColumns_L == 2) {
-        M = {{1, g}, {g, g2 + 1}};
-        return M;
-    }
-    if (NumStateColumns_L == 3) {
-        M = {{g + 1, 1, g + 1}, {1, 1, g}, {g, 1, 1}};
-        return M;
-    }
-    if (NumStateColumns_L == 4) {
-        M = {
-            {1, 1 + g, g, g},
-            {g2, g + g2, 1 + g, 1 + 2 * g},
-            {g2, g2, 1, 1 + g},
-            {1 + g, 1 + 2 * g, g, 1 + g}};
-        return M;
-    }
-    // If we are here, then the number of columns NumStateColumns_L has invalid
-    // value outside of the set {2,3,4}
-    throw std::logic_error(
-        "Error: invalid number of columns. Must be 2,3 or 4 .");
+    std::array<std::array<FieldT, 2>, 2> M = {{{1, g}, {g, g2 + 1}}};
+    return M;
+}
+
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 3>, 3> anemoi_permutation_mds_3x3(
+    const libff::Fr<ppT> g)
+{
+    using FieldT = libff::Fr<ppT>;
+    std::array<std::array<FieldT, 3>, 3> M = {
+        {{g + 1, 1, g + 1}, {1, 1, g}, {g, 1, 1}}};
+    return M;
+}
+
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 4>, 4> anemoi_permutation_mds_4x4(
+    const libff::Fr<ppT> g)
+{
+    using FieldT = libff::Fr<ppT>;
+    const FieldT g2 = g * g;
+    std::array<std::array<FieldT, 4>, 4> M = {
+        {{1, g + 1, g, g},
+         {g2, g + g2, g + 1, g + g + 1},
+         {g2, g2, 1, g + 1},
+         {g + 1, g + g + 1, g, g + 1}}};
+    return M;
 }
 
 } // namespace libsnark
