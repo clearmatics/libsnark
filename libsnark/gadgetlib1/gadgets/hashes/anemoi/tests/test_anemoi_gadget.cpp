@@ -94,7 +94,9 @@ void test_flystel_Q_gamma_prime_field_gadget()
     y.allocate(pb, "y");
 
     // create gadget
-    flystel_Q_gamma_prime_field_gadget<ppT, parameters> d(pb, x, y, "d");
+    flystel_Q_prime_field_gadget<ppT> d(
+        pb, parameters::beta, parameters::gamma, x, y, "d");
+
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value
@@ -125,7 +127,8 @@ void test_flystel_Q_gamma_binary_field_gadget()
     y.allocate(pb, "y");
 
     // create gadget
-    flystel_Q_gamma_binary_field_gadget<ppT, parameters> d(pb, x, y, "d");
+    flystel_Q_binary_field_gadget<ppT> d(
+        pb, parameters::beta, parameters::gamma, x, y, "d");
     // generate contraints
     d.generate_r1cs_constraints();
     // set input value

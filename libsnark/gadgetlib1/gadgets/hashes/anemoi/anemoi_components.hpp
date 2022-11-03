@@ -27,115 +27,59 @@
 namespace libsnark
 {
 
-/// Flystel Q_gamma function for prime fields:
-/// Qf(x) = beta x^2 + gamma
-/// x: input
-/// y: output
-// template<typename ppT, size_t generator>
-template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
-class flystel_Q_gamma_prime_field_gadget : public gadget<libff::Fr<ppT>>
-{
-    using FieldT = libff::Fr<ppT>;
-
-private:
-    const FieldT beta;
-    const FieldT gamma;
-
-public:
-    const linear_combination<FieldT> input;
-    const pb_variable<FieldT> output;
-
-    flystel_Q_gamma_prime_field_gadget(
-        protoboard<FieldT> &pb,
-        const linear_combination<FieldT> &input,
-        const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix);
-
-    void generate_r1cs_constraints();
-    void generate_r1cs_witness();
-};
-
-/// Flystel Q_delta function for prime fields:
-/// Qf(x) = beta x^2 + delta
-/// x: input
-/// y: output
-template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
-class flystel_Q_delta_prime_field_gadget : public gadget<libff::Fr<ppT>>
-{
-    using FieldT = libff::Fr<ppT>;
-
-private:
-    const FieldT beta;
-    const FieldT delta;
-
-public:
-    const linear_combination<FieldT> input;
-    const pb_variable<FieldT> output;
-
-    flystel_Q_delta_prime_field_gadget(
-        protoboard<FieldT> &pb,
-        const linear_combination<FieldT> &input,
-        const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix);
-
-    void generate_r1cs_constraints();
-    void generate_r1cs_witness();
-};
-
-/// Flystel Q_gamma function for binary fields:
-/// Qi(x) = beta x^3 + gamma
+/// Combined gadget for the Flystel Q-functions for prime fields Q(x) = A x^2 +
+/// B:
 ///
-/// Compute y = beta x^3 + gamma
-/// x: input
-/// y: output
-/// beta, gamma: constants
-template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
-class flystel_Q_gamma_binary_field_gadget : public gadget<libff::Fr<ppT>>
+/// Q_gamma(x) = beta x^2 + gamma: A = beta, B = gamma
+/// Q_delta(x) = beta x^2 + delta: A = beta, B = delta
+template<typename ppT>
+class flystel_Q_prime_field_gadget : public gadget<libff::Fr<ppT>>
+{
+    using FieldT = libff::Fr<ppT>;
+
+private:
+    const FieldT A;
+    const FieldT B;
+
+public:
+    const linear_combination<FieldT> input;
+    const pb_variable<FieldT> output;
+
+    flystel_Q_prime_field_gadget(
+        protoboard<FieldT> &pb,
+        const FieldT A,
+        const FieldT B,
+        const linear_combination<FieldT> &input,
+        const pb_variable<FieldT> &output,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
+/// Combined gadget for the Flystel Q-functions for binary fields Q(x) = A x^3 +
+/// B:
+///
+/// Q_gamma(x) = beta x^3 + gamma: A = beta, B = gamma
+/// Q_delta(x) = beta x^3 + delta: A = beta, B = delta
+template<typename ppT>
+class flystel_Q_binary_field_gadget : public gadget<libff::Fr<ppT>>
 {
     using FieldT = libff::Fr<ppT>;
 
 private:
     const pb_variable<FieldT> internal;
-    const FieldT beta;
-    const FieldT gamma;
+    const FieldT A;
+    const FieldT B;
 
 public:
     const linear_combination<FieldT> input;
     const pb_variable<FieldT> output;
 
-    flystel_Q_gamma_binary_field_gadget(
+    flystel_Q_binary_field_gadget(
         protoboard<FieldT> &pb,
-        const linear_combination<FieldT> &input,
-        const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix);
-
-    void generate_r1cs_constraints();
-    void generate_r1cs_witness();
-};
-
-/// Flystel Q_delta function for binary fields:
-/// Qi(x) = beta x^3 + delta
-///
-/// Compute y = beta x^3 + delta
-/// x: input
-/// y: output
-/// beta, delta: constants
-template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
-class flystel_Q_delta_binary_field_gadget : public gadget<libff::Fr<ppT>>
-{
-    using FieldT = libff::Fr<ppT>;
-
-private:
-    const pb_variable<FieldT> internal;
-    const FieldT beta;
-    const FieldT delta;
-
-public:
-    const linear_combination<FieldT> input;
-    const pb_variable<FieldT> output;
-
-    flystel_Q_delta_binary_field_gadget(
-        protoboard<FieldT> &pb,
+        const FieldT A,
+        const FieldT B,
         const linear_combination<FieldT> &input,
         const pb_variable<FieldT> &output,
         const std::string &annotation_prefix);
@@ -229,8 +173,8 @@ public:
     const pb_variable<FieldT> output_y0;
     const pb_variable<FieldT> output_y1;
 
-    flystel_Q_gamma_prime_field_gadget<ppT, parameters> Q_gamma;
-    flystel_Q_delta_prime_field_gadget<ppT, parameters> Q_delta;
+    flystel_Q_prime_field_gadget<ppT> Q_gamma;
+    flystel_Q_prime_field_gadget<ppT> Q_delta;
     flystel_E_root_five_gadget<ppT, parameters> E_root_five;
 
     flystel_prime_field_gadget(

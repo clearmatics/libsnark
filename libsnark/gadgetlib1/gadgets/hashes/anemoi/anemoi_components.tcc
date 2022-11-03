@@ -34,86 +34,44 @@ namespace libsnark
 //
 // where A =(0, const_a, 0), B=(0, 1, 0) and C =(-const_b, 0, 1)
 
-// template<typename ppT, size_t generator>
-template<typename ppT, class parameters>
-flystel_Q_gamma_prime_field_gadget<ppT, parameters>::
-    flystel_Q_gamma_prime_field_gadget(
-        protoboard<libff::Fr<ppT>> &pb,
-        const linear_combination<libff::Fr<ppT>> &input,
-        const pb_variable<libff::Fr<ppT>> &output,
-        const std::string &annotation_prefix)
+template<typename ppT>
+flystel_Q_prime_field_gadget<ppT>::flystel_Q_prime_field_gadget(
+    protoboard<libff::Fr<ppT>> &pb,
+    const libff::Fr<ppT> A,
+    const libff::Fr<ppT> B,
+    const linear_combination<libff::Fr<ppT>> &input,
+    const pb_variable<libff::Fr<ppT>> &output,
+    const std::string &annotation_prefix)
     : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
-    , beta(parameters::beta)
-    , gamma(parameters::gamma)
+    , A(A)
+    , B(B)
     , input(input)
     , output(output)
 {
 }
 
-template<typename ppT, class parameters>
-void flystel_Q_gamma_prime_field_gadget<ppT, parameters>::
-    generate_r1cs_constraints()
+template<typename ppT>
+void flystel_Q_prime_field_gadget<ppT>::generate_r1cs_constraints()
 {
     // Constraint has the form:
-    //   beta * input^2 + gamma = output
+    //   A * input^2 + B = output
     // which can be written as
-    //   (beta * input) * input = output - gamma
+    //   (A * input) * input = output - B
     this->pb.add_r1cs_constraint(
-        {input * beta, input, output - gamma},
-        FMT(this->annotation_prefix, " beta * x = y - gamma"));
+        {input * A, input, output - B},
+        FMT(this->annotation_prefix, " A * x = y - B"));
 }
 
 // compute a witness y for a given input x for the computation y =
-// beta x^2 + gamma
-template<typename ppT, class parameters>
-void flystel_Q_gamma_prime_field_gadget<ppT, parameters>::
-    generate_r1cs_witness()
+// A x^2 + B
+template<typename ppT>
+void flystel_Q_prime_field_gadget<ppT>::generate_r1cs_witness()
 {
     using FieldT = libff::Fr<ppT>;
     const FieldT input_value =
         input.evaluate(this->pb.full_variable_assignment());
-    // y = beta x^2 + gamma
-    this->pb.val(output) = this->beta * input_value * input_value + this->gamma;
-}
-
-template<typename ppT, class parameters>
-flystel_Q_delta_prime_field_gadget<ppT, parameters>::
-    flystel_Q_delta_prime_field_gadget(
-        protoboard<FieldT> &pb,
-        const linear_combination<FieldT> &input,
-        const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix)
-    , beta(parameters::beta)
-    , delta(parameters::delta)
-    , input(input)
-    , output(output)
-{
-}
-
-template<typename ppT, class parameters>
-void flystel_Q_delta_prime_field_gadget<ppT, parameters>::
-    generate_r1cs_constraints()
-{
-    // Constraint has the form:
-    //   beta * input^2 + delta = output
-    // which can be written as
-    //   (beta * input) * input = output - delta
-    this->pb.add_r1cs_constraint(
-        {input * beta, input, output - delta},
-        FMT(this->annotation_prefix, " beta * x = y - delta"));
-}
-
-// compute a witness y for a given input x for the computation y =
-// beta x^2 + delta, where x=input, y=output
-template<typename ppT, class parameters>
-void flystel_Q_delta_prime_field_gadget<ppT, parameters>::
-    generate_r1cs_witness()
-{
-    const FieldT input_value =
-        input.evaluate(this->pb.full_variable_assignment());
-    // y = beta x^2 + delta
-    this->pb.val(output) = this->beta * input_value * input_value + this->delta;
+    // y = A x^2 + B
+    this->pb.val(output) = A * input_value * input_value + B;
 }
 
 // R1CS constraints for the operation y = beta x^3 + gamma with
@@ -132,94 +90,47 @@ void flystel_Q_delta_prime_field_gadget<ppT, parameters>::
 //
 // where A0=(0, beta, 0, 0), B0=(0, 1, 0, 0), C0=(0, 0, 1, 0) and
 // A1=(0, 0, 1, 0), B1=(0, 1, 0, 0), C1=(-gamma, 0, 0, 1)
-template<typename ppT, class parameters>
-flystel_Q_gamma_binary_field_gadget<ppT, parameters>::
-    flystel_Q_gamma_binary_field_gadget(
-        protoboard<FieldT> &pb,
-        const linear_combination<FieldT> &input,
-        const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix)
+
+template<typename ppT>
+flystel_Q_binary_field_gadget<ppT>::flystel_Q_binary_field_gadget(
+    protoboard<FieldT> &pb,
+    const libff::Fr<ppT> A,
+    const libff::Fr<ppT> B,
+    const linear_combination<FieldT> &input,
+    const pb_variable<FieldT> &output,
+    const std::string &annotation_prefix)
     : gadget<FieldT>(pb, annotation_prefix)
     , internal(pb_variable_allocate<FieldT>(
           pb, FMT(this->annotation_prefix, " internal")))
-    , beta(parameters::beta)
-    , gamma(parameters::gamma)
+    , A(A)
+    , B(B)
     , input(input)
     , output(output)
 {
 }
 
-template<typename ppT, class parameters>
-void flystel_Q_gamma_binary_field_gadget<ppT, parameters>::
-    generate_r1cs_constraints()
+template<typename ppT>
+void flystel_Q_binary_field_gadget<ppT>::generate_r1cs_constraints()
 {
-    // (beta * input) * input = internal
+    // (A * input) * input = internal
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(beta * input, input, internal),
-        FMT(this->annotation_prefix, " beta * x * x = x_square"));
-    // internal * input = output - gamma
+        r1cs_constraint<FieldT>(A * input, input, internal),
+        FMT(this->annotation_prefix, " A * x * x = x_square"));
+    // internal * input = output - B
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(internal, input, output - gamma),
-        FMT(this->annotation_prefix, " x_square * x = y - gamma"));
+        r1cs_constraint<FieldT>(internal, input, output - B),
+        FMT(this->annotation_prefix, " x_square * x = y - B"));
 }
 
-template<typename ppT, class parameters>
-void flystel_Q_gamma_binary_field_gadget<ppT, parameters>::
-    generate_r1cs_witness()
+template<typename ppT>
+void flystel_Q_binary_field_gadget<ppT>::generate_r1cs_witness()
 {
     const FieldT input_value =
         input.evaluate(this->pb.full_variable_assignment());
-    // x_internal = beta x * x
-    this->pb.val(internal) = (this->beta * input_value) * input_value;
-    // y = beta x^3 + gamma = x_internal * x + gamma
-    this->pb.val(output) = this->pb.val(internal) * input_value + this->gamma;
-}
-
-// R1CS constraints for the operation y = beta x^3 + delta with
-// x=input, y=output. This operation is represented with two
-// multiplications as y-delta = ((beta x * x) * x).
-// \see flystel_Q_delta_binary_field_gadget
-template<typename ppT, class parameters>
-flystel_Q_delta_binary_field_gadget<ppT, parameters>::
-    flystel_Q_delta_binary_field_gadget(
-        protoboard<FieldT> &pb,
-        const linear_combination<FieldT> &input,
-        const pb_variable<FieldT> &output,
-        const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix)
-    , internal(pb_variable_allocate<FieldT>(
-          pb, FMT(this->annotation_prefix, " internal")))
-    , beta(parameters::beta)
-    , delta(parameters::delta)
-    , input(input)
-    , output(output)
-{
-}
-
-template<typename ppT, class parameters>
-void flystel_Q_delta_binary_field_gadget<ppT, parameters>::
-    generate_r1cs_constraints()
-{
-    // (beta * input) * input = internal
-    this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(beta * input, input, internal),
-        FMT(this->annotation_prefix, " beta * x * x = x_square"));
-    // internal * input = output - delta
-    this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(internal, input, output - delta),
-        FMT(this->annotation_prefix, " x_square * x = y - delta"));
-}
-
-template<typename ppT, class parameters>
-void flystel_Q_delta_binary_field_gadget<ppT, parameters>::
-    generate_r1cs_witness()
-{
-    const FieldT input_value =
-        input.evaluate(this->pb.full_variable_assignment());
-    // x_internal = beta x * x
-    this->pb.val(internal) = (this->beta * input_value) * input_value;
-    // y = beta x^3 + delta = x_internal * x + delta
-    this->pb.val(output) = this->pb.val(internal) * input_value + this->delta;
+    // x_internal = A x * x
+    this->pb.val(internal) = (A * input_value) * input_value;
+    // y = A x^3 + B = x_internal * x + B
+    this->pb.val(output) = this->pb.val(internal) * input_value + B;
 }
 
 // R1CS constraints for the operation y = x^5 with x=input,
@@ -366,8 +277,20 @@ flystel_prime_field_gadget<ppT, parameters>::flystel_prime_field_gadget(
     , input_x1(x1)
     , output_y0(y0)
     , output_y1(y1)
-    , Q_gamma(pb, x1, a0, FMT(annotation_prefix, " Q_gamma"))
-    , Q_delta(pb, x1 - a1, a2, FMT(annotation_prefix, " Q_delta"))
+    , Q_gamma(
+          pb,
+          parameters::beta,
+          parameters::gamma,
+          x1,
+          a0,
+          FMT(annotation_prefix, " Q_gamma"))
+    , Q_delta(
+          pb,
+          parameters::beta,
+          parameters::delta,
+          x1 - a1,
+          a2,
+          FMT(annotation_prefix, " Q_delta"))
     , E_root_five(pb, x0 - a0, a1, FMT(annotation_prefix, " E_root_five"))
 {
 }
