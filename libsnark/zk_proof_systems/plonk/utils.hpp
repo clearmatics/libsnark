@@ -56,6 +56,8 @@ template<typename FieldT> void print_vector(const std::vector<FieldT> &v);
 /// \param[in] f_points[0..n-1]: a set of points (0,y0), (1,y1),
 ///            ... (n-1,y_{n-1}) s.t. y0=f_points[0], y1=f_points[1],
 ///            ... which we want to interpolate as a polynomial
+/// \param[in] domain: libfqfft evaluation domain (see
+///            libfqfft/evaluation_domain/evaluation_domain.hpp)
 ///
 /// OUTPUT:
 ///

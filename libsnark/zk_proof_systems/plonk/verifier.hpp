@@ -36,7 +36,7 @@ namespace libsnark
 ///     [W_zeta]_1, [W_{zeta omega}]_1
 ///     r_zeta (*))
 ///
-/// Mapping code-to-paper quantities (code: paper)
+/// Mapping code-to-paper quantities (format code : paper)
 ///
 /// \param W_polys_blinded_at_secret_g1[a, b, c]: [a]_1, [b]_1, [c]_1
 ///        (from Round 1)
@@ -63,7 +63,9 @@ namespace libsnark
 
 /// Verifier preprocessed input
 template<typename ppT> struct verifier_preprocessed_input_t {
+    /// circuit selector polynomials Q evaluated at the secret input
     std::vector<libff::G1<ppT>> Q_polys_at_secret_g1;
+    /// permutation polynomials S evaluated at the secret input
     std::vector<libff::G1<ppT>> S_polys_at_secret_g1;
 
     verifier_preprocessed_input_t(
@@ -73,11 +75,18 @@ template<typename ppT> struct verifier_preprocessed_input_t {
 
 /// Verifier step 4 output
 template<typename ppT> struct step_four_out_t {
+    /// permutation challenge - hashes of transcript (round 1)
     const libff::Fr<ppT> beta;
+    /// permutation challenge - hashes of transcript (round 1)
     const libff::Fr<ppT> gamma;
+    /// quotinet challenge - hash of transcript (round 2)
     const libff::Fr<ppT> alpha;
+    /// evaluation challenge - hash of transcript (round 3)
     const libff::Fr<ppT> zeta;
+    /// opening challenge - hash of transcript (round 4) (denoted by v in
+    /// [GWC19])
     const libff::Fr<ppT> nu;
+    /// multipoint evaluation challenge - hash of transcript (round 5)
     const libff::Fr<ppT> u;
     step_four_out_t(
         const libff::Fr<ppT> &beta,
@@ -152,12 +161,8 @@ public:
     /// \param[in] srs: structured reference string
     ///
     /// OUTPUT
-    /// \param[out] Q_polys_at_secret_g1: circuit selector polynomials Q
-    /// evaluated at
-    ///   the secret input
-    /// \param[out] S_polys_at_secret_g1: permutation polynomials S evaluated at
-    /// the
-    ///   secret input
+    /// \param[out] verifier_preprocessed_input: see
+    ///             verifier_preprocessed_input_t
     static verifier_preprocessed_input_t<ppT> preprocessed_input(
         const srs<ppT> &srs);
 
@@ -190,28 +195,19 @@ public:
     ///            transcript after prover rounds 1,2,3,4,5.
     ///
     /// OUTPUT
-    /// \param[out] beta, gamma: permutation challenges - hashes of
-    ///             transcript
-    /// \param[out] alpha: quotinet challenge - hash of transcript
-    /// \param[out] zeta: evaluation challenge - hash of transcript
-    /// \param[out] nu: opening challenge - hash of transcript (denoted by
-    ///             v in [GWC19])
-    /// \param[out] u: multipoint evaluation challenge - hash of
-    ///             transcript
+    /// \param[out] step_four_out: see step_four_out
     static step_four_out_t<ppT> step_four(
         const plonk_proof<ppT> &proof, transcript_hasher &hasher);
 
     /// Verifier Step 5: compute zero polynomial evaluation
     ///
     /// INPUT
-    /// \param[in] zeta: evaluation challenge -- hash of transcript (from
-    ///            step 4)
-    /// \param[in] srs: structured reference string containing also
-    ///            circuit-specific information
+    /// \param[in] step_four_out: see step_four_out_t
+    /// \param[in] domain: libfqfft evaluation domain (see
+    ///            libfqfft/evaluation_domain/evaluation_domain.hpp)
     ///
     /// OUTPUT
-    /// \param[out] zh_zeta: evaluation of vanishing polynomial Zh at
-    ///             x=zeta i.e. Zh(zeta)
+    /// \param[out] step_five_out: see step_five_out_t
     static step_five_out_t<ppT> step_five(
         const step_four_out_t<ppT> &step_four_out,
         std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain);
@@ -220,14 +216,12 @@ public:
     /// Note: the paper counts the L-polynomials from 1; we count from 0
     ///
     /// INPUT
-    /// \param[in] zeta: evaluation challenge -- hash of transcript (from
-    ///            step 4)
+    /// \param[in] step_four_out: see step_four_out_t
     /// \param[in] srs: structured reference string containing also
     ///            circuit-specific information
     ///
     /// OUTPUT
-    /// \param[out] L_0_zeta: Lagrange polynomial evaluation of polynomial
-    ///             L1 at x=zeta i.e. L1(zeta)
+    /// \param[out] step_six_out: see step_six_out_t
     static step_six_out_t<ppT> step_six(
         const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs);
 
@@ -235,14 +229,12 @@ public:
     /// PI(zeta)
     ///
     /// INPUT
-    /// \param[in] zeta: evaluation challenge -- hash of transcript (from
-    ///            step 4)
+    /// \param[in] step_four_out: see step_four_out_t
     /// \param[in] srs: structured reference string containing also
     ///            circuit-specific information
     ///
     /// OUTPUT
-    /// \param[out] PI_zeta: public input polynomial PI evaluated at
-    ///             x=zeta i.e. PI(zeta)
+    /// \param[out] step_seven_out: see step_seven_out_t
     static step_seven_out_t<ppT> step_seven(
         const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs);
 
@@ -256,23 +248,14 @@ public:
     /// zeta zh_zeta, while the paper does not do that (see also Step 9).
     ///
     /// INPUT
-    /// \param[in] beta, gamma: permutation challenges -- hashes of
-    ///            transcript (from step 4)
-    /// \param[in] alpha: quotinet challenge -- hash of transcript (from
-    ///            step 4)
-    /// \param[in] zeta: evaluation challenge -- hash of transcript (from
-    ///            step 4)
-    /// \param[in] zh_zeta: evaluation of vanishing polynomial Zh at
-    ///            x=zeta i.e. Zh(zeta) (from step 5)
-    /// \param[in] L_0_zeta: Lagrange polynomial evaluation of polynomial
-    ///            L1 at x=zeta i.e. L1(zeta) (from step 6)
-    /// \param[in] PI_zeta: public input polynomial PI evaluated at x=zeta
-    ///            i.e. PI(zeta) (from step 7)
+    /// \param[in] step_four_out: see step_four_out_t
+    /// \param[in] step_five_out: see step_five_out_t
+    /// \param[in] step_six_out: see step_six_out_t
+    /// \param[in] step_seven_out: see step_seven_out_t
     /// \param[in] proof: SNARK proof produced by the prover
     ///
     /// OUTPUT
-    /// \param[out] r_prime_zeta: quotient polynomial evaluation r'(zeta)
-    ///             = r(zeta) - r0, where r0 is a constant term
+    /// \param[out] step_eight_out: see step_eight_out_t
     static step_eight_out_t<ppT> step_eight(
         const step_four_out_t<ppT> &step_four_out,
         const step_five_out_t<ppT> &step_five_out,
@@ -290,31 +273,15 @@ public:
     /// Step 8.
     ///
     /// INPUT
-    /// \param[in] beta, gamma: permutation challenges -- hashes of
-    ///            transcript (from step 4)
-    /// \param[in] alpha: quotinet challenge -- hash of transcript (from
-    ///            step 4)
-    /// \param[in] zeta: evaluation challenge -- hash of transcript (from
-    ///            step 4)
-    /// \param[in] nu: opening challenge -- hash of transcript (denoted by
-    ///            v in [GWC19]) (from step 4)
-    /// \param[in] u: multipoint evaluation challenge -- hash of
-    ///            transcript (from step 4)
-    /// \param[in] L_0_zeta: Lagrange polynomial evaluation of polynomial
-    ///            L1 at x=zeta i.e. L1(zeta) (from step 6)
-    /// \param[in] Q_polys_at_secret_g1: circuit selector polynomials Q
-    ///            evaluated at the secret input (from verifier
-    ///            preprocessed input)
-    /// \param[in] S_polys_at_secret_g1: permutation polynomials S
-    ///            evaluated at the secret input (from verifier
-    ///            preprocessed input)
+    /// \param[in] step_four_out: see step_four_out_t
+    /// \param[in] step_six_out: see step_six_out_t
     /// \param[in] proof: SNARK proof produced by the prover
     /// \param[in] preprocessed_input: verifier preprocessed input
     /// \param[in] srs: structured reference string containing also
     ///            circuit-specific information
     ///
     /// OUTPUT
-    /// \param[out] D1: first part of batched polynomial commitment [D]_1
+    /// \param[out] step_nine_out: see step_nine_out_t
     static step_nine_out_t<ppT> step_nine(
         const step_four_out_t<ppT> &step_four_out,
         const step_six_out_t<ppT> &step_six_out,
@@ -329,23 +296,15 @@ public:
     /// addedto [D]_1 in the paper (see commenst to Steps 8,9)
     ///
     /// INPUT
-    /// \param[in] zeta: evaluation challenge -- hash of transcript (from
-    ///            step 4)
-    /// \param[in] nu: opening challenge -- hash of transcript (denoted by
-    ///            v in [GWC19]) (from step 4)
-    /// \param[in] u: multipoint evaluation challenge -- hash of
-    ///            transcript (from step 4)
-    /// \param[in] D1: first part of batched polynomial commitment [D]_1
-    ///            (from step 9)
-    /// \param[in] S_polys_at_secret_g1: permutation polynomials S
-    ///            evaluated at the secret input (from verifier
-    ///            preprocessed input)
+    /// \param[in] step_four_out: see step_four_out_t
+    /// \param[in] step_nine_out: see step_nine_out_t
     /// \param[in] proof: SNARK proof produced by the prover
+    /// \param[in] preprocessed_input: verifier preprocessed input
     /// \param[in] srs: structured reference string containing also
     ///            circuit-specific information
     ///
     /// OUTPUT
-    /// \param[out] F1: full batched polynomial commitment [F]_1
+    /// \param[out] step_ten_out: see step_ten_out_t
     static step_ten_out_t<ppT> step_ten(
         const step_four_out_t<ppT> &step_four_out,
         const step_nine_out_t<ppT> &step_nine_out,
@@ -356,16 +315,12 @@ public:
     /// Verifier Step 11: compute group-encoded batch evaluation [E]_1
     ///
     /// INPUT
-    /// \param[in] nu: opening challenge -- hash of transcript (denoted by
-    ///            v in [GWC19]) (from step 4)
-    /// \param[in] u: multipoint evaluation challenge -- hash of
-    ///            transcript (from step 4)
-    /// \param[in] r_prime_zeta: quotient polynomial evaluation r'(zeta) =
-    ///            r(zeta) - r0, where r0 is a constant term (from step 8)
+    /// \param[in] step_four_out: see step_four_out_t
+    /// \param[in] step_eight_out: see step_eight_out_t
     /// \param[in] proof: SNARK proof produced by the prover
     ///
     /// OUTPUT
-    /// \param[out] E1: group-encoded batch evaluation [E]_1
+    /// \param[out] step_eleven_out: see step_eleven_out_t
     static step_eleven_out_t<ppT> step_eleven(
         const step_four_out_t<ppT> &step_four_out,
         const step_eight_out_t<ppT> &step_eight_out,
@@ -384,15 +339,10 @@ public:
     /// e(first_lhs, second_lhs) * e(first_rhs, second_rhs) = 1
     ///
     /// INPUT
-    /// \param[in] zeta: evaluation challenge -- hash of transcript (from
-    ///            step 4)
-    /// \param[in] u: multipoint evaluation challenge -- hash of
-    ///            transcript (from step 4)
-    /// \param[in] F1: full batched polynomial commitment [F]_1 (from step
-    ///            10)
-    /// \param[in] E1: group-encoded batch evaluation [E]_1 (from step 11)
+    /// \param[in] step_four_out: see step_four_out_t
+    /// \param[in] step_ten_out: see step_ten_out_t
+    /// \param[in] step_eleven_out: see step_eleven_out_t
     /// \param[in] proof: SNARK proof produced by the prover
-    /// \param[in] srs: structured reference string
     /// \param[in] srs: structured reference string containing also
     ///            circuit-specific information
     ///
