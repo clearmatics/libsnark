@@ -325,6 +325,11 @@ template<typename FieldT, size_t NumStateColumns_L>
 std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L>
 anemoi_permutation_mds(const FieldT g)
 {
+    static_assert(
+        (NumStateColumns_L == 2) || (NumStateColumns_L == 3) ||
+            (NumStateColumns_L == 4),
+        "NumStateColumns_L must be 2,3 or 4");
+
     std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L> M;
     const FieldT g2 = g * g;
     if (NumStateColumns_L == 2) {
@@ -343,10 +348,6 @@ anemoi_permutation_mds(const FieldT g)
             {1 + g, 1 + 2 * g, g, 1 + g}};
         return M;
     }
-    // If we are here, then the number of columns NumStateColumns_L has invalid
-    // value outside of the set {2,3,4}
-    throw std::logic_error(
-        "Error: invalid number of columns. Must be 2,3 or 4 .");
 }
 
 } // namespace libsnark
