@@ -34,7 +34,6 @@ namespace libsnark
 //
 // where A =(0, const_a, 0), B=(0, 1, 0) and C =(-const_b, 0, 1)
 
-// template<typename ppT, size_t generator>
 template<typename ppT, class parameters>
 flystel_Q_gamma_prime_field_gadget<ppT, parameters>::
     flystel_Q_gamma_prime_field_gadget(
