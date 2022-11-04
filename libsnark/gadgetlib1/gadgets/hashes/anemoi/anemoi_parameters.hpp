@@ -46,15 +46,16 @@ template<> class anemoi_parameters<libff::bls12_381_pp>
 {
 public:
     using ppT = libff::bls12_381_pp;
-    using FieldT = libff::Fr<ppT>;
+    using FieldT = libff::Fr<libff::bls12_381_pp>;
+    using BignumT = libff::bigint<FieldT::num_limbs>;
     static const bool b_prime_field = false;
-    static const libff::bigint<FieldT::num_limbs> multiplicative_generator_g;
-    static const libff::bigint<FieldT::num_limbs> alpha;
-    static const libff::bigint<FieldT::num_limbs> alpha_inv;
-    static const libff::bigint<FieldT::num_limbs> beta;
-    static const libff::bigint<FieldT::num_limbs> gamma;
-    static const libff::bigint<FieldT::num_limbs> delta;
-    static const libff::bigint<FieldT::num_limbs> quad_exponent;
+    static const BignumT multiplicative_generator_g;
+    static const BignumT alpha;
+    static const BignumT alpha_inv;
+    static const BignumT beta;
+    static const BignumT gamma;
+    static const BignumT delta;
+    static const BignumT quad_exponent;
 };
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
