@@ -37,8 +37,7 @@ srs<ppT>::srs(
     const libff::Fr<ppT> &k2,
     std::vector<libff::G1<ppT>> &&secret_powers_g1,
     std::vector<libff::G2<ppT>> &&secret_powers_g2,
-    const polynomial<Field> &L_basis_zero,
-    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain)
+    const polynomial<Field> &L_basis_zero)
     : num_gates(num_gates)
     , num_qpolys(num_qpolys)
     , PI_poly(PI_poly)
@@ -52,7 +51,6 @@ srs<ppT>::srs(
     , secret_powers_g1(secret_powers_g1)
     , secret_powers_g2(secret_powers_g2)
     , L_basis_zero(L_basis_zero)
-    , domain(domain)
 {
 }
 
@@ -145,8 +143,7 @@ srs<ppT> plonk_srs_derive_from_usrs(
         circuit.k2,
         std::move(secret_powers_g1),
         std::move(secret_powers_g2),
-        std::move(L_basis_zero),
-        domain);
+        std::move(L_basis_zero));
 
     return srs;
 }

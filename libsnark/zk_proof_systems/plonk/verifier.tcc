@@ -117,16 +117,16 @@ step_five_out_t<ppT>::step_five_out_t(libff::Fr<ppT> &&zh_zeta)
 
 template<typename ppT, class transcript_hasher>
 step_five_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_five(
-    const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
+    const step_four_out_t<ppT> &step_four_out,
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain)
 {
-    libff::Fr<ppT> zh_zeta;
-    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
-        libfqfft::get_evaluation_domain<Field>(srs.num_gates);
-    zh_zeta = domain->compute_vanishing_polynomial(step_four_out.zeta);
+    libff::Fr<ppT> zh_zeta =
+        domain->compute_vanishing_polynomial(step_four_out.zeta);
     step_five_out_t<ppT> step_five_out(std::move(zh_zeta));
     return step_five_out;
 }
 
+/// struct step_six_out_t constructor
 template<typename ppT>
 step_six_out_t<ppT>::step_six_out_t(libff::Fr<ppT> &&L_0_zeta)
     : L_0_zeta(L_0_zeta)
@@ -400,6 +400,9 @@ bool plonk_verifier<ppT, transcript_hasher>::verify_proof(
     const srs<ppT> &srs,
     transcript_hasher &hasher)
 {
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain =
+        libfqfft::get_evaluation_domain<libff::Fr<ppT>>(srs.num_gates);
+
     // compute verifier preprocessed input
     const verifier_preprocessed_input_t<ppT> preprocessed_input =
         plonk_verifier::preprocessed_input(srs);
@@ -418,7 +421,7 @@ bool plonk_verifier<ppT, transcript_hasher>::verify_proof(
 
     // Verifier Step 5: compute zero polynomial evaluation
     const step_five_out_t<ppT> step_five_out =
-        this->step_five(step_four_out, srs);
+        this->step_five(step_four_out, domain);
 
     // Verifier Step 6: Compute Lagrange polynomial evaluation L1(zeta)
     // Note: the paper counts the L-polynomials from 1; we count from 0

@@ -44,11 +44,10 @@ void plonk_compute_lagrange_basis(
 
 template<typename FieldT>
 void plonk_interpolate_polynomial_from_points(
-    const std::vector<FieldT> &f_points, polynomial<FieldT> &f_poly)
+    const std::vector<FieldT> &f_points,
+    polynomial<FieldT> &f_poly,
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain)
 {
-    size_t npoints = f_points.size();
-    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain =
-        libfqfft::get_evaluation_domain<FieldT>(npoints);
     f_poly = f_points;
     domain->iFFT(f_poly);
 }
@@ -57,7 +56,8 @@ template<typename FieldT>
 std::vector<polynomial<FieldT>> plonk_compute_selector_polynomials(
     const size_t &num_gates,
     const size_t &num_qpolys,
-    const std::vector<std::vector<FieldT>> &gates_matrix_transpose)
+    const std::vector<std::vector<FieldT>> &gates_matrix_transpose,
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain)
 {
     assert(gates_matrix_transpose.size() == num_qpolys);
     assert(gates_matrix_transpose[0].size() == num_gates);
@@ -66,16 +66,20 @@ std::vector<polynomial<FieldT>> plonk_compute_selector_polynomials(
     Q_polys.resize(num_qpolys, polynomial<FieldT>(num_gates));
     for (size_t i = 0; i < num_qpolys; ++i) {
         std::vector<FieldT> q_vec = gates_matrix_transpose[i];
-        plonk_interpolate_polynomial_from_points<FieldT>(q_vec, Q_polys[i]);
+        plonk_interpolate_polynomial_from_points<FieldT>(
+            q_vec, Q_polys[i], domain);
     }
     return Q_polys;
 };
 
 template<typename FieldT>
 void plonk_compute_public_input_polynomial(
-    const std::vector<FieldT> &PI_points, polynomial<FieldT> &PI_poly)
+    const std::vector<FieldT> &PI_points,
+    polynomial<FieldT> &PI_poly,
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain)
 {
-    plonk_interpolate_polynomial_from_points<FieldT>(PI_points, PI_poly);
+    plonk_interpolate_polynomial_from_points<FieldT>(
+        PI_points, PI_poly, domain);
 };
 
 template<typename FieldT>
@@ -158,7 +162,9 @@ std::vector<FieldT> plonk_permute_subgroup_H(
 
 template<typename FieldT>
 std::vector<polynomial<FieldT>> plonk_compute_permutation_polynomials(
-    const std::vector<FieldT> &H_gen_permute, const size_t num_gates)
+    const std::vector<FieldT> &H_gen_permute,
+    const size_t num_gates,
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain)
 {
     assert(H_gen_permute.size() == (NUM_HSETS * num_gates));
     std::vector<polynomial<FieldT>> S_polys;
@@ -169,7 +175,8 @@ std::vector<polynomial<FieldT>> plonk_compute_permutation_polynomials(
         typename std::vector<FieldT>::const_iterator end =
             H_gen_permute.begin() + (i * num_gates) + (num_gates);
         std::vector<FieldT> S_points(begin, end);
-        plonk_interpolate_polynomial_from_points<FieldT>(S_points, S_polys[i]);
+        plonk_interpolate_polynomial_from_points<FieldT>(
+            S_points, S_polys[i], domain);
     }
     return S_polys;
 }

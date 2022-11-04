@@ -193,7 +193,7 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     polynomial<Field> PI_poly;
     std::vector<Field> PI_points(num_gates, Field(0));
     PI_points[PI_index] = Field(-PI_value);
-    plonk_compute_public_input_polynomial(PI_points, PI_poly);
+    plonk_compute_public_input_polynomial(PI_points, PI_poly, domain);
 
     // compute the selector polynomials (q-polynomials) from the
     // transposed gates matrix over the Lagrange basis q_poly = \sum_i
@@ -201,7 +201,7 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     // element) and L[i] is a polynomial with Field coefficients
     std::vector<polynomial<Field>> Q_polys =
         plonk_compute_selector_polynomials<Field>(
-            num_gates, num_qpolys, gates_matrix_transpose);
+            num_gates, num_qpolys, gates_matrix_transpose, domain);
 
     // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
     // omega[2] are omega[0]*k2
@@ -238,7 +238,8 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     // compute the permutation polynomials S_sigma_1, S_sigma_2,
     // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
     std::vector<polynomial<Field>> S_polys =
-        plonk_compute_permutation_polynomials<Field>(H_gen_permute, num_gates);
+        plonk_compute_permutation_polynomials<Field>(
+            H_gen_permute, num_gates, domain);
 
     circuit_t<ppT> circuit(
         std::move(num_gates),
@@ -260,14 +261,15 @@ void test_plonk_compute_accumulator(
     const libff::Fr<ppT> &beta,
     const libff::Fr<ppT> &gamma,
     const std::vector<libff::Fr<ppT>> &witness,
-    const srs<ppT> &srs)
+    const srs<ppT> &srs,
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain)
 {
     using Field = libff::Fr<ppT>;
     // A[0] = 1; ... A[i] = computed from (i-1)
     std::vector<Field> A_vector = plonk_compute_accumulator(
         srs.num_gates, beta, gamma, witness, srs.H_gen, srs.H_gen_permute);
     polynomial<Field> A_poly(srs.num_gates);
-    plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly);
+    plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly, domain);
 
     // initialize hard-coded values from example circuit
     printf("[%s:%d] A_poly\n", __FILE__, __LINE__);
@@ -281,12 +283,13 @@ void test_plonk_prover_round_one(
     const round_zero_out_t<ppT> &round_zero_out,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain,
     transcript_hasher &hasher)
 {
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
     round_one_out_t<ppT> round_one_out =
         plonk_prover<ppT, transcript_hasher>::round_one(
-            round_zero_out, blind_scalars, witness, srs, hasher);
+            round_zero_out, blind_scalars, witness, srs, domain, hasher);
     for (int i = 0; i < (int)NUM_HSETS; ++i) {
         printf("[%s:%d] this->W_polys[%d]\n", __FILE__, __LINE__, (int)i);
         libff::print_vector(round_one_out.W_polys[i]);
@@ -322,11 +325,19 @@ void test_plonk_prover_round_two(
     const std::vector<libff::Fr<ppT>> &blind_scalars,
     const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain,
     transcript_hasher &hasher)
 {
     round_two_out_t<ppT> round_two_out =
         plonk_prover<ppT, transcript_hasher>::round_two(
-            beta, gamma, round_zero_out, blind_scalars, witness, srs, hasher);
+            beta,
+            gamma,
+            round_zero_out,
+            blind_scalars,
+            witness,
+            srs,
+            domain,
+            hasher);
     printf("[%s:%d] z_poly\n", __FILE__, __LINE__);
     libff::print_vector(round_two_out.z_poly);
     ASSERT_EQ(round_two_out.z_poly, example.z_poly);
@@ -491,6 +502,9 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
     // maximum degree of the encoded monomials in the usrs
     size_t max_degree = PLONK_MAX_DEGREE;
 
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
+        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
+
     // prepare srs
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
@@ -506,14 +520,14 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
     // reset buffer at the start of the round (needed for testing only)
     printf("[%s:%d] Unit test Prover Round 1...\n", __FILE__, __LINE__);
     test_plonk_prover_round_one<ppT, transcript_hasher>(
-        example, round_zero_out, witness, srs, hasher);
+        example, round_zero_out, witness, srs, domain, hasher);
 
     // --- Unit test Prover Round 2 ---
     // reset buffer at the start of the round (needed for testing only)
     printf("[%s:%d] Unit test Prover Round 2...\n", __FILE__, __LINE__);
     round_one_out_t<ppT> round_one_out =
         plonk_prover<ppT, transcript_hasher>::round_one(
-            round_zero_out, blind_scalars, witness, srs, hasher);
+            round_zero_out, blind_scalars, witness, srs, domain, hasher);
     // clear hash buffer
     hasher.buffer_clear();
     // add outputs from Round 1 to the hash buffer
@@ -531,17 +545,26 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
         blind_scalars,
         witness,
         srs,
+        domain,
         hasher);
 
     // Unit test plonk_compute_accumulator
-    test_plonk_compute_accumulator<ppT>(example, beta, gamma, witness, srs);
+    test_plonk_compute_accumulator<ppT>(
+        example, beta, gamma, witness, srs, domain);
 
     // --- Unit test Prover Round 3 ---
     // reset buffer at the start of the round (needed for testing only)
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
     round_two_out_t<ppT> round_two_out =
         plonk_prover<ppT, transcript_hasher>::round_two(
-            beta, gamma, round_zero_out, blind_scalars, witness, srs, hasher);
+            beta,
+            gamma,
+            round_zero_out,
+            blind_scalars,
+            witness,
+            srs,
+            domain,
+            hasher);
     // clear hash buffer
     hasher.buffer_clear();
     // add outputs from Round 1 to the hash buffer
@@ -651,6 +674,9 @@ template<typename ppT> void test_plonk_srs()
     // maximum degree of the encoded monomials in the usrs
     size_t max_degree = PLONK_MAX_DEGREE;
 
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
+        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
+
     // --- USRS ---
     // compute SRS = powers of secret times G1: 1*G1, secret^1*G1,
     // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
@@ -696,6 +722,9 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
     // maximum degree of the encoded monomials in the usrs
     size_t max_degree = PLONK_MAX_DEGREE;
+
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
+        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
 
     // prepare srs
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
@@ -789,10 +818,11 @@ template<typename ppT, class transcript_hasher>
 void test_plonk_verifier_step_five(
     const plonk_example &example,
     const step_four_out_t<ppT> &step_four_out,
-    const srs<ppT> &srs)
+    std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain)
 {
     const step_five_out_t<ppT> step_five_out =
-        plonk_verifier<ppT, transcript_hasher>::step_five(step_four_out, srs);
+        plonk_verifier<ppT, transcript_hasher>::step_five(
+            step_four_out, domain);
     printf("[%s:%d] zh_zeta ", __FILE__, __LINE__);
     step_five_out.zh_zeta.print();
     ASSERT_EQ(step_five_out.zh_zeta, example.zh_zeta);
@@ -977,6 +1007,9 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
     // maximum degree of the encoded monomials in the usrs
     size_t max_degree = PLONK_MAX_DEGREE;
 
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
+        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
+
     // prepare srs
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
@@ -1004,7 +1037,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
 
     // unit test verifier step 5
     test_plonk_verifier_step_five<ppT, transcript_hasher>(
-        example, step_four_out, srs);
+        example, step_four_out, domain);
 
     // unit test verifier step 6
     test_plonk_verifier_step_six<ppT, transcript_hasher>(
@@ -1016,7 +1049,8 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
 
     // unit test verifier step 8
     const step_five_out_t<ppT> step_five_out =
-        plonk_verifier<ppT, transcript_hasher>::step_five(step_four_out, srs);
+        plonk_verifier<ppT, transcript_hasher>::step_five(
+            step_four_out, domain);
     const step_six_out_t<ppT> step_six_out =
         plonk_verifier<ppT, transcript_hasher>::step_six(step_four_out, srs);
     const step_seven_out_t<ppT> step_seven_out =
@@ -1087,6 +1121,9 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
     // maximum degree of the encoded monomials in the usrs
     size_t max_degree = PLONK_MAX_DEGREE;
+
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
+        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
 
     // prepare srs
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);

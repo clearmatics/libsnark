@@ -56,6 +56,8 @@ template<typename FieldT> void print_vector(const std::vector<FieldT> &v);
 /// \param[in] f_points[0..n-1]: a set of points (0,y0), (1,y1),
 ///            ... (n-1,y_{n-1}) s.t. y0=f_points[0], y1=f_points[1],
 ///            ... which we want to interpolate as a polynomial
+/// \param[in] domain: libfqfft evaluation domain (see
+///            libfqfft/evaluation_domain/evaluation_domain.hpp)
 ///
 /// OUTPUT:
 ///
@@ -70,7 +72,9 @@ template<typename FieldT> void print_vector(const std::vector<FieldT> &v);
 /// \note uses libfqfft iFFT for the interpolation
 template<typename FieldT>
 void plonk_interpolate_polynomial_from_points(
-    const std::vector<FieldT> &f_points, polynomial<FieldT> &f_poly);
+    const std::vector<FieldT> &f_points,
+    polynomial<FieldT> &f_poly,
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain);
 
 /// Compute the selector polynomials of the given circuit (also
 /// called here "q-polynomials"). See Sect. 8.1.  The matrix
@@ -80,7 +84,8 @@ void plonk_interpolate_polynomial_from_points(
 template<typename FieldT>
 std::vector<polynomial<FieldT>> plonk_compute_selector_polynomials(
     const size_t &num_gates,
-    const std::vector<std::vector<FieldT>> &gates_matrix_transpose);
+    const std::vector<std::vector<FieldT>> &gates_matrix_transpose,
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain);
 
 /// This function computes the sets H, k1H, k2H.  H is a
 /// multiplicative subgroup containing the n-th roots of unity in Fr,
@@ -124,7 +129,9 @@ std::vector<FieldT> plonk_permute_subgroup_H(
 /// S_sigma_2 (see [GWC19], Sect. 8.1)
 template<typename FieldT>
 std::vector<polynomial<FieldT>> plonk_compute_permutation_polynomials(
-    const std::vector<FieldT> &H_gen_permute, const size_t num_gates);
+    const std::vector<FieldT> &H_gen_permute,
+    const size_t num_gates,
+    std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain);
 
 // A wrapper for multi_exp_method_BDLO12_signed() dot-product a
 // vector of group elements in G1 (curve points) with a vector of
