@@ -49,13 +49,13 @@ public:
     using FieldT = libff::Fr<libff::bls12_381_pp>;
     using BignumT = libff::bigint<FieldT::num_limbs>;
     static const bool b_prime_field = false;
-    static const BignumT multiplicative_generator_g;
-    static const BignumT alpha;
+    static constexpr size_t multiplicative_generator_g = 7;
+    static constexpr size_t alpha = 5;
+    static constexpr size_t beta = multiplicative_generator_g;
+    static constexpr size_t gamma = 0;
+    static constexpr size_t quad_exponent = 2;
     static const BignumT alpha_inv;
-    static const BignumT beta;
-    static const BignumT gamma;
     static const BignumT delta;
-    static const BignumT quad_exponent;
 };
 
 } // namespace libsnark
