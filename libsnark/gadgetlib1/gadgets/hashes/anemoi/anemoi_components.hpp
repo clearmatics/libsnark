@@ -29,9 +29,6 @@ namespace libsnark
 
 /// Flystel Q_gamma function for prime fields:
 /// Qf(x) = beta x^2 + gamma
-/// x: input
-/// y: output
-// template<typename ppT, size_t generator>
 template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
 class flystel_Q_gamma_prime_field_gadget : public gadget<libff::Fr<ppT>>
 {
@@ -57,8 +54,6 @@ public:
 
 /// Flystel Q_delta function for prime fields:
 /// Qf(x) = beta x^2 + delta
-/// x: input
-/// y: output
 template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
 class flystel_Q_delta_prime_field_gadget : public gadget<libff::Fr<ppT>>
 {
@@ -84,11 +79,6 @@ public:
 
 /// Flystel Q_gamma function for binary fields:
 /// Qi(x) = beta x^3 + gamma
-///
-/// Compute y = beta x^3 + gamma
-/// x: input
-/// y: output
-/// beta, gamma: constants
 template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
 class flystel_Q_gamma_binary_field_gadget : public gadget<libff::Fr<ppT>>
 {
@@ -115,11 +105,6 @@ public:
 
 /// Flystel Q_delta function for binary fields:
 /// Qi(x) = beta x^3 + delta
-///
-/// Compute y = beta x^3 + delta
-/// x: input
-/// y: output
-/// beta, delta: constants
 template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
 class flystel_Q_delta_binary_field_gadget : public gadget<libff::Fr<ppT>>
 {
@@ -145,8 +130,6 @@ public:
 };
 
 /// Compute y = x^5
-/// x: input
-/// y: output
 template<typename ppT>
 class flystel_E_power_five_gadget : public gadget<libff::Fr<ppT>>
 {
@@ -171,9 +154,7 @@ public:
     void generate_r1cs_witness();
 };
 
-/// Compute y = x^1/5
-/// x: input
-/// y: output
+/// Compute y = x^1/5, x=input, y=output/result
 template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
 class flystel_E_root_five_gadget : public gadget<libff::Fr<ppT>>
 {
