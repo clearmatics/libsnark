@@ -19,9 +19,7 @@
 
 using namespace libsnark;
 
-template<typename ppT> class debug_parameters;
-
-template<> class debug_parameters<libff::bls12_381_pp>
+class debug_parameters_bls12_381
 {
 public:
     using ppT = libff::bls12_381_pp;
@@ -37,33 +35,33 @@ public:
 };
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters<libff::bls12_381_pp>::multiplicative_generator_g =
+    debug_parameters_bls12_381::multiplicative_generator_g =
         libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("7");
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters<libff::bls12_381_pp>::alpha =
+    debug_parameters_bls12_381::alpha =
         libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("5");
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters<libff::bls12_381_pp>::alpha_inv =
+    debug_parameters_bls12_381::alpha_inv =
         libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>(
             "209743500700504761917790962032743863350762210002110551290414634799"
             "75432473805");
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters<libff::bls12_381_pp>::beta =
+    debug_parameters_bls12_381::beta =
         libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("2");
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters<libff::bls12_381_pp>::gamma =
+    debug_parameters_bls12_381::gamma =
         libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("5");
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters<libff::bls12_381_pp>::delta =
+    debug_parameters_bls12_381::delta =
         libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("0");
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters<libff::bls12_381_pp>::quad_exponent =
+    debug_parameters_bls12_381::quad_exponent =
         libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("2");
 
 template<typename ppT>
@@ -247,7 +245,7 @@ template<typename ppT> void test_for_curve()
     // Execute all tests for the given curve.
 
     ppT::init_public_params();
-    using parameters = debug_parameters<ppT>;
+    using parameters = debug_parameters_bls12_381;
 
     test_flystel_Q_gamma_prime_field_gadget<ppT, parameters>();
     test_flystel_Q_gamma_binary_field_gadget<ppT, parameters>();
