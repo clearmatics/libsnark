@@ -78,11 +78,11 @@ void flystel_Q_gamma_prime_field_gadget<ppT, parameters>::
 template<typename ppT, class parameters>
 flystel_Q_delta_prime_field_gadget<ppT, parameters>::
     flystel_Q_delta_prime_field_gadget(
-        protoboard<FieldT> &pb,
-        const linear_combination<FieldT> &input,
-        const pb_variable<FieldT> &output,
+        protoboard<libff::Fr<ppT>> &pb,
+        const linear_combination<libff::Fr<ppT>> &input,
+        const pb_variable<libff::Fr<ppT>> &output,
         const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
     , beta(parameters::beta)
     , delta(parameters::delta)
     , input(input)
@@ -134,12 +134,12 @@ void flystel_Q_delta_prime_field_gadget<ppT, parameters>::
 template<typename ppT, class parameters>
 flystel_Q_gamma_binary_field_gadget<ppT, parameters>::
     flystel_Q_gamma_binary_field_gadget(
-        protoboard<FieldT> &pb,
-        const linear_combination<FieldT> &input,
-        const pb_variable<FieldT> &output,
+        protoboard<libff::Fr<ppT>> &pb,
+        const linear_combination<libff::Fr<ppT>> &input,
+        const pb_variable<libff::Fr<ppT>> &output,
         const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix)
-    , internal(pb_variable_allocate<FieldT>(
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , internal(pb_variable_allocate<libff::Fr<ppT>>(
           pb, FMT(this->annotation_prefix, " internal")))
     , beta(parameters::beta)
     , gamma(parameters::gamma)
@@ -154,11 +154,11 @@ void flystel_Q_gamma_binary_field_gadget<ppT, parameters>::
 {
     // (beta * input) * input = internal
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(beta * input, input, internal),
+        r1cs_constraint<libff::Fr<ppT>>(beta * input, input, internal),
         FMT(this->annotation_prefix, " beta * x * x = x_square"));
     // internal * input = output - gamma
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(internal, input, output - gamma),
+        r1cs_constraint<libff::Fr<ppT>>(internal, input, output - gamma),
         FMT(this->annotation_prefix, " x_square * x = y - gamma"));
 }
 
@@ -166,7 +166,7 @@ template<typename ppT, class parameters>
 void flystel_Q_gamma_binary_field_gadget<ppT, parameters>::
     generate_r1cs_witness()
 {
-    const FieldT input_value =
+    const libff::Fr<ppT> input_value =
         input.evaluate(this->pb.full_variable_assignment());
     // x_internal = beta x * x
     this->pb.val(internal) = (this->beta * input_value) * input_value;
@@ -181,12 +181,12 @@ void flystel_Q_gamma_binary_field_gadget<ppT, parameters>::
 template<typename ppT, class parameters>
 flystel_Q_delta_binary_field_gadget<ppT, parameters>::
     flystel_Q_delta_binary_field_gadget(
-        protoboard<FieldT> &pb,
-        const linear_combination<FieldT> &input,
-        const pb_variable<FieldT> &output,
+        protoboard<libff::Fr<ppT>> &pb,
+        const linear_combination<libff::Fr<ppT>> &input,
+        const pb_variable<libff::Fr<ppT>> &output,
         const std::string &annotation_prefix)
-    : gadget<FieldT>(pb, annotation_prefix)
-    , internal(pb_variable_allocate<FieldT>(
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , internal(pb_variable_allocate<libff::Fr<ppT>>(
           pb, FMT(this->annotation_prefix, " internal")))
     , beta(parameters::beta)
     , delta(parameters::delta)
@@ -257,22 +257,22 @@ void flystel_E_power_five_gadget<ppT>::generate_r1cs_constraints()
 {
     // x1*x1 = x2
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(input, input, a0),
+        r1cs_constraint<libff::Fr<ppT>>(input, input, a0),
         FMT(this->annotation_prefix, " x * x = x^2"));
     // x2*x2 = x3
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(a0, a0, a1),
+        r1cs_constraint<libff::Fr<ppT>>(a0, a0, a1),
         FMT(this->annotation_prefix, " x^2 * x^2 = x^4"));
     // x1*x3 = x4
     this->pb.add_r1cs_constraint(
-        r1cs_constraint<FieldT>(input, a1, output),
+        r1cs_constraint<libff::Fr<ppT>>(input, a1, output),
         FMT(this->annotation_prefix, " x^1 * x^4 = x^5"));
 }
 
 template<typename ppT>
 void flystel_E_power_five_gadget<ppT>::generate_r1cs_witness()
 {
-    const FieldT input_value =
+    const libff::Fr<ppT> input_value =
         input.evaluate(this->pb.full_variable_assignment());
     // x2 = x1 * x1
     this->pb.val(a0) = (input_value)*input_value;
@@ -336,10 +336,10 @@ void flystel_E_root_five_gadget<ppT, parameters>::generate_r1cs_constraints()
 template<typename ppT, class parameters>
 void flystel_E_root_five_gadget<ppT, parameters>::generate_r1cs_witness()
 {
-    const FieldT input_value =
+    const libff::Fr<ppT> input_value =
         input.evaluate(this->pb.full_variable_assignment());
-    FieldT x = input_value; // this->pb.lc_val(input);
-    FieldT y = power(x, parameters::alpha_inv);
+    libff::Fr<ppT> x = input_value; // this->pb.lc_val(input);
+    libff::Fr<ppT> y = power(x, parameters::alpha_inv);
 
     // x2 = x1 * x1
     this->pb.val(a0) = y * y;
