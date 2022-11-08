@@ -45,7 +45,6 @@ template<typename ppT> class anemoi_parameters;
 template<> class anemoi_parameters<libff::bls12_381_pp>
 {
 public:
-    using ppT = libff::bls12_381_pp;
     using FieldT = libff::Fr<libff::bls12_381_pp>;
     using BignumT = libff::bigint<FieldT::num_limbs>;
     static const bool b_prime_field = false;

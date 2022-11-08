@@ -22,25 +22,17 @@ using namespace libsnark;
 class debug_parameters_bls12_381
 {
 public:
-    using ppT = libff::bls12_381_pp;
-    using FieldT = libff::Fr<ppT>;
+    using FieldT = libff::Fr<libff::bls12_381_pp>;
+    using BignumT = libff::bigint<FieldT::num_limbs>;
     static const bool b_prime_field = false;
-    static const libff::bigint<FieldT::num_limbs> multiplicative_generator_g;
-    static const libff::bigint<FieldT::num_limbs> alpha;
-    static const libff::bigint<FieldT::num_limbs> alpha_inv;
-    static const libff::bigint<FieldT::num_limbs> beta;
-    static const libff::bigint<FieldT::num_limbs> gamma;
-    static const libff::bigint<FieldT::num_limbs> delta;
-    static const libff::bigint<FieldT::num_limbs> quad_exponent;
+    static constexpr size_t multiplicative_generator_g = 7;
+    static constexpr size_t alpha = 5;
+    static constexpr size_t beta = 2;
+    static constexpr size_t gamma = 5;
+    static constexpr size_t quad_exponent = 2;
+    static const BignumT alpha_inv;
+    static const BignumT delta;
 };
-
-const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters_bls12_381::multiplicative_generator_g =
-        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("7");
-
-const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters_bls12_381::alpha =
-        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("5");
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
     debug_parameters_bls12_381::alpha_inv =
@@ -49,20 +41,8 @@ const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
             "75432473805");
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters_bls12_381::beta =
-        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("2");
-
-const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters_bls12_381::gamma =
-        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("5");
-
-const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
     debug_parameters_bls12_381::delta =
         libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("0");
-
-const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters_bls12_381::quad_exponent =
-        libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("2");
 
 template<typename ppT>
 void test_pb_verify_circuit(protoboard<libff::Fr<ppT>> &pb)
