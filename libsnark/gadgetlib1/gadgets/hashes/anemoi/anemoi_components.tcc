@@ -72,6 +72,15 @@ void flystel_Q_prime_field_gadget<ppT>::generate_r1cs_witness()
         input.evaluate(this->pb.full_variable_assignment());
     // y = A x^2 + B
     this->pb.val(output) = A * input_value * input_value + B;
+#if 1 // DEBUG
+    printf("[%s:%d] Q A B\n", __FILE__, __LINE__);
+    A.print();
+    B.print();
+    printf("[%s:%d] Q input\n", __FILE__, __LINE__);
+    input_value.print();
+    printf("[%s:%d] Q output\n", __FILE__, __LINE__);
+    this->pb.val(output).print();
+#endif // #if 1 // DEBUG
 }
 
 // R1CS constraints for the operation y = beta x^3 + gamma with
@@ -316,37 +325,354 @@ void flystel_prime_field_gadget<ppT, parameters>::generate_r1cs_witness()
     const FieldT input_x1_value =
         input_x1.evaluate(this->pb.full_variable_assignment());
 
+#if 1 // DEBUG
+    printf("[%s:%d] Flystel input left\n", __FILE__, __LINE__);
+    input_x0_value.print();
+    printf("[%s:%d] Flystel input right\n", __FILE__, __LINE__);
+    input_x1_value.print();
+#endif // #if 1 // DEBUG
+
     this->pb.lc_val(output_y0) =
         input_x0_value - this->pb.val(a0) + this->pb.val(a2);
     this->pb.lc_val(output_y1) = input_x1_value - this->pb.val(a1);
+
+#if 1 // DEBUG
+    printf("[%s:%d] Flystel output left\n", __FILE__, __LINE__);
+    this->pb.lc_val(output_y0).print();
+    printf("[%s:%d] Flystel output right\n", __FILE__, __LINE__);
+    this->pb.lc_val(output_y1).print();
+#endif // #if 1 // DEBUG
 }
 
-template<typename FieldT, size_t NumStateColumns_L>
-std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L>
-anemoi_permutation_mds(const FieldT g)
+template<typename ppT, size_t NumStateColumns_L>
+std::vector<std::vector<libff::Fr<ppT>>> anemoi_permutation_mds(
+    const libff::Fr<ppT> g)
+{
+    static_assert(
+        (NumStateColumns_L == 1) || (NumStateColumns_L == 2) ||
+            (NumStateColumns_L == 3) || (NumStateColumns_L == 4),
+        "NumStateColumns_L must be 2,3 or 4");
+
+    const libff::Fr<ppT> g2 = g * g;
+
+    // allocate matrix M of dimension LxL
+    std::vector<std::vector<libff::Fr<ppT>>> M;
+    M.resize(NumStateColumns_L, std::vector<libff::Fr<ppT>>(NumStateColumns_L));
+
+    if (NumStateColumns_L == 2) {
+        // M[0]
+        M[0][0] = 1;
+        M[0][1] = g;
+        // M[1]
+        M[1][0] = g;
+        M[1][1] = g2 + 1;
+    }
+    if (NumStateColumns_L == 3) {
+        // M[0]
+        M[0][0] = g + 1;
+        M[0][1] = 1;
+        M[0][2] = g + 1;
+        // M[1]
+        M[1][0] = 1;
+        M[1][1] = 1;
+        M[1][2] = g;
+        // M[2]
+        M[2][0] = g;
+        M[2][1] = 1;
+        M[2][2] = 1;
+    }
+    if (NumStateColumns_L == 4) {
+        // M[0]
+        M[0][0] = 1;
+        M[0][1] = g + 1;
+        M[0][2] = g;
+        M[0][3] = g;
+        // M[1]
+        M[1][0] = g2;
+        M[1][1] = g + g2;
+        M[1][2] = g + 1;
+        M[1][3] = g + g + 1;
+        // M[2]
+        M[2][0] = g2;
+        M[2][1] = g2;
+        M[2][2] = 1;
+        M[2][3] = g + 1;
+        // M[3]
+        M[3][0] = g + 1;
+        M[3][1] = g + g + 1;
+        M[3][2] = g;
+        M[3][3] = g + 1;
+    }
+    return M;
+}
+
+// Fast matrix-vector multiplication algorithm for Anemoi MDS layer with \ell =
+// 1,2 for inputs of type "linear combination of FieldT elements"
+template<typename ppT>
+std::vector<linear_combination<libff::Fr<ppT>>> anemoi_fast_multiply_mds_2x2(
+    const std::vector<linear_combination<libff::Fr<ppT>>> X_input,
+    const libff::Fr<ppT> g)
+{
+    if (!(X_input.size() == 2)) {
+        throw std::invalid_argument("input vector must be of length 2");
+    }
+    std::vector<linear_combination<libff::Fr<ppT>>> X = X_input;
+    X[0] = X[0] + (g * X[1]);
+    X[1] = X[1] + (g * X[0]);
+    return X;
+}
+
+// Fast matrix-vector multiplication algorithm for Anemoi MDS layer with \ell
+// = 3 for inputs of type "linear combination of FieldT elements". From Figure 6
+// of [DL18](https://tosc.iacr.org/index.php/ToSC/article/view/888).
+template<typename ppT>
+std::vector<linear_combination<libff::Fr<ppT>>> anemoi_fast_multiply_mds_3x3(
+    const std::vector<linear_combination<libff::Fr<ppT>>> X_input,
+    const libff::Fr<ppT> g)
+{
+    if (!(X_input.size() == 3)) {
+        throw std::invalid_argument("input vector must be of length 3");
+    }
+    std::vector<linear_combination<libff::Fr<ppT>>> X = X_input;
+    linear_combination<libff::Fr<ppT>> t = X[0] + (g * X[2]);
+    X[2] = X[2] + X[1];
+    X[2] = X[2] + (g * X[0]);
+    X[0] = t + X[2];
+    X[1] = X[1] + t;
+    return X;
+}
+
+// Fast matrix-vector multiplication algorithm for Anemoi MDS layer with \ell
+// = 4 for inputs of type "linear combination of FieldT elements". Figure 8 of
+// [DL18](https://tosc.iacr.org/index.php/ToSC/article/view/888).
+template<typename ppT>
+std::vector<linear_combination<libff::Fr<ppT>>> anemoi_fast_multiply_mds_4x4(
+    const std::vector<linear_combination<libff::Fr<ppT>>> X_input,
+    const libff::Fr<ppT> g)
+{
+    if (!(X_input.size() == 4)) {
+        throw std::invalid_argument("input vector must be of length 4");
+    }
+    std::vector<linear_combination<libff::Fr<ppT>>> X = X_input;
+    X[0] = X[0] + X[1];
+    X[2] = X[2] + X[3];
+    X[3] = X[3] + (g * X[0]);
+    X[1] = g * (X[1] + X[2]);
+    X[0] = X[0] + X[1];
+    X[2] = X[2] + (g * X[3]);
+    X[1] = X[1] + X[2];
+    X[3] = X[3] + X[0];
+    return X;
+}
+
+// multiply matrix by a vector of elements of type "linear combination of FieldT
+// elements"
+template<typename ppT, size_t NumStateColumns_L>
+std::vector<linear_combination<libff::Fr<ppT>>> anemoi_fast_multiply_mds(
+    const std::vector<linear_combination<libff::Fr<ppT>>> X,
+    const libff::Fr<ppT> g)
+{
+    static_assert(
+        (NumStateColumns_L == 1) || (NumStateColumns_L == 2) ||
+            (NumStateColumns_L == 3) || (NumStateColumns_L == 4),
+        "NumStateColumns_L must be 2,3 or 4");
+    if (!(X.size() == NumStateColumns_L)) {
+        throw std::invalid_argument("invalid length of input vector");
+    }
+
+    std::vector<linear_combination<libff::Fr<ppT>>> Y;
+    if (NumStateColumns_L == 2) {
+        Y = anemoi_fast_multiply_mds_2x2<ppT>(X, g);
+    }
+    if (NumStateColumns_L == 3) {
+        Y = anemoi_fast_multiply_mds_3x3<ppT>(X, g);
+    }
+    if (NumStateColumns_L == 4) {
+        Y = anemoi_fast_multiply_mds_4x4<ppT>(X, g);
+    }
+    return Y;
+}
+
+// multiply matrix by a vector of elements of type "linear combination of FieldT
+// elements"
+template<typename ppT, size_t NumStateColumns_L>
+std::vector<linear_combination<libff::Fr<ppT>>> anemoi_fast_multiply_mds(
+    const pb_linear_combination_array<libff::Fr<ppT>> X, const libff::Fr<ppT> g)
 {
     static_assert(
         (NumStateColumns_L == 2) || (NumStateColumns_L == 3) ||
             (NumStateColumns_L == 4),
         "NumStateColumns_L must be 2,3 or 4");
+    if (!(X.size() == NumStateColumns_L)) {
+        throw std::invalid_argument("invalid length of input vector");
+    }
 
-    std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L> M;
-    const FieldT g2 = g * g;
+    std::vector<linear_combination<libff::Fr<ppT>>> Y;
     if (NumStateColumns_L == 2) {
-        M = {{1, g}, {g, g2 + 1}};
-        return M;
+        Y = anemoi_fast_multiply_mds_2x2<ppT>(X, g);
     }
     if (NumStateColumns_L == 3) {
-        M = {{g + 1, 1, g + 1}, {1, 1, g}, {g, 1, 1}};
-        return M;
+        Y = anemoi_fast_multiply_mds_3x3<ppT>(X, g);
     }
     if (NumStateColumns_L == 4) {
-        M = {
-            {1, 1 + g, g, g},
-            {g2, g + g2, 1 + g, 1 + 2 * g},
-            {g2, g2, 1, 1 + g},
-            {1 + g, 1 + 2 * g, g, 1 + g}};
-        return M;
+        Y = anemoi_fast_multiply_mds_4x4<ppT>(X, g);
+    }
+    return Y;
+}
+
+// rotate left by 1 a vector of elements of type "linear combination of FieldT
+// elements": (x1_0 x1_1 ... x1_{L-1}) -> (x1_1 ... x1_{L-1} x_0)
+template<typename ppT>
+std::vector<linear_combination<libff::Fr<ppT>>> anemoi_vector_left_rotate_by_one(
+    const std::vector<linear_combination<libff::Fr<ppT>>> X_input)
+{
+    if (!((X_input.size() == 2) || (X_input.size() == 3) ||
+          (X_input.size() == 4))) {
+        throw std::invalid_argument("invalid length of input vector");
+    }
+    std::vector<linear_combination<libff::Fr<ppT>>> X = X_input;
+    rotate(X.begin(), X.begin() + 1, X.end());
+    return X;
+}
+
+// rotate left by 1 a vector of elements of type "linear combination of FieldT
+// elements": (x1_0 x1_1 ... x1_{L-1}) -> (x1_1 ... x1_{L-1} x_0)
+template<typename ppT>
+pb_linear_combination_array<libff::Fr<ppT>> anemoi_vector_left_rotate_by_one(
+    const pb_linear_combination_array<libff::Fr<ppT>> X_input)
+{
+    if (!((X_input.size() == 2) || (X_input.size() == 3) ||
+          (X_input.size() == 4))) {
+        throw std::invalid_argument("invalid length of input vector");
+    }
+    pb_linear_combination_array<libff::Fr<ppT>> X = X_input;
+    rotate(X.begin(), X.begin() + 1, X.end());
+    return X;
+}
+
+template<typename ppT, size_t NumStateColumns_L, class parameters>
+anemoi_permutation_round_prime_field_gadget<
+    ppT,
+    NumStateColumns_L,
+    parameters>::
+    anemoi_permutation_round_prime_field_gadget(
+        protoboard<libff::Fr<ppT>> &pb,
+        const std::vector<FieldT> &C,
+        const std::vector<FieldT> &D,
+        const pb_linear_combination_array<FieldT> &X_left,
+        const pb_linear_combination_array<FieldT> &X_right,
+        const pb_variable_array<FieldT> &Y_left,
+        const pb_variable_array<FieldT> &Y_right,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , C_const(C)
+    , D_const(D)
+    , X_left_input(X_left)
+    , X_right_input(X_right)
+    , Y_left_output(Y_left)
+    , Y_right_output(Y_right)
+{
+    const libff::Fr<ppT> g = parameters::multiplicative_generator_g;
+    const size_t ncols = NumStateColumns_L;
+
+    // temporary variables (Z_left, Z_right) modified in-place during
+    // the computation from (X_left, X_right) to (Y_left, Y_right)
+    std::vector<linear_combination<libff::Fr<ppT>>> Z_left;
+    std::vector<linear_combination<libff::Fr<ppT>>> Z_right;
+
+    // add constants Z_left[i]+=C[i], Z_right[i]+=D[i]
+    for (size_t i = 0; i < ncols; i++) {
+        Z_left.push_back(X_left[i] + C[i]);
+        Z_right.push_back(X_right[i] + D[i]);
+    }
+
+    if (ncols > 1) {
+        M_matrix = anemoi_permutation_mds<ppT, ncols>(g);
+    } else { // ncols == 1
+        // the MDS matrix for a state with 1 column (L=1) is the same as
+        // for a state with 2 columns (L=2)
+        M_matrix = anemoi_permutation_mds<ppT, 2>(g);
+    }
+
+#if 1  // DEBUG
+#endif // #if 1 // DEBUG
+
+    // multiply by matrix M
+    if (ncols > 1) {
+        // l > 1:
+        // Z_left  = (zL_0 zL_1 ... zL_{l-1})
+        // Z_right = (zR_0 zR_1 ... zR_{l-1})
+        // Z_left = M Z_left
+        // Z_right = M (Z_right <<< 1)
+        // where (Z_right <<< 1) = (zR_1 ... zR_{l-1} zR_0)
+        Z_left = anemoi_fast_multiply_mds<ppT, NumStateColumns_L>(Z_left, g);
+        std::vector<linear_combination<libff::Fr<ppT>>> Z_right_lrot =
+            anemoi_vector_left_rotate_by_one<ppT>(Z_right);
+        Z_right =
+            anemoi_fast_multiply_mds<ppT, NumStateColumns_L>(Z_right_lrot, g);
+    } else { // ncols == 1
+        // l = 1:
+        // Z_left = zL_0
+        // Z_right = zR_0
+        // Z = Z_left || Z_right
+        // Z = M Z
+        // Z_left  = Z[0]
+        // Z_right = Z[1]
+        assert(Z_left.size() == 1);
+        assert(Z_right.size() == 1);
+        std::vector<linear_combination<libff::Fr<ppT>>> Z;
+        Z.push_back(Z_left[0]);
+        Z.push_back(Z_right[0]);
+        // for L=1 still calling multiply routine for L=2
+        Z = anemoi_fast_multiply_mds<ppT, 2>(Z, g);
+        assert(Z.size() == 2);
+        Z_left.clear();
+        Z_right.clear();
+        Z_left.push_back(Z[0]);
+        Z_right.push_back(Z[1]);
+    }
+
+    // apply layer of L Flystel S-boxes
+    for (size_t i = 0; i < ncols; i++) {
+        flystel_prime_field_gadget<ppT, parameters> H(
+            pb, Z_left[i], Z_right[i], Y_left[i], Y_right[i], "Flystel[i]");
+        Flystel.push_back(H);
+    }
+}
+
+template<typename ppT, size_t NumStateColumns_L, class parameters>
+void anemoi_permutation_round_prime_field_gadget<
+    ppT,
+    NumStateColumns_L,
+    parameters>::generate_r1cs_constraints()
+{
+    for (size_t i = 0; i < NumStateColumns_L; i++) {
+        Flystel[i].generate_r1cs_constraints();
+    }
+}
+
+template<typename ppT, size_t NumStateColumns_L, class parameters>
+void anemoi_permutation_round_prime_field_gadget<
+    ppT,
+    NumStateColumns_L,
+    parameters>::generate_r1cs_witness()
+{
+    for (size_t i = 0; i < NumStateColumns_L; i++) {
+        Flystel[i].generate_r1cs_witness();
+    }
+
+#if 1 // DEBUG
+    printf("[%s:%d] h0_left\n", __FILE__, __LINE__);
+    FieldT h0_left = this->pb.lc_val(Flystel[0].output_y0);
+    h0_left.print();
+    FieldT h0_right = this->pb.lc_val(Flystel[0].output_y1);
+    h0_right.print();
+    printf("\n");
+#endif // #if 1 // DEBUG
+
+    for (size_t i = 0; i < NumStateColumns_L; i++) {
+        this->pb.val(Y_left_output[i]) = this->pb.val(Flystel[i].output_y0);
+        this->pb.val(Y_right_output[i]) = this->pb.val(Flystel[i].output_y1);
     }
 }
 
