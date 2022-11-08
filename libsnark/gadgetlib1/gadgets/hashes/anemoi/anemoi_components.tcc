@@ -369,6 +369,7 @@ flystel_prime_field_gadget<ppT, parameters>::flystel_prime_field_gadget(
     , Q_delta(pb, x1 - a1, a2, FMT(annotation_prefix, " Q_delta"))
     , E_root_five(pb, x0 - a0, a1, FMT(annotation_prefix, " E_root_five"))
 {
+    static_assert((parameters::alpha == 5), "Parameter alpha must be 5");
 }
 
 template<typename ppT, class parameters>
