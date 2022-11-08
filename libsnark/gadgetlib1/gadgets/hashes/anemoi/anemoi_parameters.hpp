@@ -45,7 +45,8 @@ template<typename ppT> class anemoi_parameters;
 template<> class anemoi_parameters<libff::bls12_381_pp>
 {
 public:
-    using FieldT = libff::Fr<libff::bls12_381_pp>;
+    using ppT = libff::bls12_381_pp;
+    using FieldT = libff::Fr<ppT>;
     using BignumT = libff::bigint<FieldT::num_limbs>;
     static const bool b_prime_field = false;
     static constexpr size_t multiplicative_generator_g = 7;
