@@ -145,51 +145,50 @@ void test_verify_invalid_proof(
     ASSERT_FALSE(b_accept);
 }
 
-/// Compute or fill-in ciruit specific data from example.
-/// \attention the example class is defined specifically for the BLS12-381
-/// curve, so make sure we are using this curve
+// Derive circuit description in terms of polynomials from the (transposed)
+// gates matrix and the wire permutation of the circuit.
+//
+// In addition, we also pass two more inputs: the value of the public
+// input and the index of the row in which it is located in the non-transposed
+// gates matrix. See "Enforcing public inputs:", Sect. 6, p.23 [GWC19].
+//
+// TODO: change type of public_input and public_input_index to vector in order
+// to handle the general case of multiple PIs
 template<typename ppT>
 circuit_t<ppT> plonk_circuit_description_from_example(
-    const plonk_example example)
+    const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix_transpose,
+    const std::vector<size_t> wire_permutation,
+    const libff::Fr<ppT> public_input,
+    const size_t public_input_index)
 {
     using Field = libff::Fr<ppT>;
 
-    // public input (PI)
-    Field PI_value = example.public_input;
-    // index of the row of the PI in the non-transposed gates_matrix
-    int PI_index = example.public_input_index;
-    // Transposed gates matrix: each row is a q-vector
-    std::vector<std::vector<Field>> gates_matrix_transpose =
-        example.gates_matrix_transpose;
-    // wire permutation
-    std::vector<size_t> wire_permutation = example.wire_permutation;
-    // Generate domains on which to evaluate the witness
-    // polynomials. k1,k2 can be random, but we fix them for debug to
-    // match against the test vector values
-    libff::Fr<ppT> k1 = example.k1;
-    libff::Fr<ppT> k2 = example.k2;
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] k1 ", __FILE__, __LINE__);
-    k1.print();
-    printf("[%s:%d] k2 ", __FILE__, __LINE__);
-    k2.print();
-#endif // #ifdef DEBUG_PLONK
-
-    size_t num_gates = example.num_gates;
+    // the number of gates is equal to the number of columns in the transposed
+    // gates matrix
+    size_t num_gates = gates_matrix_transpose[0].size();
     // ensure that num_gates is not 0
     assert(num_gates > 0);
     // ensure num_gates is power of 2
     assert((num_gates & (num_gates - 1)) == 0);
 
-    size_t num_qpolys = example.num_qpolys;
+    // the number of Q-polynomials (aka selector polynomials) is equal to the
+    // number of rows in the transposed gates matrix
+    size_t num_qpolys = gates_matrix_transpose.size();
 
-    // We represent the constraints q_L, q_R, q_O, q_M, q_C and the
-    // witness w_L, w_R, w_O as polynomials in the roots of unity
-    // e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
+    // the constraints q_L, q_R, q_O, q_M, q_C and the
+    // witness w_L, w_R, w_O are represented as polynomials in the roots of
+    // unity e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(num_gates);
 
-    // compute public input (PI) polynomial
+    // public_input (PI): e.g. PI is 35 for the example circuit P(x) = x**3 + x
+    // + 5 = 35
+    Field PI_value = public_input;
+    // public_input_index: index of the row of the PI in the non-transposed
+    // (!) gates_matrix e.g. PI index is 4 in the example circuit (see
+    // example.hpp)
+    int PI_index = public_input_index;
+    // compute the PI polynomial
     polynomial<Field> PI_poly;
     std::vector<Field> PI_points(num_gates, Field(0));
     PI_points[PI_index] = Field(-PI_value);
@@ -203,7 +202,52 @@ circuit_t<ppT> plonk_circuit_description_from_example(
         plonk_compute_selector_polynomials<Field>(
             num_gates, num_qpolys, gates_matrix_transpose, domain);
 
-    // omega[0] are the n roots of unity, omega[1] are omega[0]*k1,
+    // we need an example object here in order to copy the values for
+    // the constants k1,k2 (see more below). the latter are generated randomly,
+    // but we copy the hard-coded values here in order to match the test
+    // vectors.
+    plonk_example example;
+    // An explanation of the constants k1,k2 from [GWC19], Section 8, page 26 :
+    //
+    // "We explicitly define the multiplicative subgroup H as containing the
+    // n-th roots of unity in F_p , where w (omega) is a primitive n-th root of
+    // unity and a generator of H i.e: H = {1, w, ... , w^{n-1}}. We assume
+    // that the number of gates in a circuit is no more than n. We also include
+    // an optimisation suggested by Vitalik Buterin, to define the identity per-
+    // mutations through degree-1 polynomials. The identity permutations must
+    // map each wire value to a unique element \in F. This can be done by
+    // defining S_ID1(X) = X, S_ID2 (X) = k1 X, S_ID3(X) = k2 X [see below for
+    // more on S_ID1, S_ID2, S_ID3], where k1 , k2 are quadratic non-residues
+    // \in F. This effectively maps each wire value to a root of unity in H,
+    // with right and output wires having an additional multiplicative factor of
+    // k1, k2 applied respectively. By representing the identity permutation via
+    // degree-1 polynomials, their evaluations can be directly computed by the
+    // verifier. This reduces the size of the proof by 1 F element, as well as
+    // reducing the number of Fast-Fourier-Transforms required by the prover."
+    //
+    // Further in Sect. 8.1 [GWC19]:
+    //
+    // "S_ID1(X) = X, S_ID2(X) = k 1 X, S ID3 (X) = k 2 X: the identity
+    // permutation applied to a, b, c [the wire polynomials, see Round 1, p.27
+    // [GWC19]]. k1, k2 \in F are chosen such that H, k1 H, k2 H are distinct
+    // cosets of H in F*, and thus consist of 3n distinct elements. (For
+    // example, when w (omega) is a quadratic residue in F, take k1 to be any
+    // quadratic non-residue, and k2 to be a quadratic non-residue not
+    // contained in k1 H.)"
+
+    // Generate domains on which to evaluate the witness polynomials. k1,k2 can
+    // be random, but we fix them for debug to match against the test vector
+    // values.
+    libff::Fr<ppT> k1 = example.k1;
+    libff::Fr<ppT> k2 = example.k2;
+#ifdef DEBUG_PLONK
+    printf("[%s:%d] k1 ", __FILE__, __LINE__);
+    k1.print();
+    printf("[%s:%d] k2 ", __FILE__, __LINE__);
+    k2.print();
+#endif // #ifdef DEBUG_PLONK
+
+    // omega[0] are the n roots of unity; omega[1] are omega[0]*k1;
     // omega[2] are omega[0]*k2
     std::vector<std::vector<Field>> omega_roots;
     plonk_compute_roots_of_unity_omega(num_gates, k1, k2, omega_roots);
@@ -226,6 +270,7 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     // permute circuit.H_gen according to the wire permutation
     std::vector<Field> H_gen_permute =
         plonk_permute_subgroup_H<Field>(H_gen, wire_permutation, num_gates);
+
     // TODO: write unit test for plonk_permute_subgroup_H
 #ifdef DEBUG_PLONK
     printf("[%s:%d] H_gen_permute\n", __FILE__, __LINE__);
@@ -494,8 +539,11 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
     // example witness
     std::vector<Field> witness = example.witness;
     // example circuit
-    circuit_t<ppT> circuit =
-        plonk_circuit_description_from_example<ppT>(example);
+    circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
+        example.gates_matrix_transpose,
+        example.wire_permutation,
+        example.public_input,
+        example.public_input_index);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -669,8 +717,11 @@ template<typename ppT> void test_plonk_srs()
     // random hidden element secret (toxic waste)
     Field secret = example.secret;
     // example circuit
-    circuit_t<ppT> circuit =
-        plonk_circuit_description_from_example<ppT>(example);
+    circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
+        example.gates_matrix_transpose,
+        example.wire_permutation,
+        example.public_input,
+        example.public_input_index);
     // maximum degree of the encoded monomials in the usrs
     size_t max_degree = PLONK_MAX_DEGREE;
 
@@ -715,8 +766,11 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
     // example witness
     std::vector<Field> witness = example.witness;
     // example circuit
-    circuit_t<ppT> circuit =
-        plonk_circuit_description_from_example<ppT>(example);
+    circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
+        example.gates_matrix_transpose,
+        example.wire_permutation,
+        example.public_input,
+        example.public_input_index);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -999,8 +1053,11 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
     // example witness
     std::vector<Field> witness = example.witness;
     // example circuit
-    circuit_t<ppT> circuit =
-        plonk_circuit_description_from_example<ppT>(example);
+    circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
+        example.gates_matrix_transpose,
+        example.wire_permutation,
+        example.public_input,
+        example.public_input_index);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -1114,8 +1171,11 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
     // example witness
     std::vector<Field> witness = example.witness;
     // example circuit
-    circuit_t<ppT> circuit =
-        plonk_circuit_description_from_example<ppT>(example);
+    circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
+        example.gates_matrix_transpose,
+        example.wire_permutation,
+        example.public_input,
+        example.public_input_index);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
