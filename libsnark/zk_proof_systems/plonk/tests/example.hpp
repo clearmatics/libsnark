@@ -63,7 +63,7 @@ namespace libsnark
 /// wires = [a1, a2, a3, a4, a5, a6, a7, a8, b1, b2, b3, b4, b5, b6, b7, b8, c1,
 /// c2, c3, c4, c5, c6, c7, c8]
 ///
-/// index = [ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
+/// index = [ 1,  2,  3, 4,  5,  6, 7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
 /// 18, 19, 20, 21, 22, 23, 24]
 ///
 /// perm  = [ 9, 17, 18, 5,  4, 19, 7,  8, 10, 11,  1, 14, 21, 20, 15, 16,  2,
@@ -106,7 +106,6 @@ namespace libsnark
 /// q_O = [-1, -1, -1,  0,  0,  0,  0,  0]
 /// q_M = [ 1,  1,  0,  0,  0, -1,  0,  0]
 /// q_C = [ 0,  0,  0, -1,  0,  0,  0,  0]
-// template<typename ppT> class plonk_example
 class plonk_example
 {
 public:
@@ -127,7 +126,7 @@ public:
     std::vector<std::vector<Field>> gates_matrix;
 
     /// Transposed gates matrix: each row is a q-vector WARN: rows 2
-    /// q_O and 3 q_M are swapped ti match the Plonk_Py test vectors
+    /// q_O and 3 q_M are swapped to match the Plonk_Py test vectors
     /// implementation (reason unclear)
     std::vector<std::vector<Field>> gates_matrix_transpose;
 
@@ -143,10 +142,10 @@ public:
     std::vector<size_t> wire_permutation;
 
     /// public input (PI)
-    Field public_input;
+    Field PI_value;
 
     /// index of the row of the PI in the non-transposed gates_matrix
-    size_t public_input_index;
+    size_t PI_gates_matrix_irow;
 
     /// n-th root of unity omega in Fq (n=8 is the number of
     /// constraints in the example). omega is a generator of the

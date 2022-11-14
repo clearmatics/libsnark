@@ -115,10 +115,10 @@ plonk_example::plonk_example()
                               21, 20, 15, 16, 2, 3,  6, 12, 22, 13, 23, 24};
 
     // public input (PI)
-    this->public_input = Field(35);
+    this->PI_value = Field(35);
 
     // index of the row of the PI in the non-transposed gates_matrix
-    this->public_input_index = 4;
+    this->PI_gates_matrix_irow = 4;
 
     // n-th root of unity omega in Fq (n=8 is the number of constraints
     // in the example). omega is a generator of the multiplicative

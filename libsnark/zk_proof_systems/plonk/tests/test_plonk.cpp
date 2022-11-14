@@ -152,14 +152,22 @@ void test_verify_invalid_proof(
 // input and the index of the row in which it is located in the non-transposed
 // gates matrix. See "Enforcing public inputs:", Sect. 6, p.23 [GWC19].
 //
-// TODO: change type of public_input and public_input_index to vector in order
+// PI_value (PI): e.g. PI is 35 for the example circuit P(x) = x**3 + x
+// + 5 = 35
+// PI_gates_matrix_irow: index of the row of the PI in the non-transposed
+// (!) gates_matrix e.g. PI index is 4 in the example circuit (see
+// example.hpp). The row index is equal to the degree of x at the non-zero
+// coefficient in the PI polynomial. So the PI polynomial in the example will be
+// 35 x^4 .
+//
+// TODO: change type of PI_value and PI_gates_matrix_irow to vector in order
 // to handle the general case of multiple PIs
 template<typename ppT>
 circuit_t<ppT> plonk_circuit_description_from_example(
     const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix_transpose,
     const std::vector<size_t> wire_permutation,
-    const libff::Fr<ppT> public_input,
-    const size_t public_input_index)
+    const libff::Fr<ppT> PI_value,
+    const size_t PI_gates_matrix_irow)
 {
     using Field = libff::Fr<ppT>;
 
@@ -181,17 +189,10 @@ circuit_t<ppT> plonk_circuit_description_from_example(
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(num_gates);
 
-    // public_input (PI): e.g. PI is 35 for the example circuit P(x) = x**3 + x
-    // + 5 = 35
-    Field PI_value = public_input;
-    // public_input_index: index of the row of the PI in the non-transposed
-    // (!) gates_matrix e.g. PI index is 4 in the example circuit (see
-    // example.hpp)
-    int PI_index = public_input_index;
     // compute the PI polynomial
     polynomial<Field> PI_poly;
     std::vector<Field> PI_points(num_gates, Field(0));
-    PI_points[PI_index] = Field(-PI_value);
+    PI_points[PI_gates_matrix_irow] = Field(-PI_value);
     plonk_compute_public_input_polynomial(PI_points, PI_poly, domain);
 
     // compute the selector polynomials (q-polynomials) from the
@@ -542,8 +543,8 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
     circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
         example.gates_matrix_transpose,
         example.wire_permutation,
-        example.public_input,
-        example.public_input_index);
+        example.PI_value,
+        example.PI_gates_matrix_irow);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -720,8 +721,8 @@ template<typename ppT> void test_plonk_srs()
     circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
         example.gates_matrix_transpose,
         example.wire_permutation,
-        example.public_input,
-        example.public_input_index);
+        example.PI_value,
+        example.PI_gates_matrix_irow);
     // maximum degree of the encoded monomials in the usrs
     size_t max_degree = PLONK_MAX_DEGREE;
 
@@ -769,8 +770,8 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
     circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
         example.gates_matrix_transpose,
         example.wire_permutation,
-        example.public_input,
-        example.public_input_index);
+        example.PI_value,
+        example.PI_gates_matrix_irow);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -1056,8 +1057,8 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
     circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
         example.gates_matrix_transpose,
         example.wire_permutation,
-        example.public_input,
-        example.public_input_index);
+        example.PI_value,
+        example.PI_gates_matrix_irow);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -1174,8 +1175,8 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
     circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
         example.gates_matrix_transpose,
         example.wire_permutation,
-        example.public_input,
-        example.public_input_index);
+        example.PI_value,
+        example.PI_gates_matrix_irow);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
