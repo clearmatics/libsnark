@@ -166,6 +166,7 @@ template<typename ppT>
 circuit_t<ppT> plonk_circuit_description_from_example(
     const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix_transpose,
     const std::vector<size_t> wire_permutation,
+    std::vector<size_t> PI_wire_index, // TODO: make const
     const libff::Fr<ppT> PI_value,
     const size_t PI_gates_matrix_irow)
 {
@@ -291,6 +292,7 @@ circuit_t<ppT> plonk_circuit_description_from_example(
         std::move(num_gates),
         std::move(num_qpolys),
         std::move(PI_poly),
+        std::move(PI_wire_index),
         std::move(Q_polys),
         std::move(S_polys),
         std::move(omega_roots),
@@ -543,6 +545,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
     circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
         example.gates_matrix_transpose,
         example.wire_permutation,
+        example.PI_wire_index,
         example.PI_value,
         example.PI_gates_matrix_irow);
     // hard-coded values for the "random" blinding constants from
@@ -721,6 +724,7 @@ template<typename ppT> void test_plonk_srs()
     circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
         example.gates_matrix_transpose,
         example.wire_permutation,
+        example.PI_wire_index,
         example.PI_value,
         example.PI_gates_matrix_irow);
     // maximum degree of the encoded monomials in the usrs
@@ -770,6 +774,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
     circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
         example.gates_matrix_transpose,
         example.wire_permutation,
+        example.PI_wire_index,
         example.PI_value,
         example.PI_gates_matrix_irow);
     // hard-coded values for the "random" blinding constants from
@@ -1057,6 +1062,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
     circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
         example.gates_matrix_transpose,
         example.wire_permutation,
+        example.PI_wire_index,
         example.PI_value,
         example.PI_gates_matrix_irow);
     // hard-coded values for the "random" blinding constants from
@@ -1175,6 +1181,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
     circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
         example.gates_matrix_transpose,
         example.wire_permutation,
+        example.PI_wire_index,
         example.PI_value,
         example.PI_gates_matrix_irow);
     // hard-coded values for the "random" blinding constants from

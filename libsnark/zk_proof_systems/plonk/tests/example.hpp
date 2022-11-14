@@ -147,6 +147,9 @@ public:
     /// index of the row of the PI in the non-transposed gates_matrix
     size_t PI_gates_matrix_irow;
 
+    /// Vector of indices of wires corresponding to public inputs (PI)
+    std::vector<size_t> PI_wire_index;
+
     /// n-th root of unity omega in Fq (n=8 is the number of
     /// constraints in the example). omega is a generator of the
     /// multiplicative subgroup H.  Example (2**32)-th primitive root

@@ -43,6 +43,9 @@ template<typename ppT> struct circuit_t {
     /// Public input polynomial
     polynomial<Field> PI_poly;
 
+    /// Vector of indices of wires corresponding to public inputs (PI)
+    std::vector<size_t> PI_wire_index;
+
     /// Circuit selector polynomials (Q-polynomials)
     std::vector<polynomial<Field>> Q_polys;
 
@@ -69,6 +72,7 @@ template<typename ppT> struct circuit_t {
         size_t num_gates,
         size_t num_qpolys,
         polynomial<Field> &&PI_poly,
+        std::vector<size_t> &&PI_wire_index,
         std::vector<polynomial<Field>> &&Q_polys,
         std::vector<polynomial<Field>> &&S_polys,
         std::vector<std::vector<Field>> &&omega_roots,

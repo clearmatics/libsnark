@@ -23,6 +23,7 @@ circuit_t<ppT>::circuit_t(
     size_t num_gates,
     size_t num_qpolys,
     polynomial<Field> &&PI_poly,
+    std::vector<size_t> &&PI_wire_index,
     std::vector<polynomial<Field>> &&Q_polys,
     std::vector<polynomial<Field>> &&S_polys,
     std::vector<std::vector<Field>> &&omega_roots,
@@ -33,6 +34,7 @@ circuit_t<ppT>::circuit_t(
     : num_gates(num_gates)
     , num_qpolys(num_qpolys)
     , PI_poly(PI_poly)
+    , PI_wire_index(PI_wire_index)
     , Q_polys(Q_polys)
     , S_polys(S_polys)
     , omega_roots(omega_roots)

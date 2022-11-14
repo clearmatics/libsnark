@@ -120,6 +120,15 @@ plonk_example::plonk_example()
     // index of the row of the PI in the non-transposed gates_matrix
     this->PI_gates_matrix_irow = 4;
 
+    // the example has 1 public input with wire index 12 (counting from 0) and
+    // value 35. it corresponds to the 4-th componnet of the w_R witness vector
+    // (counting from 0). in other words w_R[4]=35. recall that the full witness
+    // is = w_L + w_R + w_O (where '+' denotes concatentation). w_L has 8
+    // components (since we have 8 gates == 6 "real" + 2 dummy) and the 4-th
+    // component of w_R is the PI (counting from 0), so it has wire index 8+4=12
+    // (counting from 0).
+    this->PI_wire_index.push_back(12);
+
     // n-th root of unity omega in Fq (n=8 is the number of constraints
     // in the example). omega is a generator of the multiplicative
     // subgroup H.  Example (2**32)-th primitive root of unity in the
