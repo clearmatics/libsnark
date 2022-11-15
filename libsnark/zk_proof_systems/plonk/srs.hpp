@@ -88,9 +88,6 @@ public:
     /// vanilla Plonk proposal [GWC19])
     size_t num_qpolys;
 
-    /// Public input polynomial
-    polynomial<Field> PI_poly;
-
     /// Vector of indices of wires corresponding to public inputs (PI)
     std::vector<size_t> PI_wire_index;
 
@@ -129,7 +126,6 @@ public:
 
     srs(const size_t &num_gates,
         const size_t &num_qpolys,
-        const polynomial<Field> &PI_poly,
         const std::vector<size_t> &PI_wire_index,
         const std::vector<polynomial<Field>> &Q_polys,
         const std::vector<polynomial<Field>> &S_polys,

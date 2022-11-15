@@ -195,6 +195,7 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     const libff::Fr<ppT> &alpha,
     const libff::Fr<ppT> &beta,
     const libff::Fr<ppT> &gamma,
+    //    const std::vector<libff::Fr<ppT>> &witness, // TODO
     const round_zero_out_t<ppT> &round_zero_out,
     const round_one_out_t<ppT> &round_one_out,
     const round_two_out_t<ppT> &round_two_out,
@@ -248,6 +249,36 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     polynomial<Field> cqO;
     libfqfft::_polynomial_multiplication<Field>(
         cqO, round_one_out.W_polys_blinded[c], srs.Q_polys[O]);
+
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
+        libfqfft::get_evaluation_domain<Field>(srs.num_gates);
+
+    // compute PI polynomial from the PI_wire_index (stored in the srs) and
+    // the PI_value (stored in the witness)
+    // TODO: get from witness[srs.PI_wire_index]
+    std::vector<Field> PI_values = {Field(35)};
+
+    // by convention of this implementation the PI values are stored in the
+    // right input wire w_R (and not in the left input wire w_L as in [GWC19]).
+    // recall that the witness w is composed of left input w_L, right input w_R
+    // and output wires w_O (in this order) and so is the concatenation of w_L
+    // || w_R || w_O = w. each vector w_L, w_R and w_O of wire values is of
+    // length srs.num_gates and so in order to get the value of the PI[i]
+    // located at PI_wire_index[i] of w we need to do a modulo srs.num_gates
+    // operation (to skip the first srs.num_gates values stored in w_L). this is
+    // the reason for the following modulo srs.num_gates operation.
+    // TODO make example
+    std::vector<Field> PI_points(srs.num_gates, Field(0));
+    for (size_t i = 0; i < PI_values.size(); i++) {
+        size_t PI_polynomial_power_of_x = srs.PI_wire_index[i] % srs.num_gates;
+        PI_points[PI_polynomial_power_of_x] = Field(-PI_values[i]);
+    }
+    assert(PI_points[4] == Field(-35));
+
+    // compute PI polynomial
+    polynomial<Field> PI_poly;
+    plonk_compute_public_input_polynomial(PI_points, PI_poly, domain);
+
     // t_part[0](x) = a(x)b(x)q_M(x) + a(x)q_L(x) + b(x)q_R(x) + c(x)q_O(x) +
     // PI(x) + q_C(x)
     polynomial<Field> poly_null{Field(0)};
@@ -255,7 +286,7 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], aqL);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], bqR);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], cqO);
-    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], srs.PI_poly);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], PI_poly);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], srs.Q_polys[C]);
 
     // --- Computation of t_part[1]
