@@ -302,7 +302,6 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
         size_t PI_polynomial_power_of_x = srs.PI_wire_index[i] % srs.num_gates;
         PI_points[PI_polynomial_power_of_x] = Field(-PI_value);
     }
-    assert(PI_points[4] == Field(-35));
     // compute the PI polynomial
     polynomial<Field> PI_poly;
     plonk_compute_public_input_polynomial(PI_points, PI_poly, domain);

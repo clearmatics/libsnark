@@ -151,21 +151,19 @@ step_seven_out_t<ppT>::step_seven_out_t(libff::Fr<ppT> &&PI_zeta)
 
 template<typename ppT, class transcript_hasher>
 step_seven_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_seven(
-    const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs)
+    const step_four_out_t<ppT> &step_four_out,
+    const std::vector<Field> &PI_value_list,
+    const srs<ppT> &srs)
 {
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(srs.num_gates);
     // construct the PI polynomial from the vector of PI values (received as
     // input to the verifier) and the PI wire indices (stored in the srs)
-    // TODO: get from additional PI input
-    std::vector<Field> PI_values = {Field(35)};
-
     std::vector<Field> PI_points(srs.num_gates, Field(0));
-    for (size_t i = 0; i < PI_values.size(); i++) {
+    for (size_t i = 0; i < PI_value_list.size(); i++) {
         size_t PI_polynomial_power_of_x = srs.PI_wire_index[i] % srs.num_gates;
-        PI_points[PI_polynomial_power_of_x] = Field(-PI_values[i]);
+        PI_points[PI_polynomial_power_of_x] = Field(-PI_value_list[i]);
     }
-    assert(PI_points[4] == Field(-35));
 
     // compute PI polynomial
     polynomial<Field> PI_poly;
@@ -416,6 +414,7 @@ template<typename ppT, class transcript_hasher>
 bool plonk_verifier<ppT, transcript_hasher>::verify_proof(
     const plonk_proof<ppT> &proof,
     const srs<ppT> &srs,
+    const std::vector<Field> &PI_value_list,
     transcript_hasher &hasher)
 {
     std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain =
@@ -447,7 +446,7 @@ bool plonk_verifier<ppT, transcript_hasher>::verify_proof(
 
     // Verifier Step 7: compute public input polynomial evaluation PI(zeta)
     const step_seven_out_t<ppT> step_seven_out =
-        this->step_seven(step_four_out, srs);
+        this->step_seven(step_four_out, PI_value_list, srs);
 
     // Verifier Step 8: compute quotient polynomial evaluation
     // r'(zeta) = r(zeta) - r0, where r0 is a constant term
