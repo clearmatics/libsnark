@@ -297,6 +297,24 @@ std::vector<FieldT> plonk_compute_accumulator(
     return A;
 }
 
+template<typename FieldT>
+std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
+    const std::vector<std::vector<FieldT>> &gates_matrix,
+    const size_t &nrows,
+    const size_t &ncols)
+{
+    size_t nrows_transpose = ncols;
+    size_t ncols_transpose = nrows;
+    std::vector<std::vector<FieldT>> gates_matrix_transpose(
+        nrows_transpose, std::vector<FieldT>(ncols_transpose));
+    for (size_t irow = 0; irow < nrows; ++irow) {
+        for (size_t icol = 0; icol < ncols; ++icol) {
+            gates_matrix_transpose[icol][irow] = gates_matrix[irow][icol];
+        }
+    }
+    return gates_matrix_transpose;
+}
+
 } // namespace libsnark
 
 #endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_TCC_

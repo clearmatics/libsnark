@@ -194,6 +194,13 @@ std::vector<FieldT> plonk_compute_accumulator(
     const std::vector<FieldT> &H_gen, // H, Hk1, Hk2
     const std::vector<FieldT> &H_gen_permute);
 
+/// transpose the gates matrix
+template<typename FieldT>
+std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
+    const std::vector<std::vector<FieldT>> &gates_matrix,
+    const size_t &nrows,
+    const size_t &ncols);
+
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/utils.tcc"
