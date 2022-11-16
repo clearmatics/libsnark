@@ -144,11 +144,6 @@ srs<ppT> plonk_srs_derive_from_usrs(
         plonk_compute_selector_polynomials<Field>(
             num_gates, num_qpolys, gates_matrix_transpose, domain);
 
-    // we need an example object here in order to copy the values for
-    // the constants k1,k2 (see more below). the latter are generated randomly,
-    // but we copy the hard-coded values here in order to match the test
-    // vectors.
-    plonk_example example;
     // An explanation of the constants k1,k2 from [GWC19], Section 8, page 26 :
     //
     // "We explicitly define the multiplicative subgroup H as containing the
@@ -176,12 +171,13 @@ srs<ppT> plonk_srs_derive_from_usrs(
     // example, when w (omega) is a quadratic residue in F, take k1 to be any
     // quadratic non-residue, and k2 to be a quadratic non-residue not
     // contained in k1 H.)"
-
-    // Generate domains on which to evaluate the witness polynomials. k1,k2 can
-    // be random, but we fix them for debug to match against the test vector
-    // values.
-    libff::Fr<ppT> k1 = example.k1;
-    libff::Fr<ppT> k2 = example.k2;
+    //
+    // For the moment k1,k2 are fixed to the test vector values for debug
+    // purpouses. TODO choose k1,k2 according to the requirements in [GWC19]
+    libff::Fr<ppT> k1 =
+        Field("706987411474581393682955260879121390206111740035659671471"
+              "3673571023200548519");
+    libff::Fr<ppT> k2 = libff::power(k1, libff::bigint<1>(2));
 #ifdef DEBUG_PLONK
     printf("[%s:%d] k1 ", __FILE__, __LINE__);
     k1.print();
