@@ -195,10 +195,10 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     const libff::Fr<ppT> &alpha,
     const libff::Fr<ppT> &beta,
     const libff::Fr<ppT> &gamma,
-    //    const std::vector<libff::Fr<ppT>> &witness, // TODO
     const round_zero_out_t<ppT> &round_zero_out,
     const round_one_out_t<ppT> &round_one_out,
     const round_two_out_t<ppT> &round_two_out,
+    const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
     transcript_hasher &hasher)
 {
@@ -253,29 +253,57 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(srs.num_gates);
 
-    // compute PI polynomial from the PI_wire_index (stored in the srs) and
-    // the PI_value (stored in the witness)
-    // TODO: get from witness[srs.PI_wire_index]
-    std::vector<Field> PI_values = {Field(35)};
-
-    // by convention of this implementation the PI values are stored in the
-    // right input wire w_R (and not in the left input wire w_L as in [GWC19]).
-    // recall that the witness w is composed of left input w_L, right input w_R
-    // and output wires w_O (in this order) and so is the concatenation of w_L
-    // || w_R || w_O = w. each vector w_L, w_R and w_O of wire values is of
-    // length srs.num_gates and so in order to get the value of the PI[i]
-    // located at PI_wire_index[i] of w we need to do a modulo srs.num_gates
-    // operation (to skip the first srs.num_gates values stored in w_L). this is
-    // the reason for the following modulo srs.num_gates operation.
-    // TODO make example
+    // Compute PI polynomial from the PI_wire_index (stored in the srs) and
+    // the PI_value (stored in the witness). By convention of this
+    // implementation the PI values are stored in the right input wire w_R (and
+    // not in the left input wire w_L as in [GWC19]). Recall that the witness w
+    // is composed of left input w_L, right input w_R and output wires w_O (in
+    // this order) and so is the concatenation of w_L || w_R || w_O = w. Each
+    // vector w_L, w_R and w_O of wire values is of length srs.num_gates and so
+    // in order to get the value of the i-th PI[i] located at PI_wire_index[i]
+    // of w we need to do a modulo srs.num_gates operation (to skip the first
+    // srs.num_gates values corresponding to w_L). This is the reason for the
+    // following modulo srs.num_gates operation.
+    //
+    // EXAMPLE
+    //
+    // Suppose that we have a circuit of 8 gates and the witness is w = w_L ||
+    // w_R || w_O where (leftmost position corresponds to index 0):
+    //
+    // w_L = [ 3, 9,27, 1, 1,30, 0, 0]
+    // w_R = [ 3, 3, 3, 5,35, 5, 0, 0]
+    // w_O = [ 9,27,30, 5,35,35, 0, 0]
+    //
+    // so (leftmost position corresponds to index 0):
+    //
+    // w = [ 3,9,27,1,1,30,0,0,3,3,3,5,35,5,0,0,9,27,30,5,35,35,0,0]
+    //
+    // In this example circuit we have a single public input (PI) 35 first
+    // appearing at position 12 in w (counting from 0). In this case the vector
+    // srs.PI_wire_index will contain a single element srs.PI_wire_index[0]
+    // = 12.
+    //
+    // The value of the PI is extracted from the witness as PI_value =
+    // w[srs.PI_wire_index[0]] = w[12] = 35
+    //
+    // To obtain the index of the PI in w_R we do a modulo num_gates (= 8)
+    // operation to skip the w_L vector (first 8 entries in w). Note that this
+    // index also corresponds to the power of x in the PI polynomial:
+    //
+    // power_of_x = srs.PI_wire_index[0] % num_gates = 12 % 8 = 4
+    //
+    // Finally the PI polynomial is computed as
+    //
+    // PI_poly(x) = PI_value x^power_of_x = 35 x^4
     std::vector<Field> PI_points(srs.num_gates, Field(0));
-    for (size_t i = 0; i < PI_values.size(); i++) {
+    // loop over all wire indices that correspond to PIs
+    for (size_t i = 0; i < srs.PI_wire_index.size(); i++) {
+        Field PI_value = witness[srs.PI_wire_index[i]];
         size_t PI_polynomial_power_of_x = srs.PI_wire_index[i] % srs.num_gates;
-        PI_points[PI_polynomial_power_of_x] = Field(-PI_values[i]);
+        PI_points[PI_polynomial_power_of_x] = Field(-PI_value);
     }
     assert(PI_points[4] == Field(-35));
-
-    // compute PI polynomial
+    // compute the PI polynomial
     polynomial<Field> PI_poly;
     plonk_compute_public_input_polynomial(PI_points, PI_poly, domain);
 
@@ -914,6 +942,7 @@ plonk_proof<ppT> plonk_prover<ppT, transcript_hasher>::compute_proof(
         round_zero_out,
         round_one_out,
         round_two_out,
+        witness,
         srs,
         hasher);
 

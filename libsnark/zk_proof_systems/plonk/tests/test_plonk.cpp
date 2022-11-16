@@ -398,6 +398,7 @@ void test_plonk_prover_round_three(
     const round_zero_out_t<ppT> &round_zero_out,
     const round_one_out_t<ppT> &round_one_out,
     const round_two_out_t<ppT> &round_two_out,
+    const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
     transcript_hasher &hasher)
 {
@@ -409,6 +410,7 @@ void test_plonk_prover_round_three(
             round_zero_out,
             round_one_out,
             round_two_out,
+            witness,
             srs,
             hasher);
     printf("[%s:%d] Output from Round 3\n", __FILE__, __LINE__);
@@ -624,6 +626,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
         round_zero_out,
         round_one_out,
         round_two_out,
+        witness,
         srs,
         hasher);
 
@@ -637,6 +640,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
             round_zero_out,
             round_one_out,
             round_two_out,
+            witness,
             srs,
             hasher);
     // clear hash buffer
