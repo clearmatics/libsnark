@@ -139,16 +139,15 @@ public:
         const polynomial<Field> &L_basis_zero);
 };
 
-/// Derive the (plain) SRS from the circuit description and the
-/// USRS. The (plain) SRS is a specialization of the USRS for one
-/// particular circuit i.e.
-///
-/// usrs = <encoded powers of secret>
-/// srs = (proving_key, verificataion_key) = derive(usrs,
-/// circuit_description)
+/// Derive the (plain) SRS from the USRS, the gates matrix, the wire permutation
+/// and the list of public input (PI) indices. The (plain) SRS is a
+/// specialization of the USRS for one particular circuit
 template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
-    const usrs<ppT> &usrs, const circuit_t<ppT> &circuit);
+    const usrs<ppT> &usrs,
+    const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix,
+    const std::vector<size_t> wire_permutation,
+    const std::vector<size_t> PI_wire_index);
 
 /// A proving key for Plonk
 template<typename ppT> class plonk_proving_key

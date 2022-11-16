@@ -537,9 +537,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
     Field secret = example.secret;
     // example witness
     std::vector<Field> witness = example.witness;
-    // example circuit
-    circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
-        example.gates_matrix, example.wire_permutation, example.PI_wire_index);
+
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -547,11 +545,15 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
     size_t max_degree = PLONK_MAX_DEGREE;
 
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
-        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
+        libfqfft::get_evaluation_domain<Field>(example.num_gates);
 
     // prepare srs
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+        usrs,
+        example.gates_matrix,
+        example.wire_permutation,
+        example.PI_wire_index);
 
     // initialize hasher
     transcript_hasher hasher;
@@ -710,25 +712,27 @@ template<typename ppT> void test_plonk_srs()
     using Field = libff::Fr<ppT>;
 
     ppT::init_public_params();
+
     // load test vector values from example circuit
     plonk_example example;
     // random hidden element secret (toxic waste)
     Field secret = example.secret;
-    // example circuit
-    circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
-        example.gates_matrix, example.wire_permutation, example.PI_wire_index);
     // maximum degree of the encoded monomials in the usrs
     size_t max_degree = PLONK_MAX_DEGREE;
 
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
-        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
+        libfqfft::get_evaluation_domain<Field>(example.num_gates);
 
     // --- USRS ---
     // compute SRS = powers of secret times G1: 1*G1, secret^1*G1,
     // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     // --- SRS ---
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+        usrs,
+        example.gates_matrix,
+        example.wire_permutation,
+        example.PI_wire_index);
     // compare SRS against reference test values
     printf("[%s:%d] secret ", __FILE__, __LINE__);
     secret.print();
@@ -760,9 +764,6 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
     Field secret = example.secret;
     // example witness
     std::vector<Field> witness = example.witness;
-    // example circuit
-    circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
-        example.gates_matrix, example.wire_permutation, example.PI_wire_index);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -770,11 +771,15 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
     size_t max_degree = PLONK_MAX_DEGREE;
 
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
-        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
+        libfqfft::get_evaluation_domain<Field>(example.num_gates);
 
     // prepare srs
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+        usrs,
+        example.gates_matrix,
+        example.wire_permutation,
+        example.PI_wire_index);
 
     // initialize hasher
     transcript_hasher hasher;
@@ -1046,9 +1051,6 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
     Field secret = example.secret;
     // example witness
     std::vector<Field> witness = example.witness;
-    // example circuit
-    circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
-        example.gates_matrix, example.wire_permutation, example.PI_wire_index);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -1056,11 +1058,15 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
     size_t max_degree = PLONK_MAX_DEGREE;
 
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
-        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
+        libfqfft::get_evaluation_domain<Field>(example.num_gates);
 
     // prepare srs
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+        usrs,
+        example.gates_matrix,
+        example.wire_permutation,
+        example.PI_wire_index);
 
     // initialize hasher
     transcript_hasher hasher;
@@ -1169,9 +1175,6 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
     Field secret = example.secret;
     // example witness
     std::vector<Field> witness = example.witness;
-    // example circuit
-    circuit_t<ppT> circuit = plonk_circuit_description_from_example<ppT>(
-        example.gates_matrix, example.wire_permutation, example.PI_wire_index);
     // hard-coded values for the "random" blinding constants from
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
@@ -1179,11 +1182,15 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
     size_t max_degree = PLONK_MAX_DEGREE;
 
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
-        libfqfft::get_evaluation_domain<Field>(circuit.num_gates);
+        libfqfft::get_evaluation_domain<Field>(example.num_gates);
 
     // prepare srs
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(usrs, circuit);
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+        usrs,
+        example.gates_matrix,
+        example.wire_permutation,
+        example.PI_wire_index);
 
     // initialize hasher
     transcript_hasher hasher;
