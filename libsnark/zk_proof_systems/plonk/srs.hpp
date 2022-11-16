@@ -27,6 +27,7 @@
 ///   Report 2019/953, 2019, <https://eprint.iacr.org/2019/953>
 
 #include "libsnark/common/data_structures/polynomial.hpp"
+#include "libsnark/zk_proof_systems/plonk/utils.hpp"
 
 namespace libsnark
 {

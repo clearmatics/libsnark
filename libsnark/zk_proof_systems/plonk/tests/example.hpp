@@ -28,7 +28,6 @@
 ///   https://vitalik.ca/general/2019/09/22/plonk.html
 
 #include "libsnark/common/data_structures/polynomial.hpp"
-#include "libsnark/zk_proof_systems/plonk/circuit.hpp"
 
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
 #include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>

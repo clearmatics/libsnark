@@ -6,7 +6,6 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#include "libsnark/zk_proof_systems/plonk/circuit.hpp"
 #include "libsnark/zk_proof_systems/plonk/prover.hpp"
 #include "libsnark/zk_proof_systems/plonk/tests/bls12_381_test_vector_transcript_hasher.hpp"
 #include "libsnark/zk_proof_systems/plonk/verifier.hpp"
@@ -15,6 +14,7 @@
 #include <cassert>
 #include <cstdio>
 #include <gtest/gtest.h>
+#include <libff/algebra/curves/public_params.hpp>
 
 /// Test program that exercises the Plonk protocol (first setup, then
 /// prover, then verifier) on a synthetic R1CS instance.
@@ -144,157 +144,6 @@ void test_verify_invalid_proof(
     proof.r_zeta = proof.r_zeta + Fr_noise;
     b_accept = verifier.verify_proof(proof, srs, PI_value_list, hasher);
     ASSERT_FALSE(b_accept);
-}
-
-// Derive circuit description in terms of polynomials from the (transposed)
-// gates matrix and the wire permutation of the circuit.
-//
-// In addition, we also pass two more inputs: the value of the public
-// input and the index of the row in which it is located in the non-transposed
-// gates matrix. See "Enforcing public inputs:", Sect. 6, p.23 [GWC19].
-//
-// PI_value (PI): e.g. PI is 35 for the example circuit P(x) = x**3 + x
-// + 5 = 35
-// PI_gates_matrix_irow: index of the row of the PI in the non-transposed
-// (!) gates_matrix e.g. PI index is 4 in the example circuit (see
-// example.hpp). The row index is equal to the degree of x at the non-zero
-// coefficient in the PI polynomial. So the PI polynomial in the example will be
-// 35 x^4 .
-template<typename ppT>
-circuit_t<ppT> plonk_circuit_description_from_example(
-    const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix,
-    const std::vector<size_t> wire_permutation,
-    std::vector<size_t> PI_wire_index) // TODO: make const
-{
-    using Field = libff::Fr<ppT>;
-
-    const size_t nrows = gates_matrix.size();
-    const size_t ncols = gates_matrix[0].size();
-    const std::vector<std::vector<Field>> gates_matrix_transpose =
-        plonk_gates_matrix_transpose(gates_matrix, nrows, ncols);
-
-    // the number of gates is equal to the number of columns in the transposed
-    // gates matrix
-    size_t num_gates = gates_matrix_transpose[0].size();
-    // ensure that num_gates is not 0
-    assert(num_gates > 0);
-    // ensure num_gates is power of 2
-    assert((num_gates & (num_gates - 1)) == 0);
-
-    // the number of Q-polynomials (aka selector polynomials) is equal to the
-    // number of rows in the transposed gates matrix
-    size_t num_qpolys = gates_matrix_transpose.size();
-
-    // the constraints q_L, q_R, q_O, q_M, q_C and the
-    // witness w_L, w_R, w_O are represented as polynomials in the roots of
-    // unity e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
-    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
-        libfqfft::get_evaluation_domain<Field>(num_gates);
-
-    // compute the selector polynomials (q-polynomials) from the
-    // transposed gates matrix over the Lagrange basis q_poly = \sum_i
-    // q[i] * L[i] where q[i] is a coefficient (a scalar Field
-    // element) and L[i] is a polynomial with Field coefficients
-    std::vector<polynomial<Field>> Q_polys =
-        plonk_compute_selector_polynomials<Field>(
-            num_gates, num_qpolys, gates_matrix_transpose, domain);
-
-    // we need an example object here in order to copy the values for
-    // the constants k1,k2 (see more below). the latter are generated randomly,
-    // but we copy the hard-coded values here in order to match the test
-    // vectors.
-    plonk_example example;
-    // An explanation of the constants k1,k2 from [GWC19], Section 8, page 26 :
-    //
-    // "We explicitly define the multiplicative subgroup H as containing the
-    // n-th roots of unity in F_p , where w (omega) is a primitive n-th root of
-    // unity and a generator of H i.e: H = {1, w, ... , w^{n-1}}. We assume
-    // that the number of gates in a circuit is no more than n. We also include
-    // an optimisation suggested by Vitalik Buterin, to define the identity per-
-    // mutations through degree-1 polynomials. The identity permutations must
-    // map each wire value to a unique element \in F. This can be done by
-    // defining S_ID1(X) = X, S_ID2 (X) = k1 X, S_ID3(X) = k2 X [see below for
-    // more on S_ID1, S_ID2, S_ID3], where k1 , k2 are quadratic non-residues
-    // \in F. This effectively maps each wire value to a root of unity in H,
-    // with right and output wires having an additional multiplicative factor of
-    // k1, k2 applied respectively. By representing the identity permutation via
-    // degree-1 polynomials, their evaluations can be directly computed by the
-    // verifier. This reduces the size of the proof by 1 F element, as well as
-    // reducing the number of Fast-Fourier-Transforms required by the prover."
-    //
-    // Further in Sect. 8.1 [GWC19]:
-    //
-    // "S_ID1(X) = X, S_ID2(X) = k 1 X, S ID3 (X) = k 2 X: the identity
-    // permutation applied to a, b, c [the wire polynomials, see Round 1, p.27
-    // [GWC19]]. k1, k2 \in F are chosen such that H, k1 H, k2 H are distinct
-    // cosets of H in F*, and thus consist of 3n distinct elements. (For
-    // example, when w (omega) is a quadratic residue in F, take k1 to be any
-    // quadratic non-residue, and k2 to be a quadratic non-residue not
-    // contained in k1 H.)"
-
-    // Generate domains on which to evaluate the witness polynomials. k1,k2 can
-    // be random, but we fix them for debug to match against the test vector
-    // values.
-    libff::Fr<ppT> k1 = example.k1;
-    libff::Fr<ppT> k2 = example.k2;
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] k1 ", __FILE__, __LINE__);
-    k1.print();
-    printf("[%s:%d] k2 ", __FILE__, __LINE__);
-    k2.print();
-#endif // #ifdef DEBUG_PLONK
-
-    // omega[0] are the n roots of unity; omega[1] are omega[0]*k1;
-    // omega[2] are omega[0]*k2
-    std::vector<std::vector<Field>> omega_roots;
-    plonk_compute_roots_of_unity_omega(num_gates, k1, k2, omega_roots);
-
-    // H_gen contains the generators of H, k1 H and k2 H in one place
-    // ie. circuit.omega_roots, circuit.omega_roots_k1 and
-    // circuit.omega_roots_k2
-    std::vector<Field> H_gen;
-    plonk_compute_cosets_H_k1H_k2H(num_gates, k1, k2, H_gen);
-
-    // TODO: write unit test for plonk_roots_of_unity_omega_to_subgroup_H
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] H_gen\n", __FILE__, __LINE__);
-    libff::print_vector(H_gen);
-    for (int i = 0; i < (int)H_gen.size(); ++i) {
-        assert(H_gen[i] == example.H_gen[i]);
-    }
-#endif // #ifdef DEBUG_PLONK
-
-    // permute circuit.H_gen according to the wire permutation
-    std::vector<Field> H_gen_permute =
-        plonk_permute_subgroup_H<Field>(H_gen, wire_permutation, num_gates);
-
-    // TODO: write unit test for plonk_permute_subgroup_H
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] H_gen_permute\n", __FILE__, __LINE__);
-    libff::print_vector(H_gen_permute);
-    for (size_t i = 0; i < H_gen_permute.size(); ++i) {
-        assert(H_gen_permute[i] == example.H_gen_permute[i]);
-    }
-#endif // #ifdef DEBUG_PLONK
-
-    // compute the permutation polynomials S_sigma_1, S_sigma_2,
-    // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
-    std::vector<polynomial<Field>> S_polys =
-        plonk_compute_permutation_polynomials<Field>(
-            H_gen_permute, num_gates, domain);
-
-    circuit_t<ppT> circuit(
-        std::move(num_gates),
-        std::move(num_qpolys),
-        std::move(PI_wire_index),
-        std::move(Q_polys),
-        std::move(S_polys),
-        std::move(omega_roots),
-        std::move(H_gen),
-        std::move(H_gen_permute),
-        std::move(k1),
-        std::move(k2));
-    return circuit;
 }
 
 template<typename ppT>
