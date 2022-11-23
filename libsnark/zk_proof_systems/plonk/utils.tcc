@@ -248,7 +248,7 @@ FieldT plonk_compute_accumulator_factor(
     const std::vector<FieldT> &A)
 {
     assert(num_gates);
-    assert((i >= 0) && (i < num_gates));
+    assert(i < num_gates);
     assert(witness.size() == (NUM_HSETS * num_gates));
     assert(H_gen.size() == (NUM_HSETS * num_gates));
     assert(H_gen_permute.size() == (NUM_HSETS * num_gates));

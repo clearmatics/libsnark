@@ -197,26 +197,14 @@ srs<ppT> plonk_srs_derive_from_usrs(
     plonk_compute_cosets_H_k1H_k2H(num_gates, k1, k2, H_gen);
 
     // TODO: write unit test for plonk_roots_of_unity_omega_to_subgroup_H
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] H_gen\n", __FILE__, __LINE__);
-    libff::print_vector(H_gen);
-    for (int i = 0; i < (int)H_gen.size(); ++i) {
-        assert(H_gen[i] == example.H_gen[i]);
-    }
-#endif // #ifdef DEBUG_PLONK
+    // assert(H_gen[i] == example.H_gen[i]);
 
     // permute circuit.H_gen according to the wire permutation
     std::vector<Field> H_gen_permute =
         plonk_permute_subgroup_H<Field>(H_gen, wire_permutation, num_gates);
 
     // TODO: write unit test for plonk_permute_subgroup_H
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] H_gen_permute\n", __FILE__, __LINE__);
-    libff::print_vector(H_gen_permute);
-    for (size_t i = 0; i < H_gen_permute.size(); ++i) {
-        assert(H_gen_permute[i] == example.H_gen_permute[i]);
-    }
-#endif // #ifdef DEBUG_PLONK
+    // assert(H_gen_permute[i] == example.H_gen_permute[i]);
 
     // compute the permutation polynomials S_sigma_1, S_sigma_2,
     // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
