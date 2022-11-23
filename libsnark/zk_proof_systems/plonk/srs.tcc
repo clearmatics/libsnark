@@ -178,12 +178,6 @@ srs<ppT> plonk_srs_derive_from_usrs(
         Field("706987411474581393682955260879121390206111740035659671471"
               "3673571023200548519");
     libff::Fr<ppT> k2 = libff::power(k1, libff::bigint<1>(2));
-#ifdef DEBUG_PLONK
-    printf("[%s:%d] k1 ", __FILE__, __LINE__);
-    k1.print();
-    printf("[%s:%d] k2 ", __FILE__, __LINE__);
-    k2.print();
-#endif // #ifdef DEBUG_PLONK
 
     // omega[0] are the n roots of unity; omega[1] are omega[0]*k1;
     // omega[2] are omega[0]*k2
