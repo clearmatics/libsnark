@@ -161,8 +161,8 @@ step_seven_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_seven(
     // input to the verifier) and the PI wire indices (stored in the srs)
     std::vector<Field> PI_points(srs.num_gates, Field(0));
     for (size_t i = 0; i < PI_value_list.size(); i++) {
-        size_t PI_polynomial_power_of_x = srs.PI_wire_index[i] % srs.num_gates;
-        PI_points[PI_polynomial_power_of_x] = Field(-PI_value_list[i]);
+        size_t PI_coordinate_x = srs.PI_wire_index[i] % srs.num_gates;
+        PI_points[PI_coordinate_x] = Field(-PI_value_list[i]);
     }
 
     // compute PI polynomial
