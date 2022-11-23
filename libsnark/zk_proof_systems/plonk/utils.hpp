@@ -16,11 +16,6 @@
 #include <libfqfft/evaluation_domain/get_evaluation_domain.hpp>
 #include <memory>
 
-// enable debug checks. in particular enable comparisons to test
-// vector values.
-#define DEBUG_PLONK
-//#undef DEBUG_PLONK
-
 /// Declaration of common untility functions for ppzkSNARK proof
 /// system Plonk. The implementation instantiates the protocol of
 /// PlonK \[GWC19],

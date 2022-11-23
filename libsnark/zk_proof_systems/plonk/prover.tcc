@@ -669,9 +669,7 @@ round_five_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_five(
     libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[3]);
 
     // TODO: make a separate unit test for r_poly
-#if 0
-    assert(r_poly == example.r_poly);
-#endif // #ifdef DEBUG_PLONK
+    // assert(r_poly == example.r_poly);
 
     // Evaluate the r-polynomial at zeta. Note: in the reference
     // implementation, r_zeta is added to the pi-SNARK proof. In the
@@ -831,10 +829,8 @@ round_five_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_five(
     assert(libfqfft::_is_zero(remainder));
 
     // TODO: make a separate unit test for W_zeta, W_zeta_omega
-#if 0
-    assert(W_zeta == example.W_zeta);
-    assert(W_zeta_omega == example.W_zeta_omega);
-#endif // #ifdef DEBUG_PLONK
+    // assert(W_zeta == example.W_zeta);
+    // assert(W_zeta_omega == example.W_zeta_omega);
 
     // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
     // input
