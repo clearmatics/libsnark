@@ -221,10 +221,9 @@ srs<ppT> plonk_srs_derive_from_usrs(
     }
 
     // compute 0-th Lagrange basis vector via inverse FFT
-    polynomial<libff::Fr<ppT>> u(num_gates, libff::Fr<ppT>(0));
-    u[0] = libff::Fr<ppT>(1);
-    domain->iFFT(u);
-    polynomial<libff::Fr<ppT>> L_basis_zero = u;
+    polynomial<libff::Fr<ppT>> L_basis_zero(num_gates, libff::Fr<ppT>(0));
+    L_basis_zero[0] = libff::Fr<ppT>(1);
+    domain->iFFT(L_basis_zero);
 
     srs<ppT> srs(
         std::move(num_gates),
