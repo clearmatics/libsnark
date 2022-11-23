@@ -206,8 +206,10 @@ srs<ppT> plonk_srs_derive_from_usrs(
             H_prime_permute, num_gates, domain);
 
     // secret^i * G1
-    std::vector<libff::G1<ppT>> secret_powers_g1;
-    secret_powers_g1.reserve(num_gates + 3);
+    std::vector<libff::G1<ppT>> secret_powers_g1(
+        usrs.secret_powers_g1.begin(),
+        usrs.secret_powers_g1.begin() + num_gates + 3);
+
     for (size_t i = 0; i < (num_gates + 3); ++i) {
         secret_powers_g1.push_back(usrs.secret_powers_g1[i]);
     }
