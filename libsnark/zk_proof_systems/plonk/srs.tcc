@@ -190,7 +190,7 @@ srs<ppT> plonk_srs_derive_from_usrs(
     std::vector<Field> H_gen;
     plonk_compute_cosets_H_k1H_k2H(num_gates, k1, k2, H_gen);
 
-    // TODO: write unit test for plonk_roots_of_unity_omega_to_subgroup_H
+    // TODO: write unit test for plonk_compute_cosets_H_k1H_k2H
     // assert(H_gen[i] == example.H_gen[i]);
 
     // permute circuit.H_gen according to the wire permutation
