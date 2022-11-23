@@ -127,7 +127,7 @@ plonk_example::plonk_example()
     // components (since we have 8 gates == 6 "real" + 2 dummy) and the 4-th
     // component of w_R is the PI (counting from 0), so it has wire index 8+4=12
     // (counting from 0).
-    this->PI_wire_index.push_back(12);
+    this->PI_wire_indices.push_back(12);
 
     // n-th root of unity omega in Fq (n=8 is the number of constraints
     // in the example). omega is a generator of the multiplicative

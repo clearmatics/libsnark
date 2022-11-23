@@ -402,7 +402,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
         usrs,
         example.gates_matrix,
         example.wire_permutation,
-        example.PI_wire_index);
+        example.PI_wire_indices);
 
     // initialize hasher
     transcript_hasher hasher;
@@ -581,7 +581,7 @@ template<typename ppT> void test_plonk_srs()
         usrs,
         example.gates_matrix,
         example.wire_permutation,
-        example.PI_wire_index);
+        example.PI_wire_indices);
     // compare SRS against reference test values
     printf("[%s:%d] secret ", __FILE__, __LINE__);
     secret.print();
@@ -628,7 +628,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
         usrs,
         example.gates_matrix,
         example.wire_permutation,
-        example.PI_wire_index);
+        example.PI_wire_indices);
 
     // initialize hasher
     transcript_hasher hasher;
@@ -915,7 +915,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
         usrs,
         example.gates_matrix,
         example.wire_permutation,
-        example.PI_wire_index);
+        example.PI_wire_indices);
 
     // initialize hasher
     transcript_hasher hasher;
@@ -936,8 +936,8 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
 
     // prepare the list of PI values for the example circuit
     std::vector<Field> PI_value_list;
-    for (size_t i = 0; i < example.PI_wire_index.size(); i++) {
-        Field PI_value = example.witness[example.PI_wire_index[i]];
+    for (size_t i = 0; i < example.PI_wire_indices.size(); i++) {
+        Field PI_value = example.witness[example.PI_wire_indices[i]];
         PI_value_list.push_back(PI_value);
     }
 
@@ -1039,7 +1039,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
         usrs,
         example.gates_matrix,
         example.wire_permutation,
-        example.PI_wire_index);
+        example.PI_wire_indices);
 
     // initialize hasher
     transcript_hasher hasher;
@@ -1058,8 +1058,8 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
     plonk_verifier<ppT, transcript_hasher> verifier;
     // prepare the list of PI values for the example circuit
     std::vector<Field> PI_value_list;
-    for (size_t i = 0; i < example.PI_wire_index.size(); i++) {
-        Field PI_value = example.witness[example.PI_wire_index[i]];
+    for (size_t i = 0; i < example.PI_wire_indices.size(); i++) {
+        Field PI_value = example.witness[example.PI_wire_indices[i]];
         PI_value_list.push_back(PI_value);
     }
     // verify proof

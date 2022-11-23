@@ -27,7 +27,7 @@ template<typename ppT>
 srs<ppT>::srs(
     const size_t &num_gates,
     const size_t &num_qpolys,
-    const std::vector<size_t> &PI_wire_index,
+    const std::vector<size_t> &PI_wire_indices,
     const std::vector<polynomial<Field>> &Q_polys,
     const std::vector<polynomial<Field>> &S_polys,
     const std::vector<std::vector<Field>> &omega_roots,
@@ -40,7 +40,7 @@ srs<ppT>::srs(
     const polynomial<Field> &L_basis_zero)
     : num_gates(num_gates)
     , num_qpolys(num_qpolys)
-    , PI_wire_index(PI_wire_index)
+    , PI_wire_indices(PI_wire_indices)
     , Q_polys(Q_polys)
     , S_polys(S_polys)
     , omega_roots(omega_roots)
@@ -109,7 +109,7 @@ srs<ppT> plonk_srs_derive_from_usrs(
     const usrs<ppT> &usrs,
     const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix,
     const std::vector<size_t> wire_permutation,
-    const std::vector<size_t> PI_wire_index)
+    const std::vector<size_t> PI_wire_indices)
 {
     using Field = libff::Fr<ppT>;
 
@@ -234,7 +234,7 @@ srs<ppT> plonk_srs_derive_from_usrs(
     srs<ppT> srs(
         std::move(num_gates),
         std::move(num_qpolys),
-        std::move(PI_wire_index),
+        std::move(PI_wire_indices),
         std::move(Q_polys),
         std::move(S_polys),
         std::move(omega_roots),

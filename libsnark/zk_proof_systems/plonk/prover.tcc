@@ -253,14 +253,14 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(srs.num_gates);
 
-    // Compute PI polynomial from the PI_wire_index (stored in the srs) and
+    // Compute PI polynomial from the PI_wire_indices (stored in the srs) and
     // the PI_value (stored in the witness). By convention of this
     // implementation the PI values are stored in the right input wire w_R (and
     // not in the left input wire w_L as in [GWC19]). Recall that the witness w
     // is composed of left input w_L, right input w_R and output wires w_O (in
     // this order) and so w is the concatenation of w_L || w_R || w_O = w. Each
     // vector w_L, w_R and w_O of wire values is of length srs.num_gates and so
-    // in order to get the value of the i-th PI[i] located at PI_wire_index[i]
+    // in order to get the value of the i-th PI[i] located at PI_wire_indices[i]
     // of w we need to do a modulo srs.num_gates operation (to skip the first
     // srs.num_gates values corresponding to w_L). This is the reason for the
     // modulo srs.num_gates operation in the code below.
@@ -280,19 +280,19 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     //
     // In this example circuit we have a single public input (PI) 35 first
     // appearing at position 12 in w (counting from 0). In this case the vector
-    // srs.PI_wire_index will contain a single element srs.PI_wire_index[0]
+    // srs.PI_wire_indices will contain a single element srs.PI_wire_indices[0]
     // = 12.
     //
     // The value of the PI is extracted from the witness as PI_value =
-    // w[srs.PI_wire_index[0]] = w[12] = 35
+    // w[srs.PI_wire_indices[0]] = w[12] = 35
     //
     // To obtain the index of the PI in w_R we do a modulo num_gates (= 8)
     // operation to skip the w_L vector (first 8 entries in w).
     std::vector<Field> PI_points(srs.num_gates, Field(0));
     // loop over all wire indices that correspond to PIs
-    for (size_t i = 0; i < srs.PI_wire_index.size(); i++) {
-        Field PI_value = witness[srs.PI_wire_index[i]];
-        size_t PI_coordinate_x = srs.PI_wire_index[i] % srs.num_gates;
+    for (size_t i = 0; i < srs.PI_wire_indices.size(); i++) {
+        Field PI_value = witness[srs.PI_wire_indices[i]];
+        size_t PI_coordinate_x = srs.PI_wire_indices[i] % srs.num_gates;
         PI_points[PI_coordinate_x] = Field(-PI_value);
     }
     // compute the PI polynomial from the list of points using iFFT
