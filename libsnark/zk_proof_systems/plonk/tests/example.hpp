@@ -167,12 +167,13 @@ public:
     /// vectors
     Field k2;
 
-    /// H_gen contains the generators of H, k1 H and K2 H in one place
-    /// ie. omega, omega_k1 and omega_k2
-    std::vector<Field> H_gen;
+    /// H_prime (i.e. H' in [GWC19], e.g. see Sect. 8) contains the
+    /// generators of H, k1 H and K2 H in one place ie. omega,
+    /// omega_k1 and omega_k2
+    std::vector<Field> H_prime;
 
-    /// H_gen permuted according to the wire permutation
-    std::vector<Field> H_gen_permute;
+    /// H_prime permuted according to the wire permutation
+    std::vector<Field> H_prime_permute;
 
     /// random hidden element secret (toxic waste). we fix it to a
     /// constant in order to match against the test vectors

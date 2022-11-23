@@ -108,7 +108,7 @@ void plonk_compute_cosets_H_k1H_k2H(
     const size_t num_gates,
     const FieldT k1,
     const FieldT k2,
-    std::vector<FieldT> &H_gen);
+    std::vector<FieldT> &H_prime);
 
 /// permute the multiplicative subgroup H according to the wire
 /// permutation: (see [GWC19] Sect. 8), \see
@@ -116,7 +116,7 @@ void plonk_compute_cosets_H_k1H_k2H(
 /// plonk_roots_of_unity_omega_to_subgroup_H
 template<typename FieldT>
 std::vector<FieldT> plonk_permute_subgroup_H(
-    const std::vector<FieldT> &H_gen,
+    const std::vector<FieldT> &H_prime,
     const std::vector<size_t> &wire_permutation,
     const size_t num_gates);
 
@@ -124,7 +124,7 @@ std::vector<FieldT> plonk_permute_subgroup_H(
 /// S_sigma_2 (see [GWC19], Sect. 8.1)
 template<typename FieldT>
 std::vector<polynomial<FieldT>> plonk_compute_permutation_polynomials(
-    const std::vector<FieldT> &H_gen_permute,
+    const std::vector<FieldT> &H_prime_permute,
     const size_t num_gates,
     std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain);
 
@@ -166,8 +166,8 @@ void plonk_evaluate_polys_at_secret_G1(
 
 /// Compute the factors in the product of the permutation polynomial
 /// z(X) in Prover Round 2. Note that accumulator A[0]=1 and A[i],
-/// i>0 is computed from values at i-1 for witness[i-1], H_gen[i-1],
-/// H_gen_permute[i-1]m etc.
+/// i>0 is computed from values at i-1 for witness[i-1], H_prime[i-1],
+/// H_prime_permute[i-1]m etc.
 template<typename FieldT>
 FieldT plonk_compute_accumulator_factor(
     const size_t i,
@@ -175,8 +175,8 @@ FieldT plonk_compute_accumulator_factor(
     const FieldT beta,
     const FieldT gamma,
     const std::vector<FieldT> &witness,
-    const std::vector<FieldT> &H_gen, // H, Hk1, Hk2
-    const std::vector<FieldT> &H_gen_permute,
+    const std::vector<FieldT> &H_prime, // H, Hk1, Hk2
+    const std::vector<FieldT> &H_prime_permute,
     const std::vector<FieldT> &A);
 
 /// A: accumulatro vector
@@ -186,8 +186,8 @@ std::vector<FieldT> plonk_compute_accumulator(
     const FieldT beta,
     const FieldT gamma,
     const std::vector<FieldT> &witness,
-    const std::vector<FieldT> &H_gen, // H, Hk1, Hk2
-    const std::vector<FieldT> &H_gen_permute);
+    const std::vector<FieldT> &H_prime, // H, Hk1, Hk2
+    const std::vector<FieldT> &H_prime_permute);
 
 /// transpose the gates matrix
 template<typename FieldT>

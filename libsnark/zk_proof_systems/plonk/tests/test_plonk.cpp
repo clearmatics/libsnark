@@ -158,7 +158,7 @@ void test_plonk_compute_accumulator(
     using Field = libff::Fr<ppT>;
     // A[0] = 1; ... A[i] = computed from (i-1)
     std::vector<Field> A_vector = plonk_compute_accumulator(
-        srs.num_gates, beta, gamma, witness, srs.H_gen, srs.H_gen_permute);
+        srs.num_gates, beta, gamma, witness, srs.H_prime, srs.H_prime_permute);
     polynomial<Field> A_poly(srs.num_gates);
     plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly, domain);
 

@@ -31,8 +31,8 @@ srs<ppT>::srs(
     const std::vector<polynomial<Field>> &Q_polys,
     const std::vector<polynomial<Field>> &S_polys,
     const std::vector<std::vector<Field>> &omega_roots,
-    const std::vector<Field> &H_gen,
-    const std::vector<Field> &H_gen_permute,
+    const std::vector<Field> &H_prime,
+    const std::vector<Field> &H_prime_permute,
     const libff::Fr<ppT> &k1,
     const libff::Fr<ppT> &k2,
     std::vector<libff::G1<ppT>> &&secret_powers_g1,
@@ -44,8 +44,8 @@ srs<ppT>::srs(
     , Q_polys(Q_polys)
     , S_polys(S_polys)
     , omega_roots(omega_roots)
-    , H_gen(H_gen)
-    , H_gen_permute(H_gen_permute)
+    , H_prime(H_prime)
+    , H_prime_permute(H_prime_permute)
     , k1(k1)
     , k2(k2)
     , secret_powers_g1(secret_powers_g1)
@@ -184,27 +184,27 @@ srs<ppT> plonk_srs_derive_from_usrs(
     std::vector<std::vector<Field>> omega_roots;
     plonk_compute_roots_of_unity_omega(num_gates, k1, k2, omega_roots);
 
-    // H_gen contains the generators of H, k1 H and k2 H in one place
+    // H_prime contains the generators of H, k1 H and k2 H in one place
     // ie. circuit.omega_roots, circuit.omega_roots_k1 and
     // circuit.omega_roots_k2
-    std::vector<Field> H_gen;
-    plonk_compute_cosets_H_k1H_k2H(num_gates, k1, k2, H_gen);
+    std::vector<Field> H_prime;
+    plonk_compute_cosets_H_k1H_k2H(num_gates, k1, k2, H_prime);
 
     // TODO: write unit test for plonk_compute_cosets_H_k1H_k2H
-    // assert(H_gen[i] == example.H_gen[i]);
+    // assert(H_prime[i] == example.H_prime[i]);
 
-    // permute circuit.H_gen according to the wire permutation
-    std::vector<Field> H_gen_permute =
-        plonk_permute_subgroup_H<Field>(H_gen, wire_permutation, num_gates);
+    // permute circuit.H_prime according to the wire permutation
+    std::vector<Field> H_prime_permute =
+        plonk_permute_subgroup_H<Field>(H_prime, wire_permutation, num_gates);
 
     // TODO: write unit test for plonk_permute_subgroup_H
-    // assert(H_gen_permute[i] == example.H_gen_permute[i]);
+    // assert(H_prime_permute[i] == example.H_prime_permute[i]);
 
     // compute the permutation polynomials S_sigma_1, S_sigma_2,
     // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
     std::vector<polynomial<Field>> S_polys =
         plonk_compute_permutation_polynomials<Field>(
-            H_gen_permute, num_gates, domain);
+            H_prime_permute, num_gates, domain);
 
     // secret^i * G1
     std::vector<libff::G1<ppT>> secret_powers_g1;
@@ -232,8 +232,8 @@ srs<ppT> plonk_srs_derive_from_usrs(
         std::move(Q_polys),
         std::move(S_polys),
         std::move(omega_roots),
-        std::move(H_gen),
-        std::move(H_gen_permute),
+        std::move(H_prime),
+        std::move(H_prime_permute),
         std::move(k1),
         std::move(k2),
         std::move(secret_powers_g1),

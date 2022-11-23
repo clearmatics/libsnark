@@ -148,9 +148,9 @@ plonk_example::plonk_example()
     // vectors
     this->k2 = libff::power(k1, libff::bigint<1>(2));
 
-    // H_gen contains the generators of H, k1 H and K2 H in one place
+    // H_prime contains the generators of H, k1 H and K2 H in one place
     // ie. omega, omega_k1 and omega_k2
-    this->H_gen = {
+    this->H_prime = {
         Field("1"),
         Field("2367469443165877065961295211566080294796737370150625379766318411"
               "1817857449850"),
@@ -198,8 +198,8 @@ plonk_example::plonk_example()
         Field("2897886528193098885258590833291181922264399771053967175378833141"
               "6327765963203")};
 
-    // H_gen permuted according to the wire permutation
-    this->H_gen_permute = {
+    // H_prime permuted according to the wire permutation
+    this->H_prime_permute = {
         Field("7069874114745813936829552608791213902061117400356596714713673571"
               "023200548519"),
         Field("1838592104783212022667877350171394113611392647210607993375145291"

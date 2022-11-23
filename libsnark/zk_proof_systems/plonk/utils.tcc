@@ -123,7 +123,7 @@ void plonk_compute_cosets_H_k1H_k2H(
     const size_t num_gates,
     const FieldT k1,
     const FieldT k2,
-    std::vector<FieldT> &H_gen)
+    std::vector<FieldT> &H_prime)
 {
     // ensure that num_gates is not 0 and is power of 2
     bool b_nonzero = (num_gates > 0);
@@ -138,42 +138,42 @@ void plonk_compute_cosets_H_k1H_k2H(
     std::vector<std::vector<FieldT>> omega;
     plonk_compute_roots_of_unity_omega(num_gates, k1, k2, omega);
 
-    std::copy(omega[base].begin(), omega[base].end(), back_inserter(H_gen));
+    std::copy(omega[base].begin(), omega[base].end(), back_inserter(H_prime));
     std::copy(
-        omega[base_k1].begin(), omega[base_k1].end(), back_inserter(H_gen));
+        omega[base_k1].begin(), omega[base_k1].end(), back_inserter(H_prime));
     std::copy(
-        omega[base_k2].begin(), omega[base_k2].end(), back_inserter(H_gen));
+        omega[base_k2].begin(), omega[base_k2].end(), back_inserter(H_prime));
 }
 
 template<typename FieldT>
 std::vector<FieldT> plonk_permute_subgroup_H(
-    const std::vector<FieldT> &H_gen,
+    const std::vector<FieldT> &H_prime,
     const std::vector<size_t> &wire_permutation,
     const size_t num_gates)
 {
-    assert(H_gen.size() > 0);
-    std::vector<FieldT> H_gen_permute;
-    H_gen_permute.resize(NUM_HSETS * num_gates, FieldT(0));
-    for (size_t i = 0; i < H_gen.size(); ++i) {
-        H_gen_permute[i] = H_gen[wire_permutation[i] - 1];
+    assert(H_prime.size() > 0);
+    std::vector<FieldT> H_prime_permute;
+    H_prime_permute.resize(NUM_HSETS * num_gates, FieldT(0));
+    for (size_t i = 0; i < H_prime.size(); ++i) {
+        H_prime_permute[i] = H_prime[wire_permutation[i] - 1];
     }
-    return H_gen_permute;
+    return H_prime_permute;
 }
 
 template<typename FieldT>
 std::vector<polynomial<FieldT>> plonk_compute_permutation_polynomials(
-    const std::vector<FieldT> &H_gen_permute,
+    const std::vector<FieldT> &H_prime_permute,
     const size_t num_gates,
     std::shared_ptr<libfqfft::evaluation_domain<FieldT>> domain)
 {
-    assert(H_gen_permute.size() == (NUM_HSETS * num_gates));
+    assert(H_prime_permute.size() == (NUM_HSETS * num_gates));
     std::vector<polynomial<FieldT>> S_polys;
     S_polys.resize(NUM_HSETS, polynomial<FieldT>(num_gates));
     for (size_t i = 0; i < NUM_HSETS; ++i) {
         typename std::vector<FieldT>::const_iterator begin =
-            H_gen_permute.begin() + (i * num_gates);
+            H_prime_permute.begin() + (i * num_gates);
         typename std::vector<FieldT>::const_iterator end =
-            H_gen_permute.begin() + (i * num_gates) + (num_gates);
+            H_prime_permute.begin() + (i * num_gates) + (num_gates);
         std::vector<FieldT> S_points(begin, end);
         plonk_interpolate_polynomial_from_points<FieldT>(
             S_points, S_polys[i], domain);
@@ -243,30 +243,30 @@ FieldT plonk_compute_accumulator_factor(
     const FieldT beta,
     const FieldT gamma,
     const std::vector<FieldT> &witness,
-    const std::vector<FieldT> &H_gen, // H, Hk1, Hk2
-    const std::vector<FieldT> &H_gen_permute,
+    const std::vector<FieldT> &H_prime, // H, Hk1, Hk2
+    const std::vector<FieldT> &H_prime_permute,
     const std::vector<FieldT> &A)
 {
     assert(num_gates);
     assert(i < num_gates);
     assert(witness.size() == (NUM_HSETS * num_gates));
-    assert(H_gen.size() == (NUM_HSETS * num_gates));
-    assert(H_gen_permute.size() == (NUM_HSETS * num_gates));
+    assert(H_prime.size() == (NUM_HSETS * num_gates));
+    assert(H_prime_permute.size() == (NUM_HSETS * num_gates));
     assert(A.size() == num_gates);
     FieldT res = FieldT(1);
     if (i > 0) {
-        FieldT nom_1 = witness[i - 1] + (beta * H_gen[i - 1]) + gamma;
-        FieldT den_1 = witness[i - 1] + (beta * H_gen_permute[i - 1]) + gamma;
+        FieldT nom_1 = witness[i - 1] + (beta * H_prime[i - 1]) + gamma;
+        FieldT den_1 = witness[i - 1] + (beta * H_prime_permute[i - 1]) + gamma;
 
         FieldT nom_2 = witness[num_gates + i - 1] +
-                       (beta * H_gen[num_gates + i - 1]) + gamma;
+                       (beta * H_prime[num_gates + i - 1]) + gamma;
         FieldT den_2 = witness[num_gates + i - 1] +
-                       (beta * H_gen_permute[num_gates + i - 1]) + gamma;
+                       (beta * H_prime_permute[num_gates + i - 1]) + gamma;
 
         FieldT nom_3 = witness[2 * num_gates + i - 1] +
-                       (beta * H_gen[2 * num_gates + i - 1]) + gamma;
+                       (beta * H_prime[2 * num_gates + i - 1]) + gamma;
         FieldT den_3 = witness[2 * num_gates + i - 1] +
-                       (beta * H_gen_permute[2 * num_gates + i - 1]) + gamma;
+                       (beta * H_prime_permute[2 * num_gates + i - 1]) + gamma;
 
         FieldT nom = nom_1 * nom_2 * nom_3;
         FieldT den = den_1 * den_2 * den_3;
@@ -282,17 +282,17 @@ std::vector<FieldT> plonk_compute_accumulator(
     const FieldT beta,
     const FieldT gamma,
     const std::vector<FieldT> &witness,
-    const std::vector<FieldT> &H_gen, // H, Hk1, Hk2
-    const std::vector<FieldT> &H_gen_permute)
+    const std::vector<FieldT> &H_prime, // H, Hk1, Hk2
+    const std::vector<FieldT> &H_prime_permute)
 {
     assert(num_gates);
     assert(witness.size() == (NUM_HSETS * num_gates));
-    assert(H_gen.size() == (NUM_HSETS * num_gates));
-    assert(H_gen_permute.size() == (NUM_HSETS * num_gates));
+    assert(H_prime.size() == (NUM_HSETS * num_gates));
+    assert(H_prime_permute.size() == (NUM_HSETS * num_gates));
     std::vector<FieldT> A(num_gates, FieldT(0));
     for (size_t i = 0; i < num_gates; ++i) {
         A[i] = plonk_compute_accumulator_factor(
-            i, num_gates, beta, gamma, witness, H_gen, H_gen_permute, A);
+            i, num_gates, beta, gamma, witness, H_prime, H_prime_permute, A);
     }
     return A;
 }

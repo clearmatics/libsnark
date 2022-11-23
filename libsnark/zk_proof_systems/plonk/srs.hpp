@@ -103,12 +103,12 @@ public:
     /// omega[2] are omega[0]*k2
     std::vector<std::vector<Field>> omega_roots;
 
-    /// H_gen contains the generators of H, k1 H and k2 H in one place
+    /// H_prime contains the generators of H, k1 H and k2 H in one place
     /// ie. omega, omega_k1 and omega_k2
-    std::vector<Field> H_gen;
+    std::vector<Field> H_prime;
 
-    /// H_gen permuted according to the wire permutation
-    std::vector<Field> H_gen_permute;
+    /// H_prime permuted according to the wire permutation
+    std::vector<Field> H_prime_permute;
 
     /// constants for H, k1 H, k2 H
     libff::Fr<ppT> k1;
@@ -131,8 +131,8 @@ public:
         const std::vector<polynomial<Field>> &Q_polys,
         const std::vector<polynomial<Field>> &S_polys,
         const std::vector<std::vector<Field>> &omega_roots,
-        const std::vector<Field> &H_gen,
-        const std::vector<Field> &H_gen_permute,
+        const std::vector<Field> &H_prime,
+        const std::vector<Field> &H_prime_permute,
         const libff::Fr<ppT> &k1,
         const libff::Fr<ppT> &k2,
         std::vector<libff::G1<ppT>> &&secret_powers_g1,
