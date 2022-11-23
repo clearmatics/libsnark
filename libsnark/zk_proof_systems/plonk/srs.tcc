@@ -141,40 +141,51 @@ srs<ppT> plonk_srs_derive_from_usrs(
         plonk_compute_selector_polynomials<Field>(
             num_gates, num_qpolys, gates_matrix_transpose, domain);
 
-    // An explanation of the constants k1,k2 from [GWC19], Section 8, page 26 :
+    // An explanation of the constants k1,k2 from [GWC19], Section 8,
+    // page 26 :
     //
-    // "We explicitly define the multiplicative subgroup H as containing the
-    // n-th roots of unity in F_p , where w (omega) is a primitive n-th root of
-    // unity and a generator of H i.e: H = {1, w, ... , w^{n-1}}. We assume
-    // that the number of gates in a circuit is no more than n. We also include
-    // an optimisation suggested by Vitalik Buterin, to define the identity per-
-    // mutations through degree-1 polynomials. The identity permutations must
-    // map each wire value to a unique element \in F. This can be done by
-    // defining S_ID1(X) = X, S_ID2 (X) = k1 X, S_ID3(X) = k2 X [see below for
-    // more on S_ID1, S_ID2, S_ID3], where k1 , k2 are quadratic non-residues
-    // \in F. This effectively maps each wire value to a root of unity in H,
-    // with right and output wires having an additional multiplicative factor of
-    // k1, k2 applied respectively. By representing the identity permutation via
-    // degree-1 polynomials, their evaluations can be directly computed by the
-    // verifier. This reduces the size of the proof by 1 F element, as well as
-    // reducing the number of Fast-Fourier-Transforms required by the prover."
+    // "We explicitly define the multiplicative subgroup H as
+    // containing the n-th roots of unity in F_p , where w (omega) is
+    // a primitive n-th root of unity and a generator of H i.e: H =
+    // {1, w, ... , w^{n-1}}. We assume that the number of gates in a
+    // circuit is no more than n.
+
     //
-    // Further in Sect. 8.1 [GWC19]:
-    //
-    // "S_ID1(X) = X, S_ID2(X) = k 1 X, S ID3 (X) = k 2 X: the identity
-    // permutation applied to a, b, c [the wire polynomials, see Round 1, p.27
-    // [GWC19]]. k1, k2 \in F are chosen such that H, k1 H, k2 H are distinct
-    // cosets of H in F*, and thus consist of 3n distinct elements. (For
-    // example, when w (omega) is a quadratic residue in F, take k1 to be any
-    // quadratic non-residue, and k2 to be a quadratic non-residue not
-    // contained in k1 H.)"
-    //
-    // For the moment k1,k2 are fixed to the test vector values for debug
-    // purpouses. TODO choose k1,k2 according to the requirements in [GWC19]
+    // For the moment k1,k2 are fixed to the test vector values for
+    // debug purpouses. TODO choose k1,k2 according to the
+    // requirements in [GWC19]
     libff::Fr<ppT> k1 =
         Field("706987411474581393682955260879121390206111740035659671471"
               "3673571023200548519");
     libff::Fr<ppT> k2 = libff::power(k1, libff::bigint<1>(2));
+
+    // From [GWC19], Section 8, page 26:
+    //
+    // "We also include an optimisation suggested by Vitalik Buterin,
+    // to define the identity permutations through degree-1
+    // polynomials. The identity permutations must map each wire value
+    // to a unique element \in F. This can be done by defining
+    // S_ID1(X) = X, S_ID2 (X) = k1 X, S_ID3(X) = k2 X [see below for
+    // more on S_ID1, S_ID2, S_ID3], where k1, k2 are quadratic
+    // non-residues \in F. This effectively maps each wire value to a
+    // root of unity in H, with right and output wires having an
+    // additional multiplicative factor of k1, k2 applied
+    // respectively. By representing the identity permutation via
+    // degree-1 polynomials, their evaluations can be directly
+    // computed by the verifier. This reduces the size of the proof by
+    // 1 F element, as well as reducing the number of
+    // Fast-Fourier-Transforms required by the prover."
+    //
+    // Further in Sect. 8.1 [GWC19]:
+    //
+    // "S_ID1(X) = X, S_ID2(X) = k 1 X, S ID3 (X) = k 2 X: the
+    // identity permutation applied to a, b, c [the wire polynomials,
+    // see Round 1, p.27 [GWC19]]. k1, k2 \in F are chosen such that
+    // H, k1 H, k2 H are distinct cosets of H in F*, and thus consist
+    // of 3n distinct elements. (For example, when w (omega) is a
+    // quadratic residue in F, take k1 to be any quadratic
+    // non-residue, and k2 to be a quadratic non-residue not contained
+    // in k1 H.)"
 
     // omega[0] are the n roots of unity; omega[1] are omega[0]*k1;
     // omega[2] are omega[0]*k2
@@ -196,7 +207,7 @@ srs<ppT> plonk_srs_derive_from_usrs(
     // TODO: write unit test for plonk_permute_subgroup_H
     // assert(H_prime_permute[i] == example.H_prime_permute[i]);
 
-    // compute the permutation polynomials S_sigma_1, S_sigma_2,
+    // Compute the permutation polynomials S_sigma_1, S_sigma_2,
     // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
     std::vector<polynomial<Field>> S_polys =
         plonk_compute_permutation_polynomials<Field>(
