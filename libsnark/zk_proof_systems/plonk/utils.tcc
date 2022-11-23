@@ -299,16 +299,17 @@ std::vector<FieldT> plonk_compute_accumulator(
 
 template<typename FieldT>
 std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
-    const std::vector<std::vector<FieldT>> &gates_matrix,
-    const size_t &nrows,
-    const size_t &ncols)
+    const std::vector<std::vector<FieldT>> &gates_matrix)
 {
-    size_t nrows_transpose = ncols;
-    size_t ncols_transpose = nrows;
+    const size_t nrows = gates_matrix.size();
+    const size_t ncols = gates_matrix[0].size();
+    const size_t nrows_transpose = ncols;
+    const size_t ncols_transpose = nrows;
     std::vector<std::vector<FieldT>> gates_matrix_transpose(
         nrows_transpose, std::vector<FieldT>(ncols_transpose));
     for (size_t irow = 0; irow < nrows; ++irow) {
         for (size_t icol = 0; icol < ncols; ++icol) {
+            assert(gates_matrix[icol].size() == ncols);
             gates_matrix_transpose[icol][irow] = gates_matrix[irow][icol];
         }
     }

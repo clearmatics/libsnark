@@ -1082,10 +1082,8 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
     using Field = libff::Fr<ppT>;
     // load gates matrix from example circuit
     plonk_example example;
-    size_t nrows = example.gates_matrix.size();
-    size_t ncols = example.gates_matrix[0].size();
     std::vector<std::vector<Field>> gates_matrix_transpose =
-        plonk_gates_matrix_transpose(example.gates_matrix, nrows, ncols);
+        plonk_gates_matrix_transpose(example.gates_matrix);
     ASSERT_EQ(gates_matrix_transpose, example.gates_matrix_transpose);
 }
 

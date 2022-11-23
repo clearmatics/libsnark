@@ -112,11 +112,8 @@ srs<ppT> plonk_srs_derive_from_usrs(
     const std::vector<size_t> PI_wire_indices)
 {
     using Field = libff::Fr<ppT>;
-
-    const size_t nrows = gates_matrix.size();
-    const size_t ncols = gates_matrix[0].size();
     const std::vector<std::vector<Field>> gates_matrix_transpose =
-        plonk_gates_matrix_transpose(gates_matrix, nrows, ncols);
+        plonk_gates_matrix_transpose(gates_matrix);
 
     // the number of gates is equal to the number of columns in the transposed
     // gates matrix
