@@ -184,16 +184,15 @@ srs<ppT> plonk_srs_derive_from_usrs(
     std::vector<std::vector<Field>> omega_roots;
     plonk_compute_roots_of_unity_omega(num_gates, k1, k2, omega_roots);
 
-    // H_prime contains the generators of H, k1 H and k2 H in one place
-    // ie. circuit.omega_roots, circuit.omega_roots_k1 and
-    // circuit.omega_roots_k2
+    // H_prime contains the generators of H, k1 H and k2 H in one
+    // place ie. omega_roots, omega_roots_k1 and omega_roots_k2
     std::vector<Field> H_prime;
     plonk_compute_cosets_H_k1H_k2H(num_gates, k1, k2, H_prime);
 
     // TODO: write unit test for plonk_compute_cosets_H_k1H_k2H
     // assert(H_prime[i] == example.H_prime[i]);
 
-    // permute circuit.H_prime according to the wire permutation
+    // permute H_prime according to the wire permutation
     std::vector<Field> H_prime_permute =
         plonk_permute_subgroup_H<Field>(H_prime, wire_permutation, num_gates);
 
