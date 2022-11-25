@@ -149,11 +149,12 @@ srs<ppT> plonk_srs_derive_from_usrs(
     // a primitive n-th root of unity and a generator of H i.e: H =
     // {1, w, ... , w^{n-1}}. We assume that the number of gates in a
     // circuit is no more than n.
-
     //
-    // For the moment k1,k2 are fixed to the test vector values for
-    // debug purpouses. TODO choose k1,k2 according to the
-    // requirements in [GWC19]
+    // For the moment k1,k2 are fixed (see below) to the test vector
+    // values from the plonk_example class for debug purpouses. Note
+    // that these test values are specific to the BLS12-381 curve and
+    // hence they satisfy the requirements for BLS12-381. TODO: choose
+    // k1,k2 according to the requirements in [GWC19]
     libff::Fr<ppT> k1 =
         Field("706987411474581393682955260879121390206111740035659671471"
               "3673571023200548519");
