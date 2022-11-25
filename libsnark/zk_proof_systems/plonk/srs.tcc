@@ -151,10 +151,11 @@ srs<ppT> plonk_srs_derive_from_usrs(
     // circuit is no more than n.
     //
     // For the moment k1,k2 are fixed (see below) to the test vector
-    // values from the plonk_example class for debug purpouses. Note
+    // values from the plonk_example class for debug purposes. Note
     // that these test values are specific to the BLS12-381 curve and
-    // hence they satisfy the requirements for BLS12-381. TODO: choose
-    // k1,k2 according to the requirements in [GWC19]
+    // hence they may ONLY satisfy the requirements for
+    // BLS12-381. TODO: choose k1,k2 according to the requirements in
+    // [GWC19]
     libff::Fr<ppT> k1 =
         Field("706987411474581393682955260879121390206111740035659671471"
               "3673571023200548519");
