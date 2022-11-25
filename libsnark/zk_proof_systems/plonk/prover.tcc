@@ -291,8 +291,8 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     std::vector<Field> PI_points(srs.num_gates, Field(0));
     // loop over all wire indices that correspond to PIs
     for (size_t i = 0; i < srs.PI_wire_indices.size(); i++) {
-        Field PI_value = witness[srs.PI_wire_indices[i]];
-        size_t PI_coordinate_x = srs.PI_wire_indices[i] % srs.num_gates;
+        const Field PI_value = witness[srs.PI_wire_indices[i]];
+        const size_t PI_coordinate_x = srs.PI_wire_indices[i] % srs.num_gates;
         PI_points[PI_coordinate_x] = Field(-PI_value);
     }
     // compute the PI polynomial from the list of points using iFFT
