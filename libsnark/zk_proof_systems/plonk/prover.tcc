@@ -158,7 +158,7 @@ round_two_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_two(
 
     // A[0] = 1; ... A[i] = computed from (i-1)
     std::vector<Field> A_vector = plonk_compute_accumulator(
-        srs.num_gates, beta, gamma, witness, srs.H_gen, srs.H_gen_permute);
+        srs.num_gates, beta, gamma, witness, srs.H_prime, srs.H_prime_permute);
 
     polynomial<Field> A_poly(srs.num_gates);
     plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly, domain);
@@ -198,6 +198,7 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     const round_zero_out_t<ppT> &round_zero_out,
     const round_one_out_t<ppT> &round_one_out,
     const round_two_out_t<ppT> &round_two_out,
+    const std::vector<libff::Fr<ppT>> &witness,
     const srs<ppT> &srs,
     transcript_hasher &hasher)
 {
@@ -248,6 +249,56 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     polynomial<Field> cqO;
     libfqfft::_polynomial_multiplication<Field>(
         cqO, round_one_out.W_polys_blinded[c], srs.Q_polys[O]);
+
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
+        libfqfft::get_evaluation_domain<Field>(srs.num_gates);
+
+    // Compute PI polynomial from the PI_wire_indices (stored in the srs) and
+    // the PI_value (stored in the witness). By convention of this
+    // implementation the PI values are stored in the right input wire w_R (and
+    // not in the left input wire w_L as in [GWC19]). Recall that the witness w
+    // is composed of left input w_L, right input w_R and output wires w_O (in
+    // this order) and so w is the concatenation of w_L || w_R || w_O = w. Each
+    // vector w_L, w_R and w_O of wire values is of length srs.num_gates and so
+    // in order to get the value of the i-th PI[i] located at PI_wire_indices[i]
+    // of w we need to do a modulo srs.num_gates operation (to skip the first
+    // srs.num_gates values corresponding to w_L). This is the reason for the
+    // modulo srs.num_gates operation in the code below.
+    //
+    // EXAMPLE
+    //
+    // Suppose that we have a circuit of 8 gates and the witness is w = w_L ||
+    // w_R || w_O where (leftmost position corresponds to index 0):
+    //
+    // w_L = [ 3, 9,27, 1, 1,30, 0, 0]
+    // w_R = [ 3, 3, 3, 5,35, 5, 0, 0]
+    // w_O = [ 9,27,30, 5,35,35, 0, 0]
+    //
+    // so (leftmost position corresponds to index 0):
+    //
+    // w = [ 3,9,27,1,1,30,0,0,3,3,3,5,35,5,0,0,9,27,30,5,35,35,0,0]
+    //
+    // In this example circuit we have a single public input (PI) 35 first
+    // appearing at position 12 in w (counting from 0). In this case the vector
+    // srs.PI_wire_indices will contain a single element srs.PI_wire_indices[0]
+    // = 12.
+    //
+    // The value of the PI is extracted from the witness as PI_value =
+    // w[srs.PI_wire_indices[0]] = w[12] = 35
+    //
+    // To obtain the index of the PI in w_R we do a modulo num_gates (= 8)
+    // operation to skip the w_L vector (first 8 entries in w).
+    std::vector<Field> PI_points(srs.num_gates, Field(0));
+    // loop over all wire indices that correspond to PIs
+    for (size_t i = 0; i < srs.PI_wire_indices.size(); i++) {
+        const Field PI_value = witness[srs.PI_wire_indices[i]];
+        const size_t PI_coordinate_x = srs.PI_wire_indices[i] % srs.num_gates;
+        PI_points[PI_coordinate_x] = Field(-PI_value);
+    }
+    // compute the PI polynomial from the list of points using iFFT
+    polynomial<Field> PI_poly;
+    plonk_compute_public_input_polynomial(PI_points, PI_poly, domain);
+
     // t_part[0](x) = a(x)b(x)q_M(x) + a(x)q_L(x) + b(x)q_R(x) + c(x)q_O(x) +
     // PI(x) + q_C(x)
     polynomial<Field> poly_null{Field(0)};
@@ -255,7 +306,7 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], aqL);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], bqR);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], cqO);
-    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], srs.PI_poly);
+    libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], PI_poly);
     libfqfft::_polynomial_addition<Field>(t_part[0], t_part[0], srs.Q_polys[C]);
 
     // --- Computation of t_part[1]
@@ -618,9 +669,7 @@ round_five_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_five(
     libfqfft::_polynomial_addition<Field>(r_poly, r_poly, r_part[3]);
 
     // TODO: make a separate unit test for r_poly
-#if 0
-    assert(r_poly == example.r_poly);
-#endif // #ifdef DEBUG_PLONK
+    // assert(r_poly == example.r_poly);
 
     // Evaluate the r-polynomial at zeta. Note: in the reference
     // implementation, r_zeta is added to the pi-SNARK proof. In the
@@ -780,10 +829,8 @@ round_five_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_five(
     assert(libfqfft::_is_zero(remainder));
 
     // TODO: make a separate unit test for W_zeta, W_zeta_omega
-#if 0
-    assert(W_zeta == example.W_zeta);
-    assert(W_zeta_omega == example.W_zeta_omega);
-#endif // #ifdef DEBUG_PLONK
+    // assert(W_zeta == example.W_zeta);
+    // assert(W_zeta_omega == example.W_zeta_omega);
 
     // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
     // input
@@ -883,6 +930,7 @@ plonk_proof<ppT> plonk_prover<ppT, transcript_hasher>::compute_proof(
         round_zero_out,
         round_one_out,
         round_two_out,
+        witness,
         srs,
         hasher);
 

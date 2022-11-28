@@ -27,6 +27,7 @@
 ///   Report 2019/953, 2019, <https://eprint.iacr.org/2019/953>
 
 #include "libsnark/common/data_structures/polynomial.hpp"
+#include "libsnark/zk_proof_systems/plonk/utils.hpp"
 
 namespace libsnark
 {
@@ -88,8 +89,8 @@ public:
     /// vanilla Plonk proposal [GWC19])
     size_t num_qpolys;
 
-    /// Public input polynomial
-    polynomial<Field> PI_poly;
+    /// Vector of indices of wires corresponding to public inputs (PI)
+    std::vector<size_t> PI_wire_indices;
 
     /// Circuit selector polynomials (Q-polynomials)
     std::vector<polynomial<Field>> Q_polys;
@@ -102,12 +103,12 @@ public:
     /// omega[2] are omega[0]*k2
     std::vector<std::vector<Field>> omega_roots;
 
-    /// H_gen contains the generators of H, k1 H and k2 H in one place
+    /// H_prime contains the generators of H, k1 H and k2 H in one place
     /// ie. omega, omega_k1 and omega_k2
-    std::vector<Field> H_gen;
+    std::vector<Field> H_prime;
 
-    /// H_gen permuted according to the wire permutation
-    std::vector<Field> H_gen_permute;
+    /// H_prime permuted according to the wire permutation
+    std::vector<Field> H_prime_permute;
 
     /// constants for H, k1 H, k2 H
     libff::Fr<ppT> k1;
@@ -126,12 +127,12 @@ public:
 
     srs(const size_t &num_gates,
         const size_t &num_qpolys,
-        const polynomial<Field> &PI_poly,
+        const std::vector<size_t> &PI_wire_indices,
         const std::vector<polynomial<Field>> &Q_polys,
         const std::vector<polynomial<Field>> &S_polys,
         const std::vector<std::vector<Field>> &omega_roots,
-        const std::vector<Field> &H_gen,
-        const std::vector<Field> &H_gen_permute,
+        const std::vector<Field> &H_prime,
+        const std::vector<Field> &H_prime_permute,
         const libff::Fr<ppT> &k1,
         const libff::Fr<ppT> &k2,
         std::vector<libff::G1<ppT>> &&secret_powers_g1,
@@ -139,16 +140,15 @@ public:
         const polynomial<Field> &L_basis_zero);
 };
 
-/// Derive the (plain) SRS from the circuit description and the
-/// USRS. The (plain) SRS is a specialization of the USRS for one
-/// particular circuit i.e.
-///
-/// usrs = <encoded powers of secret>
-/// srs = (proving_key, verificataion_key) = derive(usrs,
-/// circuit_description)
+/// Derive the (plain) SRS from the USRS, the gates matrix, the wire permutation
+/// and the list of public input (PI) indices. The (plain) SRS is a
+/// specialization of the USRS for one particular circuit
 template<typename ppT>
 srs<ppT> plonk_srs_derive_from_usrs(
-    const usrs<ppT> &usrs, const circuit_t<ppT> &circuit);
+    const usrs<ppT> &usrs,
+    const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix,
+    const std::vector<size_t> wire_permutation,
+    const std::vector<size_t> PI_wire_indices);
 
 /// A proving key for Plonk
 template<typename ppT> class plonk_proving_key

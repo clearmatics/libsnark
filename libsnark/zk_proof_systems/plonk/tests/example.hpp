@@ -28,7 +28,6 @@
 ///   https://vitalik.ca/general/2019/09/22/plonk.html
 
 #include "libsnark/common/data_structures/polynomial.hpp"
-#include "libsnark/zk_proof_systems/plonk/circuit.hpp"
 
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
 #include <libfqfft/polynomial_arithmetic/naive_evaluate.hpp>
@@ -56,16 +55,18 @@ namespace libsnark
 ///
 /// wire polynomials
 ///
-/// w_L = [ x, v1, v2,  1,  1, v3,  /,  /] = [a1, a2, a3, a4, a5, a6, a7, a8] =
-/// a w_R = [ x,  x,  x,  5, 35,  5,  /,  /] = [b1, b2, b3, b4, b5, b6, b7, b8]
-/// = b w_O = [v1, v2, v3,  5, 35, 35,  /,  /] = [c1, c2, c3, c4, c5, c6, c7,
-/// c8] = c
+/// w_L = [ x, v1, v2,  1,  1, v3, /, /] = [a1, a2, a3, a4, a5, a6, a7, a8] = a
+/// w_R = [ x,  x,  x,  5, 35,  5, /, /] = [b1, b2, b3, b4, b5, b6, b7, b8] = b
+/// w_O = [v1, v2, v3,  5, 35, 35, /, /] = [c1, c2, c3, c4, c5, c6, c7, c8] = c
 ///
 /// wires = [a1, a2, a3, a4, a5, a6, a7, a8, b1, b2, b3, b4, b5, b6, b7, b8, c1,
-/// c2, c3, c4, c5, c6, c7, c8] index = [ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10,
-/// 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24] perm  = [ 9, 17, 18,
-/// 5,  4, 19, 7,  8, 10, 11,  1, 14, 21, 20, 15, 16,  2,  3,  6, 12, 22, 13,
-/// 23, 24]
+/// c2, c3, c4, c5, c6, c7, c8]
+///
+/// index = [ 1,  2,  3, 4,  5,  6, 7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
+/// 18, 19, 20, 21, 22, 23, 24]
+///
+/// perm  = [ 9, 17, 18, 5,  4, 19, 7,  8, 10, 11,  1, 14, 21, 20, 15, 16,  2,
+/// 3,  6, 12, 22, 13, 23, 24]
 ///
 /// witness
 ///
@@ -104,7 +105,6 @@ namespace libsnark
 /// q_O = [-1, -1, -1,  0,  0,  0,  0,  0]
 /// q_M = [ 1,  1,  0,  0,  0, -1,  0,  0]
 /// q_C = [ 0,  0,  0, -1,  0,  0,  0,  0]
-// template<typename ppT> class plonk_example
 class plonk_example
 {
 public:
@@ -125,7 +125,7 @@ public:
     std::vector<std::vector<Field>> gates_matrix;
 
     /// Transposed gates matrix: each row is a q-vector WARN: rows 2
-    /// q_O and 3 q_M are swapped ti match the Plonk_Py test vectors
+    /// q_O and 3 q_M are swapped to match the Plonk_Py test vectors
     /// implementation (reason unclear)
     std::vector<std::vector<Field>> gates_matrix_transpose;
 
@@ -141,10 +141,13 @@ public:
     std::vector<size_t> wire_permutation;
 
     /// public input (PI)
-    Field public_input;
+    Field PI_value;
 
     /// index of the row of the PI in the non-transposed gates_matrix
-    size_t public_input_index;
+    size_t PI_gates_matrix_irow;
+
+    /// Vector of indices of wires corresponding to public inputs (PI)
+    std::vector<size_t> PI_wire_indices;
 
     /// n-th root of unity omega in Fq (n=8 is the number of
     /// constraints in the example). omega is a generator of the
@@ -164,12 +167,13 @@ public:
     /// vectors
     Field k2;
 
-    /// H_gen contains the generators of H, k1 H and K2 H in one place
-    /// ie. omega, omega_k1 and omega_k2
-    std::vector<Field> H_gen;
+    /// H_prime (i.e. H' in [GWC19], e.g. see Sect. 8) contains the
+    /// generators of H, k1 H and K2 H in one place ie. omega,
+    /// omega_k1 and omega_k2
+    std::vector<Field> H_prime;
 
-    /// H_gen permuted according to the wire permutation
-    std::vector<Field> H_gen_permute;
+    /// H_prime permuted according to the wire permutation
+    std::vector<Field> H_prime_permute;
 
     /// random hidden element secret (toxic waste). we fix it to a
     /// constant in order to match against the test vectors
