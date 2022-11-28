@@ -321,6 +321,7 @@ public:
         const round_zero_out_t<ppT> &round_zero_out,
         const round_one_out_t<ppT> &round_one_out,
         const round_two_out_t<ppT> &round_two_out,
+        const std::vector<libff::Fr<ppT>> &witness,
         const srs<ppT> &srs,
         transcript_hasher &hasher);
 

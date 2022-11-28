@@ -115,10 +115,19 @@ plonk_example::plonk_example()
                               21, 20, 15, 16, 2, 3,  6, 12, 22, 13, 23, 24};
 
     // public input (PI)
-    this->public_input = Field(35);
+    this->PI_value = Field(35);
 
     // index of the row of the PI in the non-transposed gates_matrix
-    this->public_input_index = 4;
+    this->PI_gates_matrix_irow = 4;
+
+    // the example has 1 public input with wire index 12 (counting from 0) and
+    // value 35. it corresponds to the 4-th componnet of the w_R witness vector
+    // (counting from 0). in other words w_R[4]=35. recall that the full witness
+    // is = w_L + w_R + w_O (where '+' denotes concatentation). w_L has 8
+    // components (since we have 8 gates == 6 "real" + 2 dummy) and the 4-th
+    // component of w_R is the PI (counting from 0), so it has wire index 8+4=12
+    // (counting from 0).
+    this->PI_wire_indices.push_back(12);
 
     // n-th root of unity omega in Fq (n=8 is the number of constraints
     // in the example). omega is a generator of the multiplicative
@@ -139,9 +148,9 @@ plonk_example::plonk_example()
     // vectors
     this->k2 = libff::power(k1, libff::bigint<1>(2));
 
-    // H_gen contains the generators of H, k1 H and K2 H in one place
+    // H_prime contains the generators of H, k1 H and K2 H in one place
     // ie. omega, omega_k1 and omega_k2
-    this->H_gen = {
+    this->H_prime = {
         Field("1"),
         Field("2367469443165877065961295211566080294796737370150625379766318411"
               "1817857449850"),
@@ -189,8 +198,8 @@ plonk_example::plonk_example()
         Field("2897886528193098885258590833291181922264399771053967175378833141"
               "6327765963203")};
 
-    // H_gen permuted according to the wire permutation
-    this->H_gen_permute = {
+    // H_prime permuted according to the wire permutation
+    this->H_prime_permute = {
         Field("7069874114745813936829552608791213902061117400356596714713673571"
               "023200548519"),
         Field("1838592104783212022667877350171394113611392647210607993375145291"

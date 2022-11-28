@@ -236,7 +236,9 @@ public:
     /// OUTPUT
     /// \param[out] step_seven_out: see step_seven_out_t
     static step_seven_out_t<ppT> step_seven(
-        const step_four_out_t<ppT> &step_four_out, const srs<ppT> &srs);
+        const step_four_out_t<ppT> &step_four_out,
+        const std::vector<Field> &PI_value_list,
+        const srs<ppT> &srs);
 
     /// Verifier Step 8: compute quotient polynomial evaluation r'(zeta) =
     /// r(zeta) - r0, where r0 is a constant term \note follows the Python
@@ -377,6 +379,7 @@ public:
     bool verify_proof(
         const plonk_proof<ppT> &proof,
         const srs<ppT> &srs,
+        const std::vector<Field> &PI_value_list,
         transcript_hasher &hasher);
 };
 
