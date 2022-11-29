@@ -1087,6 +1087,56 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
     ASSERT_EQ(gates_matrix_transpose, example.gates_matrix_transpose);
 }
 
+template<typename ppT> void test_plonk_constants_k1_k2()
+{
+    using Field = libff::Fr<ppT>;
+    Field k1, k2;
+    // n = 2^s
+    const size_t n = std::pow(2, k1.s);
+    bool b_valid = false;
+    // load k1,k2 from example circuit
+    plonk_example example;
+    k1 = example.k1;
+    k2 = example.k2;
+    b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+    ASSERT_TRUE(b_valid);
+    // check invalid k1,k2
+    for (size_t i = 1; i <= example.num_gates; ++i) {
+        size_t ipower = i;
+        // invalid k2=k1*(omega^i)
+        k1 = example.k1;
+        k2 = k1 * (example.omega_base ^ ipower);
+        b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+        ASSERT_FALSE(b_valid);
+        // invalid k1=k2*(omega^i)
+        k2 = example.k2;
+        k1 = k2 * (example.omega_base ^ ipower);
+        b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+        ASSERT_FALSE(b_valid);
+        // invalid k1=omega^i
+        k1 = (example.omega_base ^ ipower);
+        k2 = example.k2;
+        b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+        ASSERT_FALSE(b_valid);
+        // invalid k2=omega^i
+        k1 = example.k1;
+        k2 = (example.omega_base ^ ipower);
+        b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+        ASSERT_FALSE(b_valid);
+    }
+    // generate new k1,k2 and assert they are valid for a random
+    // number of tests
+    size_t ntests = 1UL << 10;
+    for (size_t i = 0; i < ntests; ++i) {
+        k1 = 0;
+        k2 = 0;
+        plonk_generate_constants_k1_k2(n, k1, k2);
+        b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+        // printf("k1 "); k1.print(); printf("k2 "); k2.print();
+        ASSERT_TRUE(b_valid);
+    }
+}
+
 TEST(TestPlonk, BLS12_381)
 {
     test_plonk_srs<libff::bls12_381_pp>();
@@ -1103,6 +1153,7 @@ TEST(TestPlonk, BLS12_381)
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
     test_plonk_gates_matrix_transpose<libff::bls12_381_pp>();
+    test_plonk_constants_k1_k2<libff::bls12_381_pp>();
 }
 
 } // namespace libsnark

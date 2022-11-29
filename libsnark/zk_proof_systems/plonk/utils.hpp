@@ -196,6 +196,47 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
     const size_t &nrows,
     const size_t &ncols);
 
+/// generate constants k1,k2 \in Fr such that the sets H, k1H, k2H are
+/// non-overlapping, where H = {w, w^1, w^2, ..., 2^n} is a
+/// multiplicative subgroup of Fr of order n with generator w (denoted
+/// as \omega in [GWC19]). w is a primitive n-th root of unity in Fr
+/// and n is of the form 2^s where s is the largest power of 2 such
+/// that 2^s < p and 2^{s+1} > p, where p is the prime modulus of
+/// Fr. see also Section 8.1 in [GWC19]. note that p = 2^s * t + 1 so
+/// that p-1 = 2^s t is the order of the multiplicative group Fr^* of
+/// the scalar field Fr and s and t are members of the class Fp_model
+/// defined in libff/libff/algebra/fields/fp.hpp .
+///
+/// the algorithm generates random values for k1,k2 until the following
+/// three conditions are simultaneously satisfied:
+///
+/// 1) k1^n != 1 ensuring that k1 \notin H
+/// 2) k2^n != 1 ensuring that k2 \notin H
+/// 3) (k1 k2^-1)^n != 1 ensuring that k2H \notin k1H (and vice-versa)
+///
+/// to clarify 3), note that if (k1 k2^-1)^n == 1 then \exists i: 1 <=
+/// i <= n: k1 = k2 w^i and so k1 \in k2H. this is because k1 = k2 w^i
+/// is equivalent to k1 k2^-1 = w^i, equivalent to (k1 k2^-1)^n =
+/// (w^i)^n = 1. the latter follows from the fact that w^i is an n-th
+/// root of unity in Fr (for any i: 1<=i<=n).
+///
+/// conditions 1) and 2) are special cases of 3) for which resp. k1=1, k2=k1 and
+/// k1=1, k2=k2
+template<typename FieldT>
+void plonk_generate_constants_k1_k2(
+    const size_t &n, FieldT &k1_result, FieldT &k2_result);
+
+/// check that the constants k1,k2 satisfy the following conditions:
+///
+/// 1) k1 != 1 ensuring that k1 \notin H
+/// 2) k2 != 1 ensuring that k2 \notin H
+/// 3) (k1 k2^-1)^n != 1 ensuring that k2H \notin k1H (and vice-versa)
+///
+/// see Section 8.1 [GWC19] and plonk_generate_constants_k1_k2
+template<typename FieldT>
+bool plonk_are_valid_constants_k1_k2(
+    const size_t &n, const FieldT &k1, const FieldT &k2);
+
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/utils.tcc"

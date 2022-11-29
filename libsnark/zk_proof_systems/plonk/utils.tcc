@@ -316,6 +316,36 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
     return gates_matrix_transpose;
 }
 
+template<typename FieldT>
+void plonk_generate_constants_k1_k2(
+    const size_t &n, FieldT &k1_result, FieldT &k2_result)
+{
+    FieldT k1, k2;
+    // choose k1
+    do {
+        k1 = FieldT::random_element();
+    } while ((k1 ^ n) == FieldT::one());
+    // choose k2
+    FieldT k1_over_k2;
+    do {
+        k2 = FieldT::random_element();
+        k1_over_k2 = k1 * k2.inverse();
+    } while (((k2 ^ n) == FieldT::one()) ||
+             (((k1_over_k2) ^ n) == FieldT::one()));
+    k1_result = k1;
+    k2_result = k2;
+}
+
+template<typename FieldT>
+bool plonk_are_valid_constants_k1_k2(
+    const size_t &n, const FieldT &k1, const FieldT &k2)
+{
+    bool b_k1 = ((k1 ^ n) != FieldT::one());
+    bool b_k2 = ((k2 ^ n) != FieldT::one());
+    bool b_k1_k2 = (((k1 * k2.inverse()) ^ n) != FieldT::one());
+    return (b_k1 && b_k2 && b_k1_k2);
+}
+
 } // namespace libsnark
 
 #endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_TCC_
