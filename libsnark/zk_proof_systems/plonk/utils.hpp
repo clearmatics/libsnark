@@ -196,7 +196,28 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
     const size_t &nrows,
     const size_t &ncols);
 
-/// generate constants k1,k2 \in Fr such that the sets H, k1H, k2H are
+/// deterministically compute values for the constants k1,k2 \in Fr
+/// (section 8.1 [GWC19]) as k1=g^{2s}, k2=nqr, where s is the largest
+/// power of 2 such that 2^s < p and 2^{s+1} > p, p is the prime
+/// modulus of Fr and nqr is a quadratic nonresidue in Fr^*. both s
+/// and nqr are members of the class Fp_model defined in
+/// libff/libff/algebra/fields/fp.hpp .
+template<typename FieldT>
+void plonk_generate_constants_k1_k2(FieldT &k1_result, FieldT &k2_result);
+
+/// generate values for the constants k1,k2 \in Fr (section 8.1
+/// [GWC19]) by trying random values until the following three
+/// conditions are simultaneously satisfied:
+///
+/// 1) k1^n != 1 ensuring that k1 \notin H
+/// 2) k2^n != 1 ensuring that k2 \notin H
+/// 3) (k1 k2^-1)^n != 1 ensuring that k2H \notin k1H (and vice-versa)
+template<typename FieldT>
+void plonk_generate_random_constants_k1_k2(
+    FieldT &k1_result, FieldT &k2_result);
+
+/// check that the constants k1,k2 \in Fr (section 8.1 [GWC19]) are
+/// valid. this is the case if the sets H, k1H, k2H are
 /// non-overlapping, where H = {w, w^1, w^2, ..., 2^n} is a
 /// multiplicative subgroup of Fr of order n with generator w (denoted
 /// as \omega in [GWC19]). w is a primitive n-th root of unity in Fr
@@ -207,8 +228,8 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
 /// the scalar field Fr and s and t are members of the class Fp_model
 /// defined in libff/libff/algebra/fields/fp.hpp .
 ///
-/// the algorithm generates random values for k1,k2 until the following
-/// three conditions are simultaneously satisfied:
+/// the function checks if the following three conditions are
+/// simultaneously satisfied:
 ///
 /// 1) k1^n != 1 ensuring that k1 \notin H
 /// 2) k2^n != 1 ensuring that k2 \notin H
@@ -222,16 +243,6 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
 ///
 /// conditions 1) and 2) are special cases of 3) for which resp. k1=1, k2=k1 and
 /// k1=1, k2=k2
-template<typename FieldT>
-void plonk_generate_constants_k1_k2(FieldT &k1_result, FieldT &k2_result);
-
-/// check that the constants k1,k2 satisfy the following conditions:
-///
-/// 1) k1^n != 1 ensuring that k1 \notin H
-/// 2) k2^n != 1 ensuring that k2 \notin H
-/// 3) (k1 k2^-1)^n != 1 ensuring that k2H \notin k1H (and vice-versa)
-///
-/// see Section 8.1 [GWC19] and plonk_generate_constants_k1_k2
 template<typename FieldT>
 bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2);
 

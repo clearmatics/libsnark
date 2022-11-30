@@ -317,7 +317,20 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
 }
 
 template<typename FieldT>
-void plonk_generate_constants_k1_k2(FieldT &k1_result, FieldT &k2_result)
+void plonk_generate_constants_k1_k2(FieldT &k1, FieldT &k2)
+{
+    // n = 2^s: maximum order of the H subgroup that is power of 2
+    const size_t n = std::pow(2, FieldT::s);
+    // generator of Fr^*
+    const FieldT g = FieldT::multiplicative_generator;
+    // set k1 = g^{2s} \notin H
+    k1 = g ^ n;
+    // set k2 to a quadratic nonresidue of Fr^*
+    k2 = FieldT::nqr;
+}
+
+template<typename FieldT>
+void plonk_generate_random_constants_k1_k2(FieldT &k1_result, FieldT &k2_result)
 {
     // n = 2^s: maximum order of the H subgroup that is power of 2
     const size_t n = std::pow(2, FieldT::s);
