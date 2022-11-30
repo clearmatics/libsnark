@@ -223,19 +223,17 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
 /// conditions 1) and 2) are special cases of 3) for which resp. k1=1, k2=k1 and
 /// k1=1, k2=k2
 template<typename FieldT>
-void plonk_generate_constants_k1_k2(
-    const size_t &n, FieldT &k1_result, FieldT &k2_result);
+void plonk_generate_constants_k1_k2(FieldT &k1_result, FieldT &k2_result);
 
 /// check that the constants k1,k2 satisfy the following conditions:
 ///
-/// 1) k1 != 1 ensuring that k1 \notin H
-/// 2) k2 != 1 ensuring that k2 \notin H
+/// 1) k1^n != 1 ensuring that k1 \notin H
+/// 2) k2^n != 1 ensuring that k2 \notin H
 /// 3) (k1 k2^-1)^n != 1 ensuring that k2H \notin k1H (and vice-versa)
 ///
 /// see Section 8.1 [GWC19] and plonk_generate_constants_k1_k2
 template<typename FieldT>
-bool plonk_are_valid_constants_k1_k2(
-    const size_t &n, const FieldT &k1, const FieldT &k2);
+bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2);
 
 } // namespace libsnark
 

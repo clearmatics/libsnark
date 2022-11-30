@@ -1092,13 +1092,13 @@ template<typename ppT> void test_plonk_constants_k1_k2()
     using Field = libff::Fr<ppT>;
     Field k1, k2;
     // n = 2^s
-    const size_t n = std::pow(2, k1.s);
+    //    const size_t n = std::pow(2, Field::s);
     bool b_valid = false;
     // load k1,k2 from example circuit
     plonk_example example;
     k1 = example.k1;
     k2 = example.k2;
-    b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+    b_valid = plonk_are_valid_constants_k1_k2(k1, k2);
     ASSERT_TRUE(b_valid);
     // check invalid k1,k2
     for (size_t i = 1; i <= example.num_gates; ++i) {
@@ -1106,22 +1106,22 @@ template<typename ppT> void test_plonk_constants_k1_k2()
         // invalid k2=k1*(omega^i)
         k1 = example.k1;
         k2 = k1 * (example.omega_base ^ ipower);
-        b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+        b_valid = plonk_are_valid_constants_k1_k2(k1, k2);
         ASSERT_FALSE(b_valid);
         // invalid k1=k2*(omega^i)
         k2 = example.k2;
         k1 = k2 * (example.omega_base ^ ipower);
-        b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+        b_valid = plonk_are_valid_constants_k1_k2(k1, k2);
         ASSERT_FALSE(b_valid);
         // invalid k1=omega^i
         k1 = (example.omega_base ^ ipower);
         k2 = example.k2;
-        b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+        b_valid = plonk_are_valid_constants_k1_k2(k1, k2);
         ASSERT_FALSE(b_valid);
         // invalid k2=omega^i
         k1 = example.k1;
         k2 = (example.omega_base ^ ipower);
-        b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+        b_valid = plonk_are_valid_constants_k1_k2(k1, k2);
         ASSERT_FALSE(b_valid);
     }
     // generate new k1,k2 and assert they are valid for a random
@@ -1130,8 +1130,8 @@ template<typename ppT> void test_plonk_constants_k1_k2()
     for (size_t i = 0; i < ntests; ++i) {
         k1 = 0;
         k2 = 0;
-        plonk_generate_constants_k1_k2(n, k1, k2);
-        b_valid = plonk_are_valid_constants_k1_k2(n, k1, k2);
+        plonk_generate_constants_k1_k2(k1, k2);
+        b_valid = plonk_are_valid_constants_k1_k2(k1, k2);
         // printf("k1 "); k1.print(); printf("k2 "); k2.print();
         ASSERT_TRUE(b_valid);
     }

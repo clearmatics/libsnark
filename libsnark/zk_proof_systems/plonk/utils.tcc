@@ -317,9 +317,10 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
 }
 
 template<typename FieldT>
-void plonk_generate_constants_k1_k2(
-    const size_t &n, FieldT &k1_result, FieldT &k2_result)
+void plonk_generate_constants_k1_k2(FieldT &k1_result, FieldT &k2_result)
 {
+    // n = 2^s: maximum order of the H subgroup that is power of 2
+    const size_t n = std::pow(2, FieldT::s);
     FieldT k1, k2;
     // choose k1
     do {
@@ -337,9 +338,10 @@ void plonk_generate_constants_k1_k2(
 }
 
 template<typename FieldT>
-bool plonk_are_valid_constants_k1_k2(
-    const size_t &n, const FieldT &k1, const FieldT &k2)
+bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2)
 {
+    // n = 2^s: maximum order of the H subgroup that is power of 2
+    const size_t n = std::pow(2, FieldT::s);
     bool b_k1 = ((k1 ^ n) != FieldT::one());
     bool b_k2 = ((k2 ^ n) != FieldT::one());
     bool b_k1_k2 = (((k1 * k2.inverse()) ^ n) != FieldT::one());
