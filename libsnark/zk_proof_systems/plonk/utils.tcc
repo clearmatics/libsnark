@@ -342,10 +342,12 @@ bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2)
 {
     // n = 2^s: maximum order of the H subgroup that is power of 2
     const size_t n = std::pow(2, FieldT::s);
-    bool b_k1 = ((k1 ^ n) != FieldT::one());
-    bool b_k2 = ((k2 ^ n) != FieldT::one());
-    bool b_k1_k2 = (((k1 * k2.inverse()) ^ n) != FieldT::one());
-    return (b_k1 && b_k2 && b_k1_k2);
+    const bool k1_outside_H = ((k1 ^ n) != FieldT::one());
+    const bool k2_outside_H = ((k2 ^ n) != FieldT::one());
+    const bool k1_over_k2_outside_H =
+        (((k1 * k2.inverse()) ^ n) != FieldT::one());
+
+    return (k1_outside_H && k2_outside_H && k1_over_k2_outside_H);
 }
 
 } // namespace libsnark
