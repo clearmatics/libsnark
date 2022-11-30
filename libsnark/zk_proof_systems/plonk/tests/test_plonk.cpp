@@ -1096,22 +1096,23 @@ template<typename ppT> void test_plonk_constants_k1_k2()
     k1 = example.k1;
     k2 = example.k2;
     ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
-    // check invalid k1,k2
+    // check invalid values for k1,k2 by setting one of them to be
+    // equal to an element of H, k1H or k2H
     for (size_t i = 1; i <= example.num_gates; ++i) {
         size_t ipower = i;
-        // invalid k2=k1*(omega^i)
+        // set k2 to an element of k1H:  k2=k1*(omega^i)
         k1 = example.k1;
         k2 = k1 * (example.omega_base ^ ipower);
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
-        // invalid k1=k2*(omega^i)
+        // set k1 to an element of k2H: k1=k2*(omega^i)
         k2 = example.k2;
         k1 = k2 * (example.omega_base ^ ipower);
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
-        // invalid k1=omega^i
+        // set k1 to an element of H: k1=omega^i
         k1 = (example.omega_base ^ ipower);
         k2 = example.k2;
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
-        // invalid k2=omega^i
+        // set k2 to an element of H: k2=omega^i
         k1 = example.k1;
         k2 = (example.omega_base ^ ipower);
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
