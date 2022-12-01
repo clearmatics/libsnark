@@ -14,6 +14,14 @@
 #include <cassert>
 #include <cstdio>
 #include <gtest/gtest.h>
+#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+#include <libff/algebra/curves/bls12_377/bls12_377_pp.hpp>
+#include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
+#include <libff/algebra/curves/bn128/bn128_pp.hpp>
+#include <libff/algebra/curves/bw6_761/bw6_761_pp.hpp>
+#include <libff/algebra/curves/edwards/edwards_pp.hpp>
+#include <libff/algebra/curves/mnt/mnt4/mnt4_pp.hpp>
+#include <libff/algebra/curves/mnt/mnt6/mnt6_pp.hpp>
 #include <libff/algebra/curves/public_params.hpp>
 
 /// Test program that exercises the Plonk protocol (first setup, then
@@ -1087,8 +1095,24 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
     ASSERT_EQ(gates_matrix_transpose, example.gates_matrix_transpose);
 }
 
+// generic test for all curves
 template<typename ppT> void test_plonk_constants_k1_k2()
 {
+    ppT::init_public_params();
+
+    using Field = libff::Fr<ppT>;
+    Field k1, k2;
+    plonk_generate_constants_k1_k2(k1, k2);
+    // printf("k1 "); k1.print(); printf("k2 "); k2.print();
+    ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
+}
+
+// test specific to BLS12-381 (uses class example specific to
+// BLS12-381)
+template<typename ppT> void test_plonk_constants_k1_k2_bls12_381()
+{
+    ppT::init_public_params();
+
     using Field = libff::Fr<ppT>;
     Field k1, k2;
     // load k1,k2 from example circuit
@@ -1119,14 +1143,52 @@ template<typename ppT> void test_plonk_constants_k1_k2()
     }
     // generate new k1,k2 and assert they are valid for a random
     // number of tests
-    size_t ntests = 1UL << 10;
-    for (size_t i = 0; i < ntests; ++i) {
-        k1 = 0;
-        k2 = 0;
-        plonk_generate_constants_k1_k2(k1, k2);
-        // printf("k1 "); k1.print(); printf("k2 "); k2.print();
-        ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
-    }
+    k1 = 0;
+    k2 = 0;
+    plonk_generate_constants_k1_k2(k1, k2);
+    // printf("k1 "); k1.print(); printf("k2 "); k2.print();
+    ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
+}
+
+TEST(TestPlonkConstantsK1K2, Edwards)
+{
+    test_plonk_constants_k1_k2<libff::edwards_pp>();
+}
+
+TEST(TestPlonkConstantsK1K2, Mnt4)
+{
+    test_plonk_constants_k1_k2<libff::mnt4_pp>();
+}
+
+TEST(TestPlonkConstantsK1K2, Mnt6)
+{
+    test_plonk_constants_k1_k2<libff::mnt6_pp>();
+}
+
+TEST(TestPlonkConstantsK1K2, BW6_761)
+{
+    test_plonk_constants_k1_k2<libff::bw6_761_pp>();
+}
+
+TEST(TestPlonkConstantsK1K2, BN128)
+{
+    test_plonk_constants_k1_k2<libff::bn128_pp>();
+}
+
+TEST(TestPlonkConstantsK1K2, ALT_BN128)
+{
+    test_plonk_constants_k1_k2<libff::alt_bn128_pp>();
+}
+
+TEST(TestPlonkConstantsK1K2, BLS12_377)
+{
+    test_plonk_constants_k1_k2<libff::bls12_377_pp>();
+}
+
+TEST(TestPlonkConstantsK1K2, BLS12_381)
+{
+    test_plonk_constants_k1_k2<libff::bls12_381_pp>();
+    test_plonk_constants_k1_k2_bls12_381<libff::bls12_381_pp>();
 }
 
 TEST(TestPlonk, BLS12_381)
@@ -1145,7 +1207,6 @@ TEST(TestPlonk, BLS12_381)
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
     test_plonk_gates_matrix_transpose<libff::bls12_381_pp>();
-    test_plonk_constants_k1_k2<libff::bls12_381_pp>();
 }
 
 } // namespace libsnark
