@@ -327,6 +327,8 @@ void plonk_generate_constants_k1_k2(FieldT &k1, FieldT &k2)
     k1 = g ^ n;
     // set k2 to a quadratic nonresidue of Fr^*
     k2 = FieldT::nqr;
+    // assert k1,k2 are valid
+    assert(plonk_are_valid_constants_k1_k2(k1, k2));
 }
 
 template<typename FieldT>
@@ -348,6 +350,8 @@ void plonk_generate_random_constants_k1_k2(FieldT &k1_result, FieldT &k2_result)
              (((k1_over_k2) ^ n) == FieldT::one()));
     k1_result = k1;
     k2_result = k2;
+    // assert k1,k2 are valid
+    assert(plonk_are_valid_constants_k1_k2(k1, k2));
 }
 
 template<typename FieldT>
