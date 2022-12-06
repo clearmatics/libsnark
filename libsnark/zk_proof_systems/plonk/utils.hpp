@@ -199,7 +199,7 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
 /// deterministically compute values for the constants k1,k2 \in Fr
 /// (section 8.1 [GWC19]) as k1=g^{2s}, k2=nqr, where s is the largest
 /// power of 2 such that 2^s < p and 2^{s+1} > p, p is the prime
-/// modulus of Fr and nqr is a quadratic nonresidue in Fr^*. both s
+/// modulus of Fr and nqr is a quadratic nonresidue in Fr^*. Both s
 /// and nqr are members of the class Fp_model defined in
 /// libff/libff/algebra/fields/fp.hpp .
 template<typename FieldT>
@@ -216,33 +216,14 @@ template<typename FieldT>
 void plonk_generate_random_constants_k1_k2(
     FieldT &k1_result, FieldT &k2_result);
 
-/// check that the constants k1,k2 \in Fr (section 8.1 [GWC19]) are
-/// valid. this is the case if the sets H, k1H, k2H are
-/// non-overlapping, where H = {w, w^1, w^2, ..., 2^n} is a
+/// Check that the constants k1,k2 \in Fr (section 8.1 [GWC19]) are
+/// valid. This is the case if the sets H, k1H, k2H are
+/// non-overlapping, where H = {w, w^1, w^2, ..., w^n} is a
 /// multiplicative subgroup of Fr of order n with generator w (denoted
 /// as \omega in [GWC19]). w is a primitive n-th root of unity in Fr
 /// and n is of the form 2^s where s is the largest power of 2 such
-/// that 2^s < p and 2^{s+1} > p, where p is the prime modulus of
-/// Fr. see also Section 8.1 in [GWC19]. note that p = 2^s * t + 1 so
-/// that p-1 = 2^s t is the order of the multiplicative group Fr^* of
-/// the scalar field Fr and s and t are members of the class Fp_model
-/// defined in libff/libff/algebra/fields/fp.hpp .
-///
-/// the function checks if the following three conditions are
-/// simultaneously satisfied:
-///
-/// 1) k1^n != 1 ensuring that k1 \notin H
-/// 2) k2^n != 1 ensuring that k2 \notin H
-/// 3) (k1 k2^-1)^n != 1 ensuring that k2H \notin k1H (and vice-versa)
-///
-/// to clarify 3), note that if (k1 k2^-1)^n == 1 then \exists i: 1 <=
-/// i <= n: k1 = k2 w^i and so k1 \in k2H. this is because k1 = k2 w^i
-/// is equivalent to k1 k2^-1 = w^i, equivalent to (k1 k2^-1)^n =
-/// (w^i)^n = 1. the latter follows from the fact that w^i is an n-th
-/// root of unity in Fr (for any i: 1<=i<=n).
-///
-/// conditions 1) and 2) are special cases of 3) for which resp. k1=1, k2=k1 and
-/// k1=1, k2=k2
+/// that 2^s | (r-1), where r is the prime modulus of Fr. See also
+/// Section 8.1 in [GWC19].
 template<typename FieldT>
 bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2);
 

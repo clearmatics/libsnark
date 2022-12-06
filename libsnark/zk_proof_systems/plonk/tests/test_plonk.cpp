@@ -1127,14 +1127,14 @@ template<typename ppT> void test_plonk_constants_k1_k2_bls12_381()
     using Field = libff::Fr<ppT>;
     Field k1, k2;
 
-    // check that the example k1 and k2 are valid (according to
+    // Check that the example k1 and k2 are valid (according to
     // plonk_are_valid_constants_k1_k2)"
     plonk_example example;
     k1 = example.k1;
     k2 = example.k2;
     ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
 
-    // check that plonk_are_valid_constants_k1_k2 correctly detects
+    // Check that plonk_are_valid_constants_k1_k2 correctly detects
     // invalid combinations of k1 and k2
     for (size_t i = 1; i <= example.num_gates; ++i) {
         size_t ipower = i;
@@ -1156,7 +1156,7 @@ template<typename ppT> void test_plonk_constants_k1_k2_bls12_381()
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
     }
 
-    // check that plonk_generate_constants_k1_k2 generates valid k1
+    // Check that plonk_generate_constants_k1_k2 generates valid k1
     // and k2
     k1 = 0;
     k2 = 0;

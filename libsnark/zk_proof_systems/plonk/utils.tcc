@@ -354,6 +354,21 @@ void plonk_generate_random_constants_k1_k2(FieldT &k1_result, FieldT &k2_result)
     assert(plonk_are_valid_constants_k1_k2(k1, k2));
 }
 
+// The function checks if the following three conditions are
+// simultaneously satisfied:
+//
+// 1) k1^n != 1 ensuring that k1 \notin H
+// 2) k2^n != 1 ensuring that k2 \notin H
+// 3) (k1 k2^-1)^n != 1 ensuring that k2H \notin k1H (and vice-versa)
+//
+// To clarify 3), note that if (k1 k2^-1)^n == 1 then \exists i: 1 <=
+// i <= n: k1 = k2 w^i and so k1 \in k2H. This is because k1 = k2 w^i
+// is equivalent to k1 k2^-1 = w^i, equivalent to (k1 k2^-1)^n =
+// (w^i)^n = 1. The latter follows from the fact that w^i is an n-th
+// root of unity in Fr (for any i: 1<=i<=n).
+//
+// conditions 1) and 2) are special cases of 3) for which resp. k1=1,
+// k2=k1 and k1=1, k2=k2
 template<typename FieldT>
 bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2)
 {
