@@ -1103,7 +1103,18 @@ template<typename ppT> void test_plonk_constants_k1_k2()
     using Field = libff::Fr<ppT>;
     Field k1, k2;
     plonk_generate_constants_k1_k2(k1, k2);
-    // printf("k1 "); k1.print(); printf("k2 "); k2.print();
+    ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
+}
+
+// generic test for all curves for an alternative method to generate
+// constants k1,k2 using randomization
+template<typename ppT> void test_plonk_random_constants_k1_k2()
+{
+    ppT::init_public_params();
+
+    using Field = libff::Fr<ppT>;
+    Field k1, k2;
+    plonk_generate_random_constants_k1_k2(k1, k2);
     ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
 }
 
@@ -1150,48 +1161,55 @@ template<typename ppT> void test_plonk_constants_k1_k2_bls12_381()
     k1 = 0;
     k2 = 0;
     plonk_generate_constants_k1_k2(k1, k2);
-    // printf("k1 "); k1.print(); printf("k2 "); k2.print();
     ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
 }
 
 TEST(TestPlonkConstantsK1K2, Edwards)
 {
     test_plonk_constants_k1_k2<libff::edwards_pp>();
+    test_plonk_random_constants_k1_k2<libff::edwards_pp>();
 }
 
 TEST(TestPlonkConstantsK1K2, Mnt4)
 {
     test_plonk_constants_k1_k2<libff::mnt4_pp>();
+    test_plonk_random_constants_k1_k2<libff::mnt4_pp>();
 }
 
 TEST(TestPlonkConstantsK1K2, Mnt6)
 {
     test_plonk_constants_k1_k2<libff::mnt6_pp>();
+    test_plonk_random_constants_k1_k2<libff::mnt6_pp>();
 }
 
 TEST(TestPlonkConstantsK1K2, BW6_761)
 {
     test_plonk_constants_k1_k2<libff::bw6_761_pp>();
+    test_plonk_random_constants_k1_k2<libff::bw6_761_pp>();
 }
 
 TEST(TestPlonkConstantsK1K2, BN128)
 {
     test_plonk_constants_k1_k2<libff::bn128_pp>();
+    test_plonk_random_constants_k1_k2<libff::bn128_pp>();
 }
 
 TEST(TestPlonkConstantsK1K2, ALT_BN128)
 {
     test_plonk_constants_k1_k2<libff::alt_bn128_pp>();
+    test_plonk_random_constants_k1_k2<libff::alt_bn128_pp>();
 }
 
 TEST(TestPlonkConstantsK1K2, BLS12_377)
 {
     test_plonk_constants_k1_k2<libff::bls12_377_pp>();
+    test_plonk_random_constants_k1_k2<libff::bls12_377_pp>();
 }
 
 TEST(TestPlonkConstantsK1K2, BLS12_381)
 {
     test_plonk_constants_k1_k2<libff::bls12_381_pp>();
+    test_plonk_random_constants_k1_k2<libff::bls12_381_pp>();
     test_plonk_constants_k1_k2_bls12_381<libff::bls12_381_pp>();
 }
 
