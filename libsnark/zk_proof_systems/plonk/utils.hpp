@@ -227,6 +227,13 @@ void plonk_generate_random_constants_k1_k2(
 template<typename FieldT>
 bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2);
 
+/// Return a matrix with top N rows filled in with the public inputs
+/// selector vectors where N = num_public_inputs is the number of
+/// public inputs passed as an input parameter by the caller.
+template<typename ppT>
+std::vector<std::vector<libff::Fr<ppT>>> plonk_prepare_gates_matrix(
+    const size_t &num_public_inputs);
+
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/utils.tcc"

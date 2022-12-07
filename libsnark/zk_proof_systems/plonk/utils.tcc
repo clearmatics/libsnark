@@ -383,6 +383,39 @@ bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2)
     return (k1_outside_H && k2_outside_H && k1_over_k2_outside_H);
 }
 
+// In general, the i-th row of the gates matrix contains the i-th
+// component of the selector vectors q_L, q_M, q_R, q_O, q_C (see
+// Section 6 [GWC19]). The i-th compoment of each selector vector is
+// determined by the i-th gate of the arithmetic circuit, which can be
+// one of the following: addition, multiplication, multiplication by
+// constant, public input. In particular, when the i-th gate is a
+// public input, the i-th components of the selector vectors are:
+//
+// (q_L[i], q_M[i], q_R[i], q_O[i], q_C[i]) = (1, 0, 0, 0, 0)
+//
+// Therefore the top N rows of the initialized gates matrix will have
+// the above form. See also Section 6 [GWC19].
+//
+// \attention The convention for selector vector values corresponding
+// to public inputs (PI) used in this function follows [GWC19] (as
+// shown above) and is different from the one used in the example
+// circuit for BLS12-381 (class example) where q_R[i]=1 rather than
+// q_L[i]=1 i.e.
+//
+// (q_L[i], q_M[i], q_R[i], q_O[i], q_C[i]) = (0, 1, 0, 0, 0)
+template<typename ppT>
+std::vector<std::vector<libff::Fr<ppT>>> plonk_prepare_gates_matrix(
+    const size_t &num_public_inputs)
+{
+    using FieldT = libff::Fr<ppT>;
+    std::vector<std::vector<FieldT>> gates_matrix_init;
+    const std::vector<FieldT> PI_selector_vector{1, 0, 0, 0, 0};
+    for (size_t i = 0; i < num_public_inputs; ++i) {
+        gates_matrix_init.push_back(PI_selector_vector);
+    }
+    return gates_matrix_init;
+}
+
 } // namespace libsnark
 
 #endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_TCC_

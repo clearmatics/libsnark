@@ -1095,6 +1095,18 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
     ASSERT_EQ(gates_matrix_transpose, example.gates_matrix_transpose);
 }
 
+template<typename ppT> void test_plonk_prepare_gates_matrix()
+{
+    using Field = libff::Fr<ppT>;
+    const size_t num_public_inputs = 8;
+    const std::vector<std::vector<Field>> gates_matrix_init =
+        plonk_prepare_gates_matrix<ppT>(num_public_inputs);
+    const std::vector<Field> PI_selector_vector{1, 0, 0, 0, 0};
+    for (size_t i = 0; i < num_public_inputs; ++i) {
+        ASSERT_EQ(gates_matrix_init[i], PI_selector_vector);
+    }
+}
+
 // generic test for all curves
 template<typename ppT> void test_plonk_constants_k1_k2()
 {
@@ -1254,6 +1266,7 @@ TEST(TestPlonk, BLS12_381)
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
     test_plonk_gates_matrix_transpose<libff::bls12_381_pp>();
+    test_plonk_prepare_gates_matrix<libff::bls12_381_pp>();
 }
 
 } // namespace libsnark
