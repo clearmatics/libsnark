@@ -1101,6 +1101,7 @@ template<typename ppT> void test_plonk_prepare_gates_matrix()
     const size_t num_public_inputs = 8;
     const std::vector<std::vector<Field>> gates_matrix_init =
         plonk_prepare_gates_matrix<ppT>(num_public_inputs);
+    ASSERT_EQ(gates_matrix_init.size(), num_public_inputs);
     const std::vector<Field> PI_selector_vector{1, 0, 0, 0, 0};
     for (size_t i = 0; i < num_public_inputs; ++i) {
         ASSERT_EQ(gates_matrix_init[i], PI_selector_vector);
