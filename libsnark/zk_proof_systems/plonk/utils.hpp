@@ -234,6 +234,19 @@ template<typename ppT>
 std::vector<std::vector<libff::Fr<ppT>>> plonk_prepare_gates_matrix(
     const size_t &num_public_inputs);
 
+/// The function extracts the indices of the public inputs (PI) from the input
+/// gates matrix under the convention that the i-th components of the selector
+/// vectors q_L, q_R, q_O, q_M, q_C corresponding to the i-th selector vector
+/// have the form
+///
+/// (q_L[i], q_R[i], q_O[i], q_M[i], q_C[i]) = (1, 0, 0, 0, 0)
+///
+/// The vector of PI indices is equal to the vector of indices of all rows in
+/// the gates matrix that are equal to (1, 0, 0, 0, 0)
+template<typename ppT>
+std::vector<size_t> plonk_public_input_indices_from_gates_matrix(
+    const std::vector<std::vector<libff::Fr<ppT>>> &gates_matrix);
+
 } // namespace libsnark
 
 #include "libsnark/zk_proof_systems/plonk/utils.tcc"

@@ -1095,17 +1095,140 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
     ASSERT_EQ(gates_matrix_transpose, example.gates_matrix_transpose);
 }
 
-template<typename ppT> void test_plonk_prepare_gates_matrix()
+// We test the example circuit y^2 = x mod r where x=49 is a public
+// input and y is the witness. We prove that we know y=7 such that y
+// is the quadratic residue of x modulo the modulus r of the scalar
+// field Fr of the given elliptic curve. The circuit is represented by
+// one public input (PI) and one multiplication gate. According to the
+// Plonk arithmetization rules, each gate (including the PI) is
+// represented as:
+//
+// qL a + qR b + qO c + qM ab + qC = 0
+//
+// where qL,qR,qO,qM,qC are the selector polynomials and
+// a,b,c are respectively the vectors of left inputs, right inputs
+// and outputs to the gates.
+//
+// Using the above representation, the PI and the multiplication
+// gates are given resp. as
+//
+//  PI: 1 a1 + 0 b1 +   0  c1 + 0 a1 b1 + 0 = 49
+// MUL: 0 a1 + 0 b1 + (-1) c1 + 1 a1 b1 + 0 = 0
+//
+// where
+//
+// a   = (a1, a2) = (x, y)
+// b   = (b1, b2) = (1, y)
+// c   = (c1, c2) = (x, x)
+// qL = (1,  0)
+// qR = (0,  0)
+// qO = (0, -1)
+// qM = (0,  1)
+// qC = (0,  0)
+//
+// The selector polynomials as given above define the following gates
+// matrix:
+//
+// qL qR qO qM qC
+//  1  0  0  0  0
+//  0  0 -1  1  0
+//
+// and the permutation expressing the copy-constraints is (second
+// line below):
+//
+// (a1 a2 b1 b2 c1 c2)
+// (c1 b2 b1 a2 c2 a1)
+//
+// reflecting the fact that a1=c1=c2=x and a2=b2=y
+template<typename ppT, class transcript_hasher>
+void test_plonk_prepare_gates_matrix()
 {
     using Field = libff::Fr<ppT>;
-    const size_t num_public_inputs = 8;
-    const std::vector<std::vector<Field>> gates_matrix_init =
+
+    // 0 Arithmetization of test circuit y^2 = x mod r
+
+    // The number of gates is 2: one public input (PI) gate and one
+    // multiplication gate. Tis nummer is also conveniently a power of
+    // 2 (needed for the FFT/iFFT)
+    const size_t num_gates = 2;
+    // The tested circuit has 1 public input
+    const size_t num_public_inputs = 1;
+    std::vector<std::vector<Field>> gates_matrix =
         plonk_prepare_gates_matrix<ppT>(num_public_inputs);
-    ASSERT_EQ(gates_matrix_init.size(), num_public_inputs);
-    const std::vector<Field> PI_selector_vector{1, 0, 0, 0, 0};
+    ASSERT_EQ(gates_matrix.size(), num_public_inputs);
+    // Add the PI gate/s
+    const std::vector<Field> PI_gate{1, 0, 0, 0, 0};
     for (size_t i = 0; i < num_public_inputs; ++i) {
-        ASSERT_EQ(gates_matrix_init[i], PI_selector_vector);
+        ASSERT_EQ(gates_matrix[i], PI_gate);
     }
+    // Add the multiplication gate
+    const std::vector<Field> MUL_gate{0, 0, -1, 1, 0};
+    gates_matrix.push_back(MUL_gate);
+    ASSERT_EQ(gates_matrix.size(), 2);
+    ASSERT_EQ(gates_matrix[0].size(), 5);
+    // Extract the PI indices from the gates matrix
+    std::vector<size_t> PI_wire_indices =
+        plonk_public_input_indices_from_gates_matrix<ppT>(gates_matrix);
+    ASSERT_EQ(PI_wire_indices.size(), 1);
+    ASSERT_EQ(PI_wire_indices[0], 0);
+    // Hard-code the wire permutation for the tested circuit. Note
+    // that counting of indices starts from 1. TODO: implement a
+    // general function to compute the wire permutation for any
+    // circuit
+    std::vector<size_t> wire_permutation{5, 4, 3, 2, 6, 1};
+    // maximum degree of the encoded monomials in the usrs
+    size_t max_degree = PLONK_MAX_DEGREE;
+    // Random hidden element kept secret (toxic waste)
+    Field secret = Field::random_element();
+
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
+        libfqfft::get_evaluation_domain<Field>(num_gates);
+
+    // 1 Generate SRS
+
+    // compute usrs
+    usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
+    // compute srs
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+        usrs, gates_matrix, wire_permutation, PI_wire_indices);
+
+    // 2 Compute proof
+
+    // initialize prover hasher
+    transcript_hasher prover_hasher;
+    // prepare witness vector w = a+b+c
+    std::vector<Field> witness{49, 7, 1, 7, 49, 49};
+    // nine random blinding constants for the prover polynomials
+    std::vector<libff::Fr<ppT>> blind_scalars;
+    const size_t nscalars = 9;
+    for (size_t i = 0; i < nscalars; ++i) {
+        Field r = Field::random_element();
+        blind_scalars.push_back(r);
+    }
+    // initialize prover
+    plonk_prover<ppT, transcript_hasher> prover;
+    // compute proof
+    plonk_proof<ppT> proof =
+        prover.compute_proof(srs, witness, blind_scalars, prover_hasher);
+
+    // 3 Verify proof
+
+    // initialize verifier hasher
+    transcript_hasher verifier_hasher;
+    // Prepare the list of PI values. for the example circuit
+    std::vector<Field> PI_value_list;
+    for (size_t i = 0; i < PI_wire_indices.size(); i++) {
+        Field PI_value = witness[PI_wire_indices[i]];
+        PI_value_list.push_back(PI_value);
+    }
+    ASSERT_EQ(PI_value_list.size(), 1);
+    ASSERT_EQ(PI_value_list[0], Field(49));
+    // initialize verifier
+    plonk_verifier<ppT, transcript_hasher> verifier;
+    // verify proof
+    bool b_valid_proof =
+        verifier.verify_proof(proof, srs, PI_value_list, verifier_hasher);
+    ASSERT_TRUE(b_valid_proof);
 }
 
 // generic test for all curves
@@ -1267,7 +1390,9 @@ TEST(TestPlonk, BLS12_381)
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
     test_plonk_gates_matrix_transpose<libff::bls12_381_pp>();
-    test_plonk_prepare_gates_matrix<libff::bls12_381_pp>();
+    test_plonk_prepare_gates_matrix<
+        libff::bls12_381_pp,
+        bls12_381_test_vector_transcript_hasher>();
 }
 
 } // namespace libsnark

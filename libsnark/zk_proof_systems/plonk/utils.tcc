@@ -308,8 +308,8 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
     std::vector<std::vector<FieldT>> gates_matrix_transpose(
         nrows_transpose, std::vector<FieldT>(ncols_transpose));
     for (size_t irow = 0; irow < nrows; ++irow) {
+        assert(gates_matrix[irow].size() == ncols);
         for (size_t icol = 0; icol < ncols; ++icol) {
-            assert(gates_matrix[icol].size() == ncols);
             gates_matrix_transpose[icol][irow] = gates_matrix[irow][icol];
         }
     }
@@ -384,14 +384,14 @@ bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2)
 }
 
 // In general, the i-th row of the gates matrix contains the i-th
-// component of the selector vectors q_L, q_M, q_R, q_O, q_C (see
+// component of the selector vectors q_L, q_R, q_O, q_M, q_C (see
 // Section 6 [GWC19]). The i-th compoment of each selector vector is
 // determined by the i-th gate of the arithmetic circuit, which can be
 // one of the following: addition, multiplication, multiplication by
 // constant, public input. In particular, when the i-th gate is a
 // public input, the i-th components of the selector vectors are:
 //
-// (q_L[i], q_M[i], q_R[i], q_O[i], q_C[i]) = (1, 0, 0, 0, 0)
+// (q_L[i], q_R[i], q_O[i], q_M[i], q_C[i]) = (1, 0, 0, 0, 0)
 //
 // Therefore the top N rows of the initialized gates matrix will have
 // the above form. See also Section 6 [GWC19].
@@ -402,7 +402,7 @@ bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2)
 // circuit for BLS12-381 (class example) where q_R[i]=1 rather than
 // q_L[i]=1 i.e.
 //
-// (q_L[i], q_M[i], q_R[i], q_O[i], q_C[i]) = (0, 1, 0, 0, 0)
+// (q_L[i], q_R[i], q_O[i], q_M[i], q_C[i]) = (0, 1, 0, 0, 0)
 template<typename ppT>
 std::vector<std::vector<libff::Fr<ppT>>> plonk_prepare_gates_matrix(
     const size_t &num_public_inputs)
@@ -416,6 +416,25 @@ std::vector<std::vector<libff::Fr<ppT>>> plonk_prepare_gates_matrix(
     return gates_matrix_init;
 }
 
+// Examine the gates matrix row by row and store the indices of those rows that
+// are equal to (1, 0, 0, 0, 0). These are the rows corresponding to public
+// inputs.
+template<typename ppT>
+std::vector<size_t> plonk_public_input_indices_from_gates_matrix(
+    const std::vector<std::vector<libff::Fr<ppT>>> &gates_matrix)
+{
+    using FieldT = libff::Fr<ppT>;
+    // Vector of indices of wires corresponding to public inputs (PI)
+    std::vector<size_t> PI_wire_indices;
+    const std::vector<FieldT> PI_selector_vector{1, 0, 0, 0, 0};
+    for (size_t i = 0; i < gates_matrix.size(); ++i) {
+        // store the index of the gates matrix row encoding a PI
+        if (gates_matrix[i] == PI_selector_vector) {
+            PI_wire_indices.push_back(i);
+        }
+    }
+    return PI_wire_indices;
+}
 } // namespace libsnark
 
 #endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_TCC_
