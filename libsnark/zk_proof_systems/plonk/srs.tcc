@@ -70,7 +70,7 @@ template<typename ppT>
 usrs<ppT> plonk_usrs_derive_from_secret(
     const libff::Fr<ppT> &secret, const size_t max_degree)
 {
-    // compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
+    // Compute powers of secret times G1: 1*G1, secret^1*G1, secret^2*G1, ...
     const libff::bigint<libff::Fr<ppT>::num_limbs> secret_bigint =
         secret.as_bigint();
     const size_t window_size = std::max(
@@ -90,7 +90,7 @@ usrs<ppT> plonk_usrs_derive_from_secret(
         secret_powers_g1.push_back(secret_i_g1);
     }
 
-    // compute powers of secret times G2: 1*G2, secret^1*G2
+    // Compute powers of secret times G2: 1*G2, secret^1*G2.
     // Note: in Plonk we *always* have 2 encoded elemnts in G2
     std::vector<libff::G2<ppT>> secret_powers_g2;
     secret_powers_g2.reserve(2);
@@ -115,28 +115,28 @@ srs<ppT> plonk_srs_derive_from_usrs(
     const std::vector<std::vector<Field>> gates_matrix_transpose =
         plonk_gates_matrix_transpose(gates_matrix);
 
-    // the number of gates is equal to the number of columns in the transposed
-    // gates matrix
+    // The number of gates is equal to the number of columns in the
+    // transposed gates matrix.
     size_t num_gates = gates_matrix_transpose[0].size();
-    // ensure that num_gates is not 0
+    // Ensure that num_gates is not 0.
     assert(num_gates > 0);
-    // ensure num_gates is power of 2
+    // Ensure num_gates is power of 2.
     assert((num_gates & (num_gates - 1)) == 0);
 
-    // the number of Q-polynomials (aka selector polynomials) is equal to the
-    // number of rows in the transposed gates matrix
+    // The number of Q-polynomials (aka selector polynomials) is equal
+    // to the number of rows in the transposed gates matrix.
     size_t num_qpolys = gates_matrix_transpose.size();
 
-    // the constraints q_L, q_R, q_O, q_M, q_C and the
+    // The constraints q_L, q_R, q_O, q_M, q_C and the
     // witness w_L, w_R, w_O are represented as polynomials in the roots of
-    // unity e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8
+    // unity e.g. f_{q_L}(omega_i) = q_L[i], 0\le{i}<8.
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(num_gates);
 
-    // compute the selector polynomials (q-polynomials) from the
+    // Compute the selector polynomials (q-polynomials) from the
     // transposed gates matrix over the Lagrange basis q_poly = \sum_i
     // q[i] * L[i] where q[i] is a coefficient (a scalar Field
-    // element) and L[i] is a polynomial with Field coefficients
+    // element) and L[i] is a polynomial with Field coefficients.
     std::vector<polynomial<Field>> Q_polys =
         plonk_compute_selector_polynomials<Field>(
             num_gates, num_qpolys, gates_matrix_transpose, domain);
@@ -202,7 +202,7 @@ srs<ppT> plonk_srs_derive_from_usrs(
     // TODO: write unit test for plonk_compute_cosets_H_k1H_k2H
     // assert(H_prime[i] == example.H_prime[i]);
 
-    // permute H_prime according to the wire permutation
+    // Permute H_prime according to the wire permutation.
     std::vector<Field> H_prime_permute =
         plonk_permute_subgroup_H<Field>(H_prime, wire_permutation, num_gates);
 
@@ -210,7 +210,7 @@ srs<ppT> plonk_srs_derive_from_usrs(
     // assert(H_prime_permute[i] == example.H_prime_permute[i]);
 
     // Compute the permutation polynomials S_sigma_1, S_sigma_2,
-    // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0)
+    // S_sigma_3 (see [GWC19], Sect. 8.1) (our indexing starts from 0).
     std::vector<polynomial<Field>> S_polys =
         plonk_compute_permutation_polynomials<Field>(
             H_prime_permute, num_gates, domain);
@@ -230,7 +230,7 @@ srs<ppT> plonk_srs_derive_from_usrs(
         secret_powers_g2.push_back(usrs.secret_powers_g2[i]);
     }
 
-    // compute 0-th Lagrange basis vector via inverse FFT
+    // Compute 0-th Lagrange basis vector via inverse FFT.
     polynomial<libff::Fr<ppT>> L_basis_zero(num_gates, libff::Fr<ppT>(0));
     L_basis_zero[0] = libff::Fr<ppT>(1);
     domain->iFFT(L_basis_zero);

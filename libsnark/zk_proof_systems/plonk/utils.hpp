@@ -110,7 +110,7 @@ void plonk_compute_cosets_H_k1H_k2H(
     const FieldT k2,
     std::vector<FieldT> &H_prime);
 
-/// permute the multiplicative subgroup H according to the wire
+/// Permute the multiplicative subgroup H according to the wire
 /// permutation: (see [GWC19] Sect. 8), \see
 /// plonk_compute_roots_of_unity_omega, \see
 /// plonk_roots_of_unity_omega_to_subgroup_H
@@ -120,8 +120,8 @@ std::vector<FieldT> plonk_permute_subgroup_H(
     const std::vector<size_t> &wire_permutation,
     const size_t num_gates);
 
-/// compute the permutation polynomials S_sigma_1, S_sigma_2,
-/// S_sigma_2 (see [GWC19], Sect. 8.1)
+/// Compute the permutation polynomials S_sigma_1, S_sigma_2,
+/// S_sigma_2 (see [GWC19], Sect. 8.1).
 template<typename FieldT>
 std::vector<polynomial<FieldT>> plonk_compute_permutation_polynomials(
     const std::vector<FieldT> &H_prime_permute,
@@ -157,7 +157,7 @@ libff::G1<ppT> plonk_evaluate_poly_at_secret_G1(
     const polynomial<libff::Fr<ppT>> &f_poly);
 
 /// Evaluate a list of polynomials in the encrypted secret input: see
-/// plonk_evaluate_poly_at_secret_G1
+/// plonk_evaluate_poly_at_secret_G1.
 template<typename ppT>
 void plonk_evaluate_polys_at_secret_G1(
     const std::vector<libff::G1<ppT>> &secret_powers_g1,
@@ -165,8 +165,8 @@ void plonk_evaluate_polys_at_secret_G1(
     std::vector<libff::G1<ppT>> &Q_polys_at_secret_g1);
 
 /// Compute the factors in the product of the permutation polynomial
-/// z(X) in Prover Round 2. Note that accumulator A[0]=1 and A[i],
-/// i>0 is computed from values at i-1 for witness[i-1], H_prime[i-1],
+/// z(X) in Prover Round 2. Note that accumulator A[0]=1 and A[i], i>0
+/// is computed from values at i-1 for witness[i-1], H_prime[i-1],
 /// H_prime_permute[i-1]m etc.
 template<typename FieldT>
 FieldT plonk_compute_accumulator_factor(
@@ -196,7 +196,7 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
     const size_t &nrows,
     const size_t &ncols);
 
-/// deterministically compute values for the constants k1,k2 \in Fr
+/// Deterministically compute values for the constants k1,k2 \in Fr
 /// (section 8.1 [GWC19]) as k1=g^{2s}, k2=nqr, where s is the largest
 /// power of 2 such that 2^s < p and 2^{s+1} > p, p is the prime
 /// modulus of Fr and nqr is a quadratic nonresidue in Fr^*. Both s
@@ -205,7 +205,7 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
 template<typename FieldT>
 void plonk_generate_constants_k1_k2(FieldT &k1_result, FieldT &k2_result);
 
-/// generate values for the constants k1,k2 \in Fr (section 8.1
+/// Generate values for the constants k1,k2 \in Fr (section 8.1
 /// [GWC19]) by trying random values until the following three
 /// conditions are simultaneously satisfied:
 ///

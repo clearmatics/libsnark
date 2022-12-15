@@ -89,7 +89,7 @@ void plonk_compute_roots_of_unity_omega(
     const FieldT k2,
     std::vector<std::vector<FieldT>> &omega)
 {
-    // ensure that num_gates is not 0 and is power of 2
+    // Ensure that num_gates is not 0 and is power of 2.
     // TODO: check also that it's less than 2^(ppT::s)
     bool b_nonzero = (num_gates > 0);
     bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
@@ -125,7 +125,7 @@ void plonk_compute_cosets_H_k1H_k2H(
     const FieldT k2,
     std::vector<FieldT> &H_prime)
 {
-    // ensure that num_gates is not 0 and is power of 2
+    // Ensure that num_gates is not 0 and is power of 2.
     bool b_nonzero = (num_gates > 0);
     bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
     if (!(b_nonzero && b_is_power2)) {
@@ -323,9 +323,9 @@ void plonk_generate_constants_k1_k2(FieldT &k1, FieldT &k2)
     const size_t n = std::pow(2, FieldT::s);
     // generator of Fr^*
     const FieldT g = FieldT::multiplicative_generator;
-    // set k1 = g^{2s} \notin H
+    // Set k1 = g^{2s} \notin H.
     k1 = g ^ n;
-    // set k2 to a quadratic nonresidue of Fr^*
+    // Set k2 to a quadratic nonresidue of Fr^* .
     k2 = FieldT::nqr;
     // assert k1,k2 are valid
     assert(plonk_are_valid_constants_k1_k2(k1, k2));

@@ -78,7 +78,7 @@ round_one_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_one(
     std::vector<std::vector<libff::Fr<ppT>>> W_polys_blinded;
     std::vector<libff::G1<ppT>> W_polys_blinded_at_secret_g1;
 
-    // compute witness polynomials via Lagrange interpolation
+    // Compute witness polynomials via Lagrange interpolation.
     W_polys.resize(nwitness, polynomial<Field>(srs.num_gates));
     for (size_t i = 0; i < nwitness; ++i) {
         typename std::vector<Field>::const_iterator begin =
@@ -90,15 +90,15 @@ round_one_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_one(
             W_points, W_polys[i], domain);
     }
 
-    // represent the blinding scalars b1, b2, ..., b9 as polynomials
+    // Represent the blinding scalars b1, b2, ..., b9 as polynomials.
     std::vector<std::vector<Field>> blind_polys{
         {blind_scalars[1], blind_scalars[0]}, // b1 + b0 X
         {blind_scalars[3], blind_scalars[2]}, // b3 + b2 X
         {blind_scalars[5], blind_scalars[4]}  // b5 + b4 X
     };
 
-    // compute blinded witness polynomials e.g. a_poly =
-    // blind_polys[0] * zh_poly + W_polys[0]
+    // Compute blinded witness polynomials e.g. a_poly =
+    // blind_polys[0] * zh_poly + W_polys[0].
     W_polys_blinded.resize(nwitness);
     for (size_t i = 0; i < nwitness; ++i) {
         libfqfft::_polynomial_multiplication<Field>(
@@ -106,12 +106,12 @@ round_one_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_one(
         libfqfft::_polynomial_addition<Field>(
             W_polys_blinded[i], W_polys_blinded[i], W_polys[i]);
     }
-    // evaluate blinded witness polynomials at the secret input
+    // Evaluate blinded witness polynomials at the secret input.
     W_polys_blinded_at_secret_g1.resize(W_polys_blinded.size());
     plonk_evaluate_polys_at_secret_G1<ppT>(
         srs.secret_powers_g1, W_polys_blinded, W_polys_blinded_at_secret_g1);
 
-    // add outputs from Round 1 to the hash buffer
+    // Add outputs from Round 1 to the hash buffer.
     hasher.add_element(W_polys_blinded_at_secret_g1[a]);
     hasher.add_element(W_polys_blinded_at_secret_g1[b]);
     hasher.add_element(W_polys_blinded_at_secret_g1[c]);
@@ -147,12 +147,12 @@ round_two_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_two(
     polynomial<libff::Fr<ppT>> z_poly;
     libff::G1<ppT> z_poly_at_secret_g1;
 
-    // compute permutation polynomial
+    // Compute permutation polynomial.
 
     // blinding polynomial: b8 + b7 X + b6 X^2
     std::vector<Field> z1_blind_poly{
         blind_scalars[8], blind_scalars[7], blind_scalars[6]};
-    // multiply by the vanishing polynomial: z1 = z1 * this->zh_poly
+    // Multiply by the vanishing polynomial: z1 = z1 * this->zh_poly.
     libfqfft::_polynomial_multiplication<Field>(
         z1_blind_poly, z1_blind_poly, round_zero_out.zh_poly);
 
@@ -163,12 +163,12 @@ round_two_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_two(
     polynomial<Field> A_poly(srs.num_gates);
     plonk_interpolate_polynomial_from_points<Field>(A_vector, A_poly, domain);
 
-    // add blinding polynomial z_1 to the accumulator polynomial A_poly
+    // Add blinding polynomial z_1 to the accumulator polynomial A_poly.
     libfqfft::_polynomial_addition<Field>(z_poly, z1_blind_poly, A_poly);
     z_poly_at_secret_g1 =
         plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, z_poly);
 
-    // add outputs from Round 2 to the hash buffer
+    // Add outputs from Round 2 to the hash buffer.
     hasher.add_element(z_poly_at_secret_g1);
 
     round_two_out_t<ppT> round_two_out(
@@ -213,7 +213,7 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
 
     // Computing the polynomial z(x*w) i.e. z(x) shifted by w where
     // w=srs.omega_roots is the base root of unity and z is
-    // z_poly. we do this by multiplying the coefficients of z by w
+    // z_poly. we do this by multiplying the coefficients of z by w.
     z_poly_xomega.resize(round_two_out.z_poly.size());
     std::fill(z_poly_xomega.begin(), z_poly_xomega.end(), Field(0));
     for (size_t i = 0; i < round_two_out.z_poly.size(); ++i) {
@@ -223,9 +223,9 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
         z_poly_xomega[i] = round_two_out.z_poly[i] * omega_roots_i;
     }
 
-    // start computation of polynomial t(X) in round 3. we break t
+    // Start computation of polynomial t(X) in round 3. we break t
     // into 4 parts which we compute separately. each of the 4 parts
-    // is multiplied by 1/zh_poly in the paper
+    // is multiplied by 1/zh_poly in the paper.
     std::vector<polynomial<Field>> t_part(4);
 
     // --- Computation of t_part[0]
@@ -289,13 +289,13 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
     // To obtain the index of the PI in w_R we do a modulo num_gates (= 8)
     // operation to skip the w_L vector (first 8 entries in w).
     std::vector<Field> PI_points(srs.num_gates, Field(0));
-    // loop over all wire indices that correspond to PIs
+    // Loop over all wire indices that correspond to PIs.
     for (size_t i = 0; i < srs.PI_wire_indices.size(); i++) {
         const Field PI_value = witness[srs.PI_wire_indices[i]];
         const size_t PI_coordinate_x = srs.PI_wire_indices[i] % srs.num_gates;
         PI_points[PI_coordinate_x] = Field(-PI_value);
     }
-    // compute the PI polynomial from the list of points using iFFT
+    // Compute the PI polynomial from the list of points using iFFT.
     polynomial<Field> PI_poly;
     plonk_compute_public_input_polynomial(PI_points, PI_poly, domain);
 
@@ -317,9 +317,9 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
         {Field(0), beta * srs.k1}, // X*beta*k1
         {Field(0), beta * srs.k2}  // X*beta*k2
     };
-    // represent gamma as polynomial in X, needed for prover Round 3
+    // Represent gamma as polynomial in X, needed for prover Round 3.
     polynomial<Field> gamma_poly{gamma}; // gamma
-    // represent alpha as polynomial in X, needed for prover Round 3
+    // Represent alpha as polynomial in X, needed for prover Round 3.
     polynomial<Field> alpha_poly{alpha}; // alpha
 
     // a(x) + beta*x + gamma
@@ -357,7 +357,7 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
 
     // --- Computation of t_part[2]
 
-    // represent beta as polynomial in X, needed for prover Round 3
+    // Represent beta as polynomial in X, needed for prover Round 3.
     polynomial<Field> beta_poly{beta};
     // S*beta as polynomial
     // S_sigma1(x)*beta, S_sigma2(x)*beta, S_sigma3(x)*beta
@@ -437,9 +437,9 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
         throw std::logic_error("Non-zero remainder in polynomial division");
     }
 
-    // break this->t_poly_long into three parts: lo, mid, hi, each of
+    // Break this->t_poly_long into three parts: lo, mid, hi, each of
     // degree (num_gates-1). note: (srs.num_gates+3) is the length of
-    // the CRS = (srs.num_gates+2) powers of G1 + 1 power of G2
+    // the CRS = (srs.num_gates+2) powers of G1 + 1 power of G2.
     t_poly.resize(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
         typename std::vector<Field>::iterator begin =
@@ -451,14 +451,14 @@ round_three_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_three(
         t_poly[i] = tmp;
     }
 
-    // evaluate each part of t_poly in the secret input
+    // Evaluate each part of t_poly in the secret input.
     t_poly_at_secret_g1.resize(num_hgen);
     for (int i = 0; i < num_hgen; ++i) {
         t_poly_at_secret_g1[i] = plonk_evaluate_poly_at_secret_G1<ppT>(
             srs.secret_powers_g1, t_poly[i]);
     }
 
-    // add outputs from Round 3 to the hash buffer
+    // Add outputs from Round 3 to the hash buffer.
     hasher.add_element(t_poly_at_secret_g1[lo]);
     hasher.add_element(t_poly_at_secret_g1[mid]);
     hasher.add_element(t_poly_at_secret_g1[hi]);
@@ -527,7 +527,7 @@ round_four_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_four(
         round_three_out.z_poly_xomega,
         zeta);
 
-    // add outputs from Round 4 to the hash buffer
+    // Add outputs from Round 4 to the hash buffer.
     hasher.add_element(a_zeta);
     hasher.add_element(b_zeta);
     hasher.add_element(c_zeta);
@@ -581,13 +581,13 @@ round_five_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_five(
     libff::G1<ppT> W_zeta_at_secret;
     libff::G1<ppT> W_zeta_omega_at_secret;
 
-    // compute linerisation polynomial r in five parts
+    // Compute linerisation polynomial r in five parts.
     std::vector<polynomial<Field>> r_part(5);
 
     // --- Computation of r_part[0]
 
-    // represent values as constant term polynomials in orderto use
-    // the functions in the libfqfft library on polynomials
+    // Represent values as constant term polynomials in orderto use
+    // the functions in the libfqfft library on polynomials.
     polynomial<Field> a_zeta_poly{round_four_out.a_zeta};
     polynomial<Field> b_zeta_poly{round_four_out.b_zeta};
     polynomial<Field> c_zeta_poly{round_four_out.c_zeta};
@@ -658,7 +658,7 @@ round_five_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_five(
     // r(x) = r(x) - zh(zeta) (t_lo(x) + zeta^n t_mid(x) + zeta^2n t_hi(x))
     //
     // In the reference implementation \[PlonkPy], the missing term is
-    // added in the computation of the W_zeta(x) polynomial
+    // added in the computation of the W_zeta(x) polynomial.
     //
     // linearisation polynomial r(x)
     polynomial<Field> r_poly;
@@ -675,11 +675,11 @@ round_five_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_five(
     // implementation, r_zeta is added to the pi-SNARK proof. In the
     // paper this is omitted, which makes the proof shorter at the
     // epxense of a slightly heavier computation on the verifier's
-    // side
+    // side.
     r_zeta = libfqfft::evaluate_polynomial<Field>(r_poly.size(), r_poly, zeta);
 
     // W_zeta polynomial is of degree 6 in the random element nu and
-    // hence has 7 terms
+    // hence has 7 terms.
     std::vector<polynomial<Field>> W_zeta_part(7);
 
     // --- compute W_zeta_part[0]
@@ -833,13 +833,13 @@ round_five_out_t<ppT> plonk_prover<ppT, transcript_hasher>::round_five(
     // assert(W_zeta_omega == example.W_zeta_omega);
 
     // Evaluate polynomials W_zeta and W_zeta_omega at the seceret
-    // input
+    // input.
     W_zeta_at_secret =
         plonk_evaluate_poly_at_secret_G1<ppT>(srs.secret_powers_g1, W_zeta);
     W_zeta_omega_at_secret = plonk_evaluate_poly_at_secret_G1<ppT>(
         srs.secret_powers_g1, W_zeta_omega);
 
-    // add outputs from Round 5 to the hash buffer
+    // Add outputs from Round 5 to the hash buffer.
     hasher.add_element(r_zeta);
     hasher.add_element(W_zeta_at_secret);
     hasher.add_element(W_zeta_omega_at_secret);

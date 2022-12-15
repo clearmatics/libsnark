@@ -32,7 +32,7 @@ namespace libsnark
 #define PLONK_MAX_DEGREE 245
 
 // Manipulate elements of a valid proof to assert that proof
-// verification fails
+// verification fails.
 //
 // Plonk proof Pi is composed of the following elements:
 //
@@ -305,7 +305,7 @@ void test_plonk_prover_round_four(
     round_four_out_t<ppT> round_four_out =
         plonk_prover<ppT, transcript_hasher>::round_four(
             zeta, round_one_out, round_three_out, srs, hasher);
-    // Prover Round 4 output check against test vectors
+    // Prover Round 4 output check against test vectors.
     printf("[%s:%d] Output from Round 4\n", __FILE__, __LINE__);
     printf("a_zeta ");
     round_four_out.a_zeta.print();
@@ -381,14 +381,14 @@ void test_plonk_prover_round_five(
 }
 
 /// \attention the example class is defined specifically for the BLS12-381
-/// curve, so make sure we are using this curve
+/// curve, so make sure we are using this curve.
 template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
 {
     using Field = libff::Fr<ppT>;
 
     ppT::init_public_params();
 
-    // load test vector values from example circuit
+    // Load test vector values from example circuit.
     plonk_example example;
     // random hidden element secret (toxic waste)
     Field secret = example.secret;
@@ -420,20 +420,20 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
         plonk_prover<ppT, transcript_hasher>::round_zero(srs);
 
     // --- Unit test Prover Round 1 ---
-    // reset buffer at the start of the round (needed for testing only)
+    // Reset buffer at the start of the round (needed for testing only).
     printf("[%s:%d] Unit test Prover Round 1...\n", __FILE__, __LINE__);
     test_plonk_prover_round_one<ppT, transcript_hasher>(
         example, round_zero_out, witness, srs, domain, hasher);
 
     // --- Unit test Prover Round 2 ---
-    // reset buffer at the start of the round (needed for testing only)
+    // Reset buffer at the start of the round (needed for testing only).
     printf("[%s:%d] Unit test Prover Round 2...\n", __FILE__, __LINE__);
     round_one_out_t<ppT> round_one_out =
         plonk_prover<ppT, transcript_hasher>::round_one(
             round_zero_out, blind_scalars, witness, srs, domain, hasher);
     // clear hash buffer
     hasher.buffer_clear();
-    // add outputs from Round 1 to the hash buffer
+    // Add outputs from Round 1 to the hash buffer.
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[a]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[b]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[c]);
@@ -456,7 +456,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
         example, beta, gamma, witness, srs, domain);
 
     // --- Unit test Prover Round 3 ---
-    // reset buffer at the start of the round (needed for testing only)
+    // Reset buffer at the start of the round (needed for testing only).
     printf("[%s:%d] Prover Round 3...\n", __FILE__, __LINE__);
     round_two_out_t<ppT> round_two_out =
         plonk_prover<ppT, transcript_hasher>::round_two(
@@ -468,14 +468,14 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
             srs,
             domain,
             hasher);
-    // clear hash buffer
+    // Clear hash buffer.
     hasher.buffer_clear();
-    // add outputs from Round 1 to the hash buffer
+    // Add outputs from Round 1 to the hash buffer.
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[a]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[b]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[c]);
     hasher.add_element(libff::Fr<ppT>::one());
-    // add outputs from Round 2 to the hash buffer
+    // Add outputs from Round 2 to the hash buffer.
     hasher.add_element(round_two_out.z_poly_at_secret_g1);
     const libff::Fr<ppT> alpha = hasher.get_hash();
     test_plonk_prover_round_three<ppT, transcript_hasher>(
@@ -503,16 +503,16 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
             witness,
             srs,
             hasher);
-    // clear hash buffer
+    // Clear hash buffer.
     hasher.buffer_clear();
-    // add outputs from Round 1 to the hash buffer
+    // Add outputs from Round 1 to the hash buffer.
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[a]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[b]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[c]);
     hasher.add_element(libff::Fr<ppT>::one());
-    // add outputs from Round 2 to the hash buffer
+    // Add outputs from Round 2 to the hash buffer.
     hasher.add_element(round_two_out.z_poly_at_secret_g1);
-    // add outputs from Round 3 to the hash buffer
+    // Add outputs from Round 3 to the hash buffer.
     hasher.add_element(round_three_out.t_poly_at_secret_g1[lo]);
     hasher.add_element(round_three_out.t_poly_at_secret_g1[mid]);
     hasher.add_element(round_three_out.t_poly_at_secret_g1[hi]);
@@ -525,20 +525,20 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
     round_four_out_t<ppT> round_four_out =
         plonk_prover<ppT, transcript_hasher>::round_four(
             zeta, round_one_out, round_three_out, srs, hasher);
-    // clear hash buffer
+    // Clear hash buffer.
     hasher.buffer_clear();
-    // add outputs from Round 1 to the hash buffer
+    // Add outputs from Round 1 to the hash buffer.
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[a]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[b]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[c]);
     hasher.add_element(libff::Fr<ppT>::one());
-    // add outputs from Round 2 to the hash buffer
+    // Add outputs from Round 2 to the hash buffer.
     hasher.add_element(round_two_out.z_poly_at_secret_g1);
-    // add outputs from Round 3 to the hash buffer
+    // Add outputs from Round 3 to the hash buffer.
     hasher.add_element(round_three_out.t_poly_at_secret_g1[lo]);
     hasher.add_element(round_three_out.t_poly_at_secret_g1[mid]);
     hasher.add_element(round_three_out.t_poly_at_secret_g1[hi]);
-    // add outputs from Round 4 to the hash buffer
+    // Add outputs from Round 4 to the hash buffer.
     hasher.add_element(round_four_out.a_zeta);
     hasher.add_element(round_four_out.b_zeta);
     hasher.add_element(round_four_out.c_zeta);
@@ -570,7 +570,7 @@ template<typename ppT> void test_plonk_srs()
 
     ppT::init_public_params();
 
-    // load test vector values from example circuit
+    // Load test vector values from example circuit.
     plonk_example example;
     // random hidden element secret (toxic waste)
     Field secret = example.secret;
@@ -581,8 +581,8 @@ template<typename ppT> void test_plonk_srs()
         libfqfft::get_evaluation_domain<Field>(example.num_gates);
 
     // --- USRS ---
-    // compute SRS = powers of secret times G1: 1*G1, secret^1*G1,
-    // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2
+    // Compute SRS = powers of secret times G1: 1*G1, secret^1*G1,
+    // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     // --- SRS ---
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
@@ -590,7 +590,7 @@ template<typename ppT> void test_plonk_srs()
         example.gates_matrix,
         example.wire_permutation,
         example.PI_wire_indices);
-    // compare SRS against reference test values
+    // Compare SRS against reference test values.
     printf("[%s:%d] secret ", __FILE__, __LINE__);
     secret.print();
     for (int i = 0; i < (int)srs.num_gates + 3; ++i) {
@@ -615,9 +615,9 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
     using Field = libff::Fr<ppT>;
 
     ppT::init_public_params();
-    // load test vector values from example circuit
+    // Load test vector values from example circuit.
     plonk_example example;
-    // random hidden element secret (toxic waste)
+    // Random hidden element secret (toxic waste).
     Field secret = example.secret;
     // example witness
     std::vector<Field> witness = example.witness;
@@ -630,7 +630,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(example.num_gates);
 
-    // prepare srs
+    // Perepare srs.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
         usrs,
@@ -638,15 +638,15 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
         example.wire_permutation,
         example.PI_wire_indices);
 
-    // initialize hasher
+    // Initialize hasher.
     transcript_hasher hasher;
 
-    // initialize prover
+    // Initialize prover.
     plonk_prover<ppT, transcript_hasher> prover;
-    // compute proof
+    // Compute proof.
     plonk_proof<ppT> proof =
         prover.compute_proof(srs, witness, blind_scalars, hasher);
-    // compare proof against test vector values (debug)
+    // Compare proof against test vector values (debug).
     ASSERT_EQ(proof.a_zeta, example.a_zeta);
     ASSERT_EQ(proof.b_zeta, example.b_zeta);
     ASSERT_EQ(proof.c_zeta, example.c_zeta);
@@ -698,7 +698,7 @@ template<typename ppT, class transcript_hasher>
 void test_plonk_verifier_preprocessed_input(
     const plonk_example &example, const srs<ppT> &srs)
 {
-    // compute verifier preprocessed input
+    // Compute verifier preprocessed input.
     const verifier_preprocessed_input_t<ppT> preprocessed_input =
         plonk_verifier<ppT, transcript_hasher>::preprocessed_input(srs);
 
@@ -902,22 +902,22 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
     using Field = libff::Fr<ppT>;
 
     ppT::init_public_params();
-    // load test vector values from example circuit
+    // Load test vector values from example circuit.
     plonk_example example;
-    // random hidden element secret (toxic waste)
+    // Random hidden element secret (toxic waste).
     Field secret = example.secret;
-    // example witness
+    // Example witness
     std::vector<Field> witness = example.witness;
-    // hard-coded values for the "random" blinding constants from
+    // Hard-coded values for the "random" blinding constants from.
     // example circuit
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
-    // maximum degree of the encoded monomials in the usrs
+    // Maximum degree of the encoded monomials in the usrs.
     size_t max_degree = PLONK_MAX_DEGREE;
 
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(example.num_gates);
 
-    // prepare srs
+    // Prepare srs.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
         usrs,
@@ -925,31 +925,31 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
         example.wire_permutation,
         example.PI_wire_indices);
 
-    // initialize hasher
+    // Initialize hasher.
     transcript_hasher hasher;
 
-    // initialize prover
+    // Initialize prover.
     plonk_prover<ppT, transcript_hasher> prover;
-    // compute proof
+    // Compute proof.
     plonk_proof<ppT> proof =
         prover.compute_proof(srs, witness, blind_scalars, hasher);
 
-    // clear the hasher buffer in order to re-use the same
-    // transcript_hasher object for the verifier
+    // Clear the hasher buffer in order to re-use the same
+    // transcript_hasher object for the verifier.
     hasher.buffer_clear();
 
-    // Unit test verifier preprocessed input
+    // Unit test verifier preprocessed input.
     test_plonk_verifier_preprocessed_input<ppT, transcript_hasher>(
         example, srs);
 
-    // prepare the list of PI values for the example circuit
+    // Prepare the list of PI values for the example circuit.
     std::vector<Field> PI_value_list;
     for (size_t i = 0; i < example.PI_wire_indices.size(); i++) {
         Field PI_value = example.witness[example.PI_wire_indices[i]];
         PI_value_list.push_back(PI_value);
     }
 
-    // compute step 4
+    // Compute step 4
     const step_four_out_t<ppT> step_four_out =
         plonk_verifier<ppT, transcript_hasher>::step_four(proof, hasher);
 
@@ -1026,22 +1026,22 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
     using Field = libff::Fr<ppT>;
 
     ppT::init_public_params();
-    // load test vector values from example circuit
+    // Load test vector values from example circuit.
     plonk_example example;
-    // random hidden element secret (toxic waste)
+    // Random hidden element secret (toxic waste).
     Field secret = example.secret;
-    // example witness
+    // Example witness.
     std::vector<Field> witness = example.witness;
-    // hard-coded values for the "random" blinding constants from
-    // example circuit
+    // Hard-coded values for the "random" blinding constants from
+    // example circuit.
     std::vector<libff::Fr<ppT>> blind_scalars = example.prover_blind_scalars;
-    // maximum degree of the encoded monomials in the usrs
+    // Maximum degree of the encoded monomials in the usrs.
     size_t max_degree = PLONK_MAX_DEGREE;
 
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(example.num_gates);
 
-    // prepare srs
+    // Prepare srs.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
         usrs,
@@ -1049,37 +1049,37 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
         example.wire_permutation,
         example.PI_wire_indices);
 
-    // initialize hasher
+    // Initialize hasher.
     transcript_hasher hasher;
 
-    // initialize prover
+    // Initialize prover.
     plonk_prover<ppT, transcript_hasher> prover;
-    // compute proof
+    // Compute proof.
     plonk_proof<ppT> proof =
         prover.compute_proof(srs, witness, blind_scalars, hasher);
 
-    // clear the hasher buffer in order to re-use the same
-    // transcript_hasher object for the verifier
+    // Clear the hasher buffer in order to re-use the same
+    // transcript_hasher object for the verifier.
     hasher.buffer_clear();
 
-    // initialize verifier
+    // Initialize verifier.
     plonk_verifier<ppT, transcript_hasher> verifier;
-    // prepare the list of PI values for the example circuit
+    // Prepare the list of PI values for the example circuit.
     std::vector<Field> PI_value_list;
     for (size_t i = 0; i < example.PI_wire_indices.size(); i++) {
         Field PI_value = example.witness[example.PI_wire_indices[i]];
         PI_value_list.push_back(PI_value);
     }
-    // verify proof
+    // Verify proof.
     bool b_valid_proof =
         verifier.verify_proof(proof, srs, PI_value_list, hasher);
     ASSERT_TRUE(b_valid_proof);
 
-    // clear the hasher buffer in order to re-use the same
-    // transcript_hasher object
+    // Clear the hasher buffer in order to re-use the same
+    // transcript_hasher object.
     hasher.buffer_clear();
-    // assert that proof verification fails when the proof is
-    // manipulated
+    // Assert that proof verification fails when the proof is
+    // manipulated.
     test_verify_invalid_proof(proof, srs, PI_value_list, hasher);
 }
 
@@ -1088,7 +1088,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
 template<typename ppT> void test_plonk_gates_matrix_transpose()
 {
     using Field = libff::Fr<ppT>;
-    // load gates matrix from example circuit
+    // Load gates matrix from example circuit.
     plonk_example example;
     std::vector<std::vector<Field>> gates_matrix_transpose =
         plonk_gates_matrix_transpose(example.gates_matrix);
@@ -1103,37 +1103,37 @@ template<typename ppT> void test_plonk_constants_k1_k2()
     using Field = libff::Fr<ppT>;
 
     // Check that plonk_generate_constants_k1_k2 generates valid k1
-    // and k2
+    // and k2.
     Field k1, k2;
     plonk_generate_constants_k1_k2(k1, k2);
     ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
 
-    // store the valid choices for k1,k2
+    // Store the valid choices for k1,k2.
     Field k1_valid = k1;
     Field k2_valid = k2;
-    // example value for the number of gates (must be power of 2)
+    // Example value for the number of gates (must be power of 2).
     size_t num_gates = 8;
-    // generate the n-th root of unity used as a generator of the
-    // multiplicative group H of size num_gates
+    // Generate the n-th root of unity used as a generator of the
+    // multiplicative group H of size num_gates.
     Field omega_base = libff::get_root_of_unity<Field>(num_gates);
 
     // Check that plonk_are_valid_constants_k1_k2 correctly detects
-    // invalid combinations of k1 and k2
+    // invalid combinations of k1 and k2.
     for (size_t i = 1; i <= num_gates; ++i) {
         size_t ipower = i;
-        // set k2 to an element of k1H:  k2=k1*(omega^i)
+        // Set k2 to an element of k1H:  k2=k1*(omega^i).
         k1 = k1_valid;
         k2 = k1 * (omega_base ^ ipower);
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
-        // set k1 to an element of k2H: k1=k2*(omega^i)
+        // Set k1 to an element of k2H: k1=k2*(omega^i).
         k2 = k2_valid;
         k1 = k2 * (omega_base ^ ipower);
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
-        // set k1 to an element of H: k1=omega^i
+        // Set k1 to an element of H: k1=omega^i.
         k1 = (omega_base ^ ipower);
         k2 = k2_valid;
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
-        // set k2 to an element of H: k2=omega^i
+        // Set k2 to an element of H: k2=omega^i.
         k1 = k1_valid;
         k2 = (omega_base ^ ipower);
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
@@ -1171,19 +1171,19 @@ void test_plonk_constants_k1_k2_bls12_381()
     // invalid combinations of k1 and k2.
     for (size_t i = 1; i <= example.num_gates; ++i) {
         size_t ipower = i;
-        // set k2 to an element of k1H:  k2=k1*(omega^i)
+        // Set k2 to an element of k1H:  k2=k1*(omega^i).
         k1 = example.k1;
         k2 = k1 * (example.omega_base ^ ipower);
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
-        // set k1 to an element of k2H: k1=k2*(omega^i)
+        // Set k1 to an element of k2H: k1=k2*(omega^i).
         k2 = example.k2;
         k1 = k2 * (example.omega_base ^ ipower);
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
-        // set k1 to an element of H: k1=omega^i
+        // Set k1 to an element of H: k1=omega^i.
         k1 = (example.omega_base ^ ipower);
         k2 = example.k2;
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
-        // set k2 to an element of H: k2=omega^i
+        // Set k2 to an element of H: k2=omega^i.
         k1 = example.k1;
         k2 = (example.omega_base ^ ipower);
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
