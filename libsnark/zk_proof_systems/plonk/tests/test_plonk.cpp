@@ -1095,13 +1095,14 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
     ASSERT_EQ(gates_matrix_transpose, example.gates_matrix_transpose);
 }
 
-// We test the example circuit y^2 = x mod r where x=49 is a public
-// input and y is the witness. We prove that we know y=7 such that y
-// is the quadratic residue of x modulo the modulus r of the scalar
-// field Fr of the given elliptic curve. The circuit is represented by
-// one public input (PI) and one multiplication gate. According to the
-// Plonk arithmetization rules, each gate (including the PI) is
-// represented as:
+// We test the example circuit y^2 = x mod r where x is a public input
+// and y is the witness. We prove that we know y such that x is the
+// quadratic residue of y modulo the modulus r of the scalar field Fr
+// of the given elliptic curve. For example x=49, y=7.
+//
+// The circuit is represented by one public input (PI) and one
+// multiplication gate. According to the Plonk arithmetization rules,
+// each gate (including the PI) is represented as:
 //
 // qL a + qR b + qO c + qM ab + qC = 0
 //
@@ -1113,7 +1114,7 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
 // gates are given resp. as
 //
 //  PI: 1 a1 + 0 b1 +   0  c1 + 0 a1 b1 + 0 = 49
-// MUL: 0 a1 + 0 b1 + (-1) c1 + 1 a1 b1 + 0 = 0
+// MUL: 0 a2 + 0 b2 + (-1) c2 + 1 a2 b2 + 0 = 0
 //
 // where
 //
@@ -1148,7 +1149,7 @@ void test_plonk_prepare_gates_matrix()
     // 0 Arithmetization of test circuit y^2 = x mod r
 
     // The number of gates is 2: one public input (PI) gate and one
-    // multiplication gate. Tis nummer is also conveniently a power of
+    // multiplication gate. Tis number is also conveniently a power of
     // 2 (needed for the FFT/iFFT)
     const size_t num_gates = 2;
     // The tested circuit has 1 public input
@@ -1156,7 +1157,8 @@ void test_plonk_prepare_gates_matrix()
     std::vector<std::vector<Field>> gates_matrix =
         plonk_prepare_gates_matrix<ppT>(num_public_inputs);
     ASSERT_EQ(gates_matrix.size(), num_public_inputs);
-    // Add the PI gate/s
+    // Assert that the PI gates are located at the top N rows of the gates
+    // matrix
     const std::vector<Field> PI_gate{1, 0, 0, 0, 0};
     for (size_t i = 0; i < num_public_inputs; ++i) {
         ASSERT_EQ(gates_matrix[i], PI_gate);
