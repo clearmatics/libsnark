@@ -72,15 +72,6 @@ void flystel_Q_prime_field_gadget<ppT>::generate_r1cs_witness()
         input.evaluate(this->pb.full_variable_assignment());
     // y = A x^2 + B
     this->pb.val(output) = A * input_value * input_value + B;
-#if 1 // DEBUG
-    printf("[%s:%d] Q A B\n", __FILE__, __LINE__);
-    A.print();
-    B.print();
-    printf("[%s:%d] Q input\n", __FILE__, __LINE__);
-    input_value.print();
-    printf("[%s:%d] Q output\n", __FILE__, __LINE__);
-    this->pb.val(output).print();
-#endif // #if 1 // DEBUG
 }
 
 // R1CS constraints for the operation y = beta x^3 + gamma with
@@ -325,23 +316,9 @@ void flystel_prime_field_gadget<ppT, parameters>::generate_r1cs_witness()
     const FieldT input_x1_value =
         input_x1.evaluate(this->pb.full_variable_assignment());
 
-#if 1 // DEBUG
-    printf("[%s:%d] Flystel input left\n", __FILE__, __LINE__);
-    input_x0_value.print();
-    printf("[%s:%d] Flystel input right\n", __FILE__, __LINE__);
-    input_x1_value.print();
-#endif // #if 1 // DEBUG
-
     this->pb.lc_val(output_y0) =
         input_x0_value - this->pb.val(a0) + this->pb.val(a2);
     this->pb.lc_val(output_y1) = input_x1_value - this->pb.val(a1);
-
-#if 1 // DEBUG
-    printf("[%s:%d] Flystel output left\n", __FILE__, __LINE__);
-    this->pb.lc_val(output_y0).print();
-    printf("[%s:%d] Flystel output right\n", __FILE__, __LINE__);
-    this->pb.lc_val(output_y1).print();
-#endif // #if 1 // DEBUG
 }
 
 template<typename ppT, size_t NumStateColumns_L>
@@ -360,48 +337,17 @@ std::vector<std::vector<libff::Fr<ppT>>> anemoi_permutation_mds(
     M.resize(NumStateColumns_L, std::vector<libff::Fr<ppT>>(NumStateColumns_L));
 
     if (NumStateColumns_L == 2) {
-        // M[0]
-        M[0][0] = 1;
-        M[0][1] = g;
-        // M[1]
-        M[1][0] = g;
-        M[1][1] = g2 + 1;
+        M = {{1, g}, {g, g2 + 1}};
     }
     if (NumStateColumns_L == 3) {
-        // M[0]
-        M[0][0] = g + 1;
-        M[0][1] = 1;
-        M[0][2] = g + 1;
-        // M[1]
-        M[1][0] = 1;
-        M[1][1] = 1;
-        M[1][2] = g;
-        // M[2]
-        M[2][0] = g;
-        M[2][1] = 1;
-        M[2][2] = 1;
+        M = {{g + 1, 1, g + 1}, {1, 1, g}, {g, 1, 1}};
     }
     if (NumStateColumns_L == 4) {
-        // M[0]
-        M[0][0] = 1;
-        M[0][1] = g + 1;
-        M[0][2] = g;
-        M[0][3] = g;
-        // M[1]
-        M[1][0] = g2;
-        M[1][1] = g + g2;
-        M[1][2] = g + 1;
-        M[1][3] = g + g + 1;
-        // M[2]
-        M[2][0] = g2;
-        M[2][1] = g2;
-        M[2][2] = 1;
-        M[2][3] = g + 1;
-        // M[3]
-        M[3][0] = g + 1;
-        M[3][1] = g + g + 1;
-        M[3][2] = g;
-        M[3][3] = g + 1;
+        M = {
+            {1, g + 1, g, g},
+            {g2, g + g2, g + 1, g + g + 1},
+            {g2, g2, 1, g + 1},
+            {g + 1, g + g + 1, g, g + 1}};
     }
     return M;
 }
@@ -594,9 +540,6 @@ anemoi_permutation_round_prime_field_gadget<
         M_matrix = anemoi_permutation_mds<ppT, 2>(g);
     }
 
-#if 1  // DEBUG
-#endif // #if 1 // DEBUG
-
     // multiply by matrix M
     if (ncols > 1) {
         // l > 1:
@@ -660,15 +603,6 @@ void anemoi_permutation_round_prime_field_gadget<
     for (size_t i = 0; i < NumStateColumns_L; i++) {
         Flystel[i].generate_r1cs_witness();
     }
-
-#if 1 // DEBUG
-    printf("[%s:%d] h0_left\n", __FILE__, __LINE__);
-    FieldT h0_left = this->pb.lc_val(Flystel[0].output_y0);
-    h0_left.print();
-    FieldT h0_right = this->pb.lc_val(Flystel[0].output_y1);
-    h0_right.print();
-    printf("\n");
-#endif // #if 1 // DEBUG
 
     for (size_t i = 0; i < NumStateColumns_L; i++) {
         this->pb.val(Y_left_output[i]) = this->pb.val(Flystel[i].output_y0);

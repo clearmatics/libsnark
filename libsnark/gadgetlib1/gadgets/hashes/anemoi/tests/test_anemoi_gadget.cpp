@@ -308,8 +308,10 @@ template<typename ppT> void test_for_curve()
     test_anemoi_permutation_round_prime_field_gadget<ppT, 1, parameters>();
     test_anemoi_permutation_round_prime_field_gadget<ppT, 2, parameters>();
     test_anemoi_permutation_round_prime_field_gadget<ppT, 3, parameters>();
-    //    test_anemoi_permutation_round_prime_field_gadget<ppT, 4,
-    //    parameters>();
+    // TODO code for L=4 is still WIP. The test values match, but a
+    // bigint assertion error is generated in libff.
+    // test_anemoi_permutation_round_prime_field_gadget<ppT, 4,
+    // parameters>();
 }
 
 TEST(TestAnemoiGadget, BLS12_381) { test_for_curve<libff::bls12_381_pp>(); }
