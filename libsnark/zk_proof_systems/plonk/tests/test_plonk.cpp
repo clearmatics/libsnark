@@ -1162,14 +1162,14 @@ template<typename ppT> void test_plonk_constants_k1_k2_bls12_381()
     Field k1, k2;
 
     // Check that the example k1 and k2 are valid (according to
-    // plonk_are_valid_constants_k1_k2)"
+    // plonk_are_valid_constants_k1_k2.
     plonk_example example;
     k1 = example.k1;
     k2 = example.k2;
     ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
 
     // Check that plonk_are_valid_constants_k1_k2 correctly detects
-    // invalid combinations of k1 and k2
+    // invalid combinations of k1 and k2.
     for (size_t i = 1; i <= example.num_gates; ++i) {
         size_t ipower = i;
         // set k2 to an element of k1H:  k2=k1*(omega^i)
