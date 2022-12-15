@@ -1154,10 +1154,9 @@ template<typename ppT> void test_plonk_random_constants_k1_k2()
 
 // test specific to BLS12-381 (uses class example specific to
 // BLS12-381)
-template<typename ppT> void test_plonk_constants_k1_k2_bls12_381()
+void test_plonk_constants_k1_k2_bls12_381()
 {
-    ppT::init_public_params();
-
+    using ppT = libff::bls12_381_pp;
     using Field = libff::Fr<ppT>;
     Field k1, k2;
 
@@ -1237,7 +1236,7 @@ TEST(TestPlonkConstantsK1K2, BLS12_381)
 {
     test_plonk_constants_k1_k2<libff::bls12_381_pp>();
     test_plonk_random_constants_k1_k2<libff::bls12_381_pp>();
-    test_plonk_constants_k1_k2_bls12_381<libff::bls12_381_pp>();
+    test_plonk_constants_k1_k2_bls12_381();
 }
 
 TEST(TestPlonk, BLS12_381)
