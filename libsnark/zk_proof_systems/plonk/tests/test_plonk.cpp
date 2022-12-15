@@ -1157,12 +1157,6 @@ void test_plonk_prepare_gates_matrix()
     std::vector<std::vector<Field>> gates_matrix =
         plonk_prepare_gates_matrix<ppT>(num_public_inputs);
     ASSERT_EQ(gates_matrix.size(), num_public_inputs);
-    // Assert that the PI gates are located at the top N rows of the gates
-    // matrix
-    const std::vector<Field> PI_gate{1, 0, 0, 0, 0};
-    for (size_t i = 0; i < num_public_inputs; ++i) {
-        ASSERT_EQ(gates_matrix[i], PI_gate);
-    }
     // Add the multiplication gate
     const std::vector<Field> MUL_gate{0, 0, -1, 1, 0};
     gates_matrix.push_back(MUL_gate);
@@ -1231,6 +1225,25 @@ void test_plonk_prepare_gates_matrix()
     bool b_valid_proof =
         verifier.verify_proof(proof, srs, PI_value_list, verifier_hasher);
     ASSERT_TRUE(b_valid_proof);
+}
+
+template<typename ppT> void test_plonk_gates_matrix()
+{
+    using Field = libff::Fr<ppT>;
+    // Test for 10 random values of num_public_inputs
+    const size_t ntests = 10;
+    for (size_t i = 0; i < ntests; ++i) {
+        const size_t num_public_inputs = random() % 100;
+        std::vector<std::vector<Field>> gates_matrix =
+            plonk_prepare_gates_matrix<ppT>(num_public_inputs);
+        ASSERT_EQ(gates_matrix.size(), num_public_inputs);
+        // Assert that the PI gates are located at the top N rows of the gates
+        // matrix
+        const std::vector<Field> PI_gate{1, 0, 0, 0, 0};
+        for (size_t i = 0; i < num_public_inputs; ++i) {
+            ASSERT_EQ(gates_matrix[i], PI_gate);
+        }
+    }
 }
 
 // generic test for all curves
@@ -1395,6 +1408,7 @@ TEST(TestPlonk, BLS12_381)
     test_plonk_prepare_gates_matrix<
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
+    test_plonk_gates_matrix<libff::bls12_381_pp>();
 }
 
 } // namespace libsnark
