@@ -1109,18 +1109,17 @@ template<typename ppT> void test_plonk_constants_k1_k2()
     ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
 
     // Store the valid choices for k1,k2.
-    Field k1_valid = k1;
-    Field k2_valid = k2;
+    const Field k1_valid = k1;
+    const Field k2_valid = k2;
     // Example value for the number of gates (must be power of 2).
-    size_t num_gates = 8;
+    const size_t num_gates = 8;
     // Generate the n-th root of unity used as a generator of the
     // multiplicative group H of size num_gates.
-    Field omega_base = libff::get_root_of_unity<Field>(num_gates);
+    const Field omega_base = libff::get_root_of_unity<Field>(num_gates);
 
     // Check that plonk_are_valid_constants_k1_k2 correctly detects
     // invalid combinations of k1 and k2.
-    for (size_t i = 1; i <= num_gates; ++i) {
-        size_t ipower = i;
+    for (size_t ipower = 1; ipower <= num_gates; ++ipower) {
         // Set k2 to an element of k1H:  k2=k1*(omega^i).
         k1 = k1_valid;
         k2 = k1 * (omega_base ^ ipower);
