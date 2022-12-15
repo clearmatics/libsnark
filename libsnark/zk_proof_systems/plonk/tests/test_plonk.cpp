@@ -1101,9 +1101,43 @@ template<typename ppT> void test_plonk_constants_k1_k2()
     ppT::init_public_params();
 
     using Field = libff::Fr<ppT>;
+
+    // Check that plonk_generate_constants_k1_k2 generates valid k1
+    // and k2
     Field k1, k2;
     plonk_generate_constants_k1_k2(k1, k2);
     ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
+
+    // store the valid choices for k1,k2
+    Field k1_valid = k1;
+    Field k2_valid = k2;
+    // example value for the number of gates (must be power of 2)
+    size_t num_gates = 8;
+    // generate the n-th root of unity used as a generator of the
+    // multiplicative group H of size num_gates
+    Field omega_base = libff::get_root_of_unity<Field>(num_gates);
+
+    // Check that plonk_are_valid_constants_k1_k2 correctly detects
+    // invalid combinations of k1 and k2
+    for (size_t i = 1; i <= num_gates; ++i) {
+        size_t ipower = i;
+        // set k2 to an element of k1H:  k2=k1*(omega^i)
+        k1 = k1_valid;
+        k2 = k1 * (omega_base ^ ipower);
+        ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
+        // set k1 to an element of k2H: k1=k2*(omega^i)
+        k2 = k2_valid;
+        k1 = k2 * (omega_base ^ ipower);
+        ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
+        // set k1 to an element of H: k1=omega^i
+        k1 = (omega_base ^ ipower);
+        k2 = k2_valid;
+        ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
+        // set k2 to an element of H: k2=omega^i
+        k1 = k1_valid;
+        k2 = (omega_base ^ ipower);
+        ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
+    }
 }
 
 // generic test for all curves for an alternative method to generate
@@ -1155,13 +1189,6 @@ template<typename ppT> void test_plonk_constants_k1_k2_bls12_381()
         k2 = (example.omega_base ^ ipower);
         ASSERT_FALSE(plonk_are_valid_constants_k1_k2(k1, k2));
     }
-
-    // Check that plonk_generate_constants_k1_k2 generates valid k1
-    // and k2
-    k1 = 0;
-    k2 = 0;
-    plonk_generate_constants_k1_k2(k1, k2);
-    ASSERT_TRUE(plonk_are_valid_constants_k1_k2(k1, k2));
 }
 
 TEST(TestPlonkConstantsK1K2, Edwards)
