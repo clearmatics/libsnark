@@ -1134,13 +1134,21 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
 //  1  0  0  0  0
 //  0  0 -1  1  0
 //
-// and the permutation expressing the copy-constraints is (second
-// line below):
+// To compute the permutation of inputs and outputs that would reflect
+// the copy-constraints, note the following. Of all the elements of
+// the input/output vector V = (a1, a2, b1, b2, c1, c2), the circuit
+// uses a1=x, a2=y, b2=a2=y and c2=a1=x, while b1 and c1 are not used
+// (see the variables with non-zero coefficients in the PI and MUL
+// equations above). If we number the elements of V from 1 to 6, the
+// permutation reflecting the copy constraints should be (6, 4, 3, 2,
+// 5, 1) i.e. 6 and 1 are permuted to reflect c2=a1; 4 and 2 are
+// permuted to reflect b2=a2 and 3 and 5 remain in place to reflect
+// that b1 and c1 are not used. Equivalently, the permutation is ("/"
+// means "unused"):
 //
-// (a1 a2 b1 b2 c1 c2)
-// (c1 b2 b1 a2 c2 a1)
-//
-// reflecting the fact that a1=c1=c2=x and a2=b2=y
+// ( x  y  /  y  /  x)
+// (a1 a2 b1 b2 c1 c2) -> (1 2 3 4 5 6)
+// (c2 b2 b1 a2 c1 a1) -> (6 4 3 2 5 1)
 template<typename ppT, class transcript_hasher>
 void test_plonk_prepare_gates_matrix()
 {
@@ -1171,7 +1179,7 @@ void test_plonk_prepare_gates_matrix()
     // that counting of indices starts from 1. TODO: implement a
     // general function to compute the wire permutation for any
     // circuit
-    std::vector<size_t> wire_permutation{5, 4, 3, 2, 6, 1};
+    std::vector<size_t> wire_permutation{6, 4, 3, 2, 5, 1};
     // maximum degree of the encoded monomials in the usrs
     size_t max_degree = PLONK_MAX_DEGREE;
     // Random hidden element kept secret (toxic waste)
