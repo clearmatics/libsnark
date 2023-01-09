@@ -578,7 +578,12 @@ anemoi_permutation_round_prime_field_gadget<
     // apply layer of L Flystel S-boxes
     for (size_t i = 0; i < ncols; i++) {
         flystel_prime_field_gadget<ppT, parameters> H(
-            pb, Z_left[i], Z_right[i], Y_left[i], Y_right[i], "Flystel[i]");
+            pb,
+            Z_left[i],
+            Z_right[i],
+            Y_left[i],
+            Y_right[i],
+            FMT(this->annotation_prefix, " Flystel[%zu]", i));
         Flystel.push_back(H);
     }
 }
