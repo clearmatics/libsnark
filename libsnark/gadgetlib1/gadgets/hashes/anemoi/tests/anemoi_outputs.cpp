@@ -5,8 +5,6 @@
  *             (see AUTHORS).
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
-#ifndef LIBSNARK_GADGETLIB1_GADGETS_HASHES_ANEMOI_TESTS_ANEMOI_OUTPUTS_CPP_
-#define LIBSNARK_GADGETLIB1_GADGETS_HASHES_ANEMOI_TESTS_ANEMOI_OUTPUTS_CPP_
 
 #include "libsnark/gadgetlib1/gadgets/hashes/anemoi/tests/anemoi_outputs.hpp"
 
@@ -107,5 +105,3 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
 }
 
 } // namespace libsnark
-
-#endif // LIBSNARK_GADGETLIB1_GADGETS_HASHES_ANEMOI_TESTS_ANEMOI_OUTPUTS_CPP_
