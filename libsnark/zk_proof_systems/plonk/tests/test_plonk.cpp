@@ -1096,9 +1096,8 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
 }
 
 // We test the example circuit y^2 = x mod r where x is a public input
-// and y is the witness. We prove that we know y such that x is the
-// quadratic residue of y modulo the modulus r of the scalar field Fr
-// of the given elliptic curve. For example x=49, y=7.
+// and y is the witness. Thus the circuit shows that x is a quadratic
+// residue in the field Fr. For example x=49, y=7.
 //
 // The circuit is represented by one public input (PI) and one
 // multiplication gate. According to the Plonk arithmetization rules,
@@ -1157,8 +1156,8 @@ void test_plonk_prepare_gates_matrix()
     // 0 Arithmetization of test circuit y^2 = x mod r
 
     // The number of gates is 2: one public input (PI) gate and one
-    // multiplication gate. Tis number is also conveniently a power of
-    // 2 (needed for the FFT/iFFT)
+    // multiplication gate. This number is also conveniently a power of
+    // 2 (needed for the FFT/iFFT).
     const size_t num_gates = 2;
     // The tested circuit has 1 public input
     const size_t num_public_inputs = 1;
@@ -1178,7 +1177,7 @@ void test_plonk_prepare_gates_matrix()
     // Hard-code the wire permutation for the tested circuit. Note
     // that counting of indices starts from 1. TODO: implement a
     // general function to compute the wire permutation for any
-    // circuit
+    // circuit.
     std::vector<size_t> wire_permutation{6, 4, 3, 2, 5, 1};
     // maximum degree of the encoded monomials in the usrs
     size_t max_degree = PLONK_MAX_DEGREE;
