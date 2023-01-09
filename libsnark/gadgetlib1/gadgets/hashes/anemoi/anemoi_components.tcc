@@ -584,7 +584,7 @@ anemoi_permutation_round_prime_field_gadget<
             Y_left[i],
             Y_right[i],
             FMT(this->annotation_prefix, " Flystel[%zu]", i));
-        Flystel.push_back(H);
+        Flystel.emplace_back(H);
     }
 }
 
