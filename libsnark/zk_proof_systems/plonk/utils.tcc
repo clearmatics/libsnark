@@ -89,7 +89,7 @@ void plonk_compute_roots_of_unity_omega(
     const FieldT k2,
     std::vector<std::vector<FieldT>> &omega)
 {
-    // ensure that num_gates is not 0 and is power of 2
+    // Ensure that num_gates is not 0 and is power of 2.
     // TODO: check also that it's less than 2^(ppT::s)
     bool b_nonzero = (num_gates > 0);
     bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
@@ -125,7 +125,7 @@ void plonk_compute_cosets_H_k1H_k2H(
     const FieldT k2,
     std::vector<FieldT> &H_prime)
 {
-    // ensure that num_gates is not 0 and is power of 2
+    // Ensure that num_gates is not 0 and is power of 2.
     bool b_nonzero = (num_gates > 0);
     bool b_is_power2 = ((num_gates & (num_gates - 1)) == 0);
     if (!(b_nonzero && b_is_power2)) {
@@ -314,6 +314,73 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
         }
     }
     return gates_matrix_transpose;
+}
+
+template<typename FieldT>
+void plonk_generate_constants_k1_k2(FieldT &k1, FieldT &k2)
+{
+    // n = 2^s: maximum order of the H subgroup that is power of 2
+    const size_t n = std::pow(2, FieldT::s);
+    // generator of Fr^*
+    const FieldT g = FieldT::multiplicative_generator;
+    // Set k1 = g^{2s} \notin H.
+    k1 = g ^ n;
+    // Set k2 to a quadratic nonresidue of Fr^* .
+    k2 = FieldT::nqr;
+    // assert k1,k2 are valid
+    assert(plonk_are_valid_constants_k1_k2(k1, k2));
+}
+
+template<typename FieldT>
+void plonk_generate_random_constants_k1_k2(FieldT &k1_result, FieldT &k2_result)
+{
+    // n = 2^s: maximum order of the H subgroup that is power of 2
+    const size_t n = std::pow(2, FieldT::s);
+    FieldT k1, k2;
+    // choose k1
+    do {
+        k1 = FieldT::random_element();
+    } while ((k1 ^ n) == FieldT::one());
+    // choose k2
+    FieldT k1_over_k2;
+    do {
+        k2 = FieldT::random_element();
+        k1_over_k2 = k1 * k2.inverse();
+    } while (((k2 ^ n) == FieldT::one()) ||
+             (((k1_over_k2) ^ n) == FieldT::one()));
+    k1_result = k1;
+    k2_result = k2;
+    // assert k1,k2 are valid
+    assert(plonk_are_valid_constants_k1_k2(k1, k2));
+}
+
+template<typename FieldT>
+bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2)
+{
+    // The function checks if the following three conditions are
+    // simultaneously satisfied:
+    //
+    // 1) k1^n != 1 ensuring that k1 \notin H
+    // 2) k2^n != 1 ensuring that k2 \notin H
+    // 3) (k1 k2^-1)^n != 1 ensuring that k2H \notin k1H (and vice-versa)
+    //
+    // To clarify 3), note that if (k1 k2^-1)^n == 1 then \exists i: 1 <=
+    // i <= n: k1 = k2 w^i and so k1 \in k2H. This is because k1 = k2 w^i
+    // is equivalent to k1 k2^-1 = w^i, equivalent to (k1 k2^-1)^n =
+    // (w^i)^n = 1. The latter follows from the fact that w^i is an n-th
+    // root of unity in Fr (for any i: 1<=i<=n).
+    //
+    // conditions 1) and 2) are special cases of 3) for which resp. k1=1,
+    // k2=k1 and k1=1, k2=k2
+
+    // n = 2^s: maximum order of the H subgroup that is power of 2
+    const size_t n = std::pow(2, FieldT::s);
+    const bool k1_outside_H = ((k1 ^ n) != FieldT::one());
+    const bool k2_outside_H = ((k2 ^ n) != FieldT::one());
+    const bool k1_over_k2_outside_H =
+        (((k1 * k2.inverse()) ^ n) != FieldT::one());
+
+    return (k1_outside_H && k2_outside_H && k1_over_k2_outside_H);
 }
 
 } // namespace libsnark

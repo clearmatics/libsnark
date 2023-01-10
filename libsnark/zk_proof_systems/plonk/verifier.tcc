@@ -59,7 +59,7 @@ template<typename ppT, class transcript_hasher>
 step_four_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_four(
     const plonk_proof<ppT> &proof, transcript_hasher &hasher)
 {
-    // add outputs from Round 1 to the hash buffer
+    // Add outputs from Round 1 to the hash buffer.
     hasher.add_element(proof.W_polys_blinded_at_secret_g1[a]);
     hasher.add_element(proof.W_polys_blinded_at_secret_g1[b]);
     hasher.add_element(proof.W_polys_blinded_at_secret_g1[c]);
@@ -72,19 +72,20 @@ step_four_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_four(
     hasher.add_element(libff::Fr<ppT>::one());
     libff::Fr<ppT> gamma = hasher.get_hash();
 
-    // add outputs from Round 2 to the hash buffer
+    // Add outputs from Round 2 to the hash buffer.
     hasher.add_element(proof.z_poly_at_secret_g1);
     // - alpha: quotient challenge - hash of transcript of rounds 1,2
     libff::Fr<ppT> alpha = hasher.get_hash();
 
-    // add outputs from Round 3 to the hash buffer
+    // Add outputs from Round 3 to the hash buffer.
     hasher.add_element(proof.t_poly_at_secret_g1[lo]);
     hasher.add_element(proof.t_poly_at_secret_g1[mid]);
     hasher.add_element(proof.t_poly_at_secret_g1[hi]);
-    // - zeta: evaluation challenge - hash of transcriptof rounds 1,2,3
+    // - zeta: evaluation challenge - hash of transcriptof rounds
+    // - 1,2,3
     libff::Fr<ppT> zeta = hasher.get_hash();
 
-    // add outputs from Round 4 to the hash buffer
+    // Add outputs from Round 4 to the hash buffer.
     hasher.add_element(proof.a_zeta);
     hasher.add_element(proof.b_zeta);
     hasher.add_element(proof.c_zeta);
@@ -95,7 +96,7 @@ step_four_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_four(
     //   [GWC19])
     libff::Fr<ppT> nu = hasher.get_hash();
 
-    // add outputs from Round 5 to the hash buffer
+    // Add outputs from Round 5 to the hash buffer.
     hasher.add_element(proof.r_zeta);
     hasher.add_element(proof.W_zeta_at_secret);
     hasher.add_element(proof.W_zeta_omega_at_secret);
@@ -157,15 +158,16 @@ step_seven_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_seven(
 {
     std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
         libfqfft::get_evaluation_domain<Field>(srs.num_gates);
-    // construct the PI polynomial from the vector of PI values (received as
-    // input to the verifier) and the PI wire indices (stored in the srs)
+    // Construct the PI polynomial from the vector of PI values
+    // (received as input to the verifier) and the PI wire indices
+    // (stored in the srs).
     std::vector<Field> PI_points(srs.num_gates, Field(0));
     for (size_t i = 0; i < PI_value_list.size(); i++) {
         size_t PI_coordinate_x = srs.PI_wire_indices[i] % srs.num_gates;
         PI_points[PI_coordinate_x] = Field(-PI_value_list[i]);
     }
 
-    // compute PI polynomial
+    // Compute PI polynomial.
     polynomial<Field> PI_poly;
     plonk_compute_public_input_polynomial(PI_points, PI_poly, domain);
 
@@ -193,7 +195,7 @@ step_eight_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_eight(
     libff::Fr<ppT> r_prime_zeta;
     Field alpha_power2 = libff::power(step_four_out.alpha, libff::bigint<1>(2));
 
-    // compute polynomial r'(zeta) = r(zeta) - r_0
+    // Compute polynomial r'(zeta) = r(zeta) - r_0 .
     std::vector<Field> r_prime_parts(5);
     r_prime_parts[0] = proof.r_zeta + step_seven_out.PI_zeta;
     r_prime_parts[1] =
@@ -234,7 +236,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_nine(
 
     Field alpha_power2 = libff::power(step_four_out.alpha, libff::bigint<1>(2));
 
-    // compute D1_part[0]:
+    // Compute D1_part[0]:
     // (a_bar b_bar [q_M]_1 + a_bar [q_L]_1 + b_bar [q_R]_1 + c_bar [q_O]_1 +
     // [q_C]_1) nu Note: the paper omits the final multiplication by nu
     std::vector<libff::G1<ppT>> curve_points{
@@ -251,7 +253,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_nine(
         step_four_out.nu};
     D1_part[0] = plonk_multi_exp_G1<ppT>(curve_points, scalar_elements);
 
-    // compute D1_part[1]:
+    // Compute D1_part[1]:
     // ((a_bar + beta zeta + gamma)(b_bar + beta k1 zeta + gamma)(c_bar + beta
     // k2 zeta + gamma) alpha + L1(zeta) alpha^2 + u) [z]_1
     Field D1_part1_scalar =
@@ -266,7 +268,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_nine(
         step_four_out.u;
     D1_part[1] = D1_part1_scalar * proof.z_poly_at_secret_g1;
 
-    // compute D1_part[2]:
+    // Compute D1_part[2]:
     // (a_bar + beta s_sigma1_bar + gamma)(b_bar + beta s_sigma2_bar +
     // gamma)alpha beta z_preprocessed_input.omega_roots_bar [s_sigma3]_1
     Field D1_part2_scalar =
@@ -279,7 +281,7 @@ step_nine_out_t<ppT> plonk_verifier<ppT, transcript_hasher>::step_nine(
         Field(-1);
     D1_part[2] = D1_part2_scalar * preprocessed_input.S_polys_at_secret_g1[2];
 
-    // Compute D1 = D1_part[0] + D1_part[1] + D1_part[2]
+    // Compute D1 = D1_part[0] + D1_part[1] + D1_part[2] .
     D1 = D1_part[0] + D1_part[1] + D1_part[2];
 
     step_nine_out_t<ppT> step_nine_out(std::move(D1));
@@ -420,7 +422,7 @@ bool plonk_verifier<ppT, transcript_hasher>::verify_proof(
     std::shared_ptr<libfqfft::evaluation_domain<libff::Fr<ppT>>> domain =
         libfqfft::get_evaluation_domain<libff::Fr<ppT>>(srs.num_gates);
 
-    // compute verifier preprocessed input
+    // Compute verifier preprocessed input.
     const verifier_preprocessed_input_t<ppT> preprocessed_input =
         plonk_verifier::preprocessed_input(srs);
 
