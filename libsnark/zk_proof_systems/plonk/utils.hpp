@@ -234,18 +234,23 @@ template<typename ppT>
 std::vector<std::vector<libff::Fr<ppT>>> plonk_prepare_gates_matrix(
     const size_t &num_public_inputs);
 
-/// The function extracts the indices of the public inputs (PI) from the input
-/// gates matrix under the convention that the i-th components of the selector
-/// vectors q_L, q_R, q_O, q_M, q_C corresponding to the i-th selector vector
-/// have the form
-///
-/// (q_L[i], q_R[i], q_O[i], q_M[i], q_C[i]) = (1, 0, 0, 0, 0)
-///
-/// The vector of PI indices is equal to the vector of indices of all rows in
-/// the gates matrix that are equal to (1, 0, 0, 0, 0)
+/// Extract the values corresponing to the public inputs from the
+/// witness using the respective wire indices passed as input. Those
+/// values are passed on to the verifier together with the proof.
 template<typename ppT>
-std::vector<size_t> plonk_public_input_indices_from_gates_matrix(
-    const std::vector<std::vector<libff::Fr<ppT>>> &gates_matrix);
+std::vector<libff::Fr<ppT>> plonk_public_input_values_from_indices(
+    const std::vector<libff::Fr<ppT>> &witness,
+    const std::vector<size_t> &PI_wire_indices);
+
+/// A wrapper for plonk_public_input_values_from_indices. Extracts the
+/// values corresponing to the public inputs from the witness, assuming
+/// that they are in the first num_public_inputs positions. In other
+/// words extracts the values of the public inputs from the *length* of
+/// the public input vector.
+template<typename ppT>
+std::vector<libff::Fr<ppT>> plonk_public_input_values_from_length(
+    const std::vector<libff::Fr<ppT>> &witness,
+    const size_t &num_public_inputs);
 
 } // namespace libsnark
 

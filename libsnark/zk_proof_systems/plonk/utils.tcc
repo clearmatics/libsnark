@@ -416,25 +416,48 @@ std::vector<std::vector<libff::Fr<ppT>>> plonk_prepare_gates_matrix(
     return gates_matrix_init;
 }
 
-// Examine the gates matrix row by row and store the indices of those rows that
-// are equal to (1, 0, 0, 0, 0). These are the rows corresponding to public
-// inputs.
+// Extract the values corresponing to the public inputs from the
+// witness using the respective wire indices passed as input. Those
+// values are passed on to the verifier together with the proof.
 template<typename ppT>
-std::vector<size_t> plonk_public_input_indices_from_gates_matrix(
-    const std::vector<std::vector<libff::Fr<ppT>>> &gates_matrix)
+std::vector<libff::Fr<ppT>> plonk_public_input_values_from_indices(
+    const std::vector<libff::Fr<ppT>> &witness,
+    const std::vector<size_t> &PI_wire_indices)
 {
+    assert(PI_wire_indices.size() <= witness.size());
+
     using FieldT = libff::Fr<ppT>;
-    // Vector of indices of wires corresponding to public inputs (PI)
-    std::vector<size_t> PI_wire_indices;
-    const std::vector<FieldT> PI_selector_vector{1, 0, 0, 0, 0};
-    for (size_t i = 0; i < gates_matrix.size(); ++i) {
-        // store the index of the gates matrix row encoding a PI
-        if (gates_matrix[i] == PI_selector_vector) {
-            PI_wire_indices.push_back(i);
-        }
+    std::vector<FieldT> PI_value_list;
+    for (size_t i = 0; i < PI_wire_indices.size(); i++) {
+        assert(PI_wire_indices[i] < witness.size());
+        FieldT PI_value = witness[PI_wire_indices[i]];
+        PI_value_list.push_back(PI_value);
     }
-    return PI_wire_indices;
+    return PI_value_list;
 }
+
+// A wrapper for plonk_public_input_values_from_indices. Extracts the
+// values corresponing to the public inputs from the witness, assuming
+// that they are in the first num_public_inputs positions. In other
+// words extracts the values of the public inputs from the *length* of
+// the public input vector.
+template<typename ppT>
+std::vector<libff::Fr<ppT>> plonk_public_input_values_from_length(
+    const std::vector<libff::Fr<ppT>> &witness, const size_t &num_public_inputs)
+{
+    assert(num_public_inputs <= witness.size());
+
+    using FieldT = libff::Fr<ppT>;
+    std::vector<size_t> PI_wire_indices;
+    // store the indices of the PIs
+    for (size_t i = 0; i < num_public_inputs; ++i) {
+        PI_wire_indices.push_back(i);
+    }
+    std::vector<FieldT> PI_value_list =
+        plonk_public_input_values_from_indices<ppT>(witness, PI_wire_indices);
+    return PI_value_list;
+}
+
 } // namespace libsnark
 
 #endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_UTILS_TCC_

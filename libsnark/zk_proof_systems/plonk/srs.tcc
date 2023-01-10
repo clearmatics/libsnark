@@ -105,7 +105,7 @@ usrs<ppT> plonk_usrs_derive_from_secret(
 }
 
 template<typename ppT>
-srs<ppT> plonk_srs_derive_from_usrs(
+srs<ppT> plonk_srs_derive_from_usrs_custom_PI_indices(
     const usrs<ppT> &usrs,
     const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix,
     const std::vector<size_t> wire_permutation,
@@ -250,6 +250,23 @@ srs<ppT> plonk_srs_derive_from_usrs(
         std::move(secret_powers_g2),
         std::move(L_basis_zero));
 
+    return srs;
+}
+
+template<typename ppT>
+srs<ppT> plonk_srs_derive_from_usrs(
+    const usrs<ppT> &usrs,
+    const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix,
+    const std::vector<size_t> wire_permutation,
+    const size_t num_public_inputs)
+{
+    std::vector<size_t> PI_wire_indices;
+    // store the indices of the PIs
+    for (size_t i = 0; i < num_public_inputs; ++i) {
+        PI_wire_indices.push_back(i);
+    }
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
+        usrs, gates_matrix, wire_permutation, PI_wire_indices);
     return srs;
 }
 

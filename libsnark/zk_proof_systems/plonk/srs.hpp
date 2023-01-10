@@ -144,11 +144,22 @@ public:
 /// and the list of public input (PI) indices. The (plain) SRS is a
 /// specialization of the USRS for one particular circuit
 template<typename ppT>
-srs<ppT> plonk_srs_derive_from_usrs(
+srs<ppT> plonk_srs_derive_from_usrs_custom_PI_indices(
     const usrs<ppT> &usrs,
     const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix,
     const std::vector<size_t> wire_permutation,
     const std::vector<size_t> PI_wire_indices);
+
+/// A wrapper for plonk_srs_derive_from_usrs_custom_PI_indices that
+/// assumes that the PI indices are located in the top
+/// num_public_inputs rows of the gates matrix. num_public_inputs is
+/// the number of public inputs.
+template<typename ppT>
+srs<ppT> plonk_srs_derive_from_usrs(
+    const usrs<ppT> &usrs,
+    const std::vector<std::vector<libff::Fr<ppT>>> gates_matrix,
+    const std::vector<size_t> wire_permutation,
+    const size_t num_public_inputs);
 
 /// A proving key for Plonk
 template<typename ppT> class plonk_proving_key

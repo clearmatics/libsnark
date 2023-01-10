@@ -406,7 +406,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
 
     // prepare srs
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
         usrs,
         example.gates_matrix,
         example.wire_permutation,
@@ -585,7 +585,7 @@ template<typename ppT> void test_plonk_srs()
     // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     // --- SRS ---
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
         usrs,
         example.gates_matrix,
         example.wire_permutation,
@@ -632,7 +632,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
 
     // Perepare srs.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
         usrs,
         example.gates_matrix,
         example.wire_permutation,
@@ -919,7 +919,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
 
     // Prepare srs.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
         usrs,
         example.gates_matrix,
         example.wire_permutation,
@@ -1043,7 +1043,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
 
     // Prepare srs.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
         usrs,
         example.gates_matrix,
         example.wire_permutation,
@@ -1159,7 +1159,7 @@ void test_plonk_prepare_gates_matrix()
     // multiplication gate. This number is also conveniently a power of
     // 2 (needed for the FFT/iFFT).
     const size_t num_gates = 2;
-    // The tested circuit has 1 public input
+    // The example circuit has 1 public input
     const size_t num_public_inputs = 1;
     std::vector<std::vector<Field>> gates_matrix =
         plonk_prepare_gates_matrix<ppT>(num_public_inputs);
@@ -1169,11 +1169,6 @@ void test_plonk_prepare_gates_matrix()
     gates_matrix.push_back(MUL_gate);
     ASSERT_EQ(gates_matrix.size(), 2);
     ASSERT_EQ(gates_matrix[0].size(), 5);
-    // Extract the PI indices from the gates matrix
-    std::vector<size_t> PI_wire_indices =
-        plonk_public_input_indices_from_gates_matrix<ppT>(gates_matrix);
-    ASSERT_EQ(PI_wire_indices.size(), 1);
-    ASSERT_EQ(PI_wire_indices[0], 0);
     // Hard-code the wire permutation for the tested circuit. Note
     // that counting of indices starts from 1. TODO: implement a
     // general function to compute the wire permutation for any
@@ -1189,19 +1184,19 @@ void test_plonk_prepare_gates_matrix()
 
     // 1 Generate SRS
 
-    // compute usrs
+    // Compute usrs.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    // compute srs
+    // Compute srs.
     srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
-        usrs, gates_matrix, wire_permutation, PI_wire_indices);
+        usrs, gates_matrix, wire_permutation, num_public_inputs);
 
     // 2 Compute proof
 
-    // initialize prover hasher
+    // Initialize prover hasher.
     transcript_hasher prover_hasher;
-    // prepare witness vector w = a+b+c
+    // Prepare witness vector w = a+b+c.
     std::vector<Field> witness{49, 7, 1, 7, 49, 49};
-    // nine random blinding constants for the prover polynomials
+    // Nine random blinding constants for the prover polynomials.
     std::vector<libff::Fr<ppT>> blind_scalars;
     const size_t nscalars = 9;
     for (size_t i = 0; i < nscalars; ++i) {
@@ -1216,19 +1211,14 @@ void test_plonk_prepare_gates_matrix()
 
     // 3 Verify proof
 
-    // initialize verifier hasher
+    // Initialize verifier hasher.
     transcript_hasher verifier_hasher;
-    // Prepare the list of PI values. for the example circuit
-    std::vector<Field> PI_value_list;
-    for (size_t i = 0; i < PI_wire_indices.size(); i++) {
-        Field PI_value = witness[PI_wire_indices[i]];
-        PI_value_list.push_back(PI_value);
-    }
-    ASSERT_EQ(PI_value_list.size(), 1);
-    ASSERT_EQ(PI_value_list[0], Field(49));
-    // initialize verifier
+    // Prepare the list of PI values for the example circuit.
+    std::vector<Field> PI_value_list =
+        plonk_public_input_values_from_length<ppT>(witness, num_public_inputs);
+    // Initialize verifier.
     plonk_verifier<ppT, transcript_hasher> verifier;
-    // verify proof
+    // Verify proof.
     bool b_valid_proof =
         verifier.verify_proof(proof, srs, PI_value_list, verifier_hasher);
     ASSERT_TRUE(b_valid_proof);
