@@ -55,6 +55,14 @@ public:
     static constexpr size_t quad_exponent = 2;
     static const BignumT alpha_inv;
     static const BignumT delta;
+    static const std::vector<std::vector<BignumT>> C_constants_col_one;
+    static const std::vector<std::vector<BignumT>> D_constants_col_one;
+    static const std::vector<std::vector<BignumT>> C_constants_col_two;
+    static const std::vector<std::vector<BignumT>> D_constants_col_two;
+    static const std::vector<std::vector<BignumT>> C_constants_col_three;
+    static const std::vector<std::vector<BignumT>> D_constants_col_three;
+    static const std::vector<std::vector<BignumT>> C_constants_col_four;
+    static const std::vector<std::vector<BignumT>> D_constants_col_four;
 };
 
 } // namespace libsnark
