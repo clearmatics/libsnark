@@ -234,8 +234,6 @@ void test_anemoi_permutation_round_prime_field_gadget()
 {
     using FieldT = libff::Fr<ppT>;
 
-    //        const size_t NumStateColumns_L = L;
-
     protoboard<FieldT> pb;
     std::vector<FieldT> C;
     std::vector<FieldT> D;
@@ -251,11 +249,23 @@ void test_anemoi_permutation_round_prime_field_gadget()
     Y_left.allocate(pb, NumStateColumns_L, "left outputs");
     Y_right.allocate(pb, NumStateColumns_L, "right outputs");
 
-    // WARNINIG! test with zero constants. TODO add the original
-    // constants of Anemoi
     for (size_t i = 0; i < NumStateColumns_L; i++) {
-        C.push_back(FieldT(0));
-        D.push_back(FieldT(0));
+        if (NumStateColumns_L == 1) {
+            C.push_back(parameters::C_constants_col_one[0][i]);
+            D.push_back(parameters::D_constants_col_one[0][i]);
+        }
+        if (NumStateColumns_L == 2) {
+            C.push_back(parameters::C_constants_col_two[0][i]);
+            D.push_back(parameters::D_constants_col_two[0][i]);
+        }
+        if (NumStateColumns_L == 3) {
+            C.push_back(parameters::C_constants_col_three[0][i]);
+            D.push_back(parameters::D_constants_col_three[0][i]);
+        }
+        if (NumStateColumns_L == 4) {
+            C.push_back(parameters::C_constants_col_four[0][i]);
+            D.push_back(parameters::D_constants_col_four[0][i]);
+        }
     }
 
     anemoi_permutation_round_prime_field_gadget<
@@ -308,10 +318,7 @@ template<typename ppT> void test_for_curve()
     test_anemoi_permutation_round_prime_field_gadget<ppT, 1, parameters>();
     test_anemoi_permutation_round_prime_field_gadget<ppT, 2, parameters>();
     test_anemoi_permutation_round_prime_field_gadget<ppT, 3, parameters>();
-    // TODO code for L=4 is still WIP. The test values match, but a
-    // bigint assertion error is generated in libff.
-    // test_anemoi_permutation_round_prime_field_gadget<ppT, 4,
-    // parameters>();
+    test_anemoi_permutation_round_prime_field_gadget<ppT, 4, parameters>();
 }
 
 TEST(TestAnemoiGadget, BLS12_381) { test_for_curve<libff::bls12_381_pp>(); }
