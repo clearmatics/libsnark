@@ -90,7 +90,6 @@ void flystel_Q_prime_field_gadget<ppT>::generate_r1cs_witness()
 //
 // where A0=(0, beta, 0, 0), B0=(0, 1, 0, 0), C0=(0, 0, 1, 0) and
 // A1=(0, 0, 1, 0), B1=(0, 1, 0, 0), C1=(-gamma, 0, 0, 1)
-
 template<typename ppT>
 flystel_Q_binary_field_gadget<ppT>::flystel_Q_binary_field_gadget(
     protoboard<libff::Fr<ppT>> &pb,
