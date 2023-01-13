@@ -245,10 +245,10 @@ std::vector<libff::Fr<ppT>> plonk_public_input_values_from_indices(
 /// A wrapper for plonk_public_input_values_from_indices. Extracts the
 /// values corresponing to the public inputs from the witness, assuming
 /// that they are in the first num_public_inputs positions. In other
-/// words extracts the values of the public inputs from the *length* of
+/// words extracts the values of the public inputs given the *length* of
 /// the public input vector.
 template<typename ppT>
-std::vector<libff::Fr<ppT>> plonk_public_input_values_from_length(
+std::vector<libff::Fr<ppT>> plonk_public_input_values(
     const std::vector<libff::Fr<ppT>> &witness,
     const size_t &num_public_inputs);
 

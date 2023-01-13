@@ -1112,14 +1112,14 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
 // Using the above representation, the PI and the multiplication
 // gates are given resp. as
 //
-//  PI: 1 a1 + 0 b1 +   0  c1 + 0 a1 b1 + 0 = 49
+//  PI: 1 a1 + 0 b1 +   0  c1 + 0 a1 b1 + 0 ( + PI) = 0
 // MUL: 0 a2 + 0 b2 + (-1) c2 + 1 a2 b2 + 0 = 0
 //
-// where
+// where ("/" means "unused"):
 //
 // a   = (a1, a2) = (x, y)
-// b   = (b1, b2) = (1, y)
-// c   = (c1, c2) = (x, x)
+// b   = (b1, b2) = (/, y)
+// c   = (c1, c2) = (/, x)
 // qL = (1,  0)
 // qR = (0,  0)
 // qO = (0, -1)
@@ -1175,7 +1175,7 @@ void test_plonk_prepare_gates_matrix()
     // circuit.
     std::vector<size_t> wire_permutation{6, 4, 3, 2, 5, 1};
     // maximum degree of the encoded monomials in the usrs
-    size_t max_degree = PLONK_MAX_DEGREE;
+    const size_t max_degree = PLONK_MAX_DEGREE;
     // Random hidden element kept secret (toxic waste)
     Field secret = Field::random_element();
 
@@ -1215,7 +1215,7 @@ void test_plonk_prepare_gates_matrix()
     transcript_hasher verifier_hasher;
     // Prepare the list of PI values for the example circuit.
     std::vector<Field> PI_value_list =
-        plonk_public_input_values_from_length<ppT>(witness, num_public_inputs);
+        plonk_public_input_values<ppT>(witness, num_public_inputs);
     // Initialize verifier.
     plonk_verifier<ppT, transcript_hasher> verifier;
     // Verify proof.
@@ -1224,7 +1224,7 @@ void test_plonk_prepare_gates_matrix()
     ASSERT_TRUE(b_valid_proof);
 }
 
-template<typename ppT> void test_plonk_gates_matrix()
+template<typename ppT> void test_plonk_prepare_gates_matrix()
 {
     using Field = libff::Fr<ppT>;
     // Test for 10 random values of num_public_inputs
@@ -1405,7 +1405,7 @@ TEST(TestPlonk, BLS12_381)
     test_plonk_prepare_gates_matrix<
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
-    test_plonk_gates_matrix<libff::bls12_381_pp>();
+    test_plonk_prepare_gates_matrix<libff::bls12_381_pp>();
 }
 
 } // namespace libsnark

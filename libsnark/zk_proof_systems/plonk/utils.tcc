@@ -395,14 +395,6 @@ bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2)
 //
 // Therefore the top N rows of the initialized gates matrix will have
 // the above form. See also Section 6 [GWC19].
-//
-// \attention The convention for selector vector values corresponding
-// to public inputs (PI) used in this function follows [GWC19] (as
-// shown above) and is different from the one used in the example
-// circuit for BLS12-381 (class example) where q_R[i]=1 rather than
-// q_L[i]=1 i.e.
-//
-// (q_L[i], q_R[i], q_O[i], q_M[i], q_C[i]) = (0, 1, 0, 0, 0)
 template<typename ppT>
 std::vector<std::vector<libff::Fr<ppT>>> plonk_prepare_gates_matrix(
     const size_t &num_public_inputs)
@@ -436,26 +428,13 @@ std::vector<libff::Fr<ppT>> plonk_public_input_values_from_indices(
     return PI_value_list;
 }
 
-// A wrapper for plonk_public_input_values_from_indices. Extracts the
-// values corresponing to the public inputs from the witness, assuming
-// that they are in the first num_public_inputs positions. In other
-// words extracts the values of the public inputs from the *length* of
-// the public input vector.
 template<typename ppT>
-std::vector<libff::Fr<ppT>> plonk_public_input_values_from_length(
+std::vector<libff::Fr<ppT>> plonk_public_input_values(
     const std::vector<libff::Fr<ppT>> &witness, const size_t &num_public_inputs)
 {
     assert(num_public_inputs <= witness.size());
-
-    using FieldT = libff::Fr<ppT>;
-    std::vector<size_t> PI_wire_indices;
-    // store the indices of the PIs
-    for (size_t i = 0; i < num_public_inputs; ++i) {
-        PI_wire_indices.push_back(i);
-    }
-    std::vector<FieldT> PI_value_list =
-        plonk_public_input_values_from_indices<ppT>(witness, PI_wire_indices);
-    return PI_value_list;
+    return std::vector<libff::Fr<ppT>>(
+        witness.begin(), witness.begin() + num_public_inputs);
 }
 
 } // namespace libsnark
