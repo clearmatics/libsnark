@@ -6,6 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
+#include "libsnark/gadgetlib1/gadgets/hashes/anemoi/tests/anemoi_outputs.hpp"
+
 #include <gtest/gtest.h>
 #include <libff/algebra/curves/bls12_381/bls12_381_init.hpp>
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
@@ -19,7 +21,7 @@
 
 using namespace libsnark;
 
-class debug_parameters_bls12_381
+class parameters_debug_bls12_381
 {
 public:
     using ppT = libff::bls12_381_pp;
@@ -36,13 +38,13 @@ public:
 };
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters_bls12_381::alpha_inv =
+    parameters_debug_bls12_381::alpha_inv =
         libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>(
             "209743500700504761917790962032743863350762210002110551290414634799"
             "75432473805");
 
 const libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>
-    debug_parameters_bls12_381::delta =
+    parameters_debug_bls12_381::delta =
         libff::bigint<libff::Fr<libff::bls12_381_pp>::num_limbs>("0");
 
 template<typename ppT>
@@ -224,18 +226,99 @@ void test_flystel_prime_field_gadget()
     libff::print_time("flystel_prime_field_gadget tests successful");
 }
 
+template<
+    typename ppT,
+    size_t NumStateColumns_L,
+    class parameters = anemoi_parameters<libff::Fr<ppT>>>
+void test_anemoi_permutation_round_prime_field_gadget()
+{
+    using FieldT = libff::Fr<ppT>;
+
+    protoboard<FieldT> pb;
+    std::vector<FieldT> C;
+    std::vector<FieldT> D;
+
+    pb_variable_array<FieldT> X_left;
+    pb_variable_array<FieldT> X_right;
+    pb_variable_array<FieldT> Y_left;
+    pb_variable_array<FieldT> Y_right;
+
+    X_left.allocate(pb, NumStateColumns_L, "left inputs");
+    X_right.allocate(pb, NumStateColumns_L, "right inputs");
+
+    Y_left.allocate(pb, NumStateColumns_L, "left outputs");
+    Y_right.allocate(pb, NumStateColumns_L, "right outputs");
+
+    for (size_t i = 0; i < NumStateColumns_L; i++) {
+        if (NumStateColumns_L == 1) {
+            C.push_back(parameters::C_constants_col_one[0][i]);
+            D.push_back(parameters::D_constants_col_one[0][i]);
+        }
+        if (NumStateColumns_L == 2) {
+            C.push_back(parameters::C_constants_col_two[0][i]);
+            D.push_back(parameters::D_constants_col_two[0][i]);
+        }
+        if (NumStateColumns_L == 3) {
+            C.push_back(parameters::C_constants_col_three[0][i]);
+            D.push_back(parameters::D_constants_col_three[0][i]);
+        }
+        if (NumStateColumns_L == 4) {
+            C.push_back(parameters::C_constants_col_four[0][i]);
+            D.push_back(parameters::D_constants_col_four[0][i]);
+        }
+    }
+
+    anemoi_permutation_round_prime_field_gadget<
+        ppT,
+        NumStateColumns_L,
+        parameters>
+        d(pb, C, D, X_left, X_right, Y_left, Y_right, "anemoi permutation");
+
+    // generate constraints
+    d.generate_r1cs_constraints();
+
+    // Input values: X_left = 0,1,2...L-1 ; X_right = L, L+1, 2L-1
+    for (size_t i = 0; i < NumStateColumns_L; i++) {
+        pb.val(X_left[i]) = FieldT(i);
+        pb.val(X_right[i]) = FieldT(NumStateColumns_L + i);
+    }
+
+    // generate witness for the given input
+    d.generate_r1cs_witness();
+
+    std::vector<FieldT> Y_expect =
+        anemoi_expected_output_one_round(NumStateColumns_L);
+
+    for (size_t i = 0; i < NumStateColumns_L; i++) {
+        ASSERT_EQ(Y_expect[i], pb.val(Y_left[i]));
+        ASSERT_EQ(Y_expect[NumStateColumns_L + i], pb.val(Y_right[i]));
+    }
+
+    ASSERT_TRUE(pb.is_satisfied());
+    test_pb_verify_circuit<ppT>(pb);
+
+    libff::print_time(
+        "anemoi_permutation_round_prime_field_gadget tests successful");
+}
+
 template<typename ppT> void test_for_curve()
 {
     // Execute all tests for the given curve.
 
     ppT::init_public_params();
-    using parameters = debug_parameters_bls12_381;
-
-    test_flystel_Q_gamma_prime_field_gadget<ppT, parameters>();
-    test_flystel_Q_gamma_binary_field_gadget<ppT, parameters>();
+    // Use debug parameters with small values for the small gadgets
+    using parameters_debug = parameters_debug_bls12_381;
+    test_flystel_Q_gamma_prime_field_gadget<ppT, parameters_debug>();
+    test_flystel_Q_gamma_binary_field_gadget<ppT, parameters_debug>();
     test_flystel_E_power_five_gadget<ppT>();
-    test_flystel_E_root_five_gadget<ppT, parameters>();
-    test_flystel_prime_field_gadget<ppT, parameters>();
+    test_flystel_E_root_five_gadget<ppT, parameters_debug>();
+    test_flystel_prime_field_gadget<ppT, parameters_debug>();
+    // Use the original parameters for the full permutation
+    using parameters = anemoi_parameters<ppT>;
+    test_anemoi_permutation_round_prime_field_gadget<ppT, 1, parameters>();
+    test_anemoi_permutation_round_prime_field_gadget<ppT, 2, parameters>();
+    test_anemoi_permutation_round_prime_field_gadget<ppT, 3, parameters>();
+    test_anemoi_permutation_round_prime_field_gadget<ppT, 4, parameters>();
 }
 
 TEST(TestAnemoiGadget, BLS12_381) { test_for_curve<libff::bls12_381_pp>(); }

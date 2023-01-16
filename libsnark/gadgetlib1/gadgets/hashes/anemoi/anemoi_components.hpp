@@ -138,14 +138,14 @@ public:
 
 /// Anemoi closed Flystel component for fields of prime characteristic
 ///
-/// x0,x1: input (x,y in the paper)
-/// y0,y1: output (u,v in the paper)
+/// x0,x1: input (x,y in [BBCPSVW22])
+/// y0,y1: output (u,v in [BBCPSVW22])
 ///
 /// The component performs the following computation:
 ///
-/// a0 = (beta x1^2 + gamma) = Q_gamma(x1)
-/// a1 = (x0 - a0)^{1/alpha} = E_root_five(x0-a0)
-/// a2 = beta (x1-a1)^2 + delta = Q_delta(x1-a1)
+/// a0 = (beta x1^2 + gamma) == Q_gamma(x1)
+/// a1 = (x0 - a0)^{1/alpha} == E_root_five(x0-a0)
+/// a2 = beta (x1-a1)^2 + delta == Q_delta(x1-a1)
 /// y0 = x0 - a0 + a2
 /// y1 = x1 - a1
 ///
@@ -187,6 +187,59 @@ public:
 template<typename FieldT, size_t NumStateColumns_L>
 std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L>
 anemoi_permutation_mds(const FieldT g);
+
+/// One round of the Anemoi permutation mapping (Fr)^{2L} -> (Fr)^{2L}
+///
+/// NumStateColumns_L : L parameter - number of columns in the
+///                     state. can be 1,2,3,4. Each column is composed
+///                     of 2 elements in Fr. One Flystel Sbox accepts
+///                     1 column as input. There are L Flystel-s in 1
+///                     round of the Anemoi permutation applied in
+///                     parallel.
+template<
+    typename ppT,
+    size_t NumStateColumns_L,
+    class parameters = anemoi_parameters<libff::Fr<ppT>>>
+class anemoi_permutation_round_prime_field_gadget
+    : public gadget<libff::Fr<ppT>>
+{
+    using FieldT = libff::Fr<ppT>;
+
+private:
+    // vector of C round constants
+    std::vector<FieldT> C_const;
+    // vector of D round constants
+    std::vector<FieldT> D_const;
+    // matrix M
+    std::vector<std::vector<FieldT>> M_matrix;
+    // vector of Flystel S-boxes
+    std::vector<flystel_prime_field_gadget<ppT, parameters>> Flystel;
+
+public:
+    const pb_linear_combination_array<FieldT> X_left_input;
+    const pb_linear_combination_array<FieldT> X_right_input;
+    const pb_variable_array<FieldT> Y_left_output;
+    const pb_variable_array<FieldT> Y_right_output;
+
+    anemoi_permutation_round_prime_field_gadget(
+        protoboard<FieldT> &pb,
+        const std::vector<FieldT> &C_const,
+        const std::vector<FieldT> &D_const,
+        const pb_linear_combination_array<FieldT> &X_left_input,
+        const pb_linear_combination_array<FieldT> &X_right_input,
+        const pb_variable_array<FieldT> &Y_left_output,
+        const pb_variable_array<FieldT> &Y_right_output,
+        const std::string &annotation_prefix);
+
+    const std::vector<linear_combination<FieldT>> anemoi_permutation_add_constants(
+        const std::vector<linear_combination<FieldT>> &input);
+
+    const std::vector<linear_combination<FieldT>> anemoi_permutation_mulitply_matrix(
+        const std::vector<linear_combination<FieldT>> &input);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
 
 } // namespace libsnark
 
