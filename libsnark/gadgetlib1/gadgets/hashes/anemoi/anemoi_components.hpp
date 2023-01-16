@@ -183,11 +183,6 @@ public:
     void generate_r1cs_witness();
 };
 
-// get the MDS matrix from the number of columns 2,3 or 4
-template<typename FieldT, size_t NumStateColumns_L>
-std::array<std::array<FieldT, NumStateColumns_L>, NumStateColumns_L>
-anemoi_permutation_mds(const FieldT g);
-
 /// One round of the Anemoi permutation mapping (Fr)^{2L} -> (Fr)^{2L}
 ///
 /// NumStateColumns_L : L parameter - number of columns in the
@@ -239,6 +234,30 @@ public:
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
+};
+
+// MDS matrix for each allowed dimension: 2,3 or 4
+template<typename ppT, size_t NumStateColumns_L> class anemoi_permutation_mds;
+
+template<typename ppT> class anemoi_permutation_mds<ppT, 2>
+{
+public:
+    static std::array<std::array<libff::Fr<ppT>, 2>, 2> permutation_mds(
+        const libff::Fr<ppT> g);
+};
+
+template<typename ppT> class anemoi_permutation_mds<ppT, 3>
+{
+public:
+    static std::array<std::array<libff::Fr<ppT>, 3>, 3> permutation_mds(
+        const libff::Fr<ppT> g);
+};
+
+template<typename ppT> class anemoi_permutation_mds<ppT, 4>
+{
+public:
+    static std::array<std::array<libff::Fr<ppT>, 4>, 4> permutation_mds(
+        const libff::Fr<ppT> g);
 };
 
 } // namespace libsnark

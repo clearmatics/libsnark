@@ -320,37 +320,6 @@ void flystel_prime_field_gadget<ppT, parameters>::generate_r1cs_witness()
     this->pb.lc_val(output_y1) = input_x1_value - this->pb.val(a1);
 }
 
-template<typename ppT, size_t NumStateColumns_L>
-std::vector<std::vector<libff::Fr<ppT>>> anemoi_permutation_mds(
-    const libff::Fr<ppT> g)
-{
-    static_assert(
-        (NumStateColumns_L == 1) || (NumStateColumns_L == 2) ||
-            (NumStateColumns_L == 3) || (NumStateColumns_L == 4),
-        "NumStateColumns_L must be 2,3 or 4");
-
-    const libff::Fr<ppT> g2 = g * g;
-
-    // allocate matrix M of dimension LxL
-    std::vector<std::vector<libff::Fr<ppT>>> M;
-    M.resize(NumStateColumns_L, std::vector<libff::Fr<ppT>>(NumStateColumns_L));
-
-    if (NumStateColumns_L == 2) {
-        M = {{1, g}, {g, g2 + 1}};
-    }
-    if (NumStateColumns_L == 3) {
-        M = {{g + 1, 1, g + 1}, {1, 1, g}, {g, 1, 1}};
-    }
-    if (NumStateColumns_L == 4) {
-        M = {
-            {1, g + 1, g, g},
-            {g2, g + g2, g + 1, g + g + 1},
-            {g2, g2, 1, g + 1},
-            {g + 1, g + g + 1, g, g + 1}};
-    }
-    return M;
-}
-
 // Fast matrix-vector multiplication algorithm for Anemoi MDS layer with \ell =
 // 1,2 for inputs of type "linear combination of FieldT elements"
 template<typename ppT>
@@ -532,11 +501,11 @@ anemoi_permutation_round_prime_field_gadget<
     }
 
     if (ncols > 1) {
-        M_matrix = anemoi_permutation_mds<ppT, ncols>(g);
+        M_matrix = anemoi_permutation_mds<ppT, ncols>::permutation_mds(g);
     } else { // ncols == 1
         // the MDS matrix for a state with 1 column (L=1) is the same as
         // for a state with 2 columns (L=2)
-        M_matrix = anemoi_permutation_mds<ppT, 2>(g);
+        M_matrix = anemoi_permutation_mds<ppT, 2>::permutation_mds(g);
     }
 
     // multiply by matrix M
@@ -611,6 +580,38 @@ void anemoi_permutation_round_prime_field_gadget<
         this->pb.val(Y_left_output[i]) = this->pb.val(Flystel[i].output_y0);
         this->pb.val(Y_right_output[i]) = this->pb.val(Flystel[i].output_y1);
     }
+}
+
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 2>, 2> anemoi_permutation_mds<ppT, 2>::
+    permutation_mds(const libff::Fr<ppT> g)
+{
+    using FieldT = libff::Fr<ppT>;
+    const FieldT g2 = g * g;
+    anemoi_mds_matrix_t M = {{{1, g}, {g, g2 + 1}}};
+    return M;
+}
+
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 3>, 3> anemoi_permutation_mds<ppT, 3>::
+    permutation_mds(const libff::Fr<ppT> g)
+{
+    anemoi_mds_matrix_t M = {{{g + 1, 1, g + 1}, {1, 1, g}, {g, 1, 1}}};
+    return M;
+}
+
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 4>, 4> anemoi_permutation_mds<ppT, 4>::
+    permutation_mds(const libff::Fr<ppT> g)
+{
+    using FieldT = libff::Fr<ppT>;
+    const FieldT g2 = g * g;
+    anemoi_mds_matrix_t M = {
+        {{1, g + 1, g, g},
+         {g2, g + g2, g + 1, g + g + 1},
+         {g2, g2, 1, g + 1},
+         {g + 1, g + g + 1, g, g + 1}}};
+    return M;
 }
 
 } // namespace libsnark

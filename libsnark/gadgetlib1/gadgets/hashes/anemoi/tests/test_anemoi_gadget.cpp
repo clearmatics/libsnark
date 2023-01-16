@@ -301,6 +301,43 @@ void test_anemoi_permutation_round_prime_field_gadget()
         "anemoi_permutation_round_prime_field_gadget tests successful");
 }
 
+template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
+void test_anemoi_permutation_mds()
+{
+    // anemoi_permutation_mds<ppT, NumStateColumnsL>::permutation_mds()
+    using FieldT = libff::Fr<ppT>;
+    const FieldT g = anemoi_parameters<ppT>::multiplicative_generator_g;
+    // NumStateColumnsL == 2
+    {
+        const size_t NumStateColumnsL = 2;
+        std::array<std::array<FieldT, NumStateColumnsL>, NumStateColumnsL>
+            M_expect = {{{1, 7}, {7, 50}}};
+        std::array<std::array<FieldT, NumStateColumnsL>, NumStateColumnsL> M =
+            anemoi_permutation_mds<ppT, NumStateColumnsL>::permutation_mds(g);
+        ASSERT_EQ(M, M_expect);
+    }
+    // NumStateColumnsL == 3
+    {
+        const size_t NumStateColumnsL = 3;
+        std::array<std::array<FieldT, NumStateColumnsL>, NumStateColumnsL>
+            M_expect = {{{8, 1, 8}, {1, 1, 7}, {7, 1, 1}}};
+        std::array<std::array<FieldT, NumStateColumnsL>, NumStateColumnsL> M =
+            anemoi_permutation_mds<ppT, NumStateColumnsL>::permutation_mds(g);
+        ASSERT_EQ(M, M_expect);
+    }
+    // NumStateColumnsL == 4
+    {
+        const size_t NumStateColumnsL = 4;
+        std::array<std::array<FieldT, NumStateColumnsL>, NumStateColumnsL>
+            M_expect = {
+                {{1, 8, 7, 7}, {49, 56, 8, 15}, {49, 49, 1, 8}, {8, 15, 7, 8}}};
+        std::array<std::array<FieldT, NumStateColumnsL>, NumStateColumnsL> M =
+            anemoi_permutation_mds<ppT, NumStateColumnsL>::permutation_mds(g);
+        ASSERT_EQ(M, M_expect);
+    }
+    libff::print_time("anemoi_permutation_mds tests successful");
+}
+
 template<typename ppT> void test_for_curve()
 {
     // Execute all tests for the given curve.
@@ -319,6 +356,7 @@ template<typename ppT> void test_for_curve()
     test_anemoi_permutation_round_prime_field_gadget<ppT, 2, parameters>();
     test_anemoi_permutation_round_prime_field_gadget<ppT, 3, parameters>();
     test_anemoi_permutation_round_prime_field_gadget<ppT, 4, parameters>();
+    test_anemoi_permutation_mds<ppT, parameters>();
 }
 
 TEST(TestAnemoiGadget, BLS12_381) { test_for_curve<libff::bls12_381_pp>(); }
