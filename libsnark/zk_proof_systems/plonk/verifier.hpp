@@ -371,6 +371,8 @@ public:
     /// \param[in] proof: SNARK proof produced by the prover
     /// \param[in] srs: structured reference string containing also
     ///            circuit-specific information
+    /// \param[in] PI_value_list: list of values corresponding to
+    ///            public inputs
     /// \param[in] transcript_hasher: hashes of the communication
     ///            transcript after prover rounds 1,2,3,4,5.
     ///

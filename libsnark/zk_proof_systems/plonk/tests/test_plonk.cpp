@@ -406,7 +406,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
 
     // prepare srs
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
         usrs,
         example.gates_matrix,
         example.wire_permutation,
@@ -585,7 +585,7 @@ template<typename ppT> void test_plonk_srs()
     // secret^2*G1, ... and secret times G2: 1*G2, secret^1*G2.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
     // --- SRS ---
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
         usrs,
         example.gates_matrix,
         example.wire_permutation,
@@ -632,7 +632,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover()
 
     // Perepare srs.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
         usrs,
         example.gates_matrix,
         example.wire_permutation,
@@ -919,7 +919,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
 
     // Prepare srs.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
         usrs,
         example.gates_matrix,
         example.wire_permutation,
@@ -1043,7 +1043,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
 
     // Prepare srs.
     usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
-    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+    srs<ppT> srs = plonk_srs_derive_from_usrs_custom_PI_indices<ppT>(
         usrs,
         example.gates_matrix,
         example.wire_permutation,
@@ -1093,6 +1093,154 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
     std::vector<std::vector<Field>> gates_matrix_transpose =
         plonk_gates_matrix_transpose(example.gates_matrix);
     ASSERT_EQ(gates_matrix_transpose, example.gates_matrix_transpose);
+}
+
+// We test the example circuit y^2 = x mod r where x is a public input
+// and y is the witness. Thus the circuit shows that x is a quadratic
+// residue in the field Fr. For example x=49, y=7.
+//
+// The circuit is represented by one public input (PI) and one
+// multiplication gate. According to the Plonk arithmetization rules,
+// each gate (including the PI) is represented as:
+//
+// qL a + qR b + qO c + qM ab + qC = 0
+//
+// where qL,qR,qO,qM,qC are the selector polynomials and
+// a,b,c are respectively the vectors of left inputs, right inputs
+// and outputs to the gates.
+//
+// Using the above representation, the PI and the multiplication
+// gates are given resp. as
+//
+//  PI: 1 a1 + 0 b1 +   0  c1 + 0 a1 b1 + 0 ( + PI) = 0
+// MUL: 0 a2 + 0 b2 + (-1) c2 + 1 a2 b2 + 0 = 0
+//
+// where ("/" means "unused"):
+//
+// a   = (a1, a2) = (x, y)
+// b   = (b1, b2) = (/, y)
+// c   = (c1, c2) = (/, x)
+// qL = (1,  0)
+// qR = (0,  0)
+// qO = (0, -1)
+// qM = (0,  1)
+// qC = (0,  0)
+//
+// The selector polynomials as given above define the following gates
+// matrix:
+//
+// qL qR qO qM qC
+//  1  0  0  0  0
+//  0  0 -1  1  0
+//
+// To compute the permutation of inputs and outputs that would reflect
+// the copy-constraints, note the following. Of all the elements of
+// the input/output vector V = (a1, a2, b1, b2, c1, c2), the circuit
+// uses a1=x, a2=y, b2=a2=y and c2=a1=x, while b1 and c1 are not used
+// (see the variables with non-zero coefficients in the PI and MUL
+// equations above). If we number the elements of V from 1 to 6, the
+// permutation reflecting the copy constraints should be (6, 4, 3, 2,
+// 5, 1) i.e. 6 and 1 are permuted to reflect c2=a1; 4 and 2 are
+// permuted to reflect b2=a2 and 3 and 5 remain in place to reflect
+// that b1 and c1 are not used. Equivalently, the permutation is ("/"
+// means "unused"):
+//
+// ( x  y  /  y  /  x)
+// (a1 a2 b1 b2 c1 c2) -> (1 2 3 4 5 6)
+// (c2 b2 b1 a2 c1 a1) -> (6 4 3 2 5 1)
+template<typename ppT, class transcript_hasher>
+void test_plonk_prepare_gates_matrix()
+{
+    using Field = libff::Fr<ppT>;
+
+    // 0 Arithmetization of test circuit y^2 = x mod r
+
+    // The number of gates is 2: one public input (PI) gate and one
+    // multiplication gate. This number is also conveniently a power of
+    // 2 (needed for the FFT/iFFT).
+    const size_t num_gates = 2;
+    // The example circuit has 1 public input
+    const size_t num_public_inputs = 1;
+    std::vector<std::vector<Field>> gates_matrix =
+        plonk_prepare_gates_matrix<ppT>(num_public_inputs);
+    ASSERT_EQ(gates_matrix.size(), num_public_inputs);
+    // Add the multiplication gate
+    const std::vector<Field> MUL_gate{0, 0, -1, 1, 0};
+    gates_matrix.push_back(MUL_gate);
+    ASSERT_EQ(gates_matrix.size(), 2);
+    ASSERT_EQ(gates_matrix[0].size(), 5);
+    // Hard-code the wire permutation for the tested circuit. Note
+    // that counting of indices starts from 1. TODO: implement a
+    // general function to compute the wire permutation for any
+    // circuit.
+    std::vector<size_t> wire_permutation{6, 4, 3, 2, 5, 1};
+    // maximum degree of the encoded monomials in the usrs
+    const size_t max_degree = PLONK_MAX_DEGREE;
+    // Random hidden element kept secret (toxic waste)
+    Field secret = Field::random_element();
+
+    std::shared_ptr<libfqfft::evaluation_domain<Field>> domain =
+        libfqfft::get_evaluation_domain<Field>(num_gates);
+
+    // 1 Generate SRS
+
+    // Compute usrs.
+    usrs<ppT> usrs = plonk_usrs_derive_from_secret<ppT>(secret, max_degree);
+    // Compute srs.
+    srs<ppT> srs = plonk_srs_derive_from_usrs<ppT>(
+        usrs, gates_matrix, wire_permutation, num_public_inputs);
+
+    // 2 Compute proof
+
+    // Initialize prover hasher.
+    transcript_hasher prover_hasher;
+    // Prepare witness vector w = a+b+c.
+    std::vector<Field> witness{49, 7, 1, 7, 49, 49};
+    // Nine random blinding constants for the prover polynomials.
+    std::vector<libff::Fr<ppT>> blind_scalars;
+    const size_t nscalars = 9;
+    for (size_t i = 0; i < nscalars; ++i) {
+        Field r = Field::random_element();
+        blind_scalars.push_back(r);
+    }
+    // initialize prover
+    plonk_prover<ppT, transcript_hasher> prover;
+    // compute proof
+    plonk_proof<ppT> proof =
+        prover.compute_proof(srs, witness, blind_scalars, prover_hasher);
+
+    // 3 Verify proof
+
+    // Initialize verifier hasher.
+    transcript_hasher verifier_hasher;
+    // Prepare the list of PI values for the example circuit.
+    std::vector<Field> PI_value_list =
+        plonk_public_input_values<ppT>(witness, num_public_inputs);
+    // Initialize verifier.
+    plonk_verifier<ppT, transcript_hasher> verifier;
+    // Verify proof.
+    bool b_valid_proof =
+        verifier.verify_proof(proof, srs, PI_value_list, verifier_hasher);
+    ASSERT_TRUE(b_valid_proof);
+}
+
+template<typename ppT> void test_plonk_prepare_gates_matrix()
+{
+    using Field = libff::Fr<ppT>;
+    // Test for 10 random values of num_public_inputs
+    const size_t ntests = 10;
+    for (size_t i = 0; i < ntests; ++i) {
+        const size_t num_public_inputs = random() % 100;
+        std::vector<std::vector<Field>> gates_matrix =
+            plonk_prepare_gates_matrix<ppT>(num_public_inputs);
+        ASSERT_EQ(gates_matrix.size(), num_public_inputs);
+        // Assert that the PI gates are located at the top N rows of the gates
+        // matrix
+        const std::vector<Field> PI_gate{1, 0, 0, 0, 0};
+        for (size_t i = 0; i < num_public_inputs; ++i) {
+            ASSERT_EQ(gates_matrix[i], PI_gate);
+        }
+    }
 }
 
 // generic test for all curves
@@ -1254,6 +1402,10 @@ TEST(TestPlonk, BLS12_381)
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
     test_plonk_gates_matrix_transpose<libff::bls12_381_pp>();
+    test_plonk_prepare_gates_matrix<
+        libff::bls12_381_pp,
+        bls12_381_test_vector_transcript_hasher>();
+    test_plonk_prepare_gates_matrix<libff::bls12_381_pp>();
 }
 
 } // namespace libsnark

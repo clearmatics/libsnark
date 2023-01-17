@@ -105,6 +105,16 @@ namespace libsnark
 /// q_O = [-1, -1, -1,  0,  0,  0,  0,  0]
 /// q_M = [ 1,  1,  0,  0,  0, -1,  0,  0]
 /// q_C = [ 0,  0,  0, -1,  0,  0,  0,  0]
+///
+/// \attention The convention for selector vector values corresponding
+/// to public inputs (PI) used here is different from the one used in
+/// plonk_prepare_gates_matrix which is consistent with [GWC19], namely:
+///
+/// (q_L[i], q_R[i], q_O[i], q_M[i], q_C[i]) = (1, 0, 0, 0, 0)
+///
+/// For comparsion, here (i.e. in the example class) q_R[i]=1 and so
+///
+/// (q_L[i], q_R[i], q_O[i], q_M[i], q_C[i]) = (0, 1, 0, 0, 0)
 class plonk_example
 {
 public:

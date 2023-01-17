@@ -308,8 +308,8 @@ std::vector<std::vector<FieldT>> plonk_gates_matrix_transpose(
     std::vector<std::vector<FieldT>> gates_matrix_transpose(
         nrows_transpose, std::vector<FieldT>(ncols_transpose));
     for (size_t irow = 0; irow < nrows; ++irow) {
+        assert(gates_matrix[irow].size() == ncols);
         for (size_t icol = 0; icol < ncols; ++icol) {
-            assert(gates_matrix[icol].size() == ncols);
             gates_matrix_transpose[icol][irow] = gates_matrix[irow][icol];
         }
     }
@@ -381,6 +381,60 @@ bool plonk_are_valid_constants_k1_k2(const FieldT &k1, const FieldT &k2)
         (((k1 * k2.inverse()) ^ n) != FieldT::one());
 
     return (k1_outside_H && k2_outside_H && k1_over_k2_outside_H);
+}
+
+// In general, the i-th row of the gates matrix contains the i-th
+// component of the selector vectors q_L, q_R, q_O, q_M, q_C (see
+// Section 6 [GWC19]). The i-th compoment of each selector vector is
+// determined by the i-th gate of the arithmetic circuit, which can be
+// one of the following: addition, multiplication, multiplication by
+// constant, public input. In particular, when the i-th gate is a
+// public input, the i-th components of the selector vectors are:
+//
+// (q_L[i], q_R[i], q_O[i], q_M[i], q_C[i]) = (1, 0, 0, 0, 0)
+//
+// Therefore the top N rows of the initialized gates matrix will have
+// the above form. See also Section 6 [GWC19].
+template<typename ppT>
+std::vector<std::vector<libff::Fr<ppT>>> plonk_prepare_gates_matrix(
+    const size_t &num_public_inputs)
+{
+    using FieldT = libff::Fr<ppT>;
+    std::vector<std::vector<FieldT>> gates_matrix_init;
+    const std::vector<FieldT> PI_selector_vector{1, 0, 0, 0, 0};
+    for (size_t i = 0; i < num_public_inputs; ++i) {
+        gates_matrix_init.push_back(PI_selector_vector);
+    }
+    return gates_matrix_init;
+}
+
+// Extract the values corresponing to the public inputs from the
+// witness using the respective wire indices passed as input. Those
+// values are passed on to the verifier together with the proof.
+template<typename ppT>
+std::vector<libff::Fr<ppT>> plonk_public_input_values_from_indices(
+    const std::vector<libff::Fr<ppT>> &witness,
+    const std::vector<size_t> &PI_wire_indices)
+{
+    assert(PI_wire_indices.size() <= witness.size());
+
+    using FieldT = libff::Fr<ppT>;
+    std::vector<FieldT> PI_value_list;
+    for (size_t i = 0; i < PI_wire_indices.size(); i++) {
+        assert(PI_wire_indices[i] < witness.size());
+        FieldT PI_value = witness[PI_wire_indices[i]];
+        PI_value_list.push_back(PI_value);
+    }
+    return PI_value_list;
+}
+
+template<typename ppT>
+std::vector<libff::Fr<ppT>> plonk_public_input_values(
+    const std::vector<libff::Fr<ppT>> &witness, const size_t &num_public_inputs)
+{
+    assert(num_public_inputs <= witness.size());
+    return std::vector<libff::Fr<ppT>>(
+        witness.begin(), witness.begin() + num_public_inputs);
 }
 
 } // namespace libsnark
