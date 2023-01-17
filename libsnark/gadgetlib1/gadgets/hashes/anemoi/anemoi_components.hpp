@@ -241,23 +241,26 @@ template<typename ppT, size_t NumStateColumns_L> class anemoi_permutation_mds;
 
 template<typename ppT> class anemoi_permutation_mds<ppT, 2>
 {
+    using anemoi_mds_matrix_t = std::array<std::array<libff::Fr<ppT>, 2>, 2>;
+
 public:
-    static std::array<std::array<libff::Fr<ppT>, 2>, 2> permutation_mds(
-        const libff::Fr<ppT> g);
+    static anemoi_mds_matrix_t permutation_mds(const libff::Fr<ppT> g);
 };
 
 template<typename ppT> class anemoi_permutation_mds<ppT, 3>
 {
+    using anemoi_mds_matrix_t = std::array<std::array<libff::Fr<ppT>, 3>, 3>;
+
 public:
-    static std::array<std::array<libff::Fr<ppT>, 3>, 3> permutation_mds(
-        const libff::Fr<ppT> g);
+    static anemoi_mds_matrix_t permutation_mds(const libff::Fr<ppT> g);
 };
 
 template<typename ppT> class anemoi_permutation_mds<ppT, 4>
 {
+    using anemoi_mds_matrix_t = std::array<std::array<libff::Fr<ppT>, 4>, 4>;
+
 public:
-    static std::array<std::array<libff::Fr<ppT>, 4>, 4> permutation_mds(
-        const libff::Fr<ppT> g);
+    static anemoi_mds_matrix_t permutation_mds(const libff::Fr<ppT> g);
 };
 
 } // namespace libsnark
