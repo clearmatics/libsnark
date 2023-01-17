@@ -500,12 +500,57 @@ anemoi_permutation_round_prime_field_gadget<
         Z_right.push_back(X_right[i] + D[i]);
     }
 
-    if (ncols > 1) {
-        M_matrix = anemoi_permutation_mds<ppT, ncols>::permutation_mds(g);
-    } else { // ncols == 1
-        // the MDS matrix for a state with 1 column (L=1) is the same as
-        // for a state with 2 columns (L=2)
-        M_matrix = anemoi_permutation_mds<ppT, 2>::permutation_mds(g);
+    // Note 1: the sequence of if-s over ncols \in {1,2,3,4} that
+    // follows is due to the fact that the specialized class
+    // anemoi_permutation_mds<ppT, n> only accepts const size_t n =
+    // <value>, but it would not accept const size_t =
+    // NumStateColumns_L. TODO: fix using a more efficient approach.
+
+    // Note 2: the for-loop within each if(ncols == <value>), copies
+    // the 2d array returned by anemoi_permutation_mds<ppT,
+    // n>::permutation_mds(g) into a 2d vector which is the type of
+    // the class member M_matrix. TODO: fix this by either using a
+    // more efficient approach or changing the type of M_matrix to be
+    // of type 2d array.
+
+    // Note 3: for matrix-vector multiplication we currently provide
+    // fast routines for dimensions NumStateColumns_L \in {2,3,4} that
+    // only accept g and a vector as input (the
+    // anemoi_fast_multiply_mds_* functions). Therefore the class
+    // member M_matrix is not used at the moment. It is included for
+    // future use for 2 foreseeable scenarios: 1) an instance of
+    // Anemoi with NumStateColumns_L > 4 for which we do not have a
+    // fast multiplication routine and 2) keep the possibility to
+    // still use normal matrix-vector multiplication if one wants to
+
+    // the MDS matrix for a state with 1 column (L=1) is the same as
+    // for a state with 2 columns (L=2)
+    if ((ncols == 1) || (ncols == 2)) {
+        const size_t n = 2;
+        std::array<std::array<FieldT, n>, n> M =
+            anemoi_permutation_mds<ppT, n>::permutation_mds(g);
+        for (size_t i = 0; i < n; ++i) {
+            std::vector<FieldT> v(std::begin(M[i]), std::end(M[i]));
+            M_matrix.push_back(v);
+        }
+    }
+    if (ncols == 3) {
+        const size_t n = 3;
+        std::array<std::array<FieldT, n>, n> M =
+            anemoi_permutation_mds<ppT, n>::permutation_mds(g);
+        for (size_t i = 0; i < n; ++i) {
+            std::vector<FieldT> v(std::begin(M[i]), std::end(M[i]));
+            M_matrix.push_back(v);
+        }
+    }
+    if (ncols == 4) {
+        const size_t n = 4;
+        std::array<std::array<FieldT, n>, n> M =
+            anemoi_permutation_mds<ppT, n>::permutation_mds(g);
+        for (size_t i = 0; i < n; ++i) {
+            std::vector<FieldT> v(std::begin(M[i]), std::end(M[i]));
+            M_matrix.push_back(v);
+        }
     }
 
     // multiply by matrix M

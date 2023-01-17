@@ -8,6 +8,7 @@
 
 #include "libsnark/gadgetlib1/gadgets/hashes/anemoi/tests/anemoi_outputs.hpp"
 
+#include <array>
 #include <gtest/gtest.h>
 #include <libff/algebra/curves/bls12_381/bls12_381_init.hpp>
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
