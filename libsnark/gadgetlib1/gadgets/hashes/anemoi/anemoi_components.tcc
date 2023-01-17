@@ -582,6 +582,20 @@ void anemoi_permutation_round_prime_field_gadget<
     }
 }
 
+// TODO: consdier applying the following changes to all
+// anemoi_permutation_mds::permutation_mds functions in order to
+// remove the input g parameter:
+//
+// - extract the ppT part from the anemoi_parameters class
+//
+// - use the ppT part from the anemoi_parameters class to implicitly
+//   get the value of g as
+//   anemoi_parameters<ppT>::multiplicative_generator_g;
+//
+// - remove the input parameter const libff::Fr<ppT> g from all
+//   permutation_mds functions and extract g as above
+//
+// see: https://github.com/clearmatics/libsnark/pull/102#discussion_r1071444422
 template<typename ppT>
 std::array<std::array<libff::Fr<ppT>, 2>, 2> anemoi_permutation_mds<ppT, 2>::
     permutation_mds(const libff::Fr<ppT> g)
