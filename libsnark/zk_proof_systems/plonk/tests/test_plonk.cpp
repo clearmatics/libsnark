@@ -8,6 +8,7 @@
 
 #include "libsnark/zk_proof_systems/plonk/prover.hpp"
 #include "libsnark/zk_proof_systems/plonk/tests/bls12_381_test_vector_transcript_hasher.hpp"
+#include "libsnark/zk_proof_systems/plonk/tests/dummy_transcript_hasher.hpp"
 #include "libsnark/zk_proof_systems/plonk/verifier.hpp"
 
 #include <algorithm>
@@ -1148,9 +1149,10 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
 // ( x  y  /  y  /  x)
 // (a1 a2 b1 b2 c1 c2) -> (1 2 3 4 5 6)
 // (c2 b2 b1 a2 c1 a1) -> (6 4 3 2 5 1)
-template<typename ppT, class transcript_hasher>
-void test_plonk_prepare_gates_matrix()
+template<typename ppT, class transcript_hasher> void test_plonk_simple_circuit()
 {
+    ppT::init_public_params();
+
     using Field = libff::Fr<ppT>;
 
     // 0 Arithmetization of test circuit y^2 = x mod r
@@ -1337,57 +1339,70 @@ void test_plonk_constants_k1_k2_bls12_381()
     }
 }
 
-TEST(TestPlonkConstantsK1K2, Edwards)
+TEST(TestPlonk, Edwards)
 {
     test_plonk_constants_k1_k2<libff::edwards_pp>();
     test_plonk_random_constants_k1_k2<libff::edwards_pp>();
+    // TODO add test_plonk_simple_circuit
 }
 
-TEST(TestPlonkConstantsK1K2, Mnt4)
-{
-    test_plonk_constants_k1_k2<libff::mnt4_pp>();
-    test_plonk_random_constants_k1_k2<libff::mnt4_pp>();
-}
-
-TEST(TestPlonkConstantsK1K2, Mnt6)
-{
-    test_plonk_constants_k1_k2<libff::mnt6_pp>();
-    test_plonk_random_constants_k1_k2<libff::mnt6_pp>();
-}
-
-TEST(TestPlonkConstantsK1K2, BW6_761)
-{
-    test_plonk_constants_k1_k2<libff::bw6_761_pp>();
-    test_plonk_random_constants_k1_k2<libff::bw6_761_pp>();
-}
-
-TEST(TestPlonkConstantsK1K2, BN128)
+TEST(TestPlonk, BN128)
 {
     test_plonk_constants_k1_k2<libff::bn128_pp>();
     test_plonk_random_constants_k1_k2<libff::bn128_pp>();
+    // TODO add test_plonk_simple_circuit
 }
 
-TEST(TestPlonkConstantsK1K2, ALT_BN128)
+TEST(TestPlonk, Mnt4)
+{
+    test_plonk_constants_k1_k2<libff::mnt4_pp>();
+    test_plonk_random_constants_k1_k2<libff::mnt4_pp>();
+    test_plonk_simple_circuit<
+        libff::mnt4_pp,
+        dummy_transcript_hasher<libff::mnt4_pp>>();
+}
+
+TEST(TestPlonk, Mnt6)
+{
+    test_plonk_constants_k1_k2<libff::mnt6_pp>();
+    test_plonk_random_constants_k1_k2<libff::mnt6_pp>();
+    test_plonk_simple_circuit<
+        libff::mnt6_pp,
+        dummy_transcript_hasher<libff::mnt6_pp>>();
+}
+
+TEST(TestPlonk, BW6_761)
+{
+    test_plonk_constants_k1_k2<libff::bw6_761_pp>();
+    test_plonk_random_constants_k1_k2<libff::bw6_761_pp>();
+    test_plonk_simple_circuit<
+        libff::bw6_761_pp,
+        dummy_transcript_hasher<libff::bw6_761_pp>>();
+}
+
+TEST(TestPlonk, ALT_BN128)
 {
     test_plonk_constants_k1_k2<libff::alt_bn128_pp>();
     test_plonk_random_constants_k1_k2<libff::alt_bn128_pp>();
+    test_plonk_simple_circuit<
+        libff::alt_bn128_pp,
+        dummy_transcript_hasher<libff::alt_bn128_pp>>();
 }
 
-TEST(TestPlonkConstantsK1K2, BLS12_377)
+TEST(TestPlonk, BLS12_377)
 {
     test_plonk_constants_k1_k2<libff::bls12_377_pp>();
     test_plonk_random_constants_k1_k2<libff::bls12_377_pp>();
-}
-
-TEST(TestPlonkConstantsK1K2, BLS12_381)
-{
-    test_plonk_constants_k1_k2<libff::bls12_381_pp>();
-    test_plonk_random_constants_k1_k2<libff::bls12_381_pp>();
-    test_plonk_constants_k1_k2_bls12_381();
+    test_plonk_simple_circuit<
+        libff::bls12_377_pp,
+        dummy_transcript_hasher<libff::bls12_377_pp>>();
 }
 
 TEST(TestPlonk, BLS12_381)
 {
+    test_plonk_constants_k1_k2<libff::bls12_381_pp>();
+    test_plonk_random_constants_k1_k2<libff::bls12_381_pp>();
+    test_plonk_constants_k1_k2_bls12_381();
     test_plonk_srs<libff::bls12_381_pp>();
     test_plonk_prover_rounds<
         libff::bls12_381_pp,
@@ -1402,10 +1417,13 @@ TEST(TestPlonk, BLS12_381)
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
     test_plonk_gates_matrix_transpose<libff::bls12_381_pp>();
-    test_plonk_prepare_gates_matrix<
+    test_plonk_prepare_gates_matrix<libff::bls12_381_pp>();
+    test_plonk_simple_circuit<
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
-    test_plonk_prepare_gates_matrix<libff::bls12_381_pp>();
+    test_plonk_simple_circuit<
+        libff::bls12_381_pp,
+        dummy_transcript_hasher<libff::bls12_381_pp>>();
 }
 
 } // namespace libsnark
