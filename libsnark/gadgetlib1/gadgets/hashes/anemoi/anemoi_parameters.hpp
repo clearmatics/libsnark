@@ -36,6 +36,14 @@ namespace libsnark
 /// - quad_exponent    : quadratic exponent applied in the mappings Q_gamma,
 ///                      Q_delta. Note that quad_exponent=2 for prime fields and
 ///                      quad_exponent=3 for binary fields
+/// - C_constants_col_"num_cols", D_constants_col_"num_cols" : the C
+///                      and D round constants of the Anemoi
+///                      permutation for a state with 1,2,3 or 4
+///                      columns with the string placeholder
+///                      "num_cols" taking the values resp. "one",
+///                      "two", "three" or "four". See [BBCPSVW22],
+///                      Sect. 5.1 for more details on the C,D
+///                      constants.
 ///
 /// The values for the above parameters for each supported curve were generated
 /// with the following Sage script scripts/anemoi-hash/parameters.sage .
