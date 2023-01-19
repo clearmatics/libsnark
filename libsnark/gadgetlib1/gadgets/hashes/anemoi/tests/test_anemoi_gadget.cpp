@@ -10,8 +10,14 @@
 
 #include <array>
 #include <gtest/gtest.h>
+#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+#include <libff/algebra/curves/bls12_377/bls12_377_pp.hpp>
 #include <libff/algebra/curves/bls12_381/bls12_381_init.hpp>
 #include <libff/algebra/curves/bls12_381/bls12_381_pp.hpp>
+#include <libff/algebra/curves/bn128/bn128_pp.hpp>
+#include <libff/algebra/curves/bw6_761/bw6_761_pp.hpp>
+#include <libff/algebra/curves/mnt/mnt4/mnt4_pp.hpp>
+#include <libff/algebra/curves/mnt/mnt6/mnt6_pp.hpp>
 #include <libff/common/default_types/ec_pp.hpp>
 #include <libff/common/profiling.hpp>
 #include <libff/common/utils.hpp>
@@ -360,10 +366,72 @@ template<typename ppT> void test_for_curve()
     test_anemoi_permutation_mds<ppT, parameters>();
 }
 
+template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
+void test_curve_parameters()
+{
+    printf("g = %zd\n", parameters::multiplicative_generator_g);
+    printf("alpha = %zd\n", parameters::alpha);
+    printf("beta = %zd\n", parameters::beta);
+    printf("gamma = %zd\n", parameters::gamma);
+    printf("quad_exponent = %zd\n", parameters::quad_exponent);
+    printf("alpha_inv = ");
+    parameters::alpha_inv.print();
+    printf("delta = ");
+    parameters::delta.print();
+}
+
 TEST(TestAnemoiGadget, BLS12_381) { test_for_curve<libff::bls12_381_pp>(); }
+
+TEST(TestCurveParameters, BLS12_381)
+{
+    using parameters = anemoi_parameters<libff::bls12_381_pp>;
+    test_curve_parameters<libff::bls12_381_pp, parameters>();
+}
+
+TEST(TestCurveParameters, BLS12_377)
+{
+    using parameters = anemoi_parameters<libff::bls12_377_pp>;
+    test_curve_parameters<libff::bls12_377_pp, parameters>();
+}
+
+TEST(TestCurveParameters, MNT4)
+{
+    using parameters = anemoi_parameters<libff::mnt4_pp>;
+    test_curve_parameters<libff::mnt4_pp, parameters>();
+}
+
+TEST(TestCurveParameters, MNT6)
+{
+    using parameters = anemoi_parameters<libff::mnt6_pp>;
+    test_curve_parameters<libff::mnt6_pp, parameters>();
+}
+
+TEST(TestCurveParameters, BW6_761)
+{
+    using parameters = anemoi_parameters<libff::bw6_761_pp>;
+    test_curve_parameters<libff::bw6_761_pp, parameters>();
+}
+
+TEST(TestCurveParameters, BN128)
+{
+    using parameters = anemoi_parameters<libff::bn128_pp>;
+    test_curve_parameters<libff::bn128_pp, parameters>();
+}
+
+TEST(TestCurveParameters, ALT_BN128)
+{
+    using parameters = anemoi_parameters<libff::alt_bn128_pp>;
+    test_curve_parameters<libff::alt_bn128_pp, parameters>();
+}
 
 int main(int argc, char **argv)
 {
+    libff::mnt4_pp::init_public_params();
+    libff::mnt6_pp::init_public_params();
+    libff::bw6_761_pp::init_public_params();
+    libff::bn128_pp::init_public_params();
+    libff::alt_bn128_pp::init_public_params();
+    libff::bls12_377_pp::init_public_params();
     libff::bls12_381_pp::init_public_params();
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

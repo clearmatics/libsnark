@@ -41,32 +41,14 @@ namespace libsnark
 /// with the following Sage script scripts/anemoi-hash/parameters.sage .
 template<typename ppT> class anemoi_parameters;
 
-template<> class anemoi_parameters<libff::bls12_381_pp>
-{
-public:
-    using ppT = libff::bls12_381_pp;
-    using FieldT = libff::Fr<ppT>;
-    using BignumT = libff::bigint<FieldT::num_limbs>;
-    static const bool b_prime_field = false;
-    static constexpr size_t multiplicative_generator_g = 7;
-    static constexpr size_t alpha = 5;
-    static constexpr size_t beta = multiplicative_generator_g;
-    static constexpr size_t gamma = 0;
-    static constexpr size_t quad_exponent = 2;
-    static const BignumT alpha_inv;
-    static const BignumT delta;
-    static const std::vector<std::vector<BignumT>> C_constants_col_one;
-    static const std::vector<std::vector<BignumT>> D_constants_col_one;
-    static const std::vector<std::vector<BignumT>> C_constants_col_two;
-    static const std::vector<std::vector<BignumT>> D_constants_col_two;
-    static const std::vector<std::vector<BignumT>> C_constants_col_three;
-    static const std::vector<std::vector<BignumT>> D_constants_col_three;
-    static const std::vector<std::vector<BignumT>> C_constants_col_four;
-    static const std::vector<std::vector<BignumT>> D_constants_col_four;
-};
-
 } // namespace libsnark
 
-#include "libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_parameters.tcc"
+#include "libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_parameters_alt_bn128.tcc"
+#include "libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_parameters_bls12_377.tcc"
+#include "libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_parameters_bls12_381.tcc"
+#include "libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_parameters_bn128.tcc"
+#include "libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_parameters_bw6_761.tcc"
+#include "libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_parameters_mnt4.tcc"
+#include "libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_parameters_mnt6.tcc"
 
 #endif // LIBSNARK_GADGETLIB1_GADGETS_HASHES_ANEMOI_PARAMETERS_HPP_
