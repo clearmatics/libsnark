@@ -90,7 +90,6 @@ void flystel_Q_prime_field_gadget<ppT>::generate_r1cs_witness()
 //
 // where A0=(0, beta, 0, 0), B0=(0, 1, 0, 0), C0=(0, 0, 1, 0) and
 // A1=(0, 0, 1, 0), B1=(0, 1, 0, 0), C1=(-gamma, 0, 0, 1)
-
 template<typename ppT>
 flystel_Q_binary_field_gadget<ppT>::flystel_Q_binary_field_gadget(
     protoboard<libff::Fr<ppT>> &pb,
@@ -321,37 +320,6 @@ void flystel_prime_field_gadget<ppT, parameters>::generate_r1cs_witness()
     this->pb.lc_val(output_y1) = input_x1_value - this->pb.val(a1);
 }
 
-template<typename ppT, size_t NumStateColumns_L>
-std::vector<std::vector<libff::Fr<ppT>>> anemoi_permutation_mds(
-    const libff::Fr<ppT> g)
-{
-    static_assert(
-        (NumStateColumns_L == 1) || (NumStateColumns_L == 2) ||
-            (NumStateColumns_L == 3) || (NumStateColumns_L == 4),
-        "NumStateColumns_L must be 2,3 or 4");
-
-    const libff::Fr<ppT> g2 = g * g;
-
-    // allocate matrix M of dimension LxL
-    std::vector<std::vector<libff::Fr<ppT>>> M;
-    M.resize(NumStateColumns_L, std::vector<libff::Fr<ppT>>(NumStateColumns_L));
-
-    if (NumStateColumns_L == 2) {
-        M = {{1, g}, {g, g2 + 1}};
-    }
-    if (NumStateColumns_L == 3) {
-        M = {{g + 1, 1, g + 1}, {1, 1, g}, {g, 1, 1}};
-    }
-    if (NumStateColumns_L == 4) {
-        M = {
-            {1, g + 1, g, g},
-            {g2, g + g2, g + 1, g + g + 1},
-            {g2, g2, 1, g + 1},
-            {g + 1, g + g + 1, g, g + 1}};
-    }
-    return M;
-}
-
 // Fast matrix-vector multiplication algorithm for Anemoi MDS layer with \ell =
 // 1,2 for inputs of type "linear combination of FieldT elements"
 template<typename ppT>
@@ -532,12 +500,57 @@ anemoi_permutation_round_prime_field_gadget<
         Z_right.push_back(X_right[i] + D[i]);
     }
 
-    if (ncols > 1) {
-        M_matrix = anemoi_permutation_mds<ppT, ncols>(g);
-    } else { // ncols == 1
-        // the MDS matrix for a state with 1 column (L=1) is the same as
-        // for a state with 2 columns (L=2)
-        M_matrix = anemoi_permutation_mds<ppT, 2>(g);
+    // Note 1: the sequence of if-s over ncols \in {1,2,3,4} that
+    // follows is due to the fact that the specialized class
+    // anemoi_permutation_mds<ppT, n> only accepts const size_t n =
+    // <value>, but it would not accept const size_t =
+    // NumStateColumns_L. TODO: fix using a more efficient approach.
+
+    // Note 2: the for-loop within each if(ncols == <value>), copies
+    // the 2d array returned by anemoi_permutation_mds<ppT,
+    // n>::permutation_mds(g) into a 2d vector which is the type of
+    // the class member M_matrix. TODO: fix this by either using a
+    // more efficient approach or changing the type of M_matrix to be
+    // of type 2d array.
+
+    // Note 3: for matrix-vector multiplication we currently provide
+    // fast routines for dimensions NumStateColumns_L \in {2,3,4} that
+    // only accept g and a vector as input (the
+    // anemoi_fast_multiply_mds_* functions). Therefore the class
+    // member M_matrix is not used at the moment. It is included for
+    // future use for 2 foreseeable scenarios: 1) an instance of
+    // Anemoi with NumStateColumns_L > 4 for which we do not have a
+    // fast multiplication routine and 2) keep the possibility to
+    // still use normal matrix-vector multiplication if one wants to
+
+    // the MDS matrix for a state with 1 column (L=1) is the same as
+    // for a state with 2 columns (L=2)
+    if ((ncols == 1) || (ncols == 2)) {
+        const size_t n = 2;
+        std::array<std::array<FieldT, n>, n> M =
+            anemoi_permutation_mds<ppT, n>::permutation_mds(g);
+        for (size_t i = 0; i < n; ++i) {
+            std::vector<FieldT> v(std::begin(M[i]), std::end(M[i]));
+            M_matrix.push_back(v);
+        }
+    }
+    if (ncols == 3) {
+        const size_t n = 3;
+        std::array<std::array<FieldT, n>, n> M =
+            anemoi_permutation_mds<ppT, n>::permutation_mds(g);
+        for (size_t i = 0; i < n; ++i) {
+            std::vector<FieldT> v(std::begin(M[i]), std::end(M[i]));
+            M_matrix.push_back(v);
+        }
+    }
+    if (ncols == 4) {
+        const size_t n = 4;
+        std::array<std::array<FieldT, n>, n> M =
+            anemoi_permutation_mds<ppT, n>::permutation_mds(g);
+        for (size_t i = 0; i < n; ++i) {
+            std::vector<FieldT> v(std::begin(M[i]), std::end(M[i]));
+            M_matrix.push_back(v);
+        }
     }
 
     // multiply by matrix M
@@ -612,6 +625,52 @@ void anemoi_permutation_round_prime_field_gadget<
         this->pb.val(Y_left_output[i]) = this->pb.val(Flystel[i].output_y0);
         this->pb.val(Y_right_output[i]) = this->pb.val(Flystel[i].output_y1);
     }
+}
+
+// TODO: consdier applying the following changes to all
+// anemoi_permutation_mds::permutation_mds functions in order to
+// remove the input g parameter:
+//
+// - extract the ppT part from the anemoi_parameters class
+//
+// - use the ppT part from the anemoi_parameters class to implicitly
+//   get the value of g as
+//   anemoi_parameters<ppT>::multiplicative_generator_g;
+//
+// - remove the input parameter const libff::Fr<ppT> g from all
+//   permutation_mds functions and extract g as above
+//
+// see: https://github.com/clearmatics/libsnark/pull/102#discussion_r1071444422
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 2>, 2> anemoi_permutation_mds<ppT, 2>::
+    permutation_mds(const libff::Fr<ppT> g)
+{
+    using FieldT = libff::Fr<ppT>;
+    const FieldT g2 = g * g;
+    anemoi_mds_matrix_t M = {{{1, g}, {g, g2 + 1}}};
+    return M;
+}
+
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 3>, 3> anemoi_permutation_mds<ppT, 3>::
+    permutation_mds(const libff::Fr<ppT> g)
+{
+    anemoi_mds_matrix_t M = {{{g + 1, 1, g + 1}, {1, 1, g}, {g, 1, 1}}};
+    return M;
+}
+
+template<typename ppT>
+std::array<std::array<libff::Fr<ppT>, 4>, 4> anemoi_permutation_mds<ppT, 4>::
+    permutation_mds(const libff::Fr<ppT> g)
+{
+    using FieldT = libff::Fr<ppT>;
+    const FieldT g2 = g * g;
+    anemoi_mds_matrix_t M = {
+        {{1, g + 1, g, g},
+         {g2, g + g2, g + 1, g + g + 1},
+         {g2, g2, 1, g + 1},
+         {g + 1, g + g + 1, g, g + 1}}};
+    return M;
 }
 
 } // namespace libsnark
