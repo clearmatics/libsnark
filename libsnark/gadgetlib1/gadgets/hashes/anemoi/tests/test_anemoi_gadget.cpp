@@ -237,7 +237,9 @@ template<
     typename ppT,
     size_t NumStateColumns_L,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
-void test_anemoi_permutation_round_prime_field_gadget()
+void test_anemoi_permutation_round_prime_field_gadget(
+    expected_round_values_fn_t *expected_round_values_fn)
+
 {
     using FieldT = libff::Fr<ppT>;
 
@@ -293,12 +295,12 @@ void test_anemoi_permutation_round_prime_field_gadget()
     // generate witness for the given input
     d.generate_r1cs_witness();
 
-    std::vector<FieldT> Y_expect =
-        anemoi_expected_output_one_round(NumStateColumns_L);
-
-    for (size_t i = 0; i < NumStateColumns_L; i++) {
-        ASSERT_EQ(Y_expect[i], pb.val(Y_left[i]));
-        ASSERT_EQ(Y_expect[NumStateColumns_L + i], pb.val(Y_right[i]));
+    if (expected_round_values_fn) {
+        Y_expect = expected_round_values_fn(NumStateColumns_L);
+        for (size_t i = 0; i < NumStateColumns_L; i++) {
+            ASSERT_EQ(Y_expect[i], pb.val(Y_left[i]));
+            ASSERT_EQ(Y_expect[NumStateColumns_L + i], pb.val(Y_right[i]));
+        }
     }
 
     ASSERT_TRUE(pb.is_satisfied());
@@ -345,11 +347,8 @@ void test_anemoi_permutation_mds()
     libff::print_time("anemoi_permutation_mds tests successful");
 }
 
-template<typename ppT> void test_for_curve()
+void test_intermediate_gadgetss_bls12_381()
 {
-    // Execute all tests for the given curve.
-
-    ppT::init_public_params();
     // Use debug parameters with small values for the small gadgets
     using parameters_debug = parameters_debug_bls12_381;
     test_flystel_Q_gamma_prime_field_gadget<ppT, parameters_debug>();
@@ -357,18 +356,35 @@ template<typename ppT> void test_for_curve()
     test_flystel_E_power_five_gadget<ppT>();
     test_flystel_E_root_five_gadget<ppT, parameters_debug>();
     test_flystel_prime_field_gadget<ppT, parameters_debug>();
+}
+
+template<typename ppT>
+using expected_round_values_fn_t = std::function < size_t,
+      std::vector<libff::Fr<ppT>>;
+
+template<typename ppT>
+void test_for_curve(
+    expected_round_values_fn_t<ppT> *expected_round_values_fn = 0)
+{
+    // Execute all tests for the given curve.
+
     // Use the original parameters for the full permutation
+
     using parameters = anemoi_parameters<ppT>;
-    test_anemoi_permutation_round_prime_field_gadget<ppT, 1, parameters>();
-    test_anemoi_permutation_round_prime_field_gadget<ppT, 2, parameters>();
-    test_anemoi_permutation_round_prime_field_gadget<ppT, 3, parameters>();
-    test_anemoi_permutation_round_prime_field_gadget<ppT, 4, parameters>();
+    test_anemoi_permutation_round_prime_field_gadget<ppT, 1, parameters>(
+        expected_round_values_fn);
+    test_anemoi_permutation_round_prime_field_gadget<ppT, 2, parameters>(
+        expected_round_values_fn);
+    test_anemoi_permutation_round_prime_field_gadget<ppT, 3, parameters>(
+        expected_round_values_fn);
+    test_anemoi_permutation_round_prime_field_gadget<ppT, 4, parameters>(
+        expected_round_values_fn);
     test_anemoi_permutation_mds<ppT, parameters>();
 }
 
-template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
-void test_curve_parameters()
+template<typename ppT> void test_curve_parameters()
 {
+    using parameters = anemoi_parameters<ppT>;
     printf("g = %zd\n", parameters::multiplicative_generator_g);
     printf("alpha = %zd\n", parameters::alpha);
     printf("beta = %zd\n", parameters::beta);
@@ -380,12 +396,14 @@ void test_curve_parameters()
     parameters::delta.print();
 }
 
-TEST(TestAnemoiGadget, BLS12_381) { test_for_curve<libff::bls12_381_pp>(); }
+TEST(TestAnemoiGadget, BLS12_381)
+{
+    test_for_curve<libff::bls12_381_pp>(&anemoi_expected_output_one_round);
+}
 
 TEST(TestCurveParameters, BLS12_381)
 {
-    using parameters = anemoi_parameters<libff::bls12_381_pp>;
-    test_curve_parameters<libff::bls12_381_pp, parameters>();
+    test_curve_parameters<libff::bls12_381_pp>();
 }
 
 TEST(TestCurveParameters, BLS12_377)
@@ -415,12 +433,14 @@ TEST(TestCurveParameters, BW6_761)
 TEST(TestCurveParameters, BN128)
 {
     using parameters = anemoi_parameters<libff::bn128_pp>;
+    test_for_curve<libff : bn128_pp>();
     test_curve_parameters<libff::bn128_pp, parameters>();
 }
 
 TEST(TestCurveParameters, ALT_BN128)
 {
     using parameters = anemoi_parameters<libff::alt_bn128_pp>;
+    test_for_curve<libff::bn128_pp>();
     test_curve_parameters<libff::alt_bn128_pp, parameters>();
 }
 
