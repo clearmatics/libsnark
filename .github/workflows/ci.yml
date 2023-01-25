@@ -32,7 +32,7 @@ jobs:
     - name: install-dependencies-macos
       if: matrix.os == 'macos-11'
       run: |
-        brew link llvm@14
+        brew link llvm@15
         which clang
         clang --version
         brew install ${MACOS_BREW_PACKAGES}
