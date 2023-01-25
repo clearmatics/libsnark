@@ -1,0 +1,9 @@
+<map id="gadgetlib2::R1P_LooseMUX_Gadget" name="gadgetlib2::R1P_LooseMUX_Gadget">
+<area shape="rect" id="node1" title=" " alt="" coords="548,91,748,132"/>
+<area shape="rect" id="node2" href="$classgadgetlib2_1_1LooseMUX__GadgetBase.html" title=" " alt="" coords="232,5,400,47"/>
+<area shape="rect" id="node3" href="$classgadgetlib2_1_1Gadget.html" title=" " alt="" coords="16,49,163,75"/>
+<area shape="rect" id="node4" href="$classgadgetlib2_1_1R1P__Gadget.html" title=" " alt="" coords="227,71,405,98"/>
+<area shape="rect" id="node5" href="$classgadgetlib2_1_1Variable.html" title="A formal variable, field agnostic." alt="" coords="240,122,392,149"/>
+<area shape="rect" id="node6" href="$classgadgetlib2_1_1VariableArray.html" title="VariableArray." alt="" coords="223,173,409,199"/>
+<area shape="rect" id="node7" title=" " alt="" coords="5,173,173,199"/>
+</map>

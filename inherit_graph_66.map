@@ -1,0 +1,12 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classlibsnark_1_1gadget.html" title=" " alt="" coords="5,275,172,316"/>
+<area shape="rect" id="node2" href="$classlibsnark_1_1G1__checker__gadget.html" title=" " alt="" coords="233,5,390,47"/>
+<area shape="rect" id="node3" href="$classlibsnark_1_1G1__variable.html" title=" " alt="" coords="231,71,391,112"/>
+<area shape="rect" id="node4" href="$classlibsnark_1_1G2__checker__gadget.html" title=" " alt="" coords="233,136,390,177"/>
+<area shape="rect" id="node5" href="$classlibsnark_1_1G2__variable.html" title=" " alt="" coords="231,201,391,243"/>
+<area shape="rect" id="node6" href="$classlibsnark_1_1bls12__377__G1__membership__check__gadget.html" title=" " alt="" coords="221,267,402,323"/>
+<area shape="rect" id="node7" href="$classlibsnark_1_1bls12__377__G2__membership__check__gadget.html" title=" " alt="" coords="221,347,402,403"/>
+<area shape="rect" id="node8" href="$classlibsnark_1_1G2__add__gadget.html" title="Gadget to add 2 G2 points." alt="" coords="220,428,403,469"/>
+<area shape="rect" id="node9" href="$classlibsnark_1_1G2__dbl__gadget.html" title="Double a G2 point." alt="" coords="222,493,401,535"/>
+<area shape="rect" id="node10" href="$classlibsnark_1_1G2__equality__gadget.html" title="Check equality of 2 G2 points." alt="" coords="231,559,391,600"/>
+</map>

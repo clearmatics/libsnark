@@ -1,0 +1,59 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classlibsnark_1_1gadget.html" title=" " alt="" coords="5,2000,172,2041"/>
+<area shape="rect" id="node2" href="$classlibsnark_1_1G2__add__gadget.html" title=" " alt="" coords="259,5,442,47"/>
+<area shape="rect" id="node3" href="$classlibsnark_1_1add__variable__and__variable__or__identity.html" title=" " alt="" coords="229,71,472,141"/>
+<area shape="rect" id="node4" href="$classlibsnark_1_1add__variable__or__identity.html" title=" " alt="" coords="244,165,457,236"/>
+<area shape="rect" id="node5" href="$classlibsnark_1_1bls12__377__ate__add__gadget.html" title=" " alt="" coords="257,260,444,301"/>
+<area shape="rect" id="node6" href="$classlibsnark_1_1bls12__377__ate__compute__f__ell__P.html" title=" " alt="" coords="269,326,433,382"/>
+<area shape="rect" id="node7" href="$classlibsnark_1_1bls12__377__ate__dbl__gadget.html" title=" " alt="" coords="259,407,442,448"/>
+<area shape="rect" id="node8" href="$classlibsnark_1_1bls12__377__e__over__e__miller__loop__gadget.html" title=" " alt="" coords="267,473,435,529"/>
+<area shape="rect" id="node9" href="$classlibsnark_1_1bls12__377__e__times__e__times__e__over__e__miller__loop__gadget.html" title=" " alt="" coords="239,553,462,609"/>
+<area shape="rect" id="node10" href="$classlibsnark_1_1bls12__377__exp__by__z__gadget.html" title=" " alt="" coords="253,633,449,675"/>
+<area shape="rect" id="node11" href="$classlibsnark_1_1bls12__377__final__exp__first__part__gadget.html" title=" " alt="" coords="274,699,427,755"/>
+<area shape="rect" id="node12" href="$classlibsnark_1_1bls12__377__final__exp__gadget.html" title=" " alt="" coords="253,780,448,821"/>
+<area shape="rect" id="node13" href="$classlibsnark_1_1bls12__377__final__exp__last__part__gadget.html" title=" " alt="" coords="275,846,427,902"/>
+<area shape="rect" id="node14" href="$classlibsnark_1_1bls12__377__G1__precompute__gadget.html" title=" " alt="" coords="259,926,443,982"/>
+<area shape="rect" id="node15" href="$classlibsnark_1_1bls12__377__G2__precompute__gadget.html" title=" " alt="" coords="259,1006,443,1062"/>
+<area shape="rect" id="node16" href="$classlibsnark_1_1bls12__377__miller__loop__gadget.html" title=" " alt="" coords="273,1086,428,1142"/>
+<area shape="rect" id="node17" href="$classlibsnark_1_1check__e__equals__e__gadget.html" title=" " alt="" coords="258,1167,443,1208"/>
+<area shape="rect" id="node18" href="$classlibsnark_1_1check__e__equals__ee__gadget.html" title=" " alt="" coords="258,1232,443,1273"/>
+<area shape="rect" id="node19" href="$classlibsnark_1_1check__e__equals__eee__gadget.html" title=" " alt="" coords="258,1297,443,1339"/>
+<area shape="rect" id="node20" href="$classlibsnark_1_1dbl__variable__or__identity.html" title=" " alt="" coords="239,1363,462,1419"/>
+<area shape="rect" id="node21" href="$classlibsnark_1_1G1__add__gadget.html" title=" " alt="" coords="259,1444,442,1485"/>
+<area shape="rect" id="node22" href="$classlibsnark_1_1G1__checker__gadget.html" title=" " alt="" coords="272,1509,429,1551"/>
+<area shape="rect" id="node23" href="$classlibsnark_1_1G1__dbl__gadget.html" title=" " alt="" coords="261,1575,440,1616"/>
+<area shape="rect" id="node24" href="$classlibsnark_1_1G1__multiscalar__mul__gadget.html" title=" " alt="" coords="261,1640,441,1681"/>
+<area shape="rect" id="node25" href="$classlibsnark_1_1G1__variable.html" title="Gadget that represents a G1 variable." alt="" coords="271,1705,431,1747"/>
+<area shape="rect" id="node26" href="$classlibsnark_1_1G1__variable__selector__gadget.html" title=" " alt="" coords="257,1771,444,1812"/>
+<area shape="rect" id="node27" href="$classlibsnark_1_1G2__checker__gadget.html" title="Gadget that creates constraints for the validity of a G2 variable." alt="" coords="272,1836,429,1877"/>
+<area shape="rect" id="node28" href="$classlibsnark_1_1G2__variable.html" title="Gadget that represents a G2 variable." alt="" coords="271,1901,431,1943"/>
+<area shape="rect" id="node29" href="$classlibsnark_1_1G2__variable__selector__gadget.html" title=" " alt="" coords="257,1967,444,2008"/>
+<area shape="rect" id="node30" href="$classlibsnark_1_1kzg10__verifier__gadget.html" title=" " alt="" coords="263,2032,438,2073"/>
+<area shape="rect" id="node31" href="$classlibsnark_1_1mnt4__final__exp__gadget.html" title=" " alt="" coords="271,2097,430,2139"/>
+<area shape="rect" id="node32" href="$classlibsnark_1_1mnt6__final__exp__gadget.html" title=" " alt="" coords="271,2163,430,2204"/>
+<area shape="rect" id="node33" href="$classlibsnark_1_1mnt__e__over__e__miller__loop__gadget.html" title="Gadget for verifying a double Miller loop (where the second is inverted)." alt="" coords="266,2229,435,2285"/>
+<area shape="rect" id="node34" href="$classlibsnark_1_1mnt__e__times__e__over__e__miller__loop__gadget.html" title="Gadget for verifying a triple Miller loop (where the third is inverted)." alt="" coords="267,2309,435,2365"/>
+<area shape="rect" id="node35" href="$classlibsnark_1_1mnt__e__times__e__times__e__over__e__miller__loop__gadget.html" title=" " alt="" coords="255,2389,447,2445"/>
+<area shape="rect" id="node36" href="$classlibsnark_1_1mnt__miller__loop__add__line__eval.html" title=" " alt="" coords="247,2469,455,2511"/>
+<area shape="rect" id="node37" href="$classlibsnark_1_1mnt__miller__loop__dbl__line__eval.html" title=" " alt="" coords="249,2535,453,2576"/>
+<area shape="rect" id="node38" href="$classlibsnark_1_1mnt__miller__loop__gadget.html" title="Gadget for verifying a single Miller loop." alt="" coords="269,2600,432,2641"/>
+<area shape="rect" id="node39" href="$classlibsnark_1_1mnt__precompute__G1__gadget.html" title=" " alt="" coords="254,2665,447,2707"/>
+<area shape="rect" id="node40" href="$classlibsnark_1_1mnt__precompute__G2__gadget.html" title=" " alt="" coords="254,2731,447,2772"/>
+<area shape="rect" id="node41" href="$classlibsnark_1_1mnt__precompute__G2__gadget__addition__step.html" title=" " alt="" coords="227,2796,475,2837"/>
+<area shape="rect" id="node42" href="$classlibsnark_1_1mnt__precompute__G2__gadget__doubling__step.html" title=" " alt="" coords="225,2861,476,2903"/>
+<area shape="rect" id="node43" href="$classlibsnark_1_1r1cs__gg__ppzksnark__online__verifier__gadget.html" title=" " alt="" coords="237,2927,465,2968"/>
+<area shape="rect" id="node44" href="$classlibsnark_1_1r1cs__gg__ppzksnark__proof__variable.html" title=" " alt="" coords="247,2992,454,3033"/>
+<area shape="rect" id="node45" href="$classlibsnark_1_1r1cs__gg__ppzksnark__verification__key__variable.html" title=" " alt="" coords="227,3057,474,3099"/>
+<area shape="rect" id="node46" href="$classlibsnark_1_1r1cs__gg__ppzksnark__verifier__gadget.html" title=" " alt="" coords="247,3123,454,3164"/>
+<area shape="rect" id="node47" href="$classlibsnark_1_1r1cs__gg__ppzksnark__verifier__process__vk__gadget.html" title=" " alt="" coords="220,3188,481,3229"/>
+<area shape="rect" id="node48" href="$classlibsnark_1_1r1cs__ppzksnark__online__verifier__gadget.html" title=" " alt="" coords="237,3253,465,3295"/>
+<area shape="rect" id="node49" href="$classlibsnark_1_1r1cs__ppzksnark__proof__variable.html" title=" " alt="" coords="259,3319,442,3360"/>
+<area shape="rect" id="node50" href="$classlibsnark_1_1r1cs__ppzksnark__verification__key__variable.html" title=" " alt="" coords="227,3384,474,3425"/>
+<area shape="rect" id="node51" href="$classlibsnark_1_1r1cs__ppzksnark__verifier__gadget.html" title=" " alt="" coords="259,3449,442,3491"/>
+<area shape="rect" id="node52" href="$classlibsnark_1_1r1cs__ppzksnark__verifier__process__vk__gadget.html" title=" " alt="" coords="220,3515,481,3556"/>
+<area shape="rect" id="node53" href="$classlibsnark_1_1variable__and__variable__or__identity__selector.html" title="Selector gadget for a variable_or_identity, and a variable." alt="" coords="239,3580,463,3651"/>
+<area shape="rect" id="node54" href="$classlibsnark_1_1variable__or__identity.html" title=" " alt="" coords="253,3675,448,3731"/>
+<area shape="rect" id="node55" href="$classlibsnark_1_1variable__or__identity__selector.html" title="Selector gadget for variable_or_identity." alt="" coords="257,3756,444,3827"/>
+<area shape="rect" id="node56" href="$classlibsnark_1_1variable__or__identity.html" title=" " alt="" coords="274,3851,427,3892"/>
+<area shape="rect" id="node57" href="$classlibsnark_1_1variable__or__identity.html" title=" " alt="" coords="253,3917,448,3973"/>
+</map>

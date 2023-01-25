@@ -1,0 +1,13 @@
+<map id="libsnark::pb_variable_array::allocate" name="libsnark::pb_variable_array::allocate">
+<area shape="rect" id="node1" title=" " alt="" coords="264,312,423,353"/>
+<area shape="rect" id="node2" href="$classlibsnark_1_1ALU__add__gadget.html#a475069f4bd5dcf0ad6c08dedf1dd87fe" title=" " alt="" coords="15,5,206,47"/>
+<area shape="rect" id="node3" href="$classlibsnark_1_1ALU__and__gadget.html#a2e449d0e9f4986b023f03fdf86c10035" title=" " alt="" coords="15,71,206,112"/>
+<area shape="rect" id="node4" href="$classlibsnark_1_1ALU__not__gadget.html#a7e9ac244e20e8001b27b12cb9933c377" title=" " alt="" coords="17,136,205,177"/>
+<area shape="rect" id="node5" href="$classlibsnark_1_1ALU__or__gadget.html#a4fdea5f229a4179ff640a4bf3971d185" title=" " alt="" coords="21,201,201,243"/>
+<area shape="rect" id="node6" href="$classlibsnark_1_1ALU__shr__shl__gadget.html#adc807250c63482ee878a7d33e0094dd9" title=" " alt="" coords="30,267,191,323"/>
+<area shape="rect" id="node7" href="$classlibsnark_1_1ALU__sub__gadget.html#a9edf0113941e4c53ed2bdc558b21942c" title=" " alt="" coords="15,348,206,389"/>
+<area shape="rect" id="node8" href="$classlibsnark_1_1ALU__xor__gadget.html#a8259bdc0e836536dc68266eda4766bb8" title=" " alt="" coords="17,413,204,455"/>
+<area shape="rect" id="node9" href="$classlibsnark_1_1comparison__gadget.html#ace81ea3d55f3e9b70ad48434dd6c6950" title=" " alt="" coords="5,479,216,520"/>
+<area shape="rect" id="node10" href="$classlibsnark_1_1dual__variable__gadget.html#ae16070c6ecf3d1abf151554b232c1d60" title=" " alt="" coords="25,545,196,601"/>
+<area shape="rect" id="node11" href="$classlibsnark_1_1inner__product__gadget.html#a5a584473ae62b7f22eae199d7c1b3c8a" title=" " alt="" coords="25,625,196,681"/>
+</map>

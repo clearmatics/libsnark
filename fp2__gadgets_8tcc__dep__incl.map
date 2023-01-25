@@ -1,0 +1,22 @@
+<map id="/home/runner/work/libsnark/libsnark/libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.tcc" name="/home/runner/work/libsnark/libsnark/libsnark/gadgetlib1/gadgets/fields/fp2_gadgets.tcc">
+<area shape="rect" id="node1" title=" " alt="" coords="1787,5,2011,61"/>
+<area shape="rect" id="node2" href="$fp2__gadgets_8hpp.html" title=" " alt="" coords="1784,109,2013,165"/>
+<area shape="rect" id="node3" href="$weierstrass__g2__gadget_8hpp.html" title=" " alt="" coords="1591,213,1798,284"/>
+<area shape="rect" id="node4" href="$bls12__377__final__exponentiation_8hpp.html" title=" " alt="" coords="1947,458,2237,529"/>
+<area shape="rect" id="node5" href="$bw6__761__pairing__params_8hpp.html" title=" " alt="" coords="2001,584,2252,655"/>
+<area shape="rect" id="node6" href="$bls12__377__miller__loop_8hpp.html" title=" " alt="" coords="2011,703,2242,773"/>
+<area shape="rect" id="node10" href="$mnt__pairing__params_8hpp.html" title=" " alt="" coords="501,584,739,655"/>
+<area shape="rect" id="node17" href="$fp4__gadgets_8hpp.html" title=" " alt="" coords="5,221,235,277"/>
+<area shape="rect" id="node18" href="$fp6__2over3__gadgets_8hpp.html" title=" " alt="" coords="259,221,541,277"/>
+<area shape="rect" id="node19" href="$fp6__3over2__gadgets_8hpp.html" title=" " alt="" coords="2057,221,2338,277"/>
+<area shape="rect" id="node7" href="$bls12__377__membership__check__gadgets_8hpp.html" title=" " alt="" coords="1665,451,1922,536"/>
+<area shape="rect" id="node8" href="$mnt__precomputation_8hpp.html" title=" " alt="" coords="780,339,1105,395"/>
+<area shape="rect" id="node11" href="$kzg10__verifier__gadget_8hpp.html" title=" " alt="" coords="1657,332,1887,403"/>
+<area shape="rect" id="node12" href="$r1cs__gg__ppzksnark__verifier__gadget_8hpp.html" title=" " alt="" coords="489,332,751,403"/>
+<area shape="rect" id="node14" href="$r1cs__ppzksnark__verifier__gadget_8hpp.html" title=" " alt="" coords="1341,332,1581,403"/>
+<area shape="rect" id="node9" href="$mnt__miller__loop_8hpp.html" title=" " alt="" coords="827,458,1059,529"/>
+<area shape="rect" id="node13" href="$r1cs__gg__ppzksnark__verifier__gadget_8tcc.html" title=" " alt="" coords="489,458,751,529"/>
+<area shape="rect" id="node15" href="$mp__pcd__circuits_8hpp.html" title=" " alt="" coords="1083,458,1331,529"/>
+<area shape="rect" id="node16" href="$sp__pcd__circuits_8hpp.html" title=" " alt="" coords="1354,458,1590,529"/>
+<area shape="rect" id="node20" href="$fp12__2over3over2__gadgets_8hpp.html" title=" " alt="" coords="2078,332,2317,403"/>
+</map>

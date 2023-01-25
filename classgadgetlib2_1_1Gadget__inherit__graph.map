@@ -1,0 +1,21 @@
+<map id="gadgetlib2::Gadget" name="gadgetlib2::Gadget">
+<area shape="rect" id="node1" title=" " alt="" coords="5,274,152,301"/>
+<area shape="rect" id="node2" href="$classgadgetExamples_1_1HashDifficultyEnforcer__Gadget.html" title=" " alt="" coords="200,5,431,47"/>
+<area shape="rect" id="node3" href="$classgadgetExamples_1_1NAND__Gadget.html" title=" " alt="" coords="226,71,405,112"/>
+<area shape="rect" id="node4" href="$classgadgetlib2_1_1ConditionalFlag__Gadget.html" title=" " alt="" coords="215,136,416,177"/>
+<area shape="rect" id="node5" href="$classgadgetlib2_1_1DualWord__Gadget.html" title=" " alt="" coords="234,201,397,243"/>
+<area shape="rect" id="node6" href="$classgadgetlib2_1_1DualWordArray__Gadget.html" title=" " alt="" coords="217,267,414,308"/>
+<area shape="rect" id="node7" href="$classgadgetlib2_1_1LogicImplication__Gadget.html" title=" " alt="" coords="212,332,419,373"/>
+<area shape="rect" id="node8" href="$classgadgetlib2_1_1LooseMUX__GadgetBase.html" title=" " alt="" coords="231,397,399,439"/>
+<area shape="rect" id="node10" href="$classgadgetlib2_1_1R1P__Gadget.html" title=" " alt="" coords="226,463,405,490"/>
+<area shape="rect" id="node19" href="$classgadgetlib2_1_1Toggle__Gadget.html" title=" " alt="" coords="245,515,386,556"/>
+<area shape="rect" id="node9" href="$classgadgetlib2_1_1R1P__LooseMUX__Gadget.html" title=" " alt="" coords="492,211,692,252"/>
+<area shape="rect" id="node11" href="$classgadgetExamples_1_1R1P__VerifyTransactionAmounts__Gadget.html" title=" " alt="" coords="493,277,691,333"/>
+<area shape="rect" id="node12" href="$classgadgetlib2_1_1R1P__AND__Gadget.html" title=" " alt="" coords="512,357,672,399"/>
+<area shape="rect" id="node13" href="$classgadgetlib2_1_1R1P__Comparison__Gadget.html" title=" " alt="" coords="487,423,697,464"/>
+<area shape="rect" id="node14" href="$classgadgetlib2_1_1R1P__CompressionPacking__Gadget.html" title=" " alt="" coords="484,488,700,529"/>
+<area shape="rect" id="node15" href="$classgadgetlib2_1_1R1P__EqualsConst__Gadget.html" title=" " alt="" coords="487,553,697,595"/>
+<area shape="rect" id="node16" href="$classgadgetlib2_1_1R1P__InnerProduct__Gadget.html" title=" " alt="" coords="485,619,699,660"/>
+<area shape="rect" id="node17" href="$classgadgetlib2_1_1R1P__IntegerPacking__Gadget.html" title=" " alt="" coords="479,684,705,725"/>
+<area shape="rect" id="node18" href="$classgadgetlib2_1_1R1P__OR__Gadget.html" title=" " alt="" coords="517,749,667,791"/>
+</map>

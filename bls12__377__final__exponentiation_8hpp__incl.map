@@ -1,0 +1,51 @@
+<map id="/home/runner/work/libsnark/libsnark/libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bls12_377_final_exponentiation.hpp" name="/home/runner/work/libsnark/libsnark/libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bls12_377_final_exponentiation.hpp">
+<area shape="rect" id="node1" title=" " alt="" coords="1261,5,1552,76"/>
+<area shape="rect" id="node2" href="$weierstrass__g1__gadget_8hpp.html" title=" " alt="" coords="515,391,719,447"/>
+<area shape="rect" id="node31" href="$weierstrass__g2__gadget_8hpp.html" title=" " alt="" coords="794,391,998,447"/>
+<area shape="rect" id="node32" href="$fp2__gadgets_8hpp.html" title=" " alt="" coords="1452,628,1599,684"/>
+<area shape="rect" id="node36" href="$fp12__2over3over2__gadgets_8hpp.html" title=" " alt="" coords="1121,391,1319,447"/>
+<area shape="rect" id="node40" href="$bw6__761__pairing__params_8hpp.html" title=" " alt="" coords="1313,124,1501,195"/>
+<area shape="rect" id="node42" title=" " alt="" coords="1344,391,1507,447"/>
+<area shape="rect" id="node49" href="$bls12__377__final__exponentiation_8tcc.html" title=" " alt="" coords="2088,124,2304,195"/>
+<area shape="rect" id="node3" href="$gadgetlib1_2gadget_8hpp.html" title=" " alt="" coords="615,739,761,781"/>
+<area shape="rect" id="node23" href="$scalar__multiplication_8hpp.html" title=" " alt="" coords="483,517,651,573"/>
+<area shape="rect" id="node27" href="$pairing__params_8hpp.html" title=" " alt="" coords="5,628,181,684"/>
+<area shape="rect" id="node28" title=" " alt="" coords="776,635,925,677"/>
+<area shape="rect" id="node30" href="$weierstrass__g1__gadget_8tcc.html" title=" " alt="" coords="153,517,357,573"/>
+<area shape="rect" id="node4" href="$gadgetlib1_2protoboard_8hpp.html" title=" " alt="" coords="615,836,761,877"/>
+<area shape="rect" id="node22" href="$gadget_8tcc.html" title=" " alt="" coords="444,836,591,877"/>
+<area shape="rect" id="node5" title=" " alt="" coords="1703,940,1788,967"/>
+<area shape="rect" id="node6" title=" " alt="" coords="273,940,343,967"/>
+<area shape="rect" id="node7" title=" " alt="" coords="367,940,428,967"/>
+<area shape="rect" id="node8" title=" " alt="" coords="209,1044,377,1071"/>
+<area shape="rect" id="node9" href="$pb__variable_8hpp.html" title=" " alt="" coords="503,933,649,974"/>
+<area shape="rect" id="node13" title=" " alt="" coords="669,1141,728,1167"/>
+<area shape="rect" id="node14" title=" " alt="" coords="1205,1141,1267,1167"/>
+<area shape="rect" id="node17" href="$r1cs_8hpp.html" title=" " alt="" coords="919,925,1099,981"/>
+<area shape="rect" id="node21" href="$protoboard_8tcc.html" title=" " alt="" coords="1532,933,1679,974"/>
+<area shape="rect" id="node10" title=" " alt="" coords="471,1141,542,1167"/>
+<area shape="rect" id="node11" href="$relations_2variable_8hpp.html" title=" " alt="" coords="775,1037,910,1078"/>
+<area shape="rect" id="node16" href="$pb__variable_8tcc.html" title=" " alt="" coords="452,1037,599,1078"/>
+<area shape="rect" id="node12" title=" " alt="" coords="923,1141,973,1167"/>
+<area shape="rect" id="node15" href="$variable_8tcc.html" title=" " alt="" coords="763,1133,898,1175"/>
+<area shape="rect" id="node18" title=" " alt="" coords="1037,1044,1102,1071"/>
+<area shape="rect" id="node19" title=" " alt="" coords="1127,1044,1207,1071"/>
+<area shape="rect" id="node20" href="$r1cs_8tcc.html" title=" " alt="" coords="1231,1029,1406,1085"/>
+<area shape="rect" id="node24" href="$basic__gadgets_8hpp.html" title=" " alt="" coords="205,635,408,677"/>
+<area shape="rect" id="node25" title=" " alt="" coords="989,747,1067,773"/>
+<area shape="rect" id="node29" href="$scalar__multiplication_8tcc.html" title=" " alt="" coords="483,628,651,684"/>
+<area shape="rect" id="node26" href="$basic__gadgets_8tcc.html" title=" " alt="" coords="343,739,542,781"/>
+<area shape="rect" id="node34" title=" " alt="" coords="827,524,965,565"/>
+<area shape="rect" id="node35" href="$weierstrass__g2__gadget_8tcc.html" title=" " alt="" coords="990,517,1194,573"/>
+<area shape="rect" id="node33" href="$fp2__gadgets_8tcc.html" title=" " alt="" coords="1452,732,1599,788"/>
+<area shape="rect" id="node37" href="$fp6__3over2__gadgets_8hpp.html" title=" " alt="" coords="1270,517,1431,573"/>
+<area shape="rect" id="node39" href="$fp12__2over3over2__gadgets_8tcc.html" title=" " alt="" coords="1507,517,1701,573"/>
+<area shape="rect" id="node38" href="$fp6__3over2__gadgets_8tcc.html" title=" " alt="" coords="1271,628,1427,684"/>
+<area shape="rect" id="node41" href="$bls12__377__membership__check__gadgets_8hpp.html" title=" " alt="" coords="876,243,1063,328"/>
+<area shape="rect" id="node44" href="$bls12__377__miller__loop_8hpp.html" title=" " alt="" coords="1529,250,1695,321"/>
+<area shape="rect" id="node45" href="$bls12__377__precomputation_8hpp.html" title=" " alt="" coords="1771,383,1962,454"/>
+<area shape="rect" id="node48" title=" " alt="" coords="1308,265,1505,306"/>
+<area shape="rect" id="node43" href="$bls12__377__membership__check__gadgets_8tcc.html" title=" " alt="" coords="304,376,491,461"/>
+<area shape="rect" id="node47" href="$bls12__377__miller__loop_8tcc.html" title=" " alt="" coords="1581,383,1747,454"/>
+<area shape="rect" id="node46" href="$bls12__377__precomputation_8tcc.html" title=" " alt="" coords="1776,509,1963,580"/>
+</map>

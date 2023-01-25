@@ -1,0 +1,17 @@
+<map id="libsnark::pb_variable::allocate" name="libsnark::pb_variable::allocate">
+<area shape="rect" id="node1" title=" " alt="" coords="269,443,428,484"/>
+<area shape="rect" id="node2" href="$classlibsnark_1_1ALU__add__gadget.html#a475069f4bd5dcf0ad6c08dedf1dd87fe" title=" " alt="" coords="18,5,209,47"/>
+<area shape="rect" id="node3" href="$classlibsnark_1_1ALU__and__gadget.html#a2e449d0e9f4986b023f03fdf86c10035" title=" " alt="" coords="18,71,209,112"/>
+<area shape="rect" id="node4" href="$classlibsnark_1_1ALU__cmps__gadget.html#a020f3c5c982a1722253503fd5c00640c" title=" " alt="" coords="12,136,215,177"/>
+<area shape="rect" id="node5" href="$classlibsnark_1_1ALU__divmod__gadget.html#a16292b5a56f8ca5266d6fd0acd260e5c" title=" " alt="" coords="5,201,221,243"/>
+<area shape="rect" id="node6" href="$classlibsnark_1_1ALU__not__gadget.html#a7e9ac244e20e8001b27b12cb9933c377" title=" " alt="" coords="19,267,207,308"/>
+<area shape="rect" id="node7" href="$classlibsnark_1_1ALU__or__gadget.html#a4fdea5f229a4179ff640a4bf3971d185" title=" " alt="" coords="23,332,203,373"/>
+<area shape="rect" id="node8" href="$classlibsnark_1_1ALU__shr__shl__gadget.html#adc807250c63482ee878a7d33e0094dd9" title=" " alt="" coords="33,398,194,454"/>
+<area shape="rect" id="node9" href="$classlibsnark_1_1ALU__smul__gadget.html#ac92bcd1950f66ce0e60575cae652049e" title=" " alt="" coords="14,479,213,520"/>
+<area shape="rect" id="node10" href="$classlibsnark_1_1ALU__sub__gadget.html#a9edf0113941e4c53ed2bdc558b21942c" title=" " alt="" coords="18,544,209,585"/>
+<area shape="rect" id="node11" href="$classlibsnark_1_1ALU__umul__gadget.html#ab0969c6ecc27ea85937100df6e8554b7" title=" " alt="" coords="13,609,213,651"/>
+<area shape="rect" id="node12" href="$classlibsnark_1_1ALU__xor__gadget.html#a8259bdc0e836536dc68266eda4766bb8" title=" " alt="" coords="20,675,207,716"/>
+<area shape="rect" id="node13" href="$classlibsnark_1_1comparison__gadget.html#ace81ea3d55f3e9b70ad48434dd6c6950" title=" " alt="" coords="8,740,219,781"/>
+<area shape="rect" id="node14" href="$classlibsnark_1_1conjunction__gadget.html#a4f2b38cf9945715f5f6d05e59c42f972" title=" " alt="" coords="35,806,192,862"/>
+<area shape="rect" id="node15" href="$classlibsnark_1_1disjunction__gadget.html#a3a90f2fb796248cf021e868d0ec77431" title=" " alt="" coords="37,886,190,942"/>
+</map>

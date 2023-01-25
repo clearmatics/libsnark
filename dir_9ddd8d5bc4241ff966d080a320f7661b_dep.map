@@ -1,0 +1,19 @@
+<map id="/home/runner/work/libsnark/libsnark/libsnark/zk_proof_systems/ppzksnark/bacs_ppzksnark" name="/home/runner/work/libsnark/libsnark/libsnark/zk_proof_systems/ppzksnark/bacs_ppzksnark">
+<area shape="rect" id="node4" href="dir_1aff6d8edd7270c65a13d2ee503875a3.html" title="relations" alt="" coords="213,255,291,303"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000081_000031.html" title="4" alt="" coords="252,228,261,243"/>
+<area shape="rect" id="node5" href="dir_5dc3f5de339ee75ffc2b7402b884742d.html" title="r1cs_ppzksnark" alt="" coords="301,159,424,207"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000081_000087.html" title="1" alt="" coords="307,135,316,149"/>
+<area shape="rect" id="node2" href="dir_69542a7124eb61beaaaf256e257b54f2.html" title="examples" alt="" coords="38,159,125,207"/>
+<area shape="rect" id="edge10-headlabel" href="dir_000082_000031.html" title="1" alt="" coords="196,232,205,247"/>
+<area shape="rect" id="node3" href="dir_e96e19663a14b809df7cacee57053900.html" title="profiling" alt="" coords="37,63,112,111"/>
+<area shape="rect" id="edge9-headlabel" href="dir_000083_000082.html" title="1" alt="" coords="82,133,92,147"/>
+<area shape="rect" id="edge7-headlabel" href="dir_000083_000031.html" title="1" alt="" coords="237,227,247,242"/>
+<area shape="rect" id="node6" href="dir_cc8a6a75adc72a9e33bc45ca7d8204c7.html" title="common" alt="" coords="213,351,291,399"/>
+<area shape="rect" id="edge8-headlabel" href="dir_000083_000001.html" title="1" alt="" coords="225,324,234,338"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000031_000001.html" title="1" alt="" coords="247,325,256,339"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000087_000031.html" title="4" alt="" coords="294,242,303,257"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000087_000001.html" title="2" alt="" coords="283,334,293,349"/>
+<area shape="rect" id="edge6-headlabel" href="dir_000001_000031.html" title="2" alt="" coords="248,314,257,329"/>
+<area shape="rect" id="clust2" href="dir_9ddd8d5bc4241ff966d080a320f7661b.html" alt="" coords="27,52,275,217"/>
+<area shape="rect" id="clust1" href="dir_02aaa83b68c2db5acc2ea495dcc6cc17.html" title="ppzksnark" alt="" coords="16,16,285,228"/>
+</map>

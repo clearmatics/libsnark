@@ -1,0 +1,27 @@
+<map id="gadgetlib2::GADGETLIB2_FMT" name="gadgetlib2::GADGETLIB2_FMT">
+<area shape="rect" id="node1" title=" " alt="" coords="965,438,1183,465"/>
+<area shape="rect" id="node2" href="$classgadgetlib2_1_1FConst.html#a5f277876adf5fb4efd377a4b396ce23f" title=" " alt="" coords="710,5,854,47"/>
+<area shape="rect" id="node3" href="$classgadgetlib2_1_1R1P__Elem.html#ab01abc0750c0b961ef976a4e9ed5d1af" title=" " alt="" coords="700,71,864,112"/>
+<area shape="rect" id="node4" href="$classgadgetlib2_1_1LinearTerm.html#afef29c5b63e8369cdd73f8d20c0bd45e" title=" " alt="" coords="697,136,867,177"/>
+<area shape="rect" id="node5" href="$classgadgetlib2_1_1Protoboard.html#a2f73223415501aa41c83204c01d4a2c2" title=" " alt="" coords="697,201,867,243"/>
+<area shape="rect" id="node6" href="$classgadgetlib2_1_1Variable.html#a430e524162f24e8138a4c5720968e9bc" title=" " alt="" coords="706,267,858,308"/>
+<area shape="rect" id="node8" href="$classgadgetExamples_1_1HashDifficultyEnforcer__Gadget.html#a2c3ff588aecfb8add7e6eaea21601b53" title=" " alt="" coords="647,332,917,373"/>
+<area shape="rect" id="node9" href="$classgadgetlib2_1_1R1P__InnerProduct__Gadget.html#a44fdefa4030f060cac9cdbb421dee13f" title=" " alt="" coords="674,397,890,439"/>
+<area shape="rect" id="node10" href="$classgadgetlib2_1_1R1P__LooseMUX__Gadget.html#a0d357a949d1dc57a601930f4c7395e8f" title=" " alt="" coords="674,463,890,504"/>
+<area shape="rect" id="node11" href="$classgadgetlib2_1_1R1P__CompressionPacking__Gadget.html#ab2618641a0e79d4c34c0f9981466a86a" title=" " alt="" coords="660,528,904,569"/>
+<area shape="rect" id="node12" href="$classgadgetlib2_1_1Rank1Constraint.html#a67a3b060409f7bdb20999a65074b0c43" title=" " alt="" coords="679,593,885,635"/>
+<area shape="rect" id="node13" href="$classgadgetlib2_1_1PolynomialConstraint.html#a606939ef5babf39ceb319e1422cd2754" title=" " alt="" coords="663,659,901,700"/>
+<area shape="rect" id="node14" href="$classgadgetlib2_1_1Protoboard.html#affee4dc16904fc6c9b184b0c9a93cfa4" title=" " alt="" coords="364,572,535,613"/>
+<area shape="rect" id="node16" href="$classgadgetlib2_1_1Protoboard.html#a4c3365abf8f7826dfcd76de5da974f6d" title=" " alt="" coords="683,775,881,802"/>
+<area shape="rect" id="node25" href="$classgadgetlib2_1_1Variable.html#a6b882ebb47d46d054ea656a27dbd3be7" title="allocates the variable" alt="" coords="706,827,858,868"/>
+<area shape="rect" id="node7" href="$classgadgetlib2_1_1LinearTerm.html#a040162923e004a940aa88f9245d7f9e3" title=" " alt="" coords="364,267,535,308"/>
+<area shape="rect" id="node15" href="$classgadgetlib2_1_1Protoboard.html#a66bdd28d8555d2364b014bec865779df" title=" " alt="" coords="43,605,214,647"/>
+<area shape="rect" id="node17" href="$classgadgetlib2_1_1Protoboard.html#a0e5e1e6d4e00abc488c2938f906f7f9b" title=" " alt="" coords="364,768,535,809"/>
+<area shape="rect" id="node18" href="$classgadgetlib2_1_1Protoboard.html#a92f1ee2423185f2ca925e8d06f016f03" title=" " alt="" coords="364,833,535,875"/>
+<area shape="rect" id="node19" href="$classgadgetlib2_1_1Protoboard.html#a227375e49ffcfbb6bb8dc7916911b44d" title=" " alt="" coords="364,899,535,940"/>
+<area shape="rect" id="node20" href="$classgadgetlib2_1_1Protoboard.html#a8bb6de1f9f07be57de74559c25139999" title=" " alt="" coords="300,964,599,1005"/>
+<area shape="rect" id="node22" href="$classgadgetlib2_1_1Protoboard.html#a0bfba790896f6aeb6173e8d8c31bc3b7" title=" " alt="" coords="364,1029,535,1071"/>
+<area shape="rect" id="node23" href="$classgadgetlib2_1_1Protoboard.html#ac72f7fcb92dd89d429daf926b9394868" title=" " alt="" coords="350,637,549,679"/>
+<area shape="rect" id="node24" href="$classgadgetlib2_1_1Protoboard.html#aad9fd3286c7718a63e0848b9a3718369" title=" " alt="" coords="309,703,590,744"/>
+<area shape="rect" id="node21" href="$classgadgetlib2_1_1Protoboard.html#aaa1931674b899b65edb7c78f9354fb41" title=" " alt="" coords="5,833,252,875"/>
+</map>

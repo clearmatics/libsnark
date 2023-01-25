@@ -1,0 +1,14 @@
+<map id="gadgetlib2::Gadget::val" name="gadgetlib2::Gadget::val">
+<area shape="rect" id="node1" title=" " alt="" coords="267,347,441,374"/>
+<area shape="rect" id="node2" href="$classgadgetExamples_1_1NAND__Gadget.html#a0c95e057b0dc2a28797806655c6709cf" title=" " alt="" coords="15,5,209,47"/>
+<area shape="rect" id="node3" href="$classgadgetlib2_1_1R1P__AND__Gadget.html#a5965b021346385b23acb49dae27efdc3" title=" " alt="" coords="15,71,209,112"/>
+<area shape="rect" id="node4" href="$classgadgetlib2_1_1R1P__OR__Gadget.html#a964e9c6b749305f8851699a783fe2ffd" title=" " alt="" coords="15,136,209,177"/>
+<area shape="rect" id="node5" href="$classgadgetlib2_1_1R1P__InnerProduct__Gadget.html#a3b89df01bc9157999d7362d75e32a91e" title=" " alt="" coords="5,201,219,243"/>
+<area shape="rect" id="node6" href="$classgadgetlib2_1_1R1P__LooseMUX__Gadget.html#a43ae82e8cd4f25db52b9582930b35b91" title=" " alt="" coords="12,267,212,308"/>
+<area shape="rect" id="node7" href="$classgadgetExamples_1_1R1P__VerifyTransactionAmounts__Gadget.html#a00367bae55c4a0816c29b37cfec963a5" title=" " alt="" coords="13,333,211,389"/>
+<area shape="rect" id="node8" href="$classgadgetlib2_1_1R1P__EqualsConst__Gadget.html#a124eb57b288f12a6e2c481f6d32441c4" title=" " alt="" coords="7,413,217,455"/>
+<area shape="rect" id="node9" href="$classgadgetlib2_1_1Toggle__Gadget.html#a1f9134aeb9df7da67a17e3b196116eeb" title=" " alt="" coords="15,479,209,520"/>
+<area shape="rect" id="node10" href="$classgadgetlib2_1_1ConditionalFlag__Gadget.html#abcd2f17bfc4713ff519e5b9a71490de4" title=" " alt="" coords="11,544,213,585"/>
+<area shape="rect" id="node11" href="$classgadgetlib2_1_1LogicImplication__Gadget.html#afedbefedb9c225befc8520f1c1ff7c9c" title=" " alt="" coords="9,609,215,651"/>
+<area shape="rect" id="node12" href="$classgadgetlib2_1_1R1P__Comparison__Gadget.html#a2831b396753682ceb93870b98d9fb2e2" title=" " alt="" coords="7,675,217,716"/>
+</map>

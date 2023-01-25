@@ -1,0 +1,7 @@
+var searchData=
+[
+  ['x_5268',['X',['../classlibsnark_1_1bar__gadget.html#acf6b29aca0ffcc5dca2241cad790bd7a',1,'libsnark::bar_gadget::X()'],['../classlibsnark_1_1G1__variable.html#a41b4f8d0826a7db8e51fb401ac9945a0',1,'libsnark::G1_variable::X()'],['../classlibsnark_1_1G2__variable.html#a3acdec5e5ba18c65a15502de14b2aa87',1,'libsnark::G2_variable::X()'],['../classlibsnark_1_1lastbits__gadget.html#a10d832e68d7dc3e8ac18cd8f954bd7b7',1,'libsnark::lastbits_gadget::X()'],['../classlibsnark_1_1choice__gadget.html#ae0d2d381387940c580019c77439d6bfe',1,'libsnark::choice_gadget::X()'],['../classlibsnark_1_1majority__gadget.html#af97604061907e4d3a7734c010e3ba848',1,'libsnark::majority_gadget::X()'],['../classlibsnark_1_1bls12__377__G2__proj.html#ade66da30ef42f6854236dd85f6895c51',1,'libsnark::bls12_377_G2_proj::X()']]],
+  ['x_5fbits_5269',['X_bits',['../classlibsnark_1_1lastbits__gadget.html#a9b2e70c26e12bb4c14b5d691d6c9e997',1,'libsnark::lastbits_gadget']]],
+  ['xsquared_5270',['Xsquared',['../classlibsnark_1_1G1__dbl__gadget.html#a9bda53ca1eae647bdc0135426c8a295b',1,'libsnark::G1_dbl_gadget::Xsquared()'],['../classlibsnark_1_1G2__checker__gadget.html#adda05209c12db4302d8358b90e961a82',1,'libsnark::G2_checker_gadget::Xsquared()']]],
+  ['xsquared_5fplus_5fa_5271',['Xsquared_plus_a',['../classlibsnark_1_1G2__checker__gadget.html#af0353072feb0ed1d504da9633c10b92f',1,'libsnark::G2_checker_gadget']]]
+];

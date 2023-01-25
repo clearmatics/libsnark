@@ -1,0 +1,51 @@
+<map id="libsnark::gadget&lt; FieldT &gt;" name="libsnark::gadget&lt; FieldT &gt;">
+<area shape="rect" id="node1" title=" " alt="" coords="5,1277,201,1303"/>
+<area shape="rect" id="node2" href="$classlibsnark_1_1digest__variable.html" title=" " alt="" coords="274,5,454,47"/>
+<area shape="rect" id="node3" href="$classlibsnark_1_1as__waksman__routing__gadget.html" title=" " alt="" coords="266,71,462,112"/>
+<area shape="rect" id="node4" href="$classlibsnark_1_1bar__gadget.html" title=" " alt="" coords="287,136,441,177"/>
+<area shape="rect" id="node5" href="$classlibsnark_1_1benes__routing__gadget.html" title=" " alt="" coords="277,201,451,243"/>
+<area shape="rect" id="node6" href="$classlibsnark_1_1big__sigma__gadget.html" title=" " alt="" coords="289,267,439,308"/>
+<area shape="rect" id="node7" href="$classlibsnark_1_1bit__vector__copy__gadget.html" title=" " alt="" coords="273,332,455,373"/>
+<area shape="rect" id="node8" href="$classlibsnark_1_1block__variable.html" title=" " alt="" coords="275,397,453,439"/>
+<area shape="rect" id="node9" href="$classlibsnark_1_1choice__gadget.html" title=" " alt="" coords="276,463,452,504"/>
+<area shape="rect" id="node10" href="$classlibsnark_1_1comparison__gadget.html" title=" " alt="" coords="285,528,443,569"/>
+<area shape="rect" id="node11" href="$classlibsnark_1_1conjunction__gadget.html" title=" " alt="" coords="285,593,443,635"/>
+<area shape="rect" id="node12" href="$classlibsnark_1_1digest__selector__gadget.html" title=" " alt="" coords="273,659,455,700"/>
+<area shape="rect" id="node13" href="$classlibsnark_1_1digest__variable.html" title=" " alt="" coords="273,724,455,765"/>
+<area shape="rect" id="node14" href="$classlibsnark_1_1disjunction__gadget.html" title="Output is 0 iff the sum of inputs is 0. Output is 1 otherwise." alt="" coords="287,789,441,831"/>
+<area shape="rect" id="node15" href="$classlibsnark_1_1dual__variable__gadget.html" title=" " alt="" coords="279,855,449,896"/>
+<area shape="rect" id="node18" href="$classlibsnark_1_1field__vector__copy__gadget.html" title=" " alt="" coords="273,920,455,961"/>
+<area shape="rect" id="node19" href="$classlibsnark_1_1fooram__gadget.html" title=" " alt="" coords="273,985,455,1027"/>
+<area shape="rect" id="node21" href="$classlibsnark_1_1gadget__from__r1cs.html" title=" " alt="" coords="281,1051,447,1092"/>
+<area shape="rect" id="node22" href="$classlibsnark_1_1inner__product__gadget.html" title=" " alt="" coords="279,1116,449,1157"/>
+<area shape="rect" id="node23" href="$classlibsnark_1_1knapsack__CRH__with__bit__out__gadget.html" title=" " alt="" coords="266,1182,462,1238"/>
+<area shape="rect" id="node24" href="$classlibsnark_1_1knapsack__CRH__with__field__out__gadget.html" title=" " alt="" coords="287,1262,441,1318"/>
+<area shape="rect" id="node25" href="$classlibsnark_1_1lastbits__gadget.html" title=" " alt="" coords="293,1343,435,1384"/>
+<area shape="rect" id="node26" href="$classlibsnark_1_1loose__multiplexing__gadget.html" title=" " alt="" coords="261,1408,467,1449"/>
+<area shape="rect" id="node27" href="$classlibsnark_1_1majority__gadget.html" title=" " alt="" coords="293,1473,435,1515"/>
+<area shape="rect" id="node28" href="$classlibsnark_1_1merkle__authentication__path__variable.html" title=" " alt="" coords="249,1539,479,1580"/>
+<area shape="rect" id="node29" href="$classlibsnark_1_1merkle__tree__check__read__gadget.html" title=" " alt="" coords="252,1604,476,1645"/>
+<area shape="rect" id="node30" href="$classlibsnark_1_1merkle__tree__check__update__gadget.html" title=" " alt="" coords="279,1670,449,1726"/>
+<area shape="rect" id="node31" href="$classlibsnark_1_1multipacking__gadget.html" title=" " alt="" coords="281,1751,447,1792"/>
+<area shape="rect" id="node32" href="$classlibsnark_1_1packing__gadget.html" title=" " alt="" coords="271,1816,457,1857"/>
+<area shape="rect" id="node33" href="$classlibsnark_1_1r1cs__pcd__local__data__variable.html" title=" " alt="" coords="286,1882,442,1938"/>
+<area shape="rect" id="node34" href="$classlibsnark_1_1r1cs__pcd__message__variable.html" title=" " alt="" coords="255,1963,473,2004"/>
+<area shape="rect" id="node35" href="$classlibsnark_1_1set__commitment__gadget.html" title=" " alt="" coords="267,2028,461,2069"/>
+<area shape="rect" id="node36" href="$classlibsnark_1_1set__membership__proof__variable.html" title=" " alt="" coords="268,2093,460,2135"/>
+<area shape="rect" id="node37" href="$classlibsnark_1_1sha256__compression__function__gadget.html" title=" " alt="" coords="255,2159,473,2200"/>
+<area shape="rect" id="node38" href="$classlibsnark_1_1sha256__message__schedule__gadget.html" title=" " alt="" coords="260,2224,468,2265"/>
+<area shape="rect" id="node39" href="$classlibsnark_1_1sha256__round__function__gadget.html" title=" " alt="" coords="263,2289,465,2331"/>
+<area shape="rect" id="node40" href="$classlibsnark_1_1sha256__two__to__one__hash__gadget.html" title=" " alt="" coords="277,2355,451,2411"/>
+<area shape="rect" id="node41" href="$classlibsnark_1_1small__sigma__gadget.html" title=" " alt="" coords="281,2436,447,2477"/>
+<area shape="rect" id="node42" href="$classlibsnark_1_1tinyram__gadget.html" title=" " alt="" coords="271,2501,457,2543"/>
+<area shape="rect" id="node49" href="$classlibsnark_1_1XOR3__gadget.html" title=" " alt="" coords="279,2567,449,2608"/>
+<area shape="rect" id="node16" href="$classlibsnark_1_1doubleword__variable__gadget.html" title=" " alt="" coords="527,823,729,864"/>
+<area shape="rect" id="node17" href="$classlibsnark_1_1word__variable__gadget.html" title=" " alt="" coords="541,888,715,929"/>
+<area shape="rect" id="node20" href="$classlibsnark_1_1fooram__cpu__checker.html" title=" " alt="" coords="549,985,707,1027"/>
+<area shape="rect" id="node43" href="$classlibsnark_1_1tinyram__standard__gadget.html" title=" " alt="" coords="529,2501,727,2543"/>
+<area shape="rect" id="node44" href="$classlibsnark_1_1ALU__arithmetic__gadget.html" title=" " alt="" coords="788,2371,971,2412"/>
+<area shape="rect" id="node45" href="$classlibsnark_1_1ALU__control__flow__gadget.html" title=" " alt="" coords="791,2436,968,2477"/>
+<area shape="rect" id="node46" href="$classlibsnark_1_1ALU__gadget.html" title=" " alt="" coords="799,2501,959,2543"/>
+<area shape="rect" id="node47" href="$classlibsnark_1_1argument__decoder__gadget.html" title=" " alt="" coords="778,2567,981,2608"/>
+<area shape="rect" id="node48" href="$classlibsnark_1_1consistency__enforcer__gadget.html" title=" " alt="" coords="777,2632,981,2673"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="gadgetlib2::Protoboard::addUnaryConstraint" name="gadgetlib2::Protoboard::addUnaryConstraint">
+<area shape="rect" id="node1" title="adds a constraint of the form (a == 0)" alt="" coords="5,5,176,47"/>
+<area shape="rect" id="node2" href="$classgadgetlib2_1_1Protoboard.html#ad3022aeb41ad14b476c71e68b28f6dc9" title=" " alt="" coords="224,5,395,47"/>
+<area shape="rect" id="node3" href="$classgadgetlib2_1_1ConstraintSystem.html#aef4f0c5bbccd76823dcaa8bec45f76ca" title=" " alt="" coords="443,5,657,47"/>
+</map>

@@ -1,0 +1,14 @@
+<map id="/home/runner/work/libsnark/libsnark/libsnark/gadgetlib1/gadgets/merkle_tree/merkle_authentication_path_variable.tcc" name="/home/runner/work/libsnark/libsnark/libsnark/gadgetlib1/gadgets/merkle_tree/merkle_authentication_path_variable.tcc">
+<area shape="rect" id="node1" title=" " alt="" coords="258,5,501,76"/>
+<area shape="rect" id="node2" href="$merkle__authentication__path__variable_8hpp.html" title=" " alt="" coords="256,124,503,195"/>
+<area shape="rect" id="node3" href="$merkle__tree__check__read__gadget_8hpp.html" title=" " alt="" coords="271,243,487,313"/>
+<area shape="rect" id="node10" href="$merkle__tree__check__update__gadget_8hpp.html" title=" " alt="" coords="13,243,245,313"/>
+<area shape="rect" id="node12" href="$set__membership__proof__variable_8hpp.html" title=" " alt="" coords="511,243,751,313"/>
+<area shape="rect" id="node4" href="$memory__load__gadget_8hpp.html" title=" " alt="" coords="266,361,495,432"/>
+<area shape="rect" id="node8" href="$set__commitment__gadget_8hpp.html" title=" " alt="" coords="521,361,739,432"/>
+<area shape="rect" id="node5" href="$ram__compliance__predicate_8hpp.html" title=" " alt="" coords="131,480,361,551"/>
+<area shape="rect" id="node6" href="$ram__zksnark_8hpp.html" title=" " alt="" coords="133,599,359,669"/>
+<area shape="rect" id="node7" href="$profile__ram__zksnark_8cpp.html" title=" " alt="" coords="125,717,367,788"/>
+<area shape="rect" id="node9" href="$mp__pcd__circuits_8hpp.html" title=" " alt="" coords="506,480,754,551"/>
+<area shape="rect" id="node11" href="$memory__load__store__gadget_8hpp.html" title=" " alt="" coords="5,361,241,432"/>
+</map>

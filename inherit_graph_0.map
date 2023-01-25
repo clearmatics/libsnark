@@ -1,0 +1,31 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" title=" " alt="" coords="247,13,384,39"/>
+<area shape="rect" id="node2" href="$classgadgetlib2_1_1BinaryAND__Gadget.html" title="Specific case for and AND with two inputs. Field agnostic." alt="" coords="507,5,677,47"/>
+<area shape="rect" id="node3" href="$classgadgetlib2_1_1R1P__AND__Gadget.html" title=" " alt="" coords="512,89,672,131"/>
+<area shape="rect" id="node4" title=" " alt="" coords="222,63,409,90"/>
+<area shape="rect" id="node5" href="$classgadgetlib2_1_1R1P__Comparison__Gadget.html" title=" " alt="" coords="487,191,697,232"/>
+<area shape="rect" id="node6" title=" " alt="" coords="237,115,394,156"/>
+<area shape="rect" id="node7" href="$classgadgetlib2_1_1R1P__CompressionPacking__Gadget.html" title=" " alt="" coords="484,329,700,371"/>
+<area shape="rect" id="node8" title=" " alt="" coords="221,181,409,207"/>
+<area shape="rect" id="node9" href="$classgadgetlib2_1_1R1P__EqualsConst__Gadget.html" title=" " alt="" coords="487,540,697,581"/>
+<area shape="rect" id="node10" href="$classgadgetlib2_1_1Gadget.html" title=" " alt="" coords="5,501,152,527"/>
+<area shape="rect" id="node11" href="$classgadgetExamples_1_1HashDifficultyEnforcer__Gadget.html" title=" " alt="" coords="200,741,431,783"/>
+<area shape="rect" id="node12" href="$classgadgetExamples_1_1NAND__Gadget.html" title=" " alt="" coords="226,232,405,273"/>
+<area shape="rect" id="node13" href="$classgadgetlib2_1_1ConditionalFlag__Gadget.html" title=" " alt="" coords="215,297,416,339"/>
+<area shape="rect" id="node14" href="$classgadgetlib2_1_1DualWord__Gadget.html" title=" " alt="" coords="234,363,397,404"/>
+<area shape="rect" id="node15" href="$classgadgetlib2_1_1DualWordArray__Gadget.html" title=" " alt="" coords="217,428,414,469"/>
+<area shape="rect" id="node16" href="$classgadgetlib2_1_1LogicImplication__Gadget.html" title=" " alt="" coords="212,493,419,535"/>
+<area shape="rect" id="node17" href="$classgadgetlib2_1_1LooseMUX__GadgetBase.html" title=" " alt="" coords="231,624,399,665"/>
+<area shape="rect" id="node19" href="$classgadgetlib2_1_1R1P__Gadget.html" title=" " alt="" coords="226,690,405,717"/>
+<area shape="rect" id="node24" href="$classgadgetlib2_1_1Toggle__Gadget.html" title=" " alt="" coords="245,559,386,600"/>
+<area shape="rect" id="node18" href="$classgadgetlib2_1_1R1P__LooseMUX__Gadget.html" title=" " alt="" coords="492,624,692,665"/>
+<area shape="rect" id="node20" href="$classgadgetExamples_1_1R1P__VerifyTransactionAmounts__Gadget.html" title=" " alt="" coords="493,690,691,746"/>
+<area shape="rect" id="node21" href="$classgadgetlib2_1_1R1P__InnerProduct__Gadget.html" title=" " alt="" coords="485,771,699,812"/>
+<area shape="rect" id="node22" href="$classgadgetlib2_1_1R1P__IntegerPacking__Gadget.html" title=" " alt="" coords="479,836,705,877"/>
+<area shape="rect" id="node23" href="$classgadgetlib2_1_1R1P__OR__Gadget.html" title=" " alt="" coords="517,901,667,943"/>
+<area shape="rect" id="node25" title=" " alt="" coords="220,873,411,899"/>
+<area shape="rect" id="node26" title=" " alt="" coords="213,923,417,950"/>
+<area shape="rect" id="node27" title=" " alt="" coords="252,974,379,1001"/>
+<area shape="rect" id="node28" href="$classgadgetlib2_1_1BinaryOR__Gadget.html" title="Specific case for and OR with two inputs. Field agnostic." alt="" coords="512,967,672,1008"/>
+<area shape="rect" id="node29" title=" " alt="" coords="220,807,411,848"/>
+</map>

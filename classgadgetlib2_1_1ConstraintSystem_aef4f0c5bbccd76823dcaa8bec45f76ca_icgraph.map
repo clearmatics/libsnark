@@ -1,0 +1,7 @@
+<map id="gadgetlib2::ConstraintSystem::addConstraint" name="gadgetlib2::ConstraintSystem::addConstraint">
+<area shape="rect" id="node1" title=" " alt="" coords="444,39,659,80"/>
+<area shape="rect" id="node2" href="$classgadgetlib2_1_1Protoboard.html#acb54daa40ddd0719eb3e357bc72cdb31" title=" " alt="" coords="224,5,396,47"/>
+<area shape="rect" id="node3" href="$classgadgetlib2_1_1Protoboard.html#ad3022aeb41ad14b476c71e68b28f6dc9" title=" " alt="" coords="225,71,395,112"/>
+<area shape="rect" id="node4" href="$classgadgetlib2_1_1Protoboard.html#afc4b6d252f2fc924945d9fa5a99fcb38" title="adds a constraint of the form (a == 0)" alt="" coords="5,37,176,79"/>
+<area shape="rect" id="node5" href="$classgadgetlib2_1_1Protoboard.html#a2f73223415501aa41c83204c01d4a2c2" title=" " alt="" coords="5,103,176,144"/>
+</map>

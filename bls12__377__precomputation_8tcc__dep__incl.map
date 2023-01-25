@@ -1,0 +1,7 @@
+<map id="/home/runner/work/libsnark/libsnark/libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bls12_377_precomputation.tcc" name="/home/runner/work/libsnark/libsnark/libsnark/gadgetlib1/gadgets/pairing/bw6_761_bls12_377/bls12_377_precomputation.tcc">
+<area shape="rect" id="node1" title=" " alt="" coords="99,5,355,76"/>
+<area shape="rect" id="node2" href="$bls12__377__precomputation_8hpp.html" title=" " alt="" coords="96,124,357,195"/>
+<area shape="rect" id="node3" href="$bls12__377__miller__loop_8hpp.html" title=" " alt="" coords="35,243,266,313"/>
+<area shape="rect" id="node4" href="$bw6__761__pairing__params_8hpp.html" title=" " alt="" coords="25,361,276,432"/>
+<area shape="rect" id="node5" href="$bls12__377__final__exponentiation_8hpp.html" title=" " alt="" coords="5,480,296,551"/>
+</map>
