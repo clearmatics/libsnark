@@ -238,7 +238,7 @@ template<
     size_t NumStateColumns_L,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
 void test_anemoi_permutation_round_prime_field_gadget(
-    expected_round_values_fn_t *expected_round_values_fn)
+    expected_round_values_fn_t<ppT> expected_round_values_fn)
 
 {
     using FieldT = libff::Fr<ppT>;
@@ -296,7 +296,8 @@ void test_anemoi_permutation_round_prime_field_gadget(
     d.generate_r1cs_witness();
 
     if (expected_round_values_fn) {
-        Y_expect = expected_round_values_fn(NumStateColumns_L);
+        std::vector<FieldT> Y_expect =
+            expected_round_values_fn(NumStateColumns_L);
         for (size_t i = 0; i < NumStateColumns_L; i++) {
             ASSERT_EQ(Y_expect[i], pb.val(Y_left[i]));
             ASSERT_EQ(Y_expect[NumStateColumns_L + i], pb.val(Y_right[i]));
@@ -310,9 +311,11 @@ void test_anemoi_permutation_round_prime_field_gadget(
         "anemoi_permutation_round_prime_field_gadget tests successful");
 }
 
-template<typename ppT, class parameters = anemoi_parameters<libff::Fr<ppT>>>
-void test_anemoi_permutation_mds()
+void test_anemoi_permutation_mds_bls12_381()
 {
+    using ppT = libff::bls12_381_pp;
+    using FieldT = libff::Fr<ppT>;
+
     // anemoi_permutation_mds<ppT, NumStateColumnsL>::permutation_mds()
     using FieldT = libff::Fr<ppT>;
     const FieldT g = anemoi_parameters<ppT>::multiplicative_generator_g;
@@ -347,7 +350,7 @@ void test_anemoi_permutation_mds()
     libff::print_time("anemoi_permutation_mds tests successful");
 }
 
-void test_intermediate_gadgetss_bls12_381()
+template<typename ppT> void test_intermediate_gadgets_bls12_381()
 {
     // Use debug parameters with small values for the small gadgets
     using parameters_debug = parameters_debug_bls12_381;
@@ -356,20 +359,14 @@ void test_intermediate_gadgetss_bls12_381()
     test_flystel_E_power_five_gadget<ppT>();
     test_flystel_E_root_five_gadget<ppT, parameters_debug>();
     test_flystel_prime_field_gadget<ppT, parameters_debug>();
+    test_anemoi_permutation_mds_bls12_381();
 }
 
 template<typename ppT>
-using expected_round_values_fn_t = std::function < size_t,
-      std::vector<libff::Fr<ppT>>;
-
-template<typename ppT>
 void test_for_curve(
-    expected_round_values_fn_t<ppT> *expected_round_values_fn = 0)
+    expected_round_values_fn_t<ppT> expected_round_values_fn = 0)
 {
-    // Execute all tests for the given curve.
-
     // Use the original parameters for the full permutation
-
     using parameters = anemoi_parameters<ppT>;
     test_anemoi_permutation_round_prime_field_gadget<ppT, 1, parameters>(
         expected_round_values_fn);
@@ -379,7 +376,6 @@ void test_for_curve(
         expected_round_values_fn);
     test_anemoi_permutation_round_prime_field_gadget<ppT, 4, parameters>(
         expected_round_values_fn);
-    test_anemoi_permutation_mds<ppT, parameters>();
 }
 
 template<typename ppT> void test_curve_parameters()
@@ -398,50 +394,61 @@ template<typename ppT> void test_curve_parameters()
 
 TEST(TestAnemoiGadget, BLS12_381)
 {
-    test_for_curve<libff::bls12_381_pp>(&anemoi_expected_output_one_round);
+    test_intermediate_gadgets_bls12_381<libff::bls12_381_pp>();
 }
 
 TEST(TestCurveParameters, BLS12_381)
 {
     test_curve_parameters<libff::bls12_381_pp>();
+    test_for_curve<libff::bls12_381_pp>(&anemoi_expected_output_one_round);
 }
 
 TEST(TestCurveParameters, BLS12_377)
 {
-    using parameters = anemoi_parameters<libff::bls12_377_pp>;
-    test_curve_parameters<libff::bls12_377_pp, parameters>();
-}
-
-TEST(TestCurveParameters, MNT4)
-{
-    using parameters = anemoi_parameters<libff::mnt4_pp>;
-    test_curve_parameters<libff::mnt4_pp, parameters>();
+    test_curve_parameters<libff::bls12_377_pp>();
+    // TODO For BLS12_377 alpha = 11, which is the first value for
+    // which alpha is co-prime to r-1, required for the inverse
+    // alpha^-1 to exist (r is the modulus of Fr). ATM we have a gadget
+    // only for alpha = 5 (flystel_E_power_five_gadget), but not for
+    // alpha = 11. For this reason test_for_curve does not run on
+    // BLS12_377.
+    // test_for_curve<libff::bls12_377_pp>();
 }
 
 TEST(TestCurveParameters, MNT6)
 {
-    using parameters = anemoi_parameters<libff::mnt6_pp>;
-    test_curve_parameters<libff::mnt6_pp, parameters>();
+    test_curve_parameters<libff::mnt6_pp>();
+    // TODO For MNT6 alpha = 11, which is the first value for
+    // which alpha is co-prime to r-1, required for the inverse
+    // alpha^-1 to exist (r is the modulus of Fr). ATM we have a gadget
+    // only for alpha = 5 (flystel_E_power_five_gadget), but not for
+    // alpha = 11. For this reason test_for_curve does not run on
+    // MNT6.
+    // test_for_curve<libff::mnt6_pp>();
+}
+
+TEST(TestCurveParameters, MNT4)
+{
+    test_curve_parameters<libff::mnt4_pp>();
+    test_for_curve<libff::mnt4_pp>();
 }
 
 TEST(TestCurveParameters, BW6_761)
 {
-    using parameters = anemoi_parameters<libff::bw6_761_pp>;
-    test_curve_parameters<libff::bw6_761_pp, parameters>();
+    test_curve_parameters<libff::bw6_761_pp>();
+    test_for_curve<libff::bw6_761_pp>();
 }
 
 TEST(TestCurveParameters, BN128)
 {
-    using parameters = anemoi_parameters<libff::bn128_pp>;
-    test_for_curve<libff : bn128_pp>();
-    test_curve_parameters<libff::bn128_pp, parameters>();
+    test_curve_parameters<libff::bn128_pp>();
+    test_for_curve<libff::bn128_pp>();
 }
 
 TEST(TestCurveParameters, ALT_BN128)
 {
-    using parameters = anemoi_parameters<libff::alt_bn128_pp>;
-    test_for_curve<libff::bn128_pp>();
-    test_curve_parameters<libff::alt_bn128_pp, parameters>();
+    test_curve_parameters<libff::alt_bn128_pp>();
+    test_for_curve<libff::alt_bn128_pp>();
 }
 
 int main(int argc, char **argv)
