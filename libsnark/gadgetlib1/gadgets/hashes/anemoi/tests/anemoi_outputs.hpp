@@ -29,6 +29,15 @@ template<typename ppT>
 using expected_round_values_fn_t =
     std::function<std::vector<libff::Fr<ppT>>(const size_t)>;
 
+// Returns the expected outputs from the full Anemoi permutation for
+// BLS12_381
+std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output(
+    const size_t &NumStateColumns_L);
+
+template<typename ppT>
+using expected_values_fn_t =
+    std::function<std::vector<libff::Fr<ppT>>(const size_t)>;
+
 } // namespace libsnark
 
 #endif // LIBSNARK_GADGETLIB1_GADGETS_HASHES_ANEMOI_TESTS_ANEMOI_OUTPUTS_HPP_
