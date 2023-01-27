@@ -620,11 +620,6 @@ void anemoi_permutation_round_prime_field_gadget<
     for (size_t i = 0; i < NumStateColumns_L; i++) {
         Flystel[i].generate_r1cs_witness();
     }
-
-    for (size_t i = 0; i < NumStateColumns_L; i++) {
-        this->pb.val(Y_left_output[i]) = this->pb.val(Flystel[i].output_y0);
-        this->pb.val(Y_right_output[i]) = this->pb.val(Flystel[i].output_y1);
-    }
 }
 
 // TODO: consdier applying the following changes to all
@@ -671,6 +666,144 @@ std::array<std::array<libff::Fr<ppT>, 4>, 4> anemoi_permutation_mds<ppT, 4>::
          {g2, g2, 1, g + 1},
          {g + 1, g + g + 1, g, g + 1}}};
     return M;
+}
+
+template<typename ppT, size_t NumStateColumns_L, class parameters>
+anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
+    anemoi_permutation_prime_field_gadget(
+        protoboard<libff::Fr<ppT>> &pb,
+        const std::vector<std::vector<FieldT>> &C,
+        const std::vector<std::vector<FieldT>> &D,
+        const pb_linear_combination_array<FieldT> &X_left,
+        const pb_linear_combination_array<FieldT> &X_right,
+        const pb_variable_array<FieldT> &Y_left,
+        const pb_variable_array<FieldT> &Y_right,
+        const std::string &annotation_prefix)
+    : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
+    , C_const_vec(C)
+    , D_const_vec(D)
+    , X_left_input(X_left)
+    , X_right_input(X_right)
+    , Y_left_output(Y_left)
+    , Y_right_output(Y_right)
+{
+    // Number of columns can not be larger than rounds128 size
+    assert(NumStateColumns_L <= parameters::nrounds128.size());
+    // Number of columns can not be larger than rounds256 size
+    assert(NumStateColumns_L <= parameters::nrounds256.size());
+
+    // Get the number of rounds for the given Anemoi instance
+    // (i.e. given number of columns in the state). Note: currently
+    // using 256-bit security instance by default. TODO add support
+    // for 128-bit security e.g. by adding a Boolean flag b_sec_128 in
+    // the tamplate parameters.
+    const size_t nrounds = parameters::nrounds256[NumStateColumns_L - 1];
+
+    // Left and right input to round i, outputs from round i-1
+    std::vector<pb_variable_array<FieldT>> round_results_left;
+    round_results_left.resize(nrounds);
+    std::vector<pb_variable_array<FieldT>> round_results_right;
+    round_results_right.resize(nrounds);
+
+    // Initialize Round[0] with input X_left_input, X_right_input and
+    // output round_results_left[0], round_results_right[0]
+    round_results_left[0].allocate(
+        pb,
+        NumStateColumns_L,
+        FMT(this->annotation_prefix, " round_results_left[0]"));
+    round_results_right[0].allocate(
+        pb,
+        NumStateColumns_L,
+        FMT(this->annotation_prefix, " round_results_right[0]"));
+
+    Round.emplace_back(anemoi_permutation_round_prime_field_gadget<
+                       ppT,
+                       NumStateColumns_L,
+                       parameters>(
+        pb,
+        C[0],
+        D[0],
+        X_left_input,
+        X_right_input,
+        round_results_left[0],
+        round_results_right[0],
+        FMT(this->annotation_prefix, " Round[0]")));
+
+    // Initialize Round[i>0] gadget with input round_results_left[i -
+    // 1], round_results_right[i - 1] and output
+    // round_results_left[i], round_results_right[i]
+    for (size_t i = 1; i < nrounds - 1; i++) {
+
+        round_results_left[i].allocate(
+            pb,
+            NumStateColumns_L,
+            FMT(this->annotation_prefix, " round_results_left[%zu]", i));
+        round_results_right[i].allocate(
+            pb,
+            NumStateColumns_L,
+            FMT(this->annotation_prefix, " round_results_right[%zu]", i));
+
+        Round.emplace_back(anemoi_permutation_round_prime_field_gadget<
+                           ppT,
+                           NumStateColumns_L,
+                           parameters>(
+            pb,
+            C[i],
+            D[i],
+            round_results_left[i - 1],
+            round_results_right[i - 1],
+            round_results_left[i],
+            round_results_right[i],
+            FMT(this->annotation_prefix, " Round[%zu]", i)));
+    }
+
+    round_results_left[nrounds - 1].allocate(
+        pb,
+        NumStateColumns_L,
+        FMT(this->annotation_prefix, " round_results_left[%zu]", nrounds - 1));
+    round_results_right[nrounds - 1].allocate(
+        pb,
+        NumStateColumns_L,
+        FMT(this->annotation_prefix, " round_results_right[%zu]", nrounds - 1));
+
+    // For last round, copy the output as given by the caller
+    // Y_left_output, Y_right_output
+    round_results_left[nrounds - 1] = Y_left_output;
+    round_results_right[nrounds - 1] = Y_right_output;
+
+    // Initialize the last round gadget
+    Round.emplace_back(anemoi_permutation_round_prime_field_gadget<
+                       ppT,
+                       NumStateColumns_L,
+                       parameters>(
+        pb,
+        C[nrounds - 1],
+        D[nrounds - 1],
+        round_results_left[nrounds - 2],
+        round_results_right[nrounds - 2],
+        round_results_left[nrounds - 1],
+        round_results_right[nrounds - 1],
+        FMT(this->annotation_prefix, " Round[%zu]", nrounds - 1)));
+}
+
+template<typename ppT, size_t NumStateColumns_L, class parameters>
+void anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
+    generate_r1cs_constraints()
+{
+    size_t nrounds = parameters::nrounds256[NumStateColumns_L - 1];
+    for (size_t i = 0; i < nrounds; i++) {
+        Round[i].generate_r1cs_constraints();
+    }
+}
+
+template<typename ppT, size_t NumStateColumns_L, class parameters>
+void anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
+    generate_r1cs_witness()
+{
+    size_t nrounds = parameters::nrounds256[NumStateColumns_L - 1];
+    for (size_t i = 0; i < nrounds; i++) {
+        Round[i].generate_r1cs_witness();
+    }
 }
 
 } // namespace libsnark

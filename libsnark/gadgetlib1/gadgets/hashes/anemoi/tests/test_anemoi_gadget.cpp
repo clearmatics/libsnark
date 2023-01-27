@@ -23,7 +23,6 @@
 #include <libff/common/utils.hpp>
 #include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_components.hpp>
-#include <libsnark/gadgetlib1/gadgets/hashes/anemoi/anemoi_constants.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/r1cs_gg_ppzksnark.hpp>
 
 using namespace libsnark;
@@ -249,6 +248,7 @@ void test_anemoi_permutation_round_prime_field_gadget(
 
     pb_variable_array<FieldT> X_left;
     pb_variable_array<FieldT> X_right;
+
     pb_variable_array<FieldT> Y_left;
     pb_variable_array<FieldT> Y_right;
 
@@ -311,6 +311,102 @@ void test_anemoi_permutation_round_prime_field_gadget(
         "anemoi_permutation_round_prime_field_gadget tests successful");
 }
 
+template<
+    typename ppT,
+    size_t NumStateColumns_L,
+    class parameters = anemoi_parameters<libff::Fr<ppT>>>
+void test_anemoi_permutation_prime_field_gadget(
+    expected_values_fn_t<ppT> expected_values_fn)
+
+{
+    using FieldT = libff::Fr<ppT>;
+
+    protoboard<FieldT> pb;
+    std::vector<std::vector<FieldT>> C;
+    std::vector<std::vector<FieldT>> D;
+
+    pb_variable_array<FieldT> X_left;
+    pb_variable_array<FieldT> X_right;
+    pb_variable_array<FieldT> Y_left;
+    pb_variable_array<FieldT> Y_right;
+
+    X_left.allocate(pb, NumStateColumns_L, "left inputs");
+    X_right.allocate(pb, NumStateColumns_L, "right inputs");
+
+    Y_left.allocate(pb, NumStateColumns_L, "left outputs");
+    Y_right.allocate(pb, NumStateColumns_L, "right outputs");
+
+    assert(NumStateColumns_L <= parameters::nrounds256.size());
+    assert(NumStateColumns_L <= parameters::nrounds128.size());
+
+    // the number of rounds depends on the number of columns in the
+    // state
+    size_t nrounds = parameters::nrounds256[NumStateColumns_L - 1];
+
+    // Store C,D round constants from parameters class
+    for (size_t iround = 0; iround < nrounds; iround++) {
+        // C,D constants for one round
+        std::vector<FieldT> C_iround;
+        std::vector<FieldT> D_iround;
+        for (size_t icol = 0; icol < NumStateColumns_L; icol++) {
+            if (NumStateColumns_L == 1) {
+                C_iround.push_back(
+                    parameters::C_constants_col_one[iround][icol]);
+                D_iround.push_back(
+                    parameters::D_constants_col_one[iround][icol]);
+            }
+            if (NumStateColumns_L == 2) {
+                C_iround.push_back(
+                    parameters::C_constants_col_two[iround][icol]);
+                D_iround.push_back(
+                    parameters::D_constants_col_two[iround][icol]);
+            }
+            if (NumStateColumns_L == 3) {
+                C_iround.push_back(
+                    parameters::C_constants_col_three[iround][icol]);
+                D_iround.push_back(
+                    parameters::D_constants_col_three[iround][icol]);
+            }
+            if (NumStateColumns_L == 4) {
+                C_iround.push_back(
+                    parameters::C_constants_col_four[iround][icol]);
+                D_iround.push_back(
+                    parameters::D_constants_col_four[iround][icol]);
+            }
+        }
+        C.push_back(C_iround);
+        D.push_back(D_iround);
+    }
+
+    anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters> d(
+        pb, C, D, X_left, X_right, Y_left, Y_right, "anemoi permutation");
+
+    // generate constraints
+    d.generate_r1cs_constraints();
+
+    // Input values: X_left = 0,1,2...L-1 ; X_right = L, L+1, 2L-1
+    for (size_t i = 0; i < NumStateColumns_L; i++) {
+        pb.val(X_left[i]) = FieldT(i);
+        pb.val(X_right[i]) = FieldT(NumStateColumns_L + i);
+    }
+
+    // generate witness for the given input
+    d.generate_r1cs_witness();
+
+    if (expected_values_fn) {
+        std::vector<FieldT> Y_expect = expected_values_fn(NumStateColumns_L);
+        for (size_t i = 0; i < NumStateColumns_L; i++) {
+            ASSERT_EQ(Y_expect[i], pb.val(Y_left[i]));
+            ASSERT_EQ(Y_expect[NumStateColumns_L + i], pb.val(Y_right[i]));
+        }
+    }
+
+    ASSERT_TRUE(pb.is_satisfied());
+    test_pb_verify_circuit<ppT>(pb);
+
+    libff::print_time("anemoi_permutation_prime_field_gadget tests successful");
+}
+
 void test_anemoi_permutation_mds_bls12_381()
 {
     using ppT = libff::bls12_381_pp;
@@ -365,10 +461,13 @@ void test_intermediate_gadgets_bls12_381()
 
 template<typename ppT>
 void test_for_curve(
-    expected_round_values_fn_t<ppT> expected_round_values_fn = 0)
+    expected_round_values_fn_t<ppT> expected_round_values_fn = 0,
+    expected_values_fn_t<ppT> expected_values_fn = 0)
 {
     // Use the original parameters for the full permutation
     using parameters = anemoi_parameters<ppT>;
+
+    // Test single round
     test_anemoi_permutation_round_prime_field_gadget<ppT, 1, parameters>(
         expected_round_values_fn);
     test_anemoi_permutation_round_prime_field_gadget<ppT, 2, parameters>(
@@ -377,14 +476,24 @@ void test_for_curve(
         expected_round_values_fn);
     test_anemoi_permutation_round_prime_field_gadget<ppT, 4, parameters>(
         expected_round_values_fn);
+    // Test full permutation
+    test_anemoi_permutation_prime_field_gadget<ppT, 1, parameters>(
+        expected_values_fn);
+    test_anemoi_permutation_prime_field_gadget<ppT, 2, parameters>(
+        expected_values_fn);
+    test_anemoi_permutation_prime_field_gadget<ppT, 3, parameters>(
+        expected_values_fn);
+    test_anemoi_permutation_prime_field_gadget<ppT, 4, parameters>(
+        expected_values_fn);
 }
-
-TEST(TestAnemoiGadget, BLS12_381) { test_intermediate_gadgets_bls12_381(); }
 
 TEST(TestForCurve, BLS12_381)
 {
-    test_for_curve<libff::bls12_381_pp>(&anemoi_expected_output_one_round);
+    test_for_curve<libff::bls12_381_pp>(
+        &anemoi_expected_output_one_round, &anemoi_expected_output);
 }
+
+TEST(TestAnemoiGadget, BLS12_381) { test_intermediate_gadgets_bls12_381(); }
 
 TEST(TestForCurve, BLS12_377)
 {

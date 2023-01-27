@@ -218,8 +218,9 @@ public:
 
     anemoi_permutation_round_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const std::vector<FieldT> &C_const,
-        const std::vector<FieldT> &D_const,
+        // TODO: add round index
+        const std::vector<FieldT> &C_const, // remove
+        const std::vector<FieldT> &D_const, // remove
         const pb_linear_combination_array<FieldT> &X_left_input,
         const pb_linear_combination_array<FieldT> &X_right_input,
         const pb_variable_array<FieldT> &Y_left_output,
@@ -261,6 +262,49 @@ template<typename ppT> class anemoi_permutation_mds<ppT, 4>
 
 public:
     static anemoi_mds_matrix_t permutation_mds(const libff::Fr<ppT> g);
+};
+
+/// Full Anemoi permutation mapping (Fr)^{2L} -> (Fr)^{2L}
+/// see anemoi_permutation_round_prime_field_gadget
+template<
+    typename ppT,
+    size_t NumStateColumns_L,
+    class parameters = anemoi_parameters<libff::Fr<ppT>>>
+class anemoi_permutation_prime_field_gadget : public gadget<libff::Fr<ppT>>
+{
+    using FieldT = libff::Fr<ppT>;
+
+private:
+    // C round constants for all rounds
+    std::vector<std::vector<FieldT>> C_const_vec;
+    // D round constants for all rounds
+    std::vector<std::vector<FieldT>> D_const_vec;
+    // vector of round gadgets
+    std::vector<anemoi_permutation_round_prime_field_gadget<
+        ppT,
+        NumStateColumns_L,
+        parameters>>
+        Round;
+
+public:
+    const pb_linear_combination_array<FieldT> X_left_input;
+    const pb_linear_combination_array<FieldT> X_right_input;
+    const pb_variable_array<FieldT> Y_left_output;
+    const pb_variable_array<FieldT> Y_right_output;
+
+    anemoi_permutation_prime_field_gadget(
+        protoboard<FieldT> &pb,
+        // TODO: remove constants
+        const std::vector<std::vector<FieldT>> &C_const,
+        const std::vector<std::vector<FieldT>> &D_const,
+        const pb_linear_combination_array<FieldT> &X_left_input,
+        const pb_linear_combination_array<FieldT> &X_right_input,
+        const pb_variable_array<FieldT> &Y_left_output,
+        const pb_variable_array<FieldT> &Y_right_output,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
 };
 
 } // namespace libsnark
