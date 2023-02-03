@@ -350,8 +350,9 @@ void test_anemoi_permutation_mds_bls12_381()
     libff::print_time("anemoi_permutation_mds tests successful");
 }
 
-template<typename ppT> void test_intermediate_gadgets_bls12_381()
+void test_intermediate_gadgets_bls12_381()
 {
+    using ppT = libff::bls12_381_pp;
     // Use debug parameters with small values for the small gadgets
     using parameters_debug = parameters_debug_bls12_381;
     test_flystel_Q_gamma_prime_field_gadget<ppT, parameters_debug>();
@@ -378,34 +379,15 @@ void test_for_curve(
         expected_round_values_fn);
 }
 
-template<typename ppT> void test_curve_parameters()
-{
-    using parameters = anemoi_parameters<ppT>;
-    printf("g = %zd\n", parameters::multiplicative_generator_g);
-    printf("alpha = %zd\n", parameters::alpha);
-    printf("beta = %zd\n", parameters::beta);
-    printf("gamma = %zd\n", parameters::gamma);
-    printf("quad_exponent = %zd\n", parameters::quad_exponent);
-    printf("alpha_inv = ");
-    parameters::alpha_inv.print();
-    printf("delta = ");
-    parameters::delta.print();
-}
+TEST(TestAnemoiGadget, BLS12_381) { test_intermediate_gadgets_bls12_381(); }
 
-TEST(TestAnemoiGadget, BLS12_381)
+TEST(TestForCurve, BLS12_381)
 {
-    test_intermediate_gadgets_bls12_381<libff::bls12_381_pp>();
-}
-
-TEST(TestCurveParameters, BLS12_381)
-{
-    test_curve_parameters<libff::bls12_381_pp>();
     test_for_curve<libff::bls12_381_pp>(&anemoi_expected_output_one_round);
 }
 
-TEST(TestCurveParameters, BLS12_377)
+TEST(TestForCurve, BLS12_377)
 {
-    test_curve_parameters<libff::bls12_377_pp>();
     // TODO For BLS12_377 alpha = 11, which is the first value for
     // which alpha is co-prime to r-1, required for the inverse
     // alpha^-1 to exist (r is the modulus of Fr). ATM we have a gadget
@@ -415,9 +397,8 @@ TEST(TestCurveParameters, BLS12_377)
     // test_for_curve<libff::bls12_377_pp>();
 }
 
-TEST(TestCurveParameters, MNT6)
+TEST(TestForCurve, MNT6)
 {
-    test_curve_parameters<libff::mnt6_pp>();
     // TODO For MNT6 alpha = 11, which is the first value for
     // which alpha is co-prime to r-1, required for the inverse
     // alpha^-1 to exist (r is the modulus of Fr). ATM we have a gadget
@@ -427,29 +408,13 @@ TEST(TestCurveParameters, MNT6)
     // test_for_curve<libff::mnt6_pp>();
 }
 
-TEST(TestCurveParameters, MNT4)
-{
-    test_curve_parameters<libff::mnt4_pp>();
-    test_for_curve<libff::mnt4_pp>();
-}
+TEST(TestForCurve, MNT4) { test_for_curve<libff::mnt4_pp>(); }
 
-TEST(TestCurveParameters, BW6_761)
-{
-    test_curve_parameters<libff::bw6_761_pp>();
-    test_for_curve<libff::bw6_761_pp>();
-}
+TEST(TestForCurve, BW6_761) { test_for_curve<libff::bw6_761_pp>(); }
 
-TEST(TestCurveParameters, BN128)
-{
-    test_curve_parameters<libff::bn128_pp>();
-    test_for_curve<libff::bn128_pp>();
-}
+TEST(TestForCurve, BN128) { test_for_curve<libff::bn128_pp>(); }
 
-TEST(TestCurveParameters, ALT_BN128)
-{
-    test_curve_parameters<libff::alt_bn128_pp>();
-    test_for_curve<libff::alt_bn128_pp>();
-}
+TEST(TestForCurve, ALT_BN128) { test_for_curve<libff::alt_bn128_pp>(); }
 
 int main(int argc, char **argv)
 {
