@@ -1,0 +1,129 @@
+/** @file
+ *****************************************************************************
+ * @author     This file is part of libff, developed by Clearmatics Ltd
+ *             (originally developed by SCIPR Lab) and contributors
+ *             (see AUTHORS).
+ * @copyright  MIT license (see LICENSE file)
+ *****************************************************************************/
+
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_BLS12_381_TEST_VECTOR_TRANSCRIPT_HASHER_CPP_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_BLS12_381_TEST_VECTOR_TRANSCRIPT_HASHER_CPP_
+
+#include "libsnark/zk_proof_systems/plonk/tests/bls12_381_test_vector_transcript_hasher.hpp"
+
+// Implementation of the transcript hasher interface specific to the BLS12-381
+// curve. See bls12_381_test_vector_transcript_hasher.hpp
+namespace libsnark
+{
+
+bls12_381_test_vector_transcript_hasher::
+    bls12_381_test_vector_transcript_hasher()
+    : length_array({288, 320, 416, 704, 896, 1120})
+    , challenge_array({"beta", "gamma", "alpha", "zeta", "nu", "u"})
+{
+    assert(length_array.size() == challenge_array.size());
+
+    plonk_example example;
+
+    // initialize to empty vector
+    buffer.clear();
+    // test array containing the expected hash values of the communication
+    // transcript i.e. the communication challenges (in this order): beta,
+    // gamma, alpha, zeta, nu, u WARNING! specific to curve BLS12-381
+    hash_values = {
+        example.beta,
+        example.gamma,
+        example.alpha,
+        example.zeta,
+        example.nu,
+        example.u,
+    };
+}
+
+void bls12_381_test_vector_transcript_hasher::reset() { this->buffer.clear(); }
+
+void bls12_381_test_vector_transcript_hasher::add_element(
+    const libff::Fr<libff::bls12_381_pp> &element)
+{
+    // convert the Fr element into a string
+    std::string str;
+    {
+        std::ostringstream ss;
+        libff::field_write<libff::encoding_binary, libff::form_plain>(
+            element, ss);
+        str = ss.str();
+    }
+    // copy the string as a sequence of uint8_t elements at the end of
+    // the buffer
+    std::copy(str.begin(), str.end(), std::back_inserter(this->buffer));
+}
+
+void bls12_381_test_vector_transcript_hasher::add_element(
+    const libff::G1<libff::bls12_381_pp> &element)
+{
+    libff::G1<libff::bls12_381_pp> element_aff(element);
+    element_aff.to_affine_coordinates();
+
+    // convert the affine coordinates of the curve point into a string
+    std::string str;
+    {
+        std::ostringstream ss;
+        libff::group_write<
+            libff::encoding_binary,
+            libff::form_plain,
+            libff::compression_off>(element_aff, ss);
+        str = ss.str();
+    }
+    // copy the string as a sequence of uint8_t elements at the end of
+    // the buffer
+    std::copy(str.begin(), str.end(), std::back_inserter(this->buffer));
+}
+
+void bls12_381_test_vector_transcript_hasher::add_element(
+    const libff::G2<libff::bls12_381_pp> &element)
+{
+    libff::G2<libff::bls12_381_pp> element_aff(element);
+    element_aff.to_affine_coordinates();
+
+    // convert the affine coordinates of the curve point into a string
+    std::string str;
+    {
+        std::ostringstream ss;
+        libff::group_write<
+            libff::encoding_binary,
+            libff::form_plain,
+            libff::compression_off>(element_aff, ss);
+        str = ss.str();
+    }
+    // copy the string as a sequence of uint8_t elements at the end of
+    // the buffer
+    std::copy(str.begin(), str.end(), std::back_inserter(this->buffer));
+}
+
+libff::Fr<libff::bls12_381_pp> bls12_381_test_vector_transcript_hasher::
+    get_hash()
+{
+    const size_t buffer_len = this->buffer.size();
+
+    // find the matching index and return the corresponding challenge.
+    for (size_t i = 0; i < length_array.size(); ++i) {
+        if (buffer_len == length_array[i]) {
+            printf(
+                "[%s:%d] buffer_len %d: %s\n",
+                __FILE__,
+                __LINE__,
+                (int)buffer_len,
+                challenge_array[i].c_str());
+
+            return hash_values[i];
+        }
+    }
+
+    // If we are here, then the hasher buffer has invalid length so
+    // throw an exception
+    throw std::logic_error("Error: invalid length of transcript hasher buffer");
+}
+
+} // namespace libsnark
+
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_BLS12_381_TEST_VECTOR_TRANSCRIPT_HASHER_CPP_
