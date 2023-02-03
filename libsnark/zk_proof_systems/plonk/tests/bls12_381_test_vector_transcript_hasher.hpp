@@ -114,10 +114,7 @@ public:
     libff::Fr<libff::bls12_381_pp> get_hash();
 
     // clear the buffer (for now only for testing)
-    void buffer_clear();
-
-    // get buffer size
-    size_t buffer_size();
+    void reset();
 };
 
 } // namespace libsnark

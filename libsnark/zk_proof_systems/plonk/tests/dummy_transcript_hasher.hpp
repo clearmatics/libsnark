@@ -17,10 +17,10 @@ namespace libsnark
 {
 
 /// Implementation of a dummy transcript hasher interface (see
-/// transcript_hasher.hpp). It returns the number of the elemnts in
-/// the hash buffer as an Fr element. Specialized over the curve
-/// field. See also class bls12_381_test_vector_transcript_hasher,
-/// which is specific to the BLS12_381 curve.
+/// transcript_hasher.hpp). It returns the number of bytes in the hash
+/// buffer as an Fr element. Specialized over the curve field. See
+/// also class bls12_381_test_vector_transcript_hasher, which is
+/// specific to the BLS12_381 curve.
 template<typename ppT> class dummy_transcript_hasher
 {
 private:
@@ -40,16 +40,13 @@ public:
     void add_element(const libff::G2<ppT> &element);
 
     // Dummy implementation of get_hash that simply returns the number
-    // of elements in the buffer as an Fr value for the purposes of
-    // unit testing. TODO: to be replaced by a call to a proper hash
+    // bytes in the buffer as an Fr value for the purposes of unit
+    // testing. TODO: to be replaced by a call to a proper hash
     // function e.g. SHA2, BLAKE, etc.
     libff::Fr<ppT> get_hash();
 
     // clear the buffer (for now only for testing)
-    void buffer_clear();
-
-    // get buffer size
-    size_t buffer_size();
+    void reset();
 };
 
 } // namespace libsnark

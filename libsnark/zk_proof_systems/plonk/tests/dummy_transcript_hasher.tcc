@@ -6,8 +6,8 @@
  * @copyright  MIT license (see LICENSE file)
  *****************************************************************************/
 
-#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_DUMMY_TRANSCRIPT_HASHER_CPP_
-#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_DUMMY_TRANSCRIPT_HASHER_CPP_
+#ifndef LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_DUMMY_TRANSCRIPT_HASHER_TCC_
+#define LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_DUMMY_TRANSCRIPT_HASHER_TCC_
 
 #include "libsnark/zk_proof_systems/plonk/tests/dummy_transcript_hasher.hpp"
 
@@ -20,14 +20,9 @@ template<typename ppT> dummy_transcript_hasher<ppT>::dummy_transcript_hasher()
 {
 }
 
-template<typename ppT> void dummy_transcript_hasher<ppT>::buffer_clear()
+template<typename ppT> void dummy_transcript_hasher<ppT>::reset()
 {
     this->buffer.clear();
-}
-
-template<typename ppT> size_t dummy_transcript_hasher<ppT>::buffer_size()
-{
-    return this->buffer.size();
 }
 
 template<typename ppT>
@@ -96,4 +91,4 @@ template<typename ppT> libff::Fr<ppT> dummy_transcript_hasher<ppT>::get_hash()
 
 } // namespace libsnark
 
-#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_DUMMY_TRANSCRIPT_HASHER_CPP_
+#endif // LIBSNARK_ZK_PROOF_SYSTEMS_PLONK_TESTS_DUMMY_TRANSCRIPT_HASHER_TCC_

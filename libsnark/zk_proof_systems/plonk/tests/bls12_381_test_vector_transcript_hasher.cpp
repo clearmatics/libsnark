@@ -40,15 +40,7 @@ bls12_381_test_vector_transcript_hasher::
     };
 }
 
-void bls12_381_test_vector_transcript_hasher::buffer_clear()
-{
-    this->buffer.clear();
-}
-
-size_t bls12_381_test_vector_transcript_hasher::buffer_size()
-{
-    return this->buffer.size();
-}
+void bls12_381_test_vector_transcript_hasher::reset() { this->buffer.clear(); }
 
 void bls12_381_test_vector_transcript_hasher::add_element(
     const libff::Fr<libff::bls12_381_pp> &element)
