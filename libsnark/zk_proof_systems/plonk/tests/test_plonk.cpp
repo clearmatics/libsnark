@@ -8,6 +8,7 @@
 
 #include "libsnark/zk_proof_systems/plonk/prover.hpp"
 #include "libsnark/zk_proof_systems/plonk/tests/bls12_381_test_vector_transcript_hasher.hpp"
+#include "libsnark/zk_proof_systems/plonk/tests/dummy_transcript_hasher.hpp"
 #include "libsnark/zk_proof_systems/plonk/verifier.hpp"
 
 #include <algorithm>
@@ -64,7 +65,7 @@ void test_verify_invalid_proof(
     for (size_t i = 0; i < valid_proof.W_polys_blinded_at_secret_g1.size();
          ++i) {
         // re-initialize the manipulated proof
-        hasher.buffer_clear();
+        hasher.reset();
         proof = valid_proof;
         G1_noise = libff::G1<ppT>::random_element();
         proof.W_polys_blinded_at_secret_g1[i] =
@@ -73,7 +74,7 @@ void test_verify_invalid_proof(
         ASSERT_FALSE(b_accept);
     }
     // manipulate [z]_1
-    hasher.buffer_clear();
+    hasher.reset();
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.z_poly_at_secret_g1 = proof.z_poly_at_secret_g1 + G1_noise;
@@ -82,7 +83,7 @@ void test_verify_invalid_proof(
     // manipulate [t_lo]_1, [t_mi]_1, [t_hi]_1
     for (size_t i = 0; i < valid_proof.t_poly_at_secret_g1.size(); ++i) {
         // re-initialize the manipulated proof
-        hasher.buffer_clear();
+        hasher.reset();
         proof = valid_proof;
         G1_noise = libff::G1<ppT>::random_element();
         proof.t_poly_at_secret_g1[i] = proof.t_poly_at_secret_g1[i] + G1_noise;
@@ -90,63 +91,63 @@ void test_verify_invalid_proof(
         ASSERT_FALSE(b_accept);
     }
     // manipulate \bar{a}
-    hasher.buffer_clear();
+    hasher.reset();
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.a_zeta = proof.a_zeta + Fr_noise;
     b_accept = verifier.verify_proof(proof, srs, PI_value_list, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{b}
-    hasher.buffer_clear();
+    hasher.reset();
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.b_zeta = proof.b_zeta + Fr_noise;
     b_accept = verifier.verify_proof(proof, srs, PI_value_list, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{c}
-    hasher.buffer_clear();
+    hasher.reset();
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.c_zeta = proof.c_zeta + Fr_noise;
     b_accept = verifier.verify_proof(proof, srs, PI_value_list, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{S_sigma1}
-    hasher.buffer_clear();
+    hasher.reset();
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.S_0_zeta = proof.S_0_zeta + Fr_noise;
     b_accept = verifier.verify_proof(proof, srs, PI_value_list, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{S_sigma2}
-    hasher.buffer_clear();
+    hasher.reset();
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.S_1_zeta = proof.S_1_zeta + Fr_noise;
     b_accept = verifier.verify_proof(proof, srs, PI_value_list, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate \bar{z_w}
-    hasher.buffer_clear();
+    hasher.reset();
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.z_poly_xomega_zeta = proof.z_poly_xomega_zeta + Fr_noise;
     b_accept = verifier.verify_proof(proof, srs, PI_value_list, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate [W_zeta]_1
-    hasher.buffer_clear();
+    hasher.reset();
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.W_zeta_at_secret = proof.W_zeta_at_secret + G1_noise;
     b_accept = verifier.verify_proof(proof, srs, PI_value_list, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate [W_{zeta omega_roots}]_1
-    hasher.buffer_clear();
+    hasher.reset();
     proof = valid_proof;
     G1_noise = libff::G1<ppT>::random_element();
     proof.W_zeta_omega_at_secret = proof.W_zeta_omega_at_secret + G1_noise;
     b_accept = verifier.verify_proof(proof, srs, PI_value_list, hasher);
     ASSERT_FALSE(b_accept);
     // manipulate r_zeta
-    hasher.buffer_clear();
+    hasher.reset();
     proof = valid_proof;
     Fr_noise = libff::Fr<ppT>::random_element();
     proof.r_zeta = proof.r_zeta + Fr_noise;
@@ -432,7 +433,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
         plonk_prover<ppT, transcript_hasher>::round_one(
             round_zero_out, blind_scalars, witness, srs, domain, hasher);
     // clear hash buffer
-    hasher.buffer_clear();
+    hasher.reset();
     // Add outputs from Round 1 to the hash buffer.
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[a]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[b]);
@@ -469,7 +470,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
             domain,
             hasher);
     // Clear hash buffer.
-    hasher.buffer_clear();
+    hasher.reset();
     // Add outputs from Round 1 to the hash buffer.
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[a]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[b]);
@@ -504,7 +505,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
             srs,
             hasher);
     // Clear hash buffer.
-    hasher.buffer_clear();
+    hasher.reset();
     // Add outputs from Round 1 to the hash buffer.
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[a]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[b]);
@@ -526,7 +527,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_prover_rounds()
         plonk_prover<ppT, transcript_hasher>::round_four(
             zeta, round_one_out, round_three_out, srs, hasher);
     // Clear hash buffer.
-    hasher.buffer_clear();
+    hasher.reset();
     // Add outputs from Round 1 to the hash buffer.
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[a]);
     hasher.add_element(round_one_out.W_polys_blinded_at_secret_g1[b]);
@@ -936,7 +937,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier_steps()
 
     // Clear the hasher buffer in order to re-use the same
     // transcript_hasher object for the verifier.
-    hasher.buffer_clear();
+    hasher.reset();
 
     // Unit test verifier preprocessed input.
     test_plonk_verifier_preprocessed_input<ppT, transcript_hasher>(
@@ -1060,7 +1061,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
 
     // Clear the hasher buffer in order to re-use the same
     // transcript_hasher object for the verifier.
-    hasher.buffer_clear();
+    hasher.reset();
 
     // Initialize verifier.
     plonk_verifier<ppT, transcript_hasher> verifier;
@@ -1077,7 +1078,7 @@ template<typename ppT, class transcript_hasher> void test_plonk_verifier()
 
     // Clear the hasher buffer in order to re-use the same
     // transcript_hasher object.
-    hasher.buffer_clear();
+    hasher.reset();
     // Assert that proof verification fails when the proof is
     // manipulated.
     test_verify_invalid_proof(proof, srs, PI_value_list, hasher);
@@ -1148,9 +1149,10 @@ template<typename ppT> void test_plonk_gates_matrix_transpose()
 // ( x  y  /  y  /  x)
 // (a1 a2 b1 b2 c1 c2) -> (1 2 3 4 5 6)
 // (c2 b2 b1 a2 c1 a1) -> (6 4 3 2 5 1)
-template<typename ppT, class transcript_hasher>
-void test_plonk_prepare_gates_matrix()
+template<typename ppT, class transcript_hasher> void test_plonk_simple_circuit()
 {
+    ppT::init_public_params();
+
     using Field = libff::Fr<ppT>;
 
     // 0 Arithmetization of test circuit y^2 = x mod r
@@ -1337,57 +1339,70 @@ void test_plonk_constants_k1_k2_bls12_381()
     }
 }
 
-TEST(TestPlonkConstantsK1K2, Edwards)
+TEST(TestPlonk, Edwards)
 {
     test_plonk_constants_k1_k2<libff::edwards_pp>();
     test_plonk_random_constants_k1_k2<libff::edwards_pp>();
+    // TODO add test_plonk_simple_circuit
 }
 
-TEST(TestPlonkConstantsK1K2, Mnt4)
-{
-    test_plonk_constants_k1_k2<libff::mnt4_pp>();
-    test_plonk_random_constants_k1_k2<libff::mnt4_pp>();
-}
-
-TEST(TestPlonkConstantsK1K2, Mnt6)
-{
-    test_plonk_constants_k1_k2<libff::mnt6_pp>();
-    test_plonk_random_constants_k1_k2<libff::mnt6_pp>();
-}
-
-TEST(TestPlonkConstantsK1K2, BW6_761)
-{
-    test_plonk_constants_k1_k2<libff::bw6_761_pp>();
-    test_plonk_random_constants_k1_k2<libff::bw6_761_pp>();
-}
-
-TEST(TestPlonkConstantsK1K2, BN128)
+TEST(TestPlonk, BN128)
 {
     test_plonk_constants_k1_k2<libff::bn128_pp>();
     test_plonk_random_constants_k1_k2<libff::bn128_pp>();
+    // TODO add test_plonk_simple_circuit
 }
 
-TEST(TestPlonkConstantsK1K2, ALT_BN128)
+TEST(TestPlonk, Mnt4)
+{
+    test_plonk_constants_k1_k2<libff::mnt4_pp>();
+    test_plonk_random_constants_k1_k2<libff::mnt4_pp>();
+    test_plonk_simple_circuit<
+        libff::mnt4_pp,
+        dummy_transcript_hasher<libff::mnt4_pp>>();
+}
+
+TEST(TestPlonk, Mnt6)
+{
+    test_plonk_constants_k1_k2<libff::mnt6_pp>();
+    test_plonk_random_constants_k1_k2<libff::mnt6_pp>();
+    test_plonk_simple_circuit<
+        libff::mnt6_pp,
+        dummy_transcript_hasher<libff::mnt6_pp>>();
+}
+
+TEST(TestPlonk, BW6_761)
+{
+    test_plonk_constants_k1_k2<libff::bw6_761_pp>();
+    test_plonk_random_constants_k1_k2<libff::bw6_761_pp>();
+    test_plonk_simple_circuit<
+        libff::bw6_761_pp,
+        dummy_transcript_hasher<libff::bw6_761_pp>>();
+}
+
+TEST(TestPlonk, ALT_BN128)
 {
     test_plonk_constants_k1_k2<libff::alt_bn128_pp>();
     test_plonk_random_constants_k1_k2<libff::alt_bn128_pp>();
+    test_plonk_simple_circuit<
+        libff::alt_bn128_pp,
+        dummy_transcript_hasher<libff::alt_bn128_pp>>();
 }
 
-TEST(TestPlonkConstantsK1K2, BLS12_377)
+TEST(TestPlonk, BLS12_377)
 {
     test_plonk_constants_k1_k2<libff::bls12_377_pp>();
     test_plonk_random_constants_k1_k2<libff::bls12_377_pp>();
-}
-
-TEST(TestPlonkConstantsK1K2, BLS12_381)
-{
-    test_plonk_constants_k1_k2<libff::bls12_381_pp>();
-    test_plonk_random_constants_k1_k2<libff::bls12_381_pp>();
-    test_plonk_constants_k1_k2_bls12_381();
+    test_plonk_simple_circuit<
+        libff::bls12_377_pp,
+        dummy_transcript_hasher<libff::bls12_377_pp>>();
 }
 
 TEST(TestPlonk, BLS12_381)
 {
+    test_plonk_constants_k1_k2<libff::bls12_381_pp>();
+    test_plonk_random_constants_k1_k2<libff::bls12_381_pp>();
+    test_plonk_constants_k1_k2_bls12_381();
     test_plonk_srs<libff::bls12_381_pp>();
     test_plonk_prover_rounds<
         libff::bls12_381_pp,
@@ -1402,10 +1417,13 @@ TEST(TestPlonk, BLS12_381)
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
     test_plonk_gates_matrix_transpose<libff::bls12_381_pp>();
-    test_plonk_prepare_gates_matrix<
+    test_plonk_prepare_gates_matrix<libff::bls12_381_pp>();
+    test_plonk_simple_circuit<
         libff::bls12_381_pp,
         bls12_381_test_vector_transcript_hasher>();
-    test_plonk_prepare_gates_matrix<libff::bls12_381_pp>();
+    test_plonk_simple_circuit<
+        libff::bls12_381_pp,
+        dummy_transcript_hasher<libff::bls12_381_pp>>();
 }
 
 } // namespace libsnark
