@@ -465,45 +465,100 @@ pb_linear_combination_array<libff::Fr<ppT>> anemoi_vector_left_rotate_by_one(
 }
 
 template<typename ppT, size_t NumStateColumns, class parameters>
+void anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
+    anemoi_get_round_constants(
+        const size_t &iround, std::vector<FieldT> &C, std::vector<FieldT> &D)
+{
+    assert(iround < parameters::nrounds256[NumStateColumns - 1]);
+    assert(C.size() == 0);
+    assert(D.size() == 0);
+
+    if (NumStateColumns == 1) {
+        copy(
+            parameters::C_constants_col_one[iround].begin(),
+            parameters::C_constants_col_one[iround].end(),
+            back_inserter(C));
+        copy(
+            parameters::D_constants_col_one[iround].begin(),
+            parameters::D_constants_col_one[iround].end(),
+            back_inserter(D));
+    }
+    if (NumStateColumns == 2) {
+        copy(
+            parameters::C_constants_col_two[iround].begin(),
+            parameters::C_constants_col_two[iround].end(),
+            back_inserter(C));
+        copy(
+            parameters::D_constants_col_two[iround].begin(),
+            parameters::D_constants_col_two[iround].end(),
+            back_inserter(D));
+    }
+    if (NumStateColumns == 3) {
+        copy(
+            parameters::C_constants_col_three[iround].begin(),
+            parameters::C_constants_col_three[iround].end(),
+            back_inserter(C));
+        copy(
+            parameters::D_constants_col_three[iround].begin(),
+            parameters::D_constants_col_three[iround].end(),
+            back_inserter(D));
+    }
+    if (NumStateColumns == 4) {
+        copy(
+            parameters::C_constants_col_four[iround].begin(),
+            parameters::C_constants_col_four[iround].end(),
+            back_inserter(C));
+        copy(
+            parameters::D_constants_col_four[iround].begin(),
+            parameters::D_constants_col_four[iround].end(),
+            back_inserter(D));
+    }
+}
+
+template<typename ppT, size_t NumStateColumns, class parameters>
 anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
     anemoi_round_prime_field_gadget(
         protoboard<libff::Fr<ppT>> &pb,
-        const std::vector<FieldT> &C,
-        const std::vector<FieldT> &D,
+        const size_t &iround,
         const pb_linear_combination_array<FieldT> &X_left,
         const pb_linear_combination_array<FieldT> &X_right,
         const pb_variable_array<FieldT> &Y_left,
         const pb_variable_array<FieldT> &Y_right,
         const std::string &annotation_prefix)
     : gadget<libff::Fr<ppT>>(pb, annotation_prefix)
-    , C_const(C)
-    , D_const(D)
+    , round_index(iround)
     , X_left_input(X_left)
     , X_right_input(X_right)
     , Y_left_output(Y_left)
     , Y_right_output(Y_right)
 {
     const libff::Fr<ppT> g = parameters::multiplicative_generator_g;
-    const size_t ncols = NumStateColumns;
 
     // temporary variables (Z_left, Z_right) modified in-place during
     // the computation from (X_left, X_right) to (Y_left, Y_right)
     std::vector<linear_combination<libff::Fr<ppT>>> Z_left;
     std::vector<linear_combination<libff::Fr<ppT>>> Z_right;
 
+    // round constants, distinct for every round
+    std::vector<FieldT> C;
+    std::vector<FieldT> D;
+    anemoi_get_round_constants(iround, C, D);
+    assert(C.size() == NumStateColumns);
+    assert(D.size() == NumStateColumns);
+
     // add constants Z_left[i]+=C[i], Z_right[i]+=D[i]
-    for (size_t i = 0; i < ncols; i++) {
+    for (size_t i = 0; i < NumStateColumns; i++) {
         Z_left.push_back(X_left[i] + C[i]);
         Z_right.push_back(X_right[i] + D[i]);
     }
 
-    // Note 1: the sequence of if-s over ncols \in {1,2,3,4} that
+    // Note 1: the sequence of if-s over NumStateColumns \in {1,2,3,4} that
     // follows is due to the fact that the specialized class
     // anemoi_permutation_mds<ppT, n> only accepts const size_t n =
     // <value>, but it would not accept const size_t =
     // NumStateColumns. TODO: fix using a more efficient approach.
 
-    // Note 2: the for-loop within each if(ncols == <value>), copies
+    // Note 2: the for-loop within each if(NumStateColumns == <value>), copies
     // the 2d array returned by anemoi_permutation_mds<ppT,
     // n>::permutation_mds(g) into a 2d vector which is the type of
     // the class member M_matrix. TODO: fix this by either using a
@@ -522,7 +577,7 @@ anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
 
     // the MDS matrix for a state with 1 column (L=1) is the same as
     // for a state with 2 columns (L=2)
-    if ((ncols == 1) || (ncols == 2)) {
+    if ((NumStateColumns == 1) || (NumStateColumns == 2)) {
         const size_t n = 2;
         std::array<std::array<FieldT, n>, n> M =
             anemoi_permutation_mds<ppT, n>::permutation_mds(g);
@@ -531,7 +586,7 @@ anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
             M_matrix.push_back(v);
         }
     }
-    if (ncols == 3) {
+    if (NumStateColumns == 3) {
         const size_t n = 3;
         std::array<std::array<FieldT, n>, n> M =
             anemoi_permutation_mds<ppT, n>::permutation_mds(g);
@@ -540,7 +595,7 @@ anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
             M_matrix.push_back(v);
         }
     }
-    if (ncols == 4) {
+    if (NumStateColumns == 4) {
         const size_t n = 4;
         std::array<std::array<FieldT, n>, n> M =
             anemoi_permutation_mds<ppT, n>::permutation_mds(g);
@@ -551,7 +606,7 @@ anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
     }
 
     // multiply by matrix M
-    if (ncols > 1) {
+    if (NumStateColumns > 1) {
         // l > 1:
         // Z_left  = (zL_0 zL_1 ... zL_{l-1})
         // Z_right = (zR_0 zR_1 ... zR_{l-1})
@@ -563,7 +618,7 @@ anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
             anemoi_vector_left_rotate_by_one<ppT>(Z_right);
         Z_right =
             anemoi_fast_multiply_mds<ppT, NumStateColumns>(Z_right_lrot, g);
-    } else { // ncols == 1
+    } else { // NumStateColumns == 1
         // l = 1:
         // Z_left = zL_0
         // Z_right = zR_0
@@ -586,7 +641,7 @@ anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
     }
 
     // apply layer of L Flystel S-boxes
-    for (size_t i = 0; i < ncols; i++) {
+    for (size_t i = 0; i < NumStateColumns; i++) {
         Flystel.emplace_back(flystel_prime_field_gadget<ppT, parameters>(
             pb,
             Z_left[i],
@@ -712,8 +767,7 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
     Round.emplace_back(
         anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>(
             pb,
-            C[0],
-            D[0],
+            0,
             X_left_input,
             X_right_input,
             round_results_left[0],
@@ -737,8 +791,7 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
         Round.emplace_back(
             anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>(
                 pb,
-                C[i],
-                D[i],
+                i,
                 round_results_left[i - 1],
                 round_results_right[i - 1],
                 round_results_left[i],
@@ -764,8 +817,7 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
     Round.emplace_back(
         anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>(
             pb,
-            C[nrounds - 1],
-            D[nrounds - 1],
+            nrounds - 1,
             round_results_left[nrounds - 2],
             round_results_right[nrounds - 2],
             round_results_left[nrounds - 1],

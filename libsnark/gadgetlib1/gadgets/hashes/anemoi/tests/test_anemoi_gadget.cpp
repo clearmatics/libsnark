@@ -258,27 +258,13 @@ void test_anemoi_round_prime_field_gadget(
     Y_left.allocate(pb, NumStateColumns, "left outputs");
     Y_right.allocate(pb, NumStateColumns, "right outputs");
 
-    for (size_t i = 0; i < NumStateColumns; i++) {
-        if (NumStateColumns == 1) {
-            C.push_back(parameters::C_constants_col_one[0][i]);
-            D.push_back(parameters::D_constants_col_one[0][i]);
-        }
-        if (NumStateColumns == 2) {
-            C.push_back(parameters::C_constants_col_two[0][i]);
-            D.push_back(parameters::D_constants_col_two[0][i]);
-        }
-        if (NumStateColumns == 3) {
-            C.push_back(parameters::C_constants_col_three[0][i]);
-            D.push_back(parameters::D_constants_col_three[0][i]);
-        }
-        if (NumStateColumns == 4) {
-            C.push_back(parameters::C_constants_col_four[0][i]);
-            D.push_back(parameters::D_constants_col_four[0][i]);
-        }
-    }
+    // Testing the 0-th round. Note that all rounds are identical,
+    // except for the round constants which are distinct for each
+    // round.
+    size_t iround = 0;
 
     anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters> d(
-        pb, C, D, X_left, X_right, Y_left, Y_right, "anemoi permutation");
+        pb, iround, X_left, X_right, Y_left, Y_right, "anemoi permutation");
 
     // generate constraints
     d.generate_r1cs_constraints();
