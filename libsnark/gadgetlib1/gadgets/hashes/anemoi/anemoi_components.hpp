@@ -200,10 +200,10 @@ class anemoi_round_prime_field_gadget : public gadget<libff::Fr<ppT>>
     using FieldT = libff::Fr<ppT>;
 
 private:
-    // vector of C round constants
-    std::vector<FieldT> C_const;
-    // vector of D round constants
-    std::vector<FieldT> D_const;
+    // The index of the round within the full Anemoi permutation
+    // (composed of multiple rounds iterated in a sequence). It is
+    // used to derive the round constants C,D.
+    size_t round_index;
     // matrix M
     std::vector<std::vector<FieldT>> M_matrix;
     // vector of Flystel S-boxes
@@ -217,20 +217,15 @@ public:
 
     anemoi_round_prime_field_gadget(
         protoboard<FieldT> &pb,
-        // TODO: add round index
-        const std::vector<FieldT> &C_const, // remove
-        const std::vector<FieldT> &D_const, // remove
+        const size_t &round_index,
         const pb_linear_combination_array<FieldT> &X_left_input,
         const pb_linear_combination_array<FieldT> &X_right_input,
         const pb_variable_array<FieldT> &Y_left_output,
         const pb_variable_array<FieldT> &Y_right_output,
         const std::string &annotation_prefix);
 
-    const std::vector<linear_combination<FieldT>> anemoi_permutation_add_constants(
-        const std::vector<linear_combination<FieldT>> &input);
-
-    const std::vector<linear_combination<FieldT>> anemoi_permutation_mulitply_matrix(
-        const std::vector<linear_combination<FieldT>> &input);
+    void anemoi_get_round_constants(
+        const size_t &iround, std::vector<FieldT> &C, std::vector<FieldT> &D);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
@@ -279,10 +274,8 @@ private:
     // D round constants for all rounds
     std::vector<std::vector<FieldT>> D_const_vec;
     // vector of round gadgets
-    std::vector<anemoi_round_prime_field_gadget<
-        ppT,
-        NumStateColumns,
-        parameters>>
+    std::vector<
+        anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>>
         Round;
 
 public:
