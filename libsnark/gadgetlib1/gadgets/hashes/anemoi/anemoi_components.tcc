@@ -381,27 +381,27 @@ std::vector<linear_combination<libff::Fr<ppT>>> anemoi_fast_multiply_mds_4x4(
 
 // multiply matrix by a vector of elements of type "linear combination of FieldT
 // elements"
-template<typename ppT, size_t NumStateColumns_L>
+template<typename ppT, size_t NumStateColumns>
 std::vector<linear_combination<libff::Fr<ppT>>> anemoi_fast_multiply_mds(
     const std::vector<linear_combination<libff::Fr<ppT>>> X,
     const libff::Fr<ppT> g)
 {
     static_assert(
-        (NumStateColumns_L == 1) || (NumStateColumns_L == 2) ||
-            (NumStateColumns_L == 3) || (NumStateColumns_L == 4),
-        "NumStateColumns_L must be 2,3 or 4");
-    if (!(X.size() == NumStateColumns_L)) {
+        (NumStateColumns == 1) || (NumStateColumns == 2) ||
+            (NumStateColumns == 3) || (NumStateColumns == 4),
+        "NumStateColumns must be 2,3 or 4");
+    if (!(X.size() == NumStateColumns)) {
         throw std::invalid_argument("invalid length of input vector");
     }
 
     std::vector<linear_combination<libff::Fr<ppT>>> Y;
-    if (NumStateColumns_L == 2) {
+    if (NumStateColumns == 2) {
         Y = anemoi_fast_multiply_mds_2x2<ppT>(X, g);
     }
-    if (NumStateColumns_L == 3) {
+    if (NumStateColumns == 3) {
         Y = anemoi_fast_multiply_mds_3x3<ppT>(X, g);
     }
-    if (NumStateColumns_L == 4) {
+    if (NumStateColumns == 4) {
         Y = anemoi_fast_multiply_mds_4x4<ppT>(X, g);
     }
     return Y;
@@ -409,26 +409,26 @@ std::vector<linear_combination<libff::Fr<ppT>>> anemoi_fast_multiply_mds(
 
 // multiply matrix by a vector of elements of type "linear combination of FieldT
 // elements"
-template<typename ppT, size_t NumStateColumns_L>
+template<typename ppT, size_t NumStateColumns>
 std::vector<linear_combination<libff::Fr<ppT>>> anemoi_fast_multiply_mds(
     const pb_linear_combination_array<libff::Fr<ppT>> X, const libff::Fr<ppT> g)
 {
     static_assert(
-        (NumStateColumns_L == 2) || (NumStateColumns_L == 3) ||
-            (NumStateColumns_L == 4),
-        "NumStateColumns_L must be 2,3 or 4");
-    if (!(X.size() == NumStateColumns_L)) {
+        (NumStateColumns == 2) || (NumStateColumns == 3) ||
+            (NumStateColumns == 4),
+        "NumStateColumns must be 2,3 or 4");
+    if (!(X.size() == NumStateColumns)) {
         throw std::invalid_argument("invalid length of input vector");
     }
 
     std::vector<linear_combination<libff::Fr<ppT>>> Y;
-    if (NumStateColumns_L == 2) {
+    if (NumStateColumns == 2) {
         Y = anemoi_fast_multiply_mds_2x2<ppT>(X, g);
     }
-    if (NumStateColumns_L == 3) {
+    if (NumStateColumns == 3) {
         Y = anemoi_fast_multiply_mds_3x3<ppT>(X, g);
     }
-    if (NumStateColumns_L == 4) {
+    if (NumStateColumns == 4) {
         Y = anemoi_fast_multiply_mds_4x4<ppT>(X, g);
     }
     return Y;
@@ -464,11 +464,8 @@ pb_linear_combination_array<libff::Fr<ppT>> anemoi_vector_left_rotate_by_one(
     return X;
 }
 
-template<typename ppT, size_t NumStateColumns_L, class parameters>
-anemoi_permutation_round_prime_field_gadget<
-    ppT,
-    NumStateColumns_L,
-    parameters>::
+template<typename ppT, size_t NumStateColumns, class parameters>
+anemoi_permutation_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
     anemoi_permutation_round_prime_field_gadget(
         protoboard<libff::Fr<ppT>> &pb,
         const std::vector<FieldT> &C,
@@ -487,7 +484,7 @@ anemoi_permutation_round_prime_field_gadget<
     , Y_right_output(Y_right)
 {
     const libff::Fr<ppT> g = parameters::multiplicative_generator_g;
-    const size_t ncols = NumStateColumns_L;
+    const size_t ncols = NumStateColumns;
 
     // temporary variables (Z_left, Z_right) modified in-place during
     // the computation from (X_left, X_right) to (Y_left, Y_right)
@@ -504,7 +501,7 @@ anemoi_permutation_round_prime_field_gadget<
     // follows is due to the fact that the specialized class
     // anemoi_permutation_mds<ppT, n> only accepts const size_t n =
     // <value>, but it would not accept const size_t =
-    // NumStateColumns_L. TODO: fix using a more efficient approach.
+    // NumStateColumns. TODO: fix using a more efficient approach.
 
     // Note 2: the for-loop within each if(ncols == <value>), copies
     // the 2d array returned by anemoi_permutation_mds<ppT,
@@ -514,12 +511,12 @@ anemoi_permutation_round_prime_field_gadget<
     // of type 2d array.
 
     // Note 3: for matrix-vector multiplication we currently provide
-    // fast routines for dimensions NumStateColumns_L \in {2,3,4} that
+    // fast routines for dimensions NumStateColumns \in {2,3,4} that
     // only accept g and a vector as input (the
     // anemoi_fast_multiply_mds_* functions). Therefore the class
     // member M_matrix is not used at the moment. It is included for
     // future use for 2 foreseeable scenarios: 1) an instance of
-    // Anemoi with NumStateColumns_L > 4 for which we do not have a
+    // Anemoi with NumStateColumns > 4 for which we do not have a
     // fast multiplication routine and 2) keep the possibility to
     // still use normal matrix-vector multiplication if one wants to
 
@@ -561,11 +558,11 @@ anemoi_permutation_round_prime_field_gadget<
         // Z_left = M Z_left
         // Z_right = M (Z_right <<< 1)
         // where (Z_right <<< 1) = (zR_1 ... zR_{l-1} zR_0)
-        Z_left = anemoi_fast_multiply_mds<ppT, NumStateColumns_L>(Z_left, g);
+        Z_left = anemoi_fast_multiply_mds<ppT, NumStateColumns>(Z_left, g);
         std::vector<linear_combination<libff::Fr<ppT>>> Z_right_lrot =
             anemoi_vector_left_rotate_by_one<ppT>(Z_right);
         Z_right =
-            anemoi_fast_multiply_mds<ppT, NumStateColumns_L>(Z_right_lrot, g);
+            anemoi_fast_multiply_mds<ppT, NumStateColumns>(Z_right_lrot, g);
     } else { // ncols == 1
         // l = 1:
         // Z_left = zL_0
@@ -600,24 +597,24 @@ anemoi_permutation_round_prime_field_gadget<
     }
 }
 
-template<typename ppT, size_t NumStateColumns_L, class parameters>
+template<typename ppT, size_t NumStateColumns, class parameters>
 void anemoi_permutation_round_prime_field_gadget<
     ppT,
-    NumStateColumns_L,
+    NumStateColumns,
     parameters>::generate_r1cs_constraints()
 {
-    for (size_t i = 0; i < NumStateColumns_L; i++) {
+    for (size_t i = 0; i < NumStateColumns; i++) {
         Flystel[i].generate_r1cs_constraints();
     }
 }
 
-template<typename ppT, size_t NumStateColumns_L, class parameters>
+template<typename ppT, size_t NumStateColumns, class parameters>
 void anemoi_permutation_round_prime_field_gadget<
     ppT,
-    NumStateColumns_L,
+    NumStateColumns,
     parameters>::generate_r1cs_witness()
 {
-    for (size_t i = 0; i < NumStateColumns_L; i++) {
+    for (size_t i = 0; i < NumStateColumns; i++) {
         Flystel[i].generate_r1cs_witness();
     }
 }
@@ -668,8 +665,8 @@ std::array<std::array<libff::Fr<ppT>, 4>, 4> anemoi_permutation_mds<ppT, 4>::
     return M;
 }
 
-template<typename ppT, size_t NumStateColumns_L, class parameters>
-anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
+template<typename ppT, size_t NumStateColumns, class parameters>
+anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
     anemoi_permutation_prime_field_gadget(
         protoboard<libff::Fr<ppT>> &pb,
         const std::vector<std::vector<FieldT>> &C,
@@ -688,16 +685,16 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
     , Y_right_output(Y_right)
 {
     // Number of columns can not be larger than rounds128 size
-    assert(NumStateColumns_L <= parameters::nrounds128.size());
+    assert(NumStateColumns <= parameters::nrounds128.size());
     // Number of columns can not be larger than rounds256 size
-    assert(NumStateColumns_L <= parameters::nrounds256.size());
+    assert(NumStateColumns <= parameters::nrounds256.size());
 
     // Get the number of rounds for the given Anemoi instance
     // (i.e. given number of columns in the state). Note: currently
     // using 256-bit security instance by default. TODO add support
     // for 128-bit security e.g. by adding a Boolean flag b_sec_128 in
     // the tamplate parameters.
-    const size_t nrounds = parameters::nrounds256[NumStateColumns_L - 1];
+    const size_t nrounds = parameters::nrounds256[NumStateColumns - 1];
 
     // Left and right input to round i, outputs from round i-1
     std::vector<pb_variable_array<FieldT>> round_results_left;
@@ -709,16 +706,16 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
     // output round_results_left[0], round_results_right[0]
     round_results_left[0].allocate(
         pb,
-        NumStateColumns_L,
+        NumStateColumns,
         FMT(this->annotation_prefix, " round_results_left[0]"));
     round_results_right[0].allocate(
         pb,
-        NumStateColumns_L,
+        NumStateColumns,
         FMT(this->annotation_prefix, " round_results_right[0]"));
 
     Round.emplace_back(anemoi_permutation_round_prime_field_gadget<
                        ppT,
-                       NumStateColumns_L,
+                       NumStateColumns,
                        parameters>(
         pb,
         C[0],
@@ -736,16 +733,16 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
 
         round_results_left[i].allocate(
             pb,
-            NumStateColumns_L,
+            NumStateColumns,
             FMT(this->annotation_prefix, " round_results_left[%zu]", i));
         round_results_right[i].allocate(
             pb,
-            NumStateColumns_L,
+            NumStateColumns,
             FMT(this->annotation_prefix, " round_results_right[%zu]", i));
 
         Round.emplace_back(anemoi_permutation_round_prime_field_gadget<
                            ppT,
-                           NumStateColumns_L,
+                           NumStateColumns,
                            parameters>(
             pb,
             C[i],
@@ -759,11 +756,11 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
 
     round_results_left[nrounds - 1].allocate(
         pb,
-        NumStateColumns_L,
+        NumStateColumns,
         FMT(this->annotation_prefix, " round_results_left[%zu]", nrounds - 1));
     round_results_right[nrounds - 1].allocate(
         pb,
-        NumStateColumns_L,
+        NumStateColumns,
         FMT(this->annotation_prefix, " round_results_right[%zu]", nrounds - 1));
 
     // For last round, copy the output as given by the caller
@@ -774,7 +771,7 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
     // Initialize the last round gadget
     Round.emplace_back(anemoi_permutation_round_prime_field_gadget<
                        ppT,
-                       NumStateColumns_L,
+                       NumStateColumns,
                        parameters>(
         pb,
         C[nrounds - 1],
@@ -786,21 +783,21 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
         FMT(this->annotation_prefix, " Round[%zu]", nrounds - 1)));
 }
 
-template<typename ppT, size_t NumStateColumns_L, class parameters>
-void anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
+template<typename ppT, size_t NumStateColumns, class parameters>
+void anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
     generate_r1cs_constraints()
 {
-    size_t nrounds = parameters::nrounds256[NumStateColumns_L - 1];
+    size_t nrounds = parameters::nrounds256[NumStateColumns - 1];
     for (size_t i = 0; i < nrounds; i++) {
         Round[i].generate_r1cs_constraints();
     }
 }
 
-template<typename ppT, size_t NumStateColumns_L, class parameters>
-void anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters>::
+template<typename ppT, size_t NumStateColumns, class parameters>
+void anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
     generate_r1cs_witness()
 {
-    size_t nrounds = parameters::nrounds256[NumStateColumns_L - 1];
+    size_t nrounds = parameters::nrounds256[NumStateColumns - 1];
     for (size_t i = 0; i < nrounds; i++) {
         Round[i].generate_r1cs_witness();
     }

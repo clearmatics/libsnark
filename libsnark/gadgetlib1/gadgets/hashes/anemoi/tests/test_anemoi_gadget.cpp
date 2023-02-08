@@ -234,7 +234,7 @@ void test_flystel_prime_field_gadget()
 
 template<
     typename ppT,
-    size_t NumStateColumns_L,
+    size_t NumStateColumns,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
 void test_anemoi_permutation_round_prime_field_gadget(
     expected_round_values_fn_t<ppT> expected_round_values_fn)
@@ -252,26 +252,26 @@ void test_anemoi_permutation_round_prime_field_gadget(
     pb_variable_array<FieldT> Y_left;
     pb_variable_array<FieldT> Y_right;
 
-    X_left.allocate(pb, NumStateColumns_L, "left inputs");
-    X_right.allocate(pb, NumStateColumns_L, "right inputs");
+    X_left.allocate(pb, NumStateColumns, "left inputs");
+    X_right.allocate(pb, NumStateColumns, "right inputs");
 
-    Y_left.allocate(pb, NumStateColumns_L, "left outputs");
-    Y_right.allocate(pb, NumStateColumns_L, "right outputs");
+    Y_left.allocate(pb, NumStateColumns, "left outputs");
+    Y_right.allocate(pb, NumStateColumns, "right outputs");
 
-    for (size_t i = 0; i < NumStateColumns_L; i++) {
-        if (NumStateColumns_L == 1) {
+    for (size_t i = 0; i < NumStateColumns; i++) {
+        if (NumStateColumns == 1) {
             C.push_back(parameters::C_constants_col_one[0][i]);
             D.push_back(parameters::D_constants_col_one[0][i]);
         }
-        if (NumStateColumns_L == 2) {
+        if (NumStateColumns == 2) {
             C.push_back(parameters::C_constants_col_two[0][i]);
             D.push_back(parameters::D_constants_col_two[0][i]);
         }
-        if (NumStateColumns_L == 3) {
+        if (NumStateColumns == 3) {
             C.push_back(parameters::C_constants_col_three[0][i]);
             D.push_back(parameters::D_constants_col_three[0][i]);
         }
-        if (NumStateColumns_L == 4) {
+        if (NumStateColumns == 4) {
             C.push_back(parameters::C_constants_col_four[0][i]);
             D.push_back(parameters::D_constants_col_four[0][i]);
         }
@@ -279,7 +279,7 @@ void test_anemoi_permutation_round_prime_field_gadget(
 
     anemoi_permutation_round_prime_field_gadget<
         ppT,
-        NumStateColumns_L,
+        NumStateColumns,
         parameters>
         d(pb, C, D, X_left, X_right, Y_left, Y_right, "anemoi permutation");
 
@@ -287,9 +287,9 @@ void test_anemoi_permutation_round_prime_field_gadget(
     d.generate_r1cs_constraints();
 
     // Input values: X_left = 0,1,2...L-1 ; X_right = L, L+1, 2L-1
-    for (size_t i = 0; i < NumStateColumns_L; i++) {
+    for (size_t i = 0; i < NumStateColumns; i++) {
         pb.val(X_left[i]) = FieldT(i);
-        pb.val(X_right[i]) = FieldT(NumStateColumns_L + i);
+        pb.val(X_right[i]) = FieldT(NumStateColumns + i);
     }
 
     // generate witness for the given input
@@ -297,10 +297,10 @@ void test_anemoi_permutation_round_prime_field_gadget(
 
     if (expected_round_values_fn) {
         std::vector<FieldT> Y_expect =
-            expected_round_values_fn(NumStateColumns_L);
-        for (size_t i = 0; i < NumStateColumns_L; i++) {
+            expected_round_values_fn(NumStateColumns);
+        for (size_t i = 0; i < NumStateColumns; i++) {
             ASSERT_EQ(Y_expect[i], pb.val(Y_left[i]));
-            ASSERT_EQ(Y_expect[NumStateColumns_L + i], pb.val(Y_right[i]));
+            ASSERT_EQ(Y_expect[NumStateColumns + i], pb.val(Y_right[i]));
         }
     }
 
@@ -313,7 +313,7 @@ void test_anemoi_permutation_round_prime_field_gadget(
 
 template<
     typename ppT,
-    size_t NumStateColumns_L,
+    size_t NumStateColumns,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
 void test_anemoi_permutation_prime_field_gadget(
     expected_values_fn_t<ppT> expected_values_fn)
@@ -330,44 +330,44 @@ void test_anemoi_permutation_prime_field_gadget(
     pb_variable_array<FieldT> Y_left;
     pb_variable_array<FieldT> Y_right;
 
-    X_left.allocate(pb, NumStateColumns_L, "left inputs");
-    X_right.allocate(pb, NumStateColumns_L, "right inputs");
+    X_left.allocate(pb, NumStateColumns, "left inputs");
+    X_right.allocate(pb, NumStateColumns, "right inputs");
 
-    Y_left.allocate(pb, NumStateColumns_L, "left outputs");
-    Y_right.allocate(pb, NumStateColumns_L, "right outputs");
+    Y_left.allocate(pb, NumStateColumns, "left outputs");
+    Y_right.allocate(pb, NumStateColumns, "right outputs");
 
-    assert(NumStateColumns_L <= parameters::nrounds256.size());
-    assert(NumStateColumns_L <= parameters::nrounds128.size());
+    assert(NumStateColumns <= parameters::nrounds256.size());
+    assert(NumStateColumns <= parameters::nrounds128.size());
 
     // the number of rounds depends on the number of columns in the
     // state
-    size_t nrounds = parameters::nrounds256[NumStateColumns_L - 1];
+    size_t nrounds = parameters::nrounds256[NumStateColumns - 1];
 
     // Store C,D round constants from parameters class
     for (size_t iround = 0; iround < nrounds; iround++) {
         // C,D constants for one round
         std::vector<FieldT> C_iround;
         std::vector<FieldT> D_iround;
-        for (size_t icol = 0; icol < NumStateColumns_L; icol++) {
-            if (NumStateColumns_L == 1) {
+        for (size_t icol = 0; icol < NumStateColumns; icol++) {
+            if (NumStateColumns == 1) {
                 C_iround.push_back(
                     parameters::C_constants_col_one[iround][icol]);
                 D_iround.push_back(
                     parameters::D_constants_col_one[iround][icol]);
             }
-            if (NumStateColumns_L == 2) {
+            if (NumStateColumns == 2) {
                 C_iround.push_back(
                     parameters::C_constants_col_two[iround][icol]);
                 D_iround.push_back(
                     parameters::D_constants_col_two[iround][icol]);
             }
-            if (NumStateColumns_L == 3) {
+            if (NumStateColumns == 3) {
                 C_iround.push_back(
                     parameters::C_constants_col_three[iround][icol]);
                 D_iround.push_back(
                     parameters::D_constants_col_three[iround][icol]);
             }
-            if (NumStateColumns_L == 4) {
+            if (NumStateColumns == 4) {
                 C_iround.push_back(
                     parameters::C_constants_col_four[iround][icol]);
                 D_iround.push_back(
@@ -378,26 +378,26 @@ void test_anemoi_permutation_prime_field_gadget(
         D.push_back(D_iround);
     }
 
-    anemoi_permutation_prime_field_gadget<ppT, NumStateColumns_L, parameters> d(
+    anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters> d(
         pb, C, D, X_left, X_right, Y_left, Y_right, "anemoi permutation");
 
     // generate constraints
     d.generate_r1cs_constraints();
 
     // Input values: X_left = 0,1,2...L-1 ; X_right = L, L+1, 2L-1
-    for (size_t i = 0; i < NumStateColumns_L; i++) {
+    for (size_t i = 0; i < NumStateColumns; i++) {
         pb.val(X_left[i]) = FieldT(i);
-        pb.val(X_right[i]) = FieldT(NumStateColumns_L + i);
+        pb.val(X_right[i]) = FieldT(NumStateColumns + i);
     }
 
     // generate witness for the given input
     d.generate_r1cs_witness();
 
     if (expected_values_fn) {
-        std::vector<FieldT> Y_expect = expected_values_fn(NumStateColumns_L);
-        for (size_t i = 0; i < NumStateColumns_L; i++) {
+        std::vector<FieldT> Y_expect = expected_values_fn(NumStateColumns);
+        for (size_t i = 0; i < NumStateColumns; i++) {
             ASSERT_EQ(Y_expect[i], pb.val(Y_left[i]));
-            ASSERT_EQ(Y_expect[NumStateColumns_L + i], pb.val(Y_right[i]));
+            ASSERT_EQ(Y_expect[NumStateColumns + i], pb.val(Y_right[i]));
         }
     }
 

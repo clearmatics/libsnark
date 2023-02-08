@@ -12,16 +12,16 @@ namespace libsnark
 {
 
 std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
-    const size_t &NumStateColumns_L)
+    const size_t &NumStateColumns)
 {
     std::vector<libff::Fr<libff::bls12_381_pp>> Y_expect_one_round;
 
     assert(
-        ((NumStateColumns_L == 1) || (NumStateColumns_L == 2) ||
-         (NumStateColumns_L == 3) || (NumStateColumns_L == 4)));
+        ((NumStateColumns == 1) || (NumStateColumns == 2) ||
+         (NumStateColumns == 3) || (NumStateColumns == 4)));
 
     // Expected output for 1 round, L=1: Y_left || Y_right
-    if (NumStateColumns_L == 1) {
+    if (NumStateColumns == 1) {
         Y_expect_one_round = {
             libff::Fr<libff::bls12_381_pp>(
                 "38051718563229095456356396838757622428877349000988080406936"
@@ -33,7 +33,7 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
     }
 
     // Expected output for 1 round, L=2: Y_left || Y_right
-    if (NumStateColumns_L == 2) {
+    if (NumStateColumns == 2) {
         Y_expect_one_round = {
             libff::Fr<libff::bls12_381_pp>(
                 "15150541060175709103777475248496599766370694616692747879011"
@@ -51,7 +51,7 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
     }
 
     // Expected output for 1 round, L=3: Y_left || Y_right
-    if (NumStateColumns_L == 3) {
+    if (NumStateColumns == 3) {
         Y_expect_one_round = {
             libff::Fr<libff::bls12_381_pp>(
                 "10213223669833360114287009308428395240580814943870872556412"
@@ -75,7 +75,7 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
     }
 
     // Expected output for 1 round, L=4: Y_left || Y_right
-    if (NumStateColumns_L == 4) {
+    if (NumStateColumns == 4) {
         Y_expect_one_round = {
             libff::Fr<libff::bls12_381_pp>(
                 "32728029339990442022355611963591129142873176406157617761037"
@@ -111,16 +111,16 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
 // parameters.sage on 8/2/2023 at 12:38:6
 
 std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output(
-    const size_t &NumStateColumns_L)
+    const size_t &NumStateColumns)
 {
     std::vector<libff::Fr<libff::bls12_381_pp>> Y_expect;
 
     assert(
-        ((NumStateColumns_L == 1) || (NumStateColumns_L == 2) ||
-         (NumStateColumns_L == 3) || (NumStateColumns_L == 4)));
+        ((NumStateColumns == 1) || (NumStateColumns == 2) ||
+         (NumStateColumns == 3) || (NumStateColumns == 4)));
 
     // Expected output for X rounds, L=1: Y_left || Y_right
-    if (NumStateColumns_L == 1) {
+    if (NumStateColumns == 1) {
         Y_expect = {
             // A_BLS_12_381_SCALARFIELD_1_COL_256_BITS
             // Left outputs
@@ -135,7 +135,7 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output(
     }
 
     // Expected output for X rounds, L=2: Y_left || Y_right
-    if (NumStateColumns_L == 2) {
+    if (NumStateColumns == 2) {
         Y_expect = {
             // A_BLS_12_381_SCALARFIELD_2_COL_256_BITS
             // Left outputs
@@ -156,7 +156,7 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output(
     }
 
     // Expected output for X rounds, L=3: Y_left || Y_right
-    if (NumStateColumns_L == 3) {
+    if (NumStateColumns == 3) {
         Y_expect = {
             // A_BLS_12_381_SCALARFIELD_3_COL_256_BITS
             // Left outputs
@@ -183,7 +183,7 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output(
     }
 
     // Expected output for X rounds, L=4: Y_left || Y_right
-    if (NumStateColumns_L == 4) {
+    if (NumStateColumns == 4) {
         Y_expect = {
             // A_BLS_12_381_SCALARFIELD_4_COL_256_BITS
             // Left outputs
