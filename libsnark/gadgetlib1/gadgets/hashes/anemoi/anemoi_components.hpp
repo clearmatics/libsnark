@@ -185,7 +185,7 @@ public:
 
 /// One round of the Anemoi permutation mapping (Fr)^{2L} -> (Fr)^{2L}
 ///
-/// NumStateColumns_L : L parameter - number of columns in the
+/// NumStateColumns : L parameter - number of columns in the
 ///                     state. can be 1,2,3,4. Each column is composed
 ///                     of 2 elements in Fr. One Flystel Sbox accepts
 ///                     1 column as input. There are L Flystel-s in 1
@@ -193,7 +193,7 @@ public:
 ///                     parallel.
 template<
     typename ppT,
-    size_t NumStateColumns_L,
+    size_t NumStateColumns,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
 class anemoi_permutation_round_prime_field_gadget
     : public gadget<libff::Fr<ppT>>
@@ -238,7 +238,7 @@ public:
 };
 
 // MDS matrix for each allowed dimension: 2,3 or 4
-template<typename ppT, size_t NumStateColumns_L> class anemoi_permutation_mds;
+template<typename ppT, size_t NumStateColumns> class anemoi_permutation_mds;
 
 template<typename ppT> class anemoi_permutation_mds<ppT, 2>
 {
@@ -268,7 +268,7 @@ public:
 /// see anemoi_permutation_round_prime_field_gadget
 template<
     typename ppT,
-    size_t NumStateColumns_L,
+    size_t NumStateColumns,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
 class anemoi_permutation_prime_field_gadget : public gadget<libff::Fr<ppT>>
 {
@@ -282,7 +282,7 @@ private:
     // vector of round gadgets
     std::vector<anemoi_permutation_round_prime_field_gadget<
         ppT,
-        NumStateColumns_L,
+        NumStateColumns,
         parameters>>
         Round;
 
