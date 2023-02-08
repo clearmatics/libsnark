@@ -465,8 +465,8 @@ pb_linear_combination_array<libff::Fr<ppT>> anemoi_vector_left_rotate_by_one(
 }
 
 template<typename ppT, size_t NumStateColumns, class parameters>
-anemoi_permutation_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
-    anemoi_permutation_round_prime_field_gadget(
+anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
+    anemoi_round_prime_field_gadget(
         protoboard<libff::Fr<ppT>> &pb,
         const std::vector<FieldT> &C,
         const std::vector<FieldT> &D,
@@ -598,10 +598,8 @@ anemoi_permutation_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
 }
 
 template<typename ppT, size_t NumStateColumns, class parameters>
-void anemoi_permutation_round_prime_field_gadget<
-    ppT,
-    NumStateColumns,
-    parameters>::generate_r1cs_constraints()
+void anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
+    generate_r1cs_constraints()
 {
     for (size_t i = 0; i < NumStateColumns; i++) {
         Flystel[i].generate_r1cs_constraints();
@@ -609,10 +607,8 @@ void anemoi_permutation_round_prime_field_gadget<
 }
 
 template<typename ppT, size_t NumStateColumns, class parameters>
-void anemoi_permutation_round_prime_field_gadget<
-    ppT,
-    NumStateColumns,
-    parameters>::generate_r1cs_witness()
+void anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>::
+    generate_r1cs_witness()
 {
     for (size_t i = 0; i < NumStateColumns; i++) {
         Flystel[i].generate_r1cs_witness();
@@ -713,18 +709,16 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
         NumStateColumns,
         FMT(this->annotation_prefix, " round_results_right[0]"));
 
-    Round.emplace_back(anemoi_permutation_round_prime_field_gadget<
-                       ppT,
-                       NumStateColumns,
-                       parameters>(
-        pb,
-        C[0],
-        D[0],
-        X_left_input,
-        X_right_input,
-        round_results_left[0],
-        round_results_right[0],
-        FMT(this->annotation_prefix, " Round[0]")));
+    Round.emplace_back(
+        anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>(
+            pb,
+            C[0],
+            D[0],
+            X_left_input,
+            X_right_input,
+            round_results_left[0],
+            round_results_right[0],
+            FMT(this->annotation_prefix, " Round[0]")));
 
     // Initialize Round[i>0] gadget with input round_results_left[i -
     // 1], round_results_right[i - 1] and output
@@ -740,18 +734,16 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
             NumStateColumns,
             FMT(this->annotation_prefix, " round_results_right[%zu]", i));
 
-        Round.emplace_back(anemoi_permutation_round_prime_field_gadget<
-                           ppT,
-                           NumStateColumns,
-                           parameters>(
-            pb,
-            C[i],
-            D[i],
-            round_results_left[i - 1],
-            round_results_right[i - 1],
-            round_results_left[i],
-            round_results_right[i],
-            FMT(this->annotation_prefix, " Round[%zu]", i)));
+        Round.emplace_back(
+            anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>(
+                pb,
+                C[i],
+                D[i],
+                round_results_left[i - 1],
+                round_results_right[i - 1],
+                round_results_left[i],
+                round_results_right[i],
+                FMT(this->annotation_prefix, " Round[%zu]", i)));
     }
 
     round_results_left[nrounds - 1].allocate(
@@ -769,18 +761,16 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
     round_results_right[nrounds - 1] = Y_right_output;
 
     // Initialize the last round gadget
-    Round.emplace_back(anemoi_permutation_round_prime_field_gadget<
-                       ppT,
-                       NumStateColumns,
-                       parameters>(
-        pb,
-        C[nrounds - 1],
-        D[nrounds - 1],
-        round_results_left[nrounds - 2],
-        round_results_right[nrounds - 2],
-        round_results_left[nrounds - 1],
-        round_results_right[nrounds - 1],
-        FMT(this->annotation_prefix, " Round[%zu]", nrounds - 1)));
+    Round.emplace_back(
+        anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>(
+            pb,
+            C[nrounds - 1],
+            D[nrounds - 1],
+            round_results_left[nrounds - 2],
+            round_results_right[nrounds - 2],
+            round_results_left[nrounds - 1],
+            round_results_right[nrounds - 1],
+            FMT(this->annotation_prefix, " Round[%zu]", nrounds - 1)));
 }
 
 template<typename ppT, size_t NumStateColumns, class parameters>
