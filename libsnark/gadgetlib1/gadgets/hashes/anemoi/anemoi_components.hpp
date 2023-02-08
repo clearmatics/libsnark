@@ -195,8 +195,7 @@ template<
     typename ppT,
     size_t NumStateColumns,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
-class anemoi_permutation_round_prime_field_gadget
-    : public gadget<libff::Fr<ppT>>
+class anemoi_round_prime_field_gadget : public gadget<libff::Fr<ppT>>
 {
     using FieldT = libff::Fr<ppT>;
 
@@ -216,7 +215,7 @@ public:
     const pb_variable_array<FieldT> Y_left_output;
     const pb_variable_array<FieldT> Y_right_output;
 
-    anemoi_permutation_round_prime_field_gadget(
+    anemoi_round_prime_field_gadget(
         protoboard<FieldT> &pb,
         // TODO: add round index
         const std::vector<FieldT> &C_const, // remove
@@ -265,7 +264,7 @@ public:
 };
 
 /// Full Anemoi permutation mapping (Fr)^{2L} -> (Fr)^{2L}
-/// see anemoi_permutation_round_prime_field_gadget
+/// see anemoi_round_prime_field_gadget
 template<
     typename ppT,
     size_t NumStateColumns,
@@ -280,7 +279,7 @@ private:
     // D round constants for all rounds
     std::vector<std::vector<FieldT>> D_const_vec;
     // vector of round gadgets
-    std::vector<anemoi_permutation_round_prime_field_gadget<
+    std::vector<anemoi_round_prime_field_gadget<
         ppT,
         NumStateColumns,
         parameters>>

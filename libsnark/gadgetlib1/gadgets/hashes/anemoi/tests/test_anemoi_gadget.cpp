@@ -236,7 +236,7 @@ template<
     typename ppT,
     size_t NumStateColumns,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
-void test_anemoi_permutation_round_prime_field_gadget(
+void test_anemoi_round_prime_field_gadget(
     expected_round_values_fn_t<ppT> expected_round_values_fn)
 
 {
@@ -277,11 +277,8 @@ void test_anemoi_permutation_round_prime_field_gadget(
         }
     }
 
-    anemoi_permutation_round_prime_field_gadget<
-        ppT,
-        NumStateColumns,
-        parameters>
-        d(pb, C, D, X_left, X_right, Y_left, Y_right, "anemoi permutation");
+    anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters> d(
+        pb, C, D, X_left, X_right, Y_left, Y_right, "anemoi permutation");
 
     // generate constraints
     d.generate_r1cs_constraints();
@@ -307,8 +304,7 @@ void test_anemoi_permutation_round_prime_field_gadget(
     ASSERT_TRUE(pb.is_satisfied());
     test_pb_verify_circuit<ppT>(pb);
 
-    libff::print_time(
-        "anemoi_permutation_round_prime_field_gadget tests successful");
+    libff::print_time("anemoi_round_prime_field_gadget tests successful");
 }
 
 template<
@@ -468,13 +464,13 @@ void test_for_curve(
     using parameters = anemoi_parameters<ppT>;
 
     // Test single round
-    test_anemoi_permutation_round_prime_field_gadget<ppT, 1, parameters>(
+    test_anemoi_round_prime_field_gadget<ppT, 1, parameters>(
         expected_round_values_fn);
-    test_anemoi_permutation_round_prime_field_gadget<ppT, 2, parameters>(
+    test_anemoi_round_prime_field_gadget<ppT, 2, parameters>(
         expected_round_values_fn);
-    test_anemoi_permutation_round_prime_field_gadget<ppT, 3, parameters>(
+    test_anemoi_round_prime_field_gadget<ppT, 3, parameters>(
         expected_round_values_fn);
-    test_anemoi_permutation_round_prime_field_gadget<ppT, 4, parameters>(
+    test_anemoi_round_prime_field_gadget<ppT, 4, parameters>(
         expected_round_values_fn);
     // Test full permutation
     test_anemoi_permutation_prime_field_gadget<ppT, 1, parameters>(
