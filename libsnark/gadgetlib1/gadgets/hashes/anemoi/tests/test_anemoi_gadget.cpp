@@ -296,6 +296,7 @@ void test_anemoi_round_prime_field_gadget(
 template<
     typename ppT,
     size_t NumStateColumns,
+    bool b_sec128,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
 void test_anemoi_permutation_prime_field_gadget(
     expected_values_fn_t<ppT> expected_values_fn)
@@ -322,8 +323,13 @@ void test_anemoi_permutation_prime_field_gadget(
     assert(NumStateColumns <= parameters::nrounds128.size());
 
     // the number of rounds depends on the number of columns in the
-    // state
-    size_t nrounds = parameters::nrounds256[NumStateColumns - 1];
+    // state and on the security level (128-bit or 256-bit)
+    size_t nrounds = 0;
+    if (b_sec128) {
+        nrounds = parameters::nrounds128[NumStateColumns - 1];
+    } else {
+        nrounds = parameters::nrounds256[NumStateColumns - 1];
+    }
 
     // Store C,D round constants from parameters class
     for (size_t iround = 0; iround < nrounds; iround++) {
@@ -360,11 +366,32 @@ void test_anemoi_permutation_prime_field_gadget(
         D.push_back(D_iround);
     }
 
-    anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters> d(
-        pb, C, D, X_left, X_right, Y_left, Y_right, "anemoi permutation");
+    anemoi_permutation_prime_field_gadget<
+        ppT,
+        NumStateColumns,
+        b_sec128,
+        parameters>
+        d(pb, C, D, X_left, X_right, Y_left, Y_right, "anemoi permutation");
 
     // generate constraints
     d.generate_r1cs_constraints();
+
+    printf(
+        "Number of constraints for Anemoi permutation b_sec128=%d, L=%zd, "
+        "nrounds=%zd: "
+        "%zu\n",
+        b_sec128,
+        NumStateColumns,
+        nrounds,
+        pb.num_constraints());
+
+    printf(
+        "Number of variables for Anemoi permutation b_sec128=%d, L=%zd, "
+        "nrounds=%zd: %zu\n",
+        b_sec128,
+        NumStateColumns,
+        nrounds,
+        pb.num_variables());
 
     // Input values: X_left = 0,1,2...L-1 ; X_right = L, L+1, 2L-1
     for (size_t i = 0; i < NumStateColumns; i++) {
@@ -444,7 +471,8 @@ void test_intermediate_gadgets_bls12_381()
 template<typename ppT>
 void test_for_curve(
     expected_round_values_fn_t<ppT> expected_round_values_fn = 0,
-    expected_values_fn_t<ppT> expected_values_fn = 0)
+    expected_values_fn_t<ppT> expected_values_sec128_fn = 0,
+    expected_values_fn_t<ppT> expected_values_sec256_fn = 0)
 {
     // Use the original parameters for the full permutation
     using parameters = anemoi_parameters<ppT>;
@@ -458,21 +486,34 @@ void test_for_curve(
         expected_round_values_fn);
     test_anemoi_round_prime_field_gadget<ppT, 4, parameters>(
         expected_round_values_fn);
-    // Test full permutation
-    test_anemoi_permutation_prime_field_gadget<ppT, 1, parameters>(
-        expected_values_fn);
-    test_anemoi_permutation_prime_field_gadget<ppT, 2, parameters>(
-        expected_values_fn);
-    test_anemoi_permutation_prime_field_gadget<ppT, 3, parameters>(
-        expected_values_fn);
-    test_anemoi_permutation_prime_field_gadget<ppT, 4, parameters>(
-        expected_values_fn);
+
+    // Test full Anemoi permutation with 128-bit security
+    test_anemoi_permutation_prime_field_gadget<ppT, 1, true, parameters>(
+        expected_values_sec128_fn);
+    test_anemoi_permutation_prime_field_gadget<ppT, 2, true, parameters>(
+        expected_values_sec128_fn);
+    test_anemoi_permutation_prime_field_gadget<ppT, 3, true, parameters>(
+        expected_values_sec128_fn);
+    test_anemoi_permutation_prime_field_gadget<ppT, 4, true, parameters>(
+        expected_values_sec128_fn);
+
+    // Test full Anemoi permutation with 256-bit security
+    test_anemoi_permutation_prime_field_gadget<ppT, 1, false, parameters>(
+        expected_values_sec256_fn);
+    test_anemoi_permutation_prime_field_gadget<ppT, 2, false, parameters>(
+        expected_values_sec256_fn);
+    test_anemoi_permutation_prime_field_gadget<ppT, 3, false, parameters>(
+        expected_values_sec256_fn);
+    test_anemoi_permutation_prime_field_gadget<ppT, 4, false, parameters>(
+        expected_values_sec256_fn);
 }
 
 TEST(TestForCurve, BLS12_381)
 {
     test_for_curve<libff::bls12_381_pp>(
-        &anemoi_expected_output_one_round, &anemoi_expected_output);
+        &anemoi_expected_output_one_round,
+        &anemoi_expected_output_sec128,
+        &anemoi_expected_output_sec256);
 }
 
 TEST(TestAnemoiGadget, BLS12_381) { test_intermediate_gadgets_bls12_381(); }

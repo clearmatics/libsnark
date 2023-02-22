@@ -716,8 +716,12 @@ std::array<std::array<libff::Fr<ppT>, 4>, 4> anemoi_permutation_mds<ppT, 4>::
     return M;
 }
 
-template<typename ppT, size_t NumStateColumns, class parameters>
-anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
+template<typename ppT, size_t NumStateColumns, bool b_sec128, class parameters>
+anemoi_permutation_prime_field_gadget<
+    ppT,
+    NumStateColumns,
+    b_sec128,
+    parameters>::
     anemoi_permutation_prime_field_gadget(
         protoboard<libff::Fr<ppT>> &pb,
         const std::vector<std::vector<FieldT>> &C,
@@ -741,11 +745,13 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
     assert(NumStateColumns <= parameters::nrounds256.size());
 
     // Get the number of rounds for the given Anemoi instance
-    // (i.e. given number of columns in the state). Note: currently
-    // using 256-bit security instance by default. TODO add support
-    // for 128-bit security e.g. by adding a Boolean flag b_sec_128 in
-    // the tamplate parameters.
-    const size_t nrounds = parameters::nrounds256[NumStateColumns - 1];
+    // (i.e. given number of columns in the state and security level)
+    size_t nrounds = 0;
+    if (b_sec128) {
+        nrounds = parameters::nrounds128[NumStateColumns - 1];
+    } else {
+        nrounds = parameters::nrounds256[NumStateColumns - 1];
+    }
 
     // Left and right input to round i, outputs from round i-1
     std::vector<pb_variable_array<FieldT>> round_results_left;
@@ -825,21 +831,37 @@ anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
             FMT(this->annotation_prefix, " Round[%zu]", nrounds - 1)));
 }
 
-template<typename ppT, size_t NumStateColumns, class parameters>
-void anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
-    generate_r1cs_constraints()
+template<typename ppT, size_t NumStateColumns, bool b_sec128, class parameters>
+void anemoi_permutation_prime_field_gadget<
+    ppT,
+    NumStateColumns,
+    b_sec128,
+    parameters>::generate_r1cs_constraints()
 {
-    size_t nrounds = parameters::nrounds256[NumStateColumns - 1];
+    size_t nrounds = 0;
+    if (b_sec128) {
+        nrounds = parameters::nrounds128[NumStateColumns - 1];
+    } else {
+        nrounds = parameters::nrounds256[NumStateColumns - 1];
+    }
     for (size_t i = 0; i < nrounds; i++) {
         Round[i].generate_r1cs_constraints();
     }
 }
 
-template<typename ppT, size_t NumStateColumns, class parameters>
-void anemoi_permutation_prime_field_gadget<ppT, NumStateColumns, parameters>::
-    generate_r1cs_witness()
+template<typename ppT, size_t NumStateColumns, bool b_sec128, class parameters>
+void anemoi_permutation_prime_field_gadget<
+    ppT,
+    NumStateColumns,
+    b_sec128,
+    parameters>::generate_r1cs_witness()
 {
-    size_t nrounds = parameters::nrounds256[NumStateColumns - 1];
+    size_t nrounds = 0;
+    if (b_sec128) {
+        nrounds = parameters::nrounds128[NumStateColumns - 1];
+    } else {
+        nrounds = parameters::nrounds256[NumStateColumns - 1];
+    }
     for (size_t i = 0; i < nrounds; i++) {
         Round[i].generate_r1cs_witness();
     }

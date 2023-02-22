@@ -263,6 +263,7 @@ public:
 template<
     typename ppT,
     size_t NumStateColumns,
+    bool b_sec128,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
 class anemoi_permutation_prime_field_gadget : public gadget<libff::Fr<ppT>>
 {
