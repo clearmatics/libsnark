@@ -106,6 +106,8 @@ public:
 
     pb_linear_combination();
     pb_linear_combination(const pb_variable<FieldT> &var);
+    pb_linear_combination(
+        protoboard<FieldT> &pb, const linear_combination<FieldT> &lc);
 
     void assign(protoboard<FieldT> &pb, const linear_combination<FieldT> &lc);
     void evaluate(protoboard<FieldT> &pb) const;
