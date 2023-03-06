@@ -30,6 +30,8 @@ public:
     static constexpr size_t quad_exponent = 2;
     static const BignumT alpha_inv;
     static const BignumT delta;
+    static const std::vector<size_t> nrounds128;
+    static const std::vector<size_t> nrounds256;
     static const std::vector<std::vector<BignumT>> C_constants_col_one;
     static const std::vector<std::vector<BignumT>> D_constants_col_one;
     static const std::vector<std::vector<BignumT>> C_constants_col_two;
@@ -39,6 +41,11 @@ public:
     static const std::vector<std::vector<BignumT>> C_constants_col_four;
     static const std::vector<std::vector<BignumT>> D_constants_col_four;
 };
+
+const std::vector<size_t> anemoi_parameters<libff::bls12_381_pp>::nrounds128 = {
+    19, 12, 10, 10};
+const std::vector<size_t> anemoi_parameters<libff::bls12_381_pp>::nrounds256 = {
+    35, 20, 15, 14};
 
 const anemoi_parameters<libff::bls12_381_pp>::BignumT
     anemoi_parameters<libff::bls12_381_pp>::alpha_inv =

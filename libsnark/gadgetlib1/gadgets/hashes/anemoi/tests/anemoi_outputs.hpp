@@ -23,10 +23,24 @@ namespace libsnark
 // Returns the expected outputs from 1 round of the Anemoi permutation for
 // BLS12_381
 std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
-    const size_t &NumStateColumns_L);
+    const size_t &NumStateColumns);
 
 template<typename ppT>
 using expected_round_values_fn_t =
+    std::function<std::vector<libff::Fr<ppT>>(const size_t)>;
+
+// Returns the expected outputs from the full Anemoi permutation for
+// BLS12_381 with 128-bit security
+std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_sec128(
+    const size_t &NumStateColumns);
+
+// Returns the expected outputs from the full Anemoi permutation for
+// BLS12_381 with 256-bit security
+std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_sec256(
+    const size_t &NumStateColumns);
+
+template<typename ppT>
+using expected_values_fn_t =
     std::function<std::vector<libff::Fr<ppT>>(const size_t)>;
 
 } // namespace libsnark

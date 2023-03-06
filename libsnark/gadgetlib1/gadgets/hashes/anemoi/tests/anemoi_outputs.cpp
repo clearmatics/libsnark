@@ -12,16 +12,16 @@ namespace libsnark
 {
 
 std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
-    const size_t &NumStateColumns_L)
+    const size_t &NumStateColumns)
 {
     std::vector<libff::Fr<libff::bls12_381_pp>> Y_expect_one_round;
 
     assert(
-        ((NumStateColumns_L == 1) || (NumStateColumns_L == 2) ||
-         (NumStateColumns_L == 3) || (NumStateColumns_L == 4)));
+        ((NumStateColumns == 1) || (NumStateColumns == 2) ||
+         (NumStateColumns == 3) || (NumStateColumns == 4)));
 
     // Expected output for 1 round, L=1: Y_left || Y_right
-    if (NumStateColumns_L == 1) {
+    if (NumStateColumns == 1) {
         Y_expect_one_round = {
             libff::Fr<libff::bls12_381_pp>(
                 "38051718563229095456356396838757622428877349000988080406936"
@@ -33,7 +33,7 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
     }
 
     // Expected output for 1 round, L=2: Y_left || Y_right
-    if (NumStateColumns_L == 2) {
+    if (NumStateColumns == 2) {
         Y_expect_one_round = {
             libff::Fr<libff::bls12_381_pp>(
                 "15150541060175709103777475248496599766370694616692747879011"
@@ -51,7 +51,7 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
     }
 
     // Expected output for 1 round, L=3: Y_left || Y_right
-    if (NumStateColumns_L == 3) {
+    if (NumStateColumns == 3) {
         Y_expect_one_round = {
             libff::Fr<libff::bls12_381_pp>(
                 "10213223669833360114287009308428395240580814943870872556412"
@@ -75,7 +75,7 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
     }
 
     // Expected output for 1 round, L=4: Y_left || Y_right
-    if (NumStateColumns_L == 4) {
+    if (NumStateColumns == 4) {
         Y_expect_one_round = {
             libff::Fr<libff::bls12_381_pp>(
                 "32728029339990442022355611963591129142873176406157617761037"
@@ -105,6 +105,225 @@ std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_one_round(
     }
 
     return Y_expect_one_round;
+}
+
+// Output values automatically generated with SAGE script parameters.sage on
+// 22/2/2023 at 15:42:52
+
+std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_sec128(
+    const size_t &NumStateColumns)
+{
+    std::vector<libff::Fr<libff::bls12_381_pp>> Y_expect;
+
+    assert(
+        ((NumStateColumns == 1) || (NumStateColumns == 2) ||
+         (NumStateColumns == 3) || (NumStateColumns == 4)));
+
+    // Expected output for X rounds, L=1: Y_left || Y_right
+    if (NumStateColumns == 1) {
+        Y_expect = {
+            // A_BLS_12_381_SCALARFIELD_1_COL_128_BITS
+            // Left outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "19463313543534248726432829720355949992115481142527733903500993"
+                "416436681359462"),
+            // Right outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "24097836352777748145579459445766630401317354855690625231253784"
+                "292194604293571"),
+        };
+    }
+
+    // Expected output for X rounds, L=2: Y_left || Y_right
+    if (NumStateColumns == 2) {
+        Y_expect = {
+            // A_BLS_12_381_SCALARFIELD_2_COL_128_BITS
+            // Left outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "20636196687232276298438196241398690677938366239053904563010834"
+                "541309527854991"),
+            libff::Fr<libff::bls12_381_pp>(
+                "39253916165022249533082065477479430579750918696028787690371014"
+                "52687525354031"),
+            // Right outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "47061893317231315260263422053135889963204648975511761903522774"
+                "86385893809395"),
+            libff::Fr<libff::bls12_381_pp>(
+                "45793334370241758458544071272207820701498478315901461355994185"
+                "085013035430493"),
+        };
+    }
+
+    // Expected output for X rounds, L=3: Y_left || Y_right
+    if (NumStateColumns == 3) {
+        Y_expect = {
+            // A_BLS_12_381_SCALARFIELD_3_COL_128_BITS
+            // Left outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "28715769826978654676588546137117600748550476950408785857193565"
+                "153875705420975"),
+            libff::Fr<libff::bls12_381_pp>(
+                "30425229241496163422803804141580461486929064146611232216062976"
+                "254737479882403"),
+            libff::Fr<libff::bls12_381_pp>(
+                "22789248741438984532214659536852322247722236081022972364883893"
+                "282168923848450"),
+            // Right outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "83340274330612138707941626621488069857370856538793932637490252"
+                "41344734749219"),
+            libff::Fr<libff::bls12_381_pp>(
+                "38341449265920577314536214955239005955863226132621074752657782"
+                "328514346130364"),
+            libff::Fr<libff::bls12_381_pp>(
+                "28073280982375140090919520522401329658310313884355685437076001"
+                "811914604043364"),
+        };
+    }
+
+    // Expected output for X rounds, L=4: Y_left || Y_right
+    if (NumStateColumns == 4) {
+        Y_expect = {
+            // A_BLS_12_381_SCALARFIELD_4_COL_128_BITS
+            // Left outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "19356149758649626294450657712280508522363341709284507844575489"
+                "610192191514962"),
+            libff::Fr<libff::bls12_381_pp>(
+                "43155080790752903177252471274668523810674926564664489782972593"
+                "085074051296840"),
+            libff::Fr<libff::bls12_381_pp>(
+                "41787658699965881793824486198005321620242003410745831867294329"
+                "180279986418075"),
+            libff::Fr<libff::bls12_381_pp>(
+                "45207360550431743775255889352626333429066098966478431547522957"
+                "807501170661928"),
+            // Right outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "37717615359665988354289045467804278397912413188575884030395250"
+                "092911699801716"),
+            libff::Fr<libff::bls12_381_pp>(
+                "36147903245738985095503661861599596609184057062914456862066826"
+                "887006062632577"),
+            libff::Fr<libff::bls12_381_pp>(
+                "41936718433766085193462460233543805461189771221168643535359299"
+                "387832399336324"),
+            libff::Fr<libff::bls12_381_pp>(
+                "35115766378970860468260290086983943422955413756722324468203198"
+                "670156540279242"),
+        };
+    }
+
+    return Y_expect;
+}
+
+std::vector<libff::Fr<libff::bls12_381_pp>> anemoi_expected_output_sec256(
+    const size_t &NumStateColumns)
+{
+    std::vector<libff::Fr<libff::bls12_381_pp>> Y_expect;
+
+    assert(
+        ((NumStateColumns == 1) || (NumStateColumns == 2) ||
+         (NumStateColumns == 3) || (NumStateColumns == 4)));
+
+    // Expected output for X rounds, L=1: Y_left || Y_right
+    if (NumStateColumns == 1) {
+        Y_expect = {
+            // A_BLS_12_381_SCALARFIELD_1_COL_256_BITS
+            // Left outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "23592301003500664995929917733266743854375415916040326652210568"
+                "078795386647097"),
+            // Right outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "46415751505026927687934363401060779170128061056083999362978931"
+                "09307338071265"),
+        };
+    }
+
+    // Expected output for X rounds, L=2: Y_left || Y_right
+    if (NumStateColumns == 2) {
+        Y_expect = {
+            // A_BLS_12_381_SCALARFIELD_2_COL_256_BITS
+            // Left outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "14658224666697525543665581557177920897018725487885393770688961"
+                "291142066565838"),
+            libff::Fr<libff::bls12_381_pp>(
+                "22696721298764611334499842832788494984317317977616725617062055"
+                "973718288462083"),
+            // Right outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "41254164318270696844698147640474784924833116221680739817900833"
+                "75015002260367"),
+            libff::Fr<libff::bls12_381_pp>(
+                "85516268014959707663369712918470356171127697856604948332123300"
+                "88434570655220"),
+        };
+    }
+
+    // Expected output for X rounds, L=3: Y_left || Y_right
+    if (NumStateColumns == 3) {
+        Y_expect = {
+            // A_BLS_12_381_SCALARFIELD_3_COL_256_BITS
+            // Left outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "39354654009222930922076215480960296260844083612260032711385075"
+                "821419598992495"),
+            libff::Fr<libff::bls12_381_pp>(
+                "35857978005837223530941291838645726295300924278186042951565477"
+                "753001911648704"),
+            libff::Fr<libff::bls12_381_pp>(
+                "73133080760004009022948041840133483135280922655558522590705858"
+                "39828489100756"),
+            // Right outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "27964702120041308262791208736057137783851503845042628202338953"
+                "806313118894432"),
+            libff::Fr<libff::bls12_381_pp>(
+                "32605073953207604732414082895795832873262647917998760850707996"
+                "197372829415078"),
+            libff::Fr<libff::bls12_381_pp>(
+                "26789211140092257781038997601682984740469870292740801416378551"
+                "890114989182776"),
+        };
+    }
+
+    // Expected output for X rounds, L=4: Y_left || Y_right
+    if (NumStateColumns == 4) {
+        Y_expect = {
+            // A_BLS_12_381_SCALARFIELD_4_COL_256_BITS
+            // Left outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "37935275437371366775666670594948501766272500250774338143461366"
+                "789714115968944"),
+            libff::Fr<libff::bls12_381_pp>(
+                "46013056163891430736716124133522777555340005169288884686271429"
+                "476146703061386"),
+            libff::Fr<libff::bls12_381_pp>(
+                "34292192884279029656147093024511389074726243647468508480039887"
+                "915986427463842"),
+            libff::Fr<libff::bls12_381_pp>(
+                "19361591618166593449330002683801850115916835743219702190183265"
+                "100898653128350"),
+            // Right outputs
+            libff::Fr<libff::bls12_381_pp>(
+                "50276857710105470204512033208185084240001478327548370600191258"
+                "668539356034348"),
+            libff::Fr<libff::bls12_381_pp>(
+                "30612042191114496995886018278834216278786456996263573491525930"
+                "890999097880377"),
+            libff::Fr<libff::bls12_381_pp>(
+                "44865148646864607507025476306280271506300928383843934665366106"
+                "390302816945546"),
+            libff::Fr<libff::bls12_381_pp>(
+                "12299595100938587761671298225363168979705772605172431805112941"
+                "997639442458604"),
+        };
+    }
+
+    return Y_expect;
 }
 
 } // namespace libsnark

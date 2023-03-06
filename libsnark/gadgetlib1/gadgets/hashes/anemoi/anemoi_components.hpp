@@ -185,7 +185,7 @@ public:
 
 /// One round of the Anemoi permutation mapping (Fr)^{2L} -> (Fr)^{2L}
 ///
-/// NumStateColumns_L : L parameter - number of columns in the
+/// NumStateColumns : L parameter - number of columns in the
 ///                     state. can be 1,2,3,4. Each column is composed
 ///                     of 2 elements in Fr. One Flystel Sbox accepts
 ///                     1 column as input. There are L Flystel-s in 1
@@ -193,18 +193,17 @@ public:
 ///                     parallel.
 template<
     typename ppT,
-    size_t NumStateColumns_L,
+    size_t NumStateColumns,
     class parameters = anemoi_parameters<libff::Fr<ppT>>>
-class anemoi_permutation_round_prime_field_gadget
-    : public gadget<libff::Fr<ppT>>
+class anemoi_round_prime_field_gadget : public gadget<libff::Fr<ppT>>
 {
     using FieldT = libff::Fr<ppT>;
 
 private:
-    // vector of C round constants
-    std::vector<FieldT> C_const;
-    // vector of D round constants
-    std::vector<FieldT> D_const;
+    // The index of the round within the full Anemoi permutation
+    // (composed of multiple rounds iterated in a sequence). It is
+    // used to derive the round constants C,D.
+    size_t round_index;
     // matrix M
     std::vector<std::vector<FieldT>> M_matrix;
     // vector of Flystel S-boxes
@@ -216,28 +215,24 @@ public:
     const pb_variable_array<FieldT> Y_left_output;
     const pb_variable_array<FieldT> Y_right_output;
 
-    anemoi_permutation_round_prime_field_gadget(
+    anemoi_round_prime_field_gadget(
         protoboard<FieldT> &pb,
-        const std::vector<FieldT> &C_const,
-        const std::vector<FieldT> &D_const,
+        const size_t &round_index,
         const pb_linear_combination_array<FieldT> &X_left_input,
         const pb_linear_combination_array<FieldT> &X_right_input,
         const pb_variable_array<FieldT> &Y_left_output,
         const pb_variable_array<FieldT> &Y_right_output,
         const std::string &annotation_prefix);
 
-    const std::vector<linear_combination<FieldT>> anemoi_permutation_add_constants(
-        const std::vector<linear_combination<FieldT>> &input);
-
-    const std::vector<linear_combination<FieldT>> anemoi_permutation_mulitply_matrix(
-        const std::vector<linear_combination<FieldT>> &input);
+    void anemoi_get_round_constants(
+        const size_t &iround, std::vector<FieldT> &C, std::vector<FieldT> &D);
 
     void generate_r1cs_constraints();
     void generate_r1cs_witness();
 };
 
 // MDS matrix for each allowed dimension: 2,3 or 4
-template<typename ppT, size_t NumStateColumns_L> class anemoi_permutation_mds;
+template<typename ppT, size_t NumStateColumns> class anemoi_permutation_mds;
 
 template<typename ppT> class anemoi_permutation_mds<ppT, 2>
 {
@@ -261,6 +256,48 @@ template<typename ppT> class anemoi_permutation_mds<ppT, 4>
 
 public:
     static anemoi_mds_matrix_t permutation_mds(const libff::Fr<ppT> g);
+};
+
+/// Full Anemoi permutation mapping (Fr)^{2L} -> (Fr)^{2L}
+/// see anemoi_round_prime_field_gadget
+template<
+    typename ppT,
+    size_t NumStateColumns,
+    bool b_sec128,
+    class parameters = anemoi_parameters<libff::Fr<ppT>>>
+class anemoi_permutation_prime_field_gadget : public gadget<libff::Fr<ppT>>
+{
+    using FieldT = libff::Fr<ppT>;
+
+private:
+    // C round constants for all rounds
+    std::vector<std::vector<FieldT>> C_const_vec;
+    // D round constants for all rounds
+    std::vector<std::vector<FieldT>> D_const_vec;
+    // vector of round gadgets
+    std::vector<
+        anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>>
+        Rounds;
+
+public:
+    const pb_linear_combination_array<FieldT> X_left_input;
+    const pb_linear_combination_array<FieldT> X_right_input;
+    const pb_variable_array<FieldT> Y_left_output;
+    const pb_variable_array<FieldT> Y_right_output;
+
+    anemoi_permutation_prime_field_gadget(
+        protoboard<FieldT> &pb,
+        // TODO: remove constants
+        const std::vector<std::vector<FieldT>> &C_const,
+        const std::vector<std::vector<FieldT>> &D_const,
+        const pb_linear_combination_array<FieldT> &X_left_input,
+        const pb_linear_combination_array<FieldT> &X_right_input,
+        const pb_variable_array<FieldT> &Y_left_output,
+        const pb_variable_array<FieldT> &Y_right_output,
+        const std::string &annotation_prefix);
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
 };
 
 } // namespace libsnark

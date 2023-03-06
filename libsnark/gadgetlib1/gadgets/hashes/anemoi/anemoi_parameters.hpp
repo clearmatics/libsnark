@@ -36,6 +36,12 @@ namespace libsnark
 /// - quad_exponent    : quadratic exponent applied in the mappings Q_gamma,
 ///                      Q_delta. Note that quad_exponent=2 for prime fields and
 ///                      quad_exponent=3 for binary fields
+/// - nrounds128       : array of total number of rounds for instances with
+///                      different number of columns e.g. 1,2,3,4 and 128-bit
+///                      security
+/// - nrounds256       : array of total number of rounds for instances with
+///                      different number of columns e.g. 1,2,3,4 and 256-bit
+///                      security
 /// - C_constants_col_"num_cols", D_constants_col_"num_cols" : the C
 ///                      and D round constants of the Anemoi
 ///                      permutation for a state with 1,2,3 or 4
