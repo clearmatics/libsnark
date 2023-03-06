@@ -277,7 +277,7 @@ private:
     // vector of round gadgets
     std::vector<
         anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>>
-        Round;
+        Rounds;
 
 public:
     const pb_linear_combination_array<FieldT> X_left_input;

@@ -770,7 +770,7 @@ anemoi_permutation_prime_field_gadget<
         NumStateColumns,
         FMT(this->annotation_prefix, " round_results_right[0]"));
 
-    Round.emplace_back(
+    Rounds.emplace_back(
         anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>(
             pb,
             0,
@@ -794,7 +794,7 @@ anemoi_permutation_prime_field_gadget<
             NumStateColumns,
             FMT(this->annotation_prefix, " round_results_right[%zu]", i));
 
-        Round.emplace_back(
+        Rounds.emplace_back(
             anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>(
                 pb,
                 i,
@@ -820,7 +820,7 @@ anemoi_permutation_prime_field_gadget<
     round_results_right[nrounds - 1] = Y_right_output;
 
     // Initialize the last round gadget
-    Round.emplace_back(
+    Rounds.emplace_back(
         anemoi_round_prime_field_gadget<ppT, NumStateColumns, parameters>(
             pb,
             nrounds - 1,
@@ -845,7 +845,7 @@ void anemoi_permutation_prime_field_gadget<
         nrounds = parameters::nrounds256[NumStateColumns - 1];
     }
     for (size_t i = 0; i < nrounds; i++) {
-        Round[i].generate_r1cs_constraints();
+        Rounds[i].generate_r1cs_constraints();
     }
 }
 
@@ -863,7 +863,7 @@ void anemoi_permutation_prime_field_gadget<
         nrounds = parameters::nrounds256[NumStateColumns - 1];
     }
     for (size_t i = 0; i < nrounds; i++) {
-        Round[i].generate_r1cs_witness();
+        Rounds[i].generate_r1cs_witness();
     }
 }
 
